@@ -70,11 +70,16 @@ export class KVRateLimiter implements RateLimiter {
   }
 }
 
-/** Cloudflare sets this header on every request reaching a Worker; it
- * cannot be spoofed by the client the way a plain X-Forwarded-For could,
- * since Cloudflare's edge overwrites it. Falls back to a constant so a
- * request from `wrangler dev` (which does not set it) still rate-limits
- * as one shared bucket locally rather than throwing. */
+/** On deployed Cloudflare (not checked live in this session, since that
+ * needs a deploy - this is Cloudflare's documented behavior), the edge
+ * sets this header on every request and overwrites any client-supplied
+ * value, so it cannot be spoofed the way a plain X-Forwarded-For could.
+ * Checked live under `wrangler dev` instead: local dev does NOT strip a
+ * client-supplied value - sending `cf-connecting-ip: 1.2.3.4` created its
+ * own separate rate-limit bucket - so the header is spoofable in local
+ * dev only. The `?? 'local-dev'` fallback is nearly unreachable there in
+ * practice, since wrangler dev's own simulation sets a real loopback
+ * value (127.0.0.1) when the client sends nothing. */
 export function extractIp(request: Request): string {
   return request.headers.get('cf-connecting-ip') ?? 'local-dev';
 }
