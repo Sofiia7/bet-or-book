@@ -1,5 +1,6 @@
 import { extractAddress } from './guard';
 import { checkAddress } from './api/check';
+import pageHtml from '../web/index.html';
 
 export default {
   async fetch(request: Request): Promise<Response> {
@@ -23,6 +24,10 @@ export default {
       }
     }
 
-    return new Response('bet or book - phase 1 scaffold', { status: 200 });
+    if (url.pathname === '/') {
+      return new Response(pageHtml, { headers: { 'content-type': 'text/html;charset=UTF-8' } });
+    }
+
+    return new Response('not found', { status: 404 });
   },
 };

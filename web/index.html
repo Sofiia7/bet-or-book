@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bet or Book</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: -apple-system, system-ui, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; line-height: 1.5; }
+  h1 { font-size: 22px; font-weight: 500; }
+  .sub { color: #666; margin-top: -8px; }
+  .row { display: flex; gap: 8px; margin: 20px 0; }
+  input { flex: 1; padding: 10px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 8px; font-family: monospace; }
+  button { padding: 10px 16px; font-size: 14px; border: 1px solid #ccc; border-radius: 8px; background: none; cursor: pointer; }
+  button:hover { background: #f2f2f2; }
+  .card { border: 1px solid #ccc; border-radius: 12px; padding: 16px 20px; display: none; }
+  .badge { display: inline-block; font-size: 13px; font-weight: 500; padding: 4px 12px; border-radius: 8px; }
+  .badge-book { background: #e6f1fb; color: #0c447c; }
+  .badge-hedged { background: #eaf3de; color: #27500a; }
+  .badge-bet { background: #faeeda; color: #633806; }
+  .badge-unknown { background: #f1efe8; color: #444441; }
+  .headline { font-size: 18px; font-weight: 500; margin: 10px 0 2px; }
+  .explain { color: #666; margin: 0 0 12px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 16px 0; }
+  .stat { background: #f7f7f7; border-radius: 8px; padding: 10px 12px; }
+  .stat-label { font-size: 12px; color: #666; }
+  .stat-value { font-size: 20px; font-weight: 500; }
+  .cannot-see { background: #faeeda; color: #633806; border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-top: 12px; }
+  .footer { font-size: 12px; color: #999; margin-top: 12px; }
+  .error { color: #a32d2d; font-size: 14px; display: none; }
+</style>
+</head>
+<body>
+<h1>Bet or book</h1>
+<p class="sub">Should you copy this whale? Paste a Hyperliquid address.</p>
+
+<div class="row">
+  <input id="address" type="text" placeholder="0x... or a link containing one" autocomplete="off" spellcheck="false">
+  <button id="check">Check</button>
+</div>
+<p class="error" id="error"></p>
+
+<div class="card" id="card">
+  <span class="badge" id="badge"></span>
+  <p class="headline" id="headline"></p>
+  <p class="explain" id="explain"></p>
+  <div class="stats" id="stats"></div>
+  <p class="cannot-see" id="cannot-see"></p>
+  <p class="footer" id="footer"></p>
+</div>
+
+<script>
+function extractAddress(input) {
+  const m = input.trim().match(/0x[0-9a-fA-F]{40}/);
+  return m ? m[0] : null;
+}
+
+const VERDICT_COPY = {
+  book: { label: 'Book', cls: 'badge-book', headline: 'This is a market-making book.', explain: 'There is nothing to copy - this account quotes both sides.' },
+  hedged: { label: 'Hedged', cls: 'badge-hedged', headline: 'This position is not a directional view.', explain: 'A hedge leg covers most of the exposure, or the book roughly nets out.' },
+  looks_like_a_bet: { label: 'Looks like a bet', cls: 'badge-bet', headline: 'This looks like a real bet.', explain: 'A hedge on a centralized exchange would be invisible to us.' },
+  unknown: { label: 'Unknown', cls: 'badge-unknown', headline: 'Not enough evidence either way.', explain: 'The signals disagree, or there is not enough data to call it.' },
+};
+
+function fmtUsd(n) {
+  if (n === null || n === undefined) return '-';
+  return '$' + Math.round(n).toLocaleString('en-US');
+}
+function fmtPct(n) {
+  if (n === null || n === undefined) return '-';
+  return (n * 100).toFixed(1) + '%';
+}
+
+async function runCheck() {
+  const raw = document.getElementById('address').value;
+  const addr = extractAddress(raw);
+  const errorEl = document.getElementById('error');
+  const cardEl = document.getElementById('card');
+  if (!addr) {
+    errorEl.textContent = 'Enter a Hyperliquid address (or a link containing one) first.';
+    errorEl.style.display = 'block';
+    cardEl.style.display = 'none';
+    return;
+  }
+  errorEl.style.display = 'none';
+
+  const res = await fetch('/api/check?address=' + encodeURIComponent(addr));
+  const data = await res.json();
+  if (!res.ok) {
+    errorEl.textContent = data.error || 'Something went wrong.';
+    errorEl.style.display = 'block';
+    cardEl.style.display = 'none';
+    return;
+  }
+
+  const v = VERDICT_COPY[data.verdict.verdict] || VERDICT_COPY.unknown;
+  const badge = document.getElementById('badge');
+  badge.textContent = v.label + (data.verdict.strength ? ' (' + data.verdict.strength + ')' : '');
+  badge.className = 'badge ' + v.cls;
+  document.getElementById('headline').textContent = v.headline;
+  document.getElementById('explain').textContent = v.explain;
+
+  const stats = document.getElementById('stats');
+  stats.innerHTML = '';
+  const rows = [
+    ['Open positions', data.positions.nPositions],
+    ['Net / gross exposure', fmtPct(data.positions.netToGross)],
+    ['Resting orders', data.orders.restingOrders],
+    ['Headline position', fmtUsd(data.positions.headlineNotionalUsd) + ' ' + (data.positions.headlineCoin || '')],
+    ['Hedge ratio', fmtPct(data.hedge.hedgeRatio)],
+    ['Trades / day' + (data.trades.cappedByApiLimit ? ' (at least)' : ''), Math.round(data.trades.tradesPerDay)],
+  ];
+  for (const [label, value] of rows) {
+    const div = document.createElement('div');
+    div.className = 'stat';
+    div.innerHTML = '<div class="stat-label"></div><div class="stat-value"></div>';
+    div.querySelector('.stat-label').textContent = label;
+    div.querySelector('.stat-value').textContent = value;
+    stats.appendChild(div);
+  }
+
+  document.getElementById('cannot-see').textContent =
+    'What we cannot see: positions on centralized exchanges and OTC deals, and wallets not linked on-chain to this address.';
+  document.getElementById('footer').textContent =
+    'Source: ' + data.source + ' - checked ' + new Date(data.checkedAt).toLocaleString();
+
+  cardEl.style.display = 'block';
+}
+
+document.getElementById('check').addEventListener('click', runCheck);
+document.getElementById('address').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') runCheck();
+});
+</script>
+</body>
+</html>
