@@ -82,6 +82,19 @@ export interface HlPerpMeta {
   universe: Array<{ name: string; maxLeverage: number }>;
 }
 
+export interface HlFill {
+  coin: string;
+  px: string;
+  sz: string;
+  side: 'B' | 'A';
+  time: number;
+  closedPnl: string;
+  crossed: boolean;
+  fee: string;
+  oid: number;
+  tid: number;
+}
+
 async function postInfo<T>(body: Record<string, unknown>): Promise<T> {
   const res = await fetch(BASE_URL, {
     method: 'POST',
@@ -112,4 +125,8 @@ export async function getSpotMeta(): Promise<[HlSpotMeta, HlSpotAssetCtx[]]> {
 
 export async function getPerpMetaAndAssetCtxs(): Promise<[HlPerpMeta, HlPerpAssetCtx[]]> {
   return postInfo<[HlPerpMeta, HlPerpAssetCtx[]]>({ type: 'metaAndAssetCtxs' });
+}
+
+export async function getUserFillsByTime(user: string, startTime: number, endTime: number): Promise<HlFill[]> {
+  return postInfo<HlFill[]>({ type: 'userFillsByTime', user, startTime, endTime, aggregateByTime: false });
 }

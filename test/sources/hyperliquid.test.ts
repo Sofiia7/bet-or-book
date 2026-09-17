@@ -4,12 +4,14 @@ import openOrdersFixture from '../fixtures/hyperliquid/open-orders.json';
 import spotBalancesFixture from '../fixtures/hyperliquid/spot-balances.json';
 import spotMetaFixture from '../fixtures/hyperliquid/spot-meta.json';
 import metaAndAssetCtxsFixture from '../fixtures/hyperliquid/meta-and-asset-ctxs.json';
+import fillsFixture from '../fixtures/hyperliquid/fills-24h.json';
 import {
   getClearinghouseState,
   getOpenOrders,
   getSpotBalances,
   getSpotMeta,
   getPerpMetaAndAssetCtxs,
+  getUserFillsByTime,
 } from '../../src/sources/hyperliquid';
 
 function mockFetchOnce(body: unknown, status = 200): void {
@@ -73,5 +75,22 @@ describe('hyperliquid client', () => {
   it('throws a clear error when Hyperliquid responds with a non-200 status', async () => {
     mockFetchOnce('rate limited', 429);
     await expect(getClearinghouseState('0xtest')).rejects.toThrow(/429/);
+  });
+});
+
+describe('getUserFillsByTime', () => {
+  const originalFetch = global.fetch;
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('parses fills from a real captured response', async () => {
+    mockFetchOnce(fillsFixture);
+    const fills = await getUserFillsByTime('0xtest', 0, 1);
+    expect(fills.length).toBeGreaterThan(0);
+    expect(fills[0]).toHaveProperty('coin');
+    expect(fills[0]).toHaveProperty('crossed');
+    expect(fills[0]).toHaveProperty('closedPnl');
+    expect(typeof fills[0].crossed).toBe('boolean');
   });
 });

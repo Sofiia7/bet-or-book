@@ -21,3 +21,10 @@ export interface SpotHolding {
   coin: string;
   valueUsd: number;
 }
+
+export interface Trade {
+  coin: string;
+  timestamp: number;
+  crossed: boolean;
+  closedPnlUsd: number;
+}
