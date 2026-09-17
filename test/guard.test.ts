@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { extractAddress, isValidAddress, InMemoryRateLimiter } from '../src/guard';
+import { describe, expect, it, vi, afterEach } from 'vitest';
+import { extractAddress, isValidAddress, InMemoryRateLimiter, KVRateLimiter } from '../src/guard';
+import { FakeKV } from './support/fakeKv';
 
 describe('extractAddress', () => {
   it('extracts a bare address', () => {
@@ -50,5 +51,38 @@ describe('InMemoryRateLimiter', () => {
     expect(await limiter.allow('ip1')).toBe(true);
     expect(await limiter.allow('ip2')).toBe(true);
     expect(await limiter.allow('ip1')).toBe(false);
+  });
+});
+
+describe('KVRateLimiter', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('allows up to the configured number of hits in the current window', async () => {
+    const kv = new FakeKV();
+    const limiter = new KVRateLimiter(kv, 3, 60);
+    expect(await limiter.allow('ip1')).toBe(true);
+    expect(await limiter.allow('ip1')).toBe(true);
+    expect(await limiter.allow('ip1')).toBe(true);
+    expect(await limiter.allow('ip1')).toBe(false);
+  });
+
+  it('tracks separate keys independently', async () => {
+    const kv = new FakeKV();
+    const limiter = new KVRateLimiter(kv, 1, 60);
+    expect(await limiter.allow('ip1')).toBe(true);
+    expect(await limiter.allow('ip2')).toBe(true);
+    expect(await limiter.allow('ip1')).toBe(false);
+  });
+
+  it('resets once the fixed window rolls over', async () => {
+    const kv = new FakeKV();
+    const limiter = new KVRateLimiter(kv, 1, 60);
+    vi.setSystemTime(0);
+    expect(await limiter.allow('ip1')).toBe(true);
+    expect(await limiter.allow('ip1')).toBe(false);
+    vi.setSystemTime(61_000);
+    expect(await limiter.allow('ip1')).toBe(true);
   });
 });
