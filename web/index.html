@@ -47,6 +47,11 @@
   <div class="stats" id="stats"></div>
   <p class="cannot-see" id="cannot-see"></p>
   <p class="footer" id="footer"></p>
+  <div style="display:flex; gap:8px; margin-top:12px;">
+    <button id="copy-card">Copy card</button>
+    <button id="copy-link">Copy link</button>
+  </div>
+  <canvas id="card-canvas" width="1200" height="675" style="display:none;"></canvas>
 </div>
 
 <script>
@@ -71,6 +76,8 @@ function fmtPct(n) {
   return (n * 100).toFixed(1) + '%';
 }
 
+let lastResult = null;
+
 async function runCheck() {
   const raw = document.getElementById('address').value;
   const addr = extractAddress(raw);
@@ -92,6 +99,7 @@ async function runCheck() {
     cardEl.style.display = 'none';
     return;
   }
+  lastResult = data;
 
   const v = VERDICT_COPY[data.verdict.verdict] || VERDICT_COPY.unknown;
   const badge = document.getElementById('badge');
@@ -124,6 +132,10 @@ async function runCheck() {
   document.getElementById('footer').textContent =
     'Source: ' + data.source + ' - checked ' + new Date(data.checkedAt).toLocaleString();
 
+  const cardCanvas = document.getElementById('card-canvas');
+  cardCanvas.style.display = 'none';
+  document.getElementById('copy-card').textContent = 'Copy card';
+
   cardEl.style.display = 'block';
 }
 
@@ -131,6 +143,124 @@ document.getElementById('check').addEventListener('click', runCheck);
 document.getElementById('address').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') runCheck();
 });
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(' ');
+  let line = '';
+  let curY = y;
+  for (const word of words) {
+    const test = line + word + ' ';
+    if (ctx.measureText(test).width > maxWidth && line !== '') {
+      ctx.fillText(line, x, curY);
+      line = word + ' ';
+      curY += lineHeight;
+    } else {
+      line = test;
+    }
+  }
+  ctx.fillText(line, x, curY);
+}
+
+function drawCard() {
+  const canvas = document.getElementById('card-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const data = lastResult;
+  const v = VERDICT_COPY[data.verdict.verdict] || VERDICT_COPY.unknown;
+  const palette = {
+    book: '#0c447c', hedged: '#27500a', looks_like_a_bet: '#633806', unknown: '#444441',
+  };
+  const accent = palette[data.verdict.verdict] || palette.unknown;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = accent;
+  ctx.font = '600 28px -apple-system, system-ui, sans-serif';
+  ctx.fillText(v.label.toUpperCase() + (data.verdict.strength ? ' - ' + data.verdict.strength.toUpperCase() : ''), 48, 90);
+
+  ctx.fillStyle = '#111111';
+  ctx.font = '600 44px -apple-system, system-ui, sans-serif';
+  wrapText(ctx, v.headline, 48, 160, W - 96, 52);
+
+  ctx.fillStyle = '#555555';
+  ctx.font = '400 24px -apple-system, system-ui, sans-serif';
+  wrapText(ctx, v.explain, 48, 250, W - 96, 32);
+
+  const stats = [
+    ['Open positions', String(data.positions.nPositions)],
+    ['Net / gross', fmtPct(data.positions.netToGross)],
+    ['Resting orders', String(data.orders.restingOrders)],
+    ['Hedge ratio', fmtPct(data.hedge.hedgeRatio)],
+  ];
+  const colW = (W - 96) / 4;
+  stats.forEach(([label, value], i) => {
+    const x = 48 + i * colW;
+    ctx.fillStyle = '#888888';
+    ctx.font = '400 18px -apple-system, system-ui, sans-serif';
+    ctx.fillText(label, x, 420);
+    ctx.fillStyle = '#111111';
+    ctx.font = '600 32px -apple-system, system-ui, sans-serif';
+    ctx.fillText(value, x, 460);
+  });
+
+  ctx.fillStyle = '#999999';
+  ctx.font = '400 18px -apple-system, system-ui, sans-serif';
+  ctx.fillText('bet-or-book - ' + data.address.slice(0, 10) + '...' + data.address.slice(-6), 48, H - 40);
+}
+
+document.getElementById('copy-card').addEventListener('click', async () => {
+  if (!lastResult) return;
+  drawCard();
+  const canvas = document.getElementById('card-canvas');
+  const btn = document.getElementById('copy-card');
+  const original = btn.textContent;
+  canvas.toBlob(async (blob) => {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      btn.textContent = 'Copied';
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    } catch (e) {
+      // A new window opened from inside an awaited callback is not a
+      // trusted user gesture in most browsers and gets popup-blocked
+      // silently - checked live, window.open() returned null here and a
+      // "we opened it" message would have been a lie. Show the image
+      // inline instead, which needs no permission and cannot be blocked.
+      // Checked live too: `max-width: 100%` alone, with no `width`, left
+      // the canvas at a 0x0 layout box in this browser - a canvas is a
+      // replaced element and needs an explicit responsive width/height
+      // pair, not just a cap on one axis.
+      canvas.style.display = 'block';
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+      canvas.style.borderRadius = '8px';
+      canvas.style.marginTop = '12px';
+      btn.textContent = 'Right-click (or long-press) the image below to save it';
+    }
+  }, 'image/png');
+});
+
+document.getElementById('copy-link').addEventListener('click', async () => {
+  if (!lastResult) return;
+  const link = window.location.origin + '/?address=' + lastResult.address;
+  const btn = document.getElementById('copy-link');
+  const original = btn.textContent;
+  try {
+    await navigator.clipboard.writeText(link);
+    btn.textContent = 'Copied';
+  } catch (e) {
+    window.prompt('Copy this link:', link);
+    btn.textContent = original;
+    return;
+  }
+  setTimeout(() => { btn.textContent = original; }, 1500);
+});
+
+const preset = new URLSearchParams(window.location.search).get('address');
+if (preset) {
+  document.getElementById('address').value = preset;
+  runCheck();
+}
 </script>
 </body>
 </html>
