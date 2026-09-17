@@ -1,10 +1,11 @@
-import type { Position, RestingOrder, SpotHolding } from '../types';
+import type { Position, RestingOrder, SpotHolding, Trade } from '../types';
 import type {
   HlClearinghouseState,
   HlOpenOrder,
   HlSpotBalance,
   HlSpotMeta,
   HlSpotAssetCtx,
+  HlFill,
 } from './hyperliquid';
 
 export function normalizePositions(state: HlClearinghouseState): Position[] {
@@ -70,4 +71,13 @@ export function normalizeSpotHoldings(
     .filter((b) => b.coin !== 'USDC')
     .map((b) => ({ coin: b.coin, valueUsd: Number(b.total) * (priceByCoin.get(b.coin) ?? 0) }))
     .filter((h) => h.valueUsd > 0);
+}
+
+export function normalizeTrades(fills: HlFill[]): Trade[] {
+  return fills.map((f) => ({
+    coin: f.coin,
+    timestamp: f.time,
+    crossed: f.crossed,
+    closedPnlUsd: Number(f.closedPnl),
+  }));
 }

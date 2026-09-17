@@ -1,4 +1,4 @@
-import type { Position, RestingOrder, SpotHolding } from '../types';
+import type { Position, RestingOrder, SpotHolding, Trade } from '../types';
 import { spotHedgesPerp } from './assets';
 
 export interface PositionFeatures {
@@ -97,4 +97,29 @@ export function computeHedgeFeatures(
 export function computeSizeVsOi(headlineNotionalUsd: number, openInterestUsd: number): number | null {
   if (openInterestUsd <= 0) return null;
   return headlineNotionalUsd / openInterestUsd;
+}
+
+export interface TradeFeatures {
+  tradesPerDay: number;
+  crossedShare: number;
+  sampleSize: number;
+  /** True when the raw sample hit Hyperliquid's 2000-fill-per-call cap, so
+   * tradesPerDay is a lower bound, not an exact count - a full page is a
+   * sign there is more history, not that the history ends here. */
+  cappedByApiLimit: boolean;
+}
+
+const HL_FILLS_PAGE_CAP = 2000;
+
+export function computeTradeFeatures(trades: Trade[], windowHours: number): TradeFeatures {
+  if (trades.length === 0) {
+    return { tradesPerDay: 0, crossedShare: 0, sampleSize: 0, cappedByApiLimit: false };
+  }
+  const crossedCount = trades.filter((t) => t.crossed).length;
+  return {
+    tradesPerDay: (trades.length / windowHours) * 24,
+    crossedShare: crossedCount / trades.length,
+    sampleSize: trades.length,
+    cappedByApiLimit: trades.length >= HL_FILLS_PAGE_CAP,
+  };
 }

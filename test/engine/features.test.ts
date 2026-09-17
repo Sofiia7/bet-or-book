@@ -4,8 +4,9 @@ import {
   computeOrderFeatures,
   computeHedgeFeatures,
   computeSizeVsOi,
+  computeTradeFeatures,
 } from '../../src/engine/features';
-import type { Position, RestingOrder, SpotHolding } from '../../src/types';
+import type { Position, RestingOrder, SpotHolding, Trade } from '../../src/types';
 
 describe('computePositionFeatures', () => {
   it('returns zeroed features for an empty account', () => {
@@ -90,5 +91,41 @@ describe('computeSizeVsOi', () => {
 
   it('returns null when open interest is not known', () => {
     expect(computeSizeVsOi(1000, 0)).toBeNull();
+  });
+});
+
+describe('computeTradeFeatures', () => {
+  it('returns zeroed features for no trades', () => {
+    const result = computeTradeFeatures([], 24);
+    expect(result.tradesPerDay).toBe(0);
+    expect(result.sampleSize).toBe(0);
+    expect(result.cappedByApiLimit).toBe(false);
+  });
+
+  it('scales a partial-day sample up to a per-day rate', () => {
+    const trades: Trade[] = Array.from({ length: 100 }, (_, i) => ({
+      coin: 'BTC',
+      timestamp: i,
+      crossed: i % 2 === 0,
+      closedPnlUsd: 0,
+    }));
+    const result = computeTradeFeatures(trades, 12);
+    expect(result.tradesPerDay).toBe(200);
+    expect(result.crossedShare).toBeCloseTo(0.5, 6);
+    expect(result.sampleSize).toBe(100);
+    expect(result.cappedByApiLimit).toBe(false);
+  });
+
+  it("flags the result as a floor when the sample hits Hyperliquid's 2000-fill cap", () => {
+    const trades: Trade[] = Array.from({ length: 2000 }, (_, i) => ({
+      coin: 'BTC',
+      timestamp: i,
+      crossed: i % 4 === 0,
+      closedPnlUsd: 0,
+    }));
+    const result = computeTradeFeatures(trades, 24);
+    expect(result.cappedByApiLimit).toBe(true);
+    expect(result.tradesPerDay).toBe(2000);
+    expect(result.crossedShare).toBeCloseTo(0.25, 6);
   });
 });

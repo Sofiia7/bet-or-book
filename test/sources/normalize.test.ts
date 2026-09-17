@@ -3,11 +3,13 @@ import clearinghouseFixture from '../fixtures/hyperliquid/clearinghouse-many-pos
 import openOrdersFixture from '../fixtures/hyperliquid/open-orders.json';
 import spotBalancesFixture from '../fixtures/hyperliquid/spot-balances.json';
 import spotMetaFixture from '../fixtures/hyperliquid/spot-meta.json';
+import fillsFixture from '../fixtures/hyperliquid/fills-24h.json';
 import {
   normalizePositions,
   normalizeOrders,
   buildSpotPriceIndex,
   normalizeSpotHoldings,
+  normalizeTrades,
 } from '../../src/sources/normalize';
 import type {
   HlClearinghouseState,
@@ -15,6 +17,7 @@ import type {
   HlSpotBalance,
   HlSpotMeta,
   HlSpotAssetCtx,
+  HlFill,
 } from '../../src/sources/hyperliquid';
 
 describe('normalizePositions', () => {
@@ -75,6 +78,17 @@ describe('spot price index and holdings', () => {
     for (const h of holdings) {
       expect(h.valueUsd).toBeGreaterThan(0);
       expect(h.coin).not.toBe('USDC');
+    }
+  });
+});
+
+describe('normalizeTrades', () => {
+  it('converts every raw fill into the domain Trade shape', () => {
+    const trades = normalizeTrades(fillsFixture as HlFill[]);
+    expect(trades.length).toBe((fillsFixture as HlFill[]).length);
+    for (const t of trades) {
+      expect(typeof t.crossed).toBe('boolean');
+      expect(typeof t.closedPnlUsd).toBe('number');
     }
   });
 });
