@@ -65,3 +65,51 @@ a profit-taking ladder from being misread as quoting.
 // 0xbf732ea04197942783e34730ed6e0f6099575d58 (ZEC long, substitute for the bet role)
 {"address":"0xbf732ea04197942783e34730ed6e0f6099575d58","verdict":{"verdict":"looks_like_a_bet","strength":null,"reasons":["directional_concentration"]},"positions":{"nPositions":1,"grossUsd":22069500,"netUsd":22069500,"netToGross":1,"headlineCoin":"ZEC","headlineNotionalUsd":22069500,"headlineShare":1,"headlineLiqDistancePct":0.15426401678357457},"orders":{"restingOrders":30,"bidShare":0,"coinsBothSides":0},"hedge":{"hedgeUsd":0,"hedgeRatio":0},"sizeVsOi":0.023414979911352135,"source":"hyperliquid","checkedAt":"2026-09-17T16:40:21.516Z"}
 ```
+
+## 2026-09-17, after adding the trades signal
+
+Same three addresses, same live endpoint, after wiring `computeTradeFeatures`
+(book rule в: `tradesPerDay >= 200`, `crossedShare <= 40%`) via Hyperliquid's
+free `userFillsByTime`, no Nansen involved. All three accounts moved in the
+few hours between runs (open positions and order counts differ slightly from
+the table above - expected for live accounts), but every verdict either held
+or strengthened for a sound reason.
+
+| Address | Verdict before | Verdict after | tradesPerDay | crossedShare | Changed? |
+|---|---|---|---|---|---|
+| Wintermute | book (likely, reason: orders) | **book (strong, reasons: orders + trades)** | 2000 (capped) | 24.4% | strengthened |
+| Abraxas-linked | unknown | unknown | 2000 (capped) | 52.3% | unchanged, and for the right reason (below) |
+| ZEC long | looks_like_a_bet | looks_like_a_bet | 1482 | 95.1% | unchanged, unaffected by design - the bet rule does not read trades |
+
+**Wintermute strengthened as expected.** The trades signal agreed with the
+orders signal instead of just the positions signal: 2000+ fills/day (hit the
+API cap again, so this is a floor) with only 24.4% crossing the spread -
+mostly passive quoting, the market-maker shape.
+
+**Abraxas is the interesting one.** Trade volume came back surprisingly
+high - 2000+ fills/day, capped again - which could easily have been
+misread as more market-making evidence. It was not: 52.3% of those trades
+crossed the spread, above the 40% ceiling, so the trades signal correctly
+declined to fire. High volume alone is not the book signal; high volume
+with *mostly passive* fills is. This account still reads as fourteen
+concentrated, one-directional short positions with a trading style that
+looks like active position management, not liquidity provision - and with
+the hedge leg still invisible from Hyperliquid-only data (see the note
+above), `unknown` remains the honest answer.
+
+**ZEC long's 95.1% crossed share is itself informative**, even though the
+bet rule does not use it: an account entering and exiting mostly by taking
+the book, rather than resting orders, is a directional trader's footprint,
+not a market maker's - consistent with the single-position, ask-only-ladder
+shape already driving the `looks_like_a_bet` verdict.
+
+```json
+// 0xecb63caa47c7c4e77f60f1ce858cf28dc2b82b00 (Wintermute)
+{"address":"0xecb63caa47c7c4e77f60f1ce858cf28dc2b82b00","verdict":{"verdict":"book","strength":"strong","reasons":["orders","trades"]},"positions":{"nPositions":85,"grossUsd":112935793.81381904,"netUsd":79407649.59254897,"netToGross":0.70312207415354,"headlineCoin":"ETH","headlineNotionalUsd":36411466.38591,"headlineShare":0.32240855760872705,"headlineLiqDistancePct":0.9610359282290284},"orders":{"restingOrders":1765,"bidShare":0.5042492917847026,"coinsBothSides":78},"hedge":{"hedgeUsd":1155089.626704574,"hedgeRatio":0.03172323834646645},"trades":{"tradesPerDay":2000,"crossedShare":0.244,"sampleSize":2000,"cappedByApiLimit":true},"sizeVsOi":0.014903103280504213,"source":"hyperliquid","checkedAt":"2026-09-17T17:25:36.068Z"}
+
+// 0xB83DE012dbA672c76A7dbbbf3E459CB59D7D6E36 (Abraxas-linked)
+{"address":"0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36","verdict":{"verdict":"unknown","strength":null,"reasons":["signals disagree: not enough evidence for book, hedge, or bet"]},"positions":{"nPositions":14,"grossUsd":406956065.90041494,"netUsd":406956065.90041494,"netToGross":1,"headlineCoin":"ETH","headlineNotionalUsd":177537296.05737,"headlineShare":0.4362566648676387,"headlineLiqDistancePct":0.5251872882476846},"orders":{"restingOrders":0,"bidShare":0.5,"coinsBothSides":0},"hedge":{"hedgeUsd":0,"hedgeRatio":0},"trades":{"tradesPerDay":2000,"crossedShare":0.523,"sampleSize":2000,"cappedByApiLimit":true},"sizeVsOi":0.07267723420371408,"source":"hyperliquid","checkedAt":"2026-09-17T17:25:38.093Z"}
+
+// 0xbf732ea04197942783e34730ed6e0f6099575d58 (ZEC long)
+{"address":"0xbf732ea04197942783e34730ed6e0f6099575d58","verdict":{"verdict":"looks_like_a_bet","strength":null,"reasons":["directional_concentration"]},"positions":{"nPositions":1,"grossUsd":21553257.782596,"netUsd":21553257.782596,"netToGross":1,"headlineCoin":"ZEC","headlineNotionalUsd":21553257.782596,"headlineShare":1,"headlineLiqDistancePct":0.16979161887224903},"orders":{"restingOrders":28,"bidShare":0,"coinsBothSides":0},"hedge":{"hedgeUsd":0,"hedgeRatio":0},"trades":{"tradesPerDay":1482,"crossedShare":0.9507422402159245,"sampleSize":1482,"cappedByApiLimit":false},"sizeVsOi":0.02280365610511598,"source":"hyperliquid","checkedAt":"2026-09-17T17:25:39.235Z"}
+```
