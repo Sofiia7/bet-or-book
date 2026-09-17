@@ -1,0 +1,1563 @@
+# Bet or Book - Core Engine Implementation Plan (Phase 1)
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Build a working, tested verdict engine (book / hedged / looks-like-a-bet / unknown) that reads a Hyperliquid address through Hyperliquid's own free public API and classifies the account, runnable locally via `wrangler dev`. No Nansen API key required for this phase.
+
+**Architecture:** A Cloudflare Worker in TypeScript. Three layers with one-way dependencies: `sources/` (typed HTTP clients, know nothing about verdict rules) -> `engine/` (pure functions: raw account data in, features and a verdict out, no network) -> `api/` + `index.ts` (orchestration and the Worker's fetch handler). Every module in `engine/` is unit-tested with hand-built inputs; every module in `sources/` is tested against real JSON captured once from the live Hyperliquid API and committed as a fixture.
+
+**Tech Stack:** TypeScript, Cloudflare Workers (`wrangler`), Vitest, `tsx` for one-off scripts. No framework, no database yet - state lives in the response only.
+
+**Relationship to the spec:** implements section 3 (verdicts and features, using Hyperliquid as the fallback source that section 4 rule 2 explicitly allows), section 6 file layout (the `sources/`, `engine/`, `api/` split), and section 10 (tests on recorded real responses) of `docs/specs/2026-09-17-bet-or-book-design.md`. It deliberately stops short of the full spec: Nansen integration, the gallery/prescan, the web page, the credit ledger, and deployment are Phase 2, planned separately once this lands and the Nansen key exists (spec section 12, days 19-27). `tradesPerDay` / `crossedShare` (spec's book rule (в), needs paginated trade history) and the cross-chain part of the hedge leg (needs Nansen's related-wallets and current-balance) are out of scope here for the same reason - Phase 1 implements book rules (а) position-spread and (б) order-book, and the same-account spot leg of the hedge check.
+
+---
+
+## Task 1: Project scaffold
+
+**Files:**
+- Create: `package.json`
+- Create: `tsconfig.json`
+- Create: `wrangler.toml`
+- Create: `vitest.config.ts`
+- Create: `src/index.ts` (placeholder handler, replaced in Task 9)
+
+- [ ] **Step 1: Init npm and install dependencies**
+
+Run:
+```bash
+cd /c/Server/bet_or_book
+npm init -y
+npm install -D typescript vitest wrangler @cloudflare/workers-types tsx @types/node
+```
+Expected: `package.json` and `package-lock.json` exist, `node_modules/` populated. Do not hand-write dependency version numbers - let npm resolve current ones.
+
+- [ ] **Step 2: Edit package.json scripts and module type**
+
+Open the generated `package.json` and set exactly these two things, leaving `name`, `version`, and the installed `devDependencies` as npm wrote them:
+
+```json
+{
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "dev": "wrangler dev"
+  }
+}
+```
+
+- [ ] **Step 3: Write tsconfig.json**
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022"],
+    "types": ["@cloudflare/workers-types"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  },
+  "include": ["src", "test"]
+}
+```
+
+`scripts/` is deliberately excluded - one-off scripts run through `tsx` directly and would otherwise fight with `@cloudflare/workers-types`' globals.
+
+- [ ] **Step 4: Write wrangler.toml**
+
+```toml
+name = "bet-or-book"
+main = "src/index.ts"
+compatibility_date = "2026-09-17"
+compatibility_flags = ["nodejs_compat"]
+```
+
+- [ ] **Step 5: Write vitest.config.ts**
+
+```typescript
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    environment: 'node',
+    include: ['test/**/*.test.ts'],
+  },
+});
+```
+
+- [ ] **Step 6: Write a placeholder Worker handler**
+
+```typescript
+// src/index.ts
+export default {
+  async fetch(): Promise<Response> {
+    return new Response('bet or book - scaffold', { status: 200 });
+  },
+};
+```
+
+- [ ] **Step 7: Verify the scaffold boots**
+
+Run: `npm run typecheck`
+Expected: exits 0, no errors.
+
+Run: `npm run dev` in the background, then in another shell `curl http://localhost:8787/`, then stop the dev server.
+Expected: response body `bet or book - scaffold`.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add package.json package-lock.json tsconfig.json wrangler.toml vitest.config.ts src/index.ts .gitignore
+git commit -m "chore: project scaffold (worker, typescript, vitest)"
+```
+
+---
+
+## Task 2: Capture real Hyperliquid fixtures
+
+**Files:**
+- Create: `scripts/fetch-fixtures.ts`
+- Create: `test/fixtures/hyperliquid/*.json` (generated by running the script)
+
+- [ ] **Step 1: Write the fixture-capture script**
+
+```typescript
+// scripts/fetch-fixtures.ts
+import { writeFileSync, mkdirSync } from 'node:fs';
+
+const HL_API = 'https://api.hyperliquid.xyz/info';
+const OUT_DIR = 'test/fixtures/hyperliquid';
+
+async function post(body: Record<string, unknown>): Promise<unknown> {
+  const res = await fetch(HL_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(`Hyperliquid ${String(body.type)} failed: ${res.status} ${await res.text()}`);
+  }
+  return res.json();
+}
+
+function save(name: string, data: unknown): void {
+  mkdirSync(OUT_DIR, { recursive: true });
+  writeFileSync(`${OUT_DIR}/${name}.json`, JSON.stringify(data, null, 2) + '\n');
+  console.log(`saved ${name}.json`);
+}
+
+async function main(): Promise<void> {
+  const [manyPositions, withOrders, withSpot] = process.argv.slice(2);
+  if (!manyPositions || !withOrders || !withSpot) {
+    console.error(
+      'usage: npx tsx scripts/fetch-fixtures.ts <address with >=3 open positions> ' +
+        '<address with several resting limit orders> <address with a nonzero spot balance>',
+    );
+    process.exit(1);
+  }
+
+  save('clearinghouse-many-positions', await post({ type: 'clearinghouseState', user: manyPositions }));
+  save('open-orders', await post({ type: 'frontendOpenOrders', user: withOrders }));
+  save('open-orders-empty', await post({ type: 'frontendOpenOrders', user: '0x0000000000000000000000000000000000000001' }));
+  save('spot-balances', await post({ type: 'spotClearinghouseState', user: withSpot }));
+  save('spot-meta', await post({ type: 'spotMetaAndAssetCtxs' }));
+  save('meta-and-asset-ctxs', await post({ type: 'metaAndAssetCtxs' }));
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
+```
+
+- [ ] **Step 2: Find three real addresses and run the script**
+
+Open the Browser pane on `https://hyperdash.com` or `https://hypurrscan.io` and pick:
+- one address showing at least 3 open perp positions (a large or market-making-looking account works best - it makes later tests easier because the fixture won't be empty),
+- one address with several resting limit orders visible in its open-orders view,
+- one address holding a nonzero spot balance (any of the above may already qualify).
+
+It is fine to reuse the same address for more than one role.
+
+Run:
+```bash
+npx tsx scripts/fetch-fixtures.ts <addr1> <addr2> <addr3>
+```
+Expected: six `saved *.json` lines and six files under `test/fixtures/hyperliquid/`.
+
+- [ ] **Step 3: Open each saved file and sanity-check it**
+
+Read `test/fixtures/hyperliquid/clearinghouse-many-positions.json` and confirm `assetPositions` is a non-empty array and each entry has a `position` object with `coin`, `szi`, `entryPx`, `leverage`, `liquidationPx`, `positionValue`.
+
+Read `test/fixtures/hyperliquid/open-orders.json` and confirm it is a non-empty array with `coin`, `side`, `limitPx`, `sz` on each entry. Note the actual string value of `side` (expected `"B"`/`"A"`; if it differs, that is the real value to use in Task 3).
+
+Read `test/fixtures/hyperliquid/spot-meta.json` and confirm the shape is a two-element array: `[ { tokens: [...], universe: [...] }, [ {...}, ... ] ]`, and that `universe[i].tokens` is a two-element array of token indices. If the real shape differs, note exactly how - Task 3's types are written to match this file.
+
+If any fixture is empty in a way that defeats its purpose (e.g. `open-orders.json` is `[]`), pick a different address and re-run Step 2 for that fixture only.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add scripts/fetch-fixtures.ts test/fixtures/hyperliquid
+git commit -m "chore: capture real Hyperliquid API fixtures for tests"
+```
+
+---
+
+## Task 3: Hyperliquid client
+
+**Files:**
+- Create: `src/sources/hyperliquid.ts`
+- Test: `test/sources/hyperliquid.test.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+```typescript
+// test/sources/hyperliquid.test.ts
+import { describe, expect, it, vi, afterEach } from 'vitest';
+import clearinghouseFixture from '../fixtures/hyperliquid/clearinghouse-many-positions.json';
+import openOrdersFixture from '../fixtures/hyperliquid/open-orders.json';
+import spotBalancesFixture from '../fixtures/hyperliquid/spot-balances.json';
+import spotMetaFixture from '../fixtures/hyperliquid/spot-meta.json';
+import metaAndAssetCtxsFixture from '../fixtures/hyperliquid/meta-and-asset-ctxs.json';
+import {
+  getClearinghouseState,
+  getOpenOrders,
+  getSpotBalances,
+  getSpotMeta,
+  getPerpMetaAndAssetCtxs,
+} from '../../src/sources/hyperliquid';
+
+function mockFetchOnce(body: unknown, status = 200): void {
+  global.fetch = vi.fn(async () => new Response(JSON.stringify(body), { status })) as unknown as typeof fetch;
+}
+
+describe('hyperliquid client', () => {
+  const originalFetch = global.fetch;
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('parses clearinghouseState from a real captured response', async () => {
+    mockFetchOnce(clearinghouseFixture);
+    const state = await getClearinghouseState('0xtest');
+    expect(state.assetPositions.length).toBeGreaterThan(0);
+    const first = state.assetPositions[0].position;
+    expect(first).toHaveProperty('coin');
+    expect(first).toHaveProperty('szi');
+    expect(state.marginSummary).toHaveProperty('accountValue');
+  });
+
+  it('parses open orders from a real captured response', async () => {
+    mockFetchOnce(openOrdersFixture);
+    const orders = await getOpenOrders('0xtest');
+    expect(orders.length).toBeGreaterThan(0);
+    expect(['B', 'A']).toContain(orders[0].side);
+    expect(orders[0]).toHaveProperty('coin');
+    expect(orders[0]).toHaveProperty('limitPx');
+  });
+
+  it('parses spot balances from a real captured response', async () => {
+    mockFetchOnce(spotBalancesFixture);
+    const result = await getSpotBalances('0xtest');
+    expect(result.balances.length).toBeGreaterThan(0);
+    expect(result.balances[0]).toHaveProperty('coin');
+    expect(result.balances[0]).toHaveProperty('total');
+  });
+
+  it('parses spot meta and asset contexts from a real captured response', async () => {
+    mockFetchOnce(spotMetaFixture);
+    const [meta, ctxs] = await getSpotMeta();
+    expect(meta.universe.length).toBeGreaterThan(0);
+    expect(meta.tokens.length).toBeGreaterThan(0);
+    expect(ctxs.length).toBe(meta.universe.length);
+  });
+
+  it('parses perp meta and asset contexts from a real captured response', async () => {
+    mockFetchOnce(metaAndAssetCtxsFixture);
+    const [meta, ctxs] = await getPerpMetaAndAssetCtxs();
+    expect(meta.universe.length).toBeGreaterThan(0);
+    expect(ctxs.length).toBe(meta.universe.length);
+  });
+
+  it('throws a clear error when Hyperliquid responds with a non-200 status', async () => {
+    mockFetchOnce('rate limited', 429);
+    await expect(getClearinghouseState('0xtest')).rejects.toThrow(/429/);
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npm test -- test/sources/hyperliquid.test.ts`
+Expected: FAIL - `src/sources/hyperliquid.ts` does not exist yet.
+
+- [ ] **Step 3: Write the client**
+
+```typescript
+// src/sources/hyperliquid.ts
+const BASE_URL = 'https://api.hyperliquid.xyz/info';
+
+export interface HlPosition {
+  coin: string;
+  szi: string;
+  entryPx: string | null;
+  leverage: { type: 'cross' | 'isolated'; value: number };
+  liquidationPx: string | null;
+  positionValue: string;
+  unrealizedPnl: string;
+  cumFunding: { allTime: string; sinceOpen: string; sinceChange: string };
+  marginUsed: string;
+  maxLeverage: number;
+  returnOnEquity: string;
+}
+
+export interface HlClearinghouseState {
+  assetPositions: Array<{ position: HlPosition; type: string }>;
+  marginSummary: {
+    accountValue: string;
+    totalMarginUsed: string;
+    totalNtlPos: string;
+    totalRawUsd: string;
+  };
+  withdrawable: string;
+  time: number;
+}
+
+export interface HlOpenOrder {
+  coin: string;
+  side: 'B' | 'A';
+  limitPx: string;
+  sz: string;
+  oid: number;
+  timestamp: number;
+  reduceOnly: boolean;
+  isTrigger: boolean;
+  orderType: string;
+}
+
+export interface HlSpotBalance {
+  coin: string;
+  token: number;
+  total: string;
+  hold: string;
+  entryNtl: string;
+}
+
+export interface HlSpotAssetCtx {
+  dayNtlVlm: string;
+  markPx: string;
+  midPx: string | null;
+  prevDayPx: string;
+}
+
+export interface HlSpotMeta {
+  tokens: Array<{ name: string; index: number }>;
+  universe: Array<{ name: string; tokens: [number, number] }>;
+}
+
+export interface HlPerpAssetCtx {
+  dayNtlVlm: string;
+  funding: string;
+  markPx: string;
+  midPx: string | null;
+  openInterest: string;
+  oraclePx: string;
+  prevDayPx: string;
+  premium: string | null;
+}
+
+export interface HlPerpMeta {
+  universe: Array<{ name: string; maxLeverage: number; onlyIsolated?: boolean }>;
+}
+
+async function postInfo<T>(body: Record<string, unknown>): Promise<T> {
+  const res = await fetch(BASE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(`hyperliquid ${String(body.type)} failed: ${res.status}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+export async function getClearinghouseState(user: string): Promise<HlClearinghouseState> {
+  return postInfo<HlClearinghouseState>({ type: 'clearinghouseState', user });
+}
+
+export async function getOpenOrders(user: string): Promise<HlOpenOrder[]> {
+  return postInfo<HlOpenOrder[]>({ type: 'frontendOpenOrders', user });
+}
+
+export async function getSpotBalances(user: string): Promise<{ balances: HlSpotBalance[] }> {
+  return postInfo<{ balances: HlSpotBalance[] }>({ type: 'spotClearinghouseState', user });
+}
+
+export async function getSpotMeta(): Promise<[HlSpotMeta, HlSpotAssetCtx[]]> {
+  return postInfo<[HlSpotMeta, HlSpotAssetCtx[]]>({ type: 'spotMetaAndAssetCtxs' });
+}
+
+export async function getPerpMetaAndAssetCtxs(): Promise<[HlPerpMeta, HlPerpAssetCtx[]]> {
+  return postInfo<[HlPerpMeta, HlPerpAssetCtx[]]>({ type: 'metaAndAssetCtxs' });
+}
+```
+
+If Task 2 Step 3 found that `side` in the real fixture is not `"B"`/`"A"`, or that `spot-meta.json`'s shape differs from the `HlSpotMeta` above (e.g. no `index` field, or `universe[i].tokens` under a different key), fix the types here to match the actual captured JSON before moving on - the fixture is the source of truth, not this draft.
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npm test -- test/sources/hyperliquid.test.ts`
+Expected: PASS, 6 tests.
+
+Run: `npm run typecheck`
+Expected: exits 0.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/sources/hyperliquid.ts test/sources/hyperliquid.test.ts
+git commit -m "feat: typed Hyperliquid info-endpoint client"
+```
+
+---
+
+## Task 4: Domain types and normalizer
+
+**Files:**
+- Create: `src/types.ts`
+- Create: `src/sources/normalize.ts`
+- Test: `test/sources/normalize.test.ts`
+
+- [ ] **Step 1: Write the domain types**
+
+```typescript
+// src/types.ts
+export type PositionSide = 'long' | 'short';
+
+export interface Position {
+  coin: string;
+  side: PositionSide;
+  sizeUsd: number;
+  entryPx: number;
+  leverage: number;
+  liquidationPx: number | null;
+  unrealizedPnlUsd: number;
+  cumFundingUsd: number;
+}
+
+export interface RestingOrder {
+  coin: string;
+  side: 'bid' | 'ask';
+  sizeUsd: number;
+}
+
+export interface SpotHolding {
+  coin: string;
+  valueUsd: number;
+}
+```
+
+- [ ] **Step 2: Write the failing test**
+
+```typescript
+// test/sources/normalize.test.ts
+import { describe, expect, it } from 'vitest';
+import clearinghouseFixture from '../fixtures/hyperliquid/clearinghouse-many-positions.json';
+import openOrdersFixture from '../fixtures/hyperliquid/open-orders.json';
+import spotBalancesFixture from '../fixtures/hyperliquid/spot-balances.json';
+import spotMetaFixture from '../fixtures/hyperliquid/spot-meta.json';
+import {
+  normalizePositions,
+  normalizeOrders,
+  buildSpotPriceIndex,
+  normalizeSpotHoldings,
+} from '../../src/sources/normalize';
+import type {
+  HlClearinghouseState,
+  HlOpenOrder,
+  HlSpotBalance,
+  HlSpotMeta,
+  HlSpotAssetCtx,
+} from '../../src/sources/hyperliquid';
+
+describe('normalizePositions', () => {
+  it('converts every raw position into the domain Position shape', () => {
+    const raw = clearinghouseFixture as HlClearinghouseState;
+    const positions = normalizePositions(raw);
+    expect(positions.length).toBe(raw.assetPositions.length);
+    for (const p of positions) {
+      expect(['long', 'short']).toContain(p.side);
+      expect(p.sizeUsd).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it('reads side from the sign of szi', () => {
+    const raw = clearinghouseFixture as HlClearinghouseState;
+    const positions = normalizePositions(raw);
+    raw.assetPositions.forEach((entry, i) => {
+      const expectedSide = Number(entry.position.szi) >= 0 ? 'long' : 'short';
+      expect(positions[i].side).toBe(expectedSide);
+    });
+  });
+});
+
+describe('normalizeOrders', () => {
+  it('converts every non-trigger raw order into the domain RestingOrder shape', () => {
+    const orders = normalizeOrders(openOrdersFixture as HlOpenOrder[]);
+    expect(orders.length).toBeGreaterThan(0);
+    for (const o of orders) {
+      expect(['bid', 'ask']).toContain(o.side);
+      expect(o.sizeUsd).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('spot price index and holdings', () => {
+  it('resolves at least one real spot price from the captured universe', () => {
+    const [meta, ctxs] = spotMetaFixture as [HlSpotMeta, HlSpotAssetCtx[]];
+    const prices = buildSpotPriceIndex(meta, ctxs);
+    expect(prices.size).toBeGreaterThan(0);
+  });
+
+  it('prices the captured spot balances and drops zero-value dust', () => {
+    const [meta, ctxs] = spotMetaFixture as [HlSpotMeta, HlSpotAssetCtx[]];
+    const prices = buildSpotPriceIndex(meta, ctxs);
+    const holdings = normalizeSpotHoldings(
+      (spotBalancesFixture as { balances: HlSpotBalance[] }).balances,
+      prices,
+    );
+    for (const h of holdings) {
+      expect(h.valueUsd).toBeGreaterThan(0);
+      expect(h.coin).not.toBe('USDC');
+    }
+  });
+});
+```
+
+- [ ] **Step 3: Run test to verify it fails**
+
+Run: `npm test -- test/sources/normalize.test.ts`
+Expected: FAIL - `src/sources/normalize.ts` does not exist yet.
+
+- [ ] **Step 4: Write the normalizer**
+
+```typescript
+// src/sources/normalize.ts
+import type { Position, RestingOrder, SpotHolding } from '../types';
+import type {
+  HlClearinghouseState,
+  HlOpenOrder,
+  HlSpotBalance,
+  HlSpotMeta,
+  HlSpotAssetCtx,
+} from './hyperliquid';
+
+export function normalizePositions(state: HlClearinghouseState): Position[] {
+  return state.assetPositions.map(({ position }) => {
+    const szi = Number(position.szi);
+    return {
+      coin: position.coin,
+      side: szi >= 0 ? 'long' : 'short',
+      sizeUsd: Math.abs(Number(position.positionValue)),
+      entryPx: Number(position.entryPx ?? 0),
+      leverage: position.leverage.value,
+      liquidationPx: position.liquidationPx === null ? null : Number(position.liquidationPx),
+      unrealizedPnlUsd: Number(position.unrealizedPnl),
+      cumFundingUsd: Number(position.cumFunding.sinceOpen),
+    };
+  });
+}
+
+export function normalizeOrders(orders: HlOpenOrder[]): RestingOrder[] {
+  return orders
+    .filter((o) => !o.isTrigger)
+    .map((o) => ({
+      coin: o.coin,
+      side: o.side === 'B' ? 'bid' : 'ask',
+      sizeUsd: Number(o.sz) * Number(o.limitPx),
+    }));
+}
+
+/**
+ * Maps a base-token symbol (e.g. "UBTC") to its USD mark price. Universe
+ * entries and asset contexts in spotMetaAndAssetCtxs share the same index;
+ * each universe entry's first `tokens` index is the base token.
+ */
+export function buildSpotPriceIndex(meta: HlSpotMeta, assetCtxs: HlSpotAssetCtx[]): Map<string, number> {
+  const tokenNameByIndex = new Map(meta.tokens.map((t) => [t.index, t.name]));
+  const priceByCoin = new Map<string, number>();
+  meta.universe.forEach((pair, i) => {
+    const [baseTokenIndex] = pair.tokens;
+    const baseName = tokenNameByIndex.get(baseTokenIndex);
+    const ctx = assetCtxs[i];
+    if (baseName && ctx) {
+      priceByCoin.set(baseName, Number(ctx.markPx));
+    }
+  });
+  return priceByCoin;
+}
+
+export function normalizeSpotHoldings(
+  balances: HlSpotBalance[],
+  priceByCoin: Map<string, number>,
+): SpotHolding[] {
+  return balances
+    .filter((b) => b.coin !== 'USDC')
+    .map((b) => ({ coin: b.coin, valueUsd: Number(b.total) * (priceByCoin.get(b.coin) ?? 0) }))
+    .filter((h) => h.valueUsd > 0);
+}
+```
+
+If the price-index test fails because `meta.tokens[i].index` or `pair.tokens` don't exist under those names in the real fixture, open `test/fixtures/hyperliquid/spot-meta.json`, read the actual field names, and fix `HlSpotMeta` (Task 3) and `buildSpotPriceIndex` together to match. That is expected the first time real data is inspected, not a broken plan.
+
+- [ ] **Step 5: Run test to verify it passes**
+
+Run: `npm test -- test/sources/normalize.test.ts`
+Expected: PASS, 4 tests.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/types.ts src/sources/normalize.ts test/sources/normalize.test.ts
+git commit -m "feat: normalize Hyperliquid responses into domain types"
+```
+
+---
+
+## Task 5: Spot-to-perp asset alias table
+
+**Files:**
+- Create: `src/engine/assets.ts`
+- Test: `test/engine/assets.test.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+```typescript
+// test/engine/assets.test.ts
+import { describe, expect, it } from 'vitest';
+import { spotHedgesPerp } from '../../src/engine/assets';
+
+describe('spotHedgesPerp', () => {
+  it('matches known BTC wrappers', () => {
+    expect(spotHedgesPerp('UBTC', 'BTC')).toBe(true);
+    expect(spotHedgesPerp('WBTC', 'BTC')).toBe(true);
+    expect(spotHedgesPerp('CBBTC', 'BTC')).toBe(true);
+  });
+
+  it('matches known ETH liquid-staking wrappers', () => {
+    expect(spotHedgesPerp('WSTETH', 'ETH')).toBe(true);
+    expect(spotHedgesPerp('WEETH', 'ETH')).toBe(true);
+  });
+
+  it('is case-insensitive', () => {
+    expect(spotHedgesPerp('ubtc', 'btc')).toBe(true);
+  });
+
+  it('does not match an unrelated token', () => {
+    expect(spotHedgesPerp('USDC', 'BTC')).toBe(false);
+  });
+
+  it('falls back to an exact ticker match for coins with no alias table', () => {
+    expect(spotHedgesPerp('FART', 'FART')).toBe(true);
+    expect(spotHedgesPerp('FART', 'BONK')).toBe(false);
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npm test -- test/engine/assets.test.ts`
+Expected: FAIL - `src/engine/assets.ts` does not exist yet.
+
+- [ ] **Step 3: Write the alias table**
+
+```typescript
+// src/engine/assets.ts
+// Maps a Hyperliquid perp coin (e.g. "BTC") to the spot token symbols that
+// count as the same underlying asset, so a spot holding can be read as a
+// hedge of a perp position. See docs/specs/2026-09-17-bet-or-book-design.md
+// section 3.
+
+const SPOT_ALIASES: Record<string, string[]> = {
+  BTC: ['UBTC', 'WBTC', 'CBBTC', 'TBTC', 'BTCB'],
+  ETH: ['UETH', 'WETH', 'STETH', 'WSTETH', 'WEETH', 'RETH', 'CBETH'],
+  SOL: ['USOL', 'SOL', 'MSOL', 'JITOSOL'],
+  HYPE: ['HYPE', 'WHYPE'],
+};
+
+/**
+ * True when a spot balance in `spotCoin` should count toward the hedge leg
+ * of a perp position in `perpCoin`. Majors use a known alias list; anything
+ * else falls back to an exact ticker match.
+ */
+export function spotHedgesPerp(spotCoin: string, perpCoin: string): boolean {
+  const spot = spotCoin.toUpperCase();
+  const perp = perpCoin.toUpperCase();
+  const aliases = SPOT_ALIASES[perp];
+  if (aliases) {
+    return spot === perp || aliases.includes(spot);
+  }
+  return spot === perp;
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npm test -- test/engine/assets.test.ts`
+Expected: PASS, 5 tests.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/engine/assets.ts test/engine/assets.test.ts
+git commit -m "feat: spot-to-perp asset alias table"
+```
+
+---
+
+## Task 6: Feature functions
+
+**Files:**
+- Create: `src/engine/features.ts`
+- Test: `test/engine/features.test.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+```typescript
+// test/engine/features.test.ts
+import { describe, expect, it } from 'vitest';
+import {
+  computePositionFeatures,
+  computeOrderFeatures,
+  computeHedgeFeatures,
+  computeSizeVsOi,
+} from '../../src/engine/features';
+import type { Position, RestingOrder, SpotHolding } from '../../src/types';
+
+describe('computePositionFeatures', () => {
+  it('returns zeroed features for an empty account', () => {
+    const result = computePositionFeatures([]);
+    expect(result.nPositions).toBe(0);
+    expect(result.headlineCoin).toBeNull();
+  });
+
+  it('identifies the headline position and its share of gross exposure', () => {
+    const positions: Position[] = [
+      { coin: 'BTC', side: 'short', sizeUsd: 190_000_000, entryPx: 60000, leverage: 3, liquidationPx: 68000, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
+      { coin: 'ETH', side: 'long', sizeUsd: 9_050_000, entryPx: 3000, leverage: 2, liquidationPx: 2400, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
+    ];
+    const result = computePositionFeatures(positions);
+    expect(result.nPositions).toBe(2);
+    expect(result.headlineCoin).toBe('BTC');
+    expect(result.grossUsd).toBe(199_050_000);
+    expect(result.headlineShare).toBeCloseTo(190_000_000 / 199_050_000, 6);
+  });
+
+  it('computes net-to-gross close to zero for a balanced book', () => {
+    const positions: Position[] = [
+      { coin: 'BTC', side: 'long', sizeUsd: 100, entryPx: 60000, leverage: 1, liquidationPx: null, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
+      { coin: 'BTC', side: 'short', sizeUsd: 95, entryPx: 60000, leverage: 1, liquidationPx: null, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
+    ];
+    const result = computePositionFeatures(positions);
+    expect(result.netToGross).toBeCloseTo(5 / 195, 6);
+  });
+
+  it('computes net-to-gross at 1 for a single one-directional position', () => {
+    const positions: Position[] = [
+      { coin: 'BTC', side: 'long', sizeUsd: 100, entryPx: 60000, leverage: 5, liquidationPx: 50000, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
+    ];
+    const result = computePositionFeatures(positions);
+    expect(result.netToGross).toBe(1);
+    expect(result.headlineLiqDistancePct).toBeCloseTo((60000 - 50000) / 60000, 6);
+  });
+});
+
+describe('computeOrderFeatures', () => {
+  it('returns a neutral bidShare when there are no orders', () => {
+    const result = computeOrderFeatures([]);
+    expect(result.restingOrders).toBe(0);
+    expect(result.bidShare).toBe(0.5);
+  });
+
+  it('counts coins quoted on both sides', () => {
+    const orders: RestingOrder[] = [
+      { coin: 'BTC', side: 'bid', sizeUsd: 1000 },
+      { coin: 'BTC', side: 'ask', sizeUsd: 1000 },
+      { coin: 'ETH', side: 'bid', sizeUsd: 500 },
+    ];
+    const result = computeOrderFeatures(orders);
+    expect(result.restingOrders).toBe(3);
+    expect(result.coinsBothSides).toBe(1);
+    expect(result.bidShare).toBeCloseTo(2 / 3, 6);
+  });
+});
+
+describe('computeHedgeFeatures', () => {
+  it('sums spot holdings that alias to the headline coin', () => {
+    const spot: SpotHolding[] = [
+      { coin: 'UBTC', valueUsd: 40_000_000 },
+      { coin: 'USDC', valueUsd: 5_000_000 },
+    ];
+    const result = computeHedgeFeatures('BTC', 190_000_000, spot);
+    expect(result.hedgeUsd).toBe(40_000_000);
+    expect(result.hedgeRatio).toBeCloseTo(40_000_000 / 190_000_000, 6);
+  });
+
+  it('returns zero when there is no headline position', () => {
+    const result = computeHedgeFeatures(null, 0, [{ coin: 'UBTC', valueUsd: 1000 }]);
+    expect(result.hedgeUsd).toBe(0);
+    expect(result.hedgeRatio).toBe(0);
+  });
+});
+
+describe('computeSizeVsOi', () => {
+  it('divides headline notional by open interest', () => {
+    expect(computeSizeVsOi(24_108_771, 2_868_000_000)).toBeCloseTo(24_108_771 / 2_868_000_000, 8);
+  });
+
+  it('returns null when open interest is not known', () => {
+    expect(computeSizeVsOi(1000, 0)).toBeNull();
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npm test -- test/engine/features.test.ts`
+Expected: FAIL - `src/engine/features.ts` does not exist yet.
+
+- [ ] **Step 3: Write the feature functions**
+
+```typescript
+// src/engine/features.ts
+import type { Position, RestingOrder, SpotHolding } from '../types';
+import { spotHedgesPerp } from './assets';
+
+export interface PositionFeatures {
+  nPositions: number;
+  grossUsd: number;
+  netUsd: number;
+  netToGross: number;
+  headlineCoin: string | null;
+  headlineNotionalUsd: number;
+  headlineShare: number;
+  headlineLiqDistancePct: number | null;
+}
+
+export function computePositionFeatures(positions: Position[]): PositionFeatures {
+  if (positions.length === 0) {
+    return {
+      nPositions: 0,
+      grossUsd: 0,
+      netUsd: 0,
+      netToGross: 0,
+      headlineCoin: null,
+      headlineNotionalUsd: 0,
+      headlineShare: 0,
+      headlineLiqDistancePct: null,
+    };
+  }
+
+  const signed = positions.map((p) => (p.side === 'long' ? p.sizeUsd : -p.sizeUsd));
+  const grossUsd = positions.reduce((sum, p) => sum + p.sizeUsd, 0);
+  const netUsd = Math.abs(signed.reduce((sum, s) => sum + s, 0));
+  const netToGross = grossUsd === 0 ? 0 : netUsd / grossUsd;
+
+  const headline = positions.reduce((max, p) => (p.sizeUsd > max.sizeUsd ? p : max), positions[0]);
+  const headlineShare = grossUsd === 0 ? 0 : headline.sizeUsd / grossUsd;
+
+  let headlineLiqDistancePct: number | null = null;
+  if (headline.liquidationPx !== null && headline.entryPx > 0) {
+    headlineLiqDistancePct = Math.abs(headline.liquidationPx - headline.entryPx) / headline.entryPx;
+  }
+
+  return {
+    nPositions: positions.length,
+    grossUsd,
+    netUsd,
+    netToGross,
+    headlineCoin: headline.coin,
+    headlineNotionalUsd: headline.sizeUsd,
+    headlineShare,
+    headlineLiqDistancePct,
+  };
+}
+
+export interface OrderFeatures {
+  restingOrders: number;
+  bidShare: number;
+  coinsBothSides: number;
+}
+
+export function computeOrderFeatures(orders: RestingOrder[]): OrderFeatures {
+  if (orders.length === 0) {
+    return { restingOrders: 0, bidShare: 0.5, coinsBothSides: 0 };
+  }
+  const bids = orders.filter((o) => o.side === 'bid').length;
+  const bidShare = bids / orders.length;
+
+  const sidesByCoin = new Map<string, Set<'bid' | 'ask'>>();
+  for (const order of orders) {
+    const set = sidesByCoin.get(order.coin) ?? new Set<'bid' | 'ask'>();
+    set.add(order.side);
+    sidesByCoin.set(order.coin, set);
+  }
+  const coinsBothSides = [...sidesByCoin.values()].filter((set) => set.size === 2).length;
+
+  return { restingOrders: orders.length, bidShare, coinsBothSides };
+}
+
+export interface HedgeFeatures {
+  hedgeUsd: number;
+  hedgeRatio: number;
+}
+
+export function computeHedgeFeatures(
+  headlineCoin: string | null,
+  headlineNotionalUsd: number,
+  spotHoldings: SpotHolding[],
+): HedgeFeatures {
+  if (headlineCoin === null || headlineNotionalUsd === 0) {
+    return { hedgeUsd: 0, hedgeRatio: 0 };
+  }
+  const hedgeUsd = spotHoldings
+    .filter((h) => spotHedgesPerp(h.coin, headlineCoin))
+    .reduce((sum, h) => sum + h.valueUsd, 0);
+  return { hedgeUsd, hedgeRatio: hedgeUsd / headlineNotionalUsd };
+}
+
+export function computeSizeVsOi(headlineNotionalUsd: number, openInterestUsd: number): number | null {
+  if (openInterestUsd <= 0) return null;
+  return headlineNotionalUsd / openInterestUsd;
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npm test -- test/engine/features.test.ts`
+Expected: PASS, 10 tests.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/engine/features.ts test/engine/features.test.ts
+git commit -m "feat: pure feature functions for positions, orders, hedge, size-vs-OI"
+```
+
+---
+
+## Task 7: Verdict engine
+
+**Files:**
+- Create: `src/engine/verdict.ts`
+- Test: `test/engine/verdict.test.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+```typescript
+// test/engine/verdict.test.ts
+import { describe, expect, it } from 'vitest';
+import { computeVerdict, DEFAULT_THRESHOLDS } from '../../src/engine/verdict';
+import type { PositionFeatures, OrderFeatures, HedgeFeatures } from '../../src/engine/features';
+
+function positions(overrides: Partial<PositionFeatures>): PositionFeatures {
+  return {
+    nPositions: 0,
+    grossUsd: 0,
+    netUsd: 0,
+    netToGross: 0,
+    headlineCoin: null,
+    headlineNotionalUsd: 0,
+    headlineShare: 0,
+    headlineLiqDistancePct: null,
+    ...overrides,
+  };
+}
+function orders(overrides: Partial<OrderFeatures>): OrderFeatures {
+  return { restingOrders: 0, bidShare: 0.5, coinsBothSides: 0, ...overrides };
+}
+function hedge(overrides: Partial<HedgeFeatures>): HedgeFeatures {
+  return { hedgeUsd: 0, hedgeRatio: 0, ...overrides };
+}
+
+describe('computeVerdict', () => {
+  it('returns unknown when there are no open positions', () => {
+    const result = computeVerdict({ positions: positions({}), orders: orders({}), hedge: hedge({}) });
+    expect(result.verdict).toBe('unknown');
+  });
+
+  it('calls it a book from position spread alone (Wintermute-shaped account)', () => {
+    const result = computeVerdict({
+      positions: positions({ nPositions: 76, netToGross: 0.04, headlineShare: 0.2, headlineCoin: 'BTC', headlineNotionalUsd: 40_000_000 }),
+      orders: orders({}),
+      hedge: hedge({}),
+    });
+    expect(result.verdict).toBe('book');
+    expect(result.strength).toBe('likely');
+  });
+
+  it('calls it a strong book when both position spread and order-book signals agree', () => {
+    const result = computeVerdict({
+      positions: positions({ nPositions: 76, netToGross: 0.04, headlineShare: 0.2, headlineCoin: 'BTC', headlineNotionalUsd: 40_000_000 }),
+      orders: orders({ restingOrders: 1732, bidShare: 0.51, coinsBothSides: 40 }),
+      hedge: hedge({}),
+    });
+    expect(result.verdict).toBe('book');
+    expect(result.strength).toBe('strong');
+  });
+
+  it('calls it hedged when a spot leg covers most of the headline position', () => {
+    const result = computeVerdict({
+      positions: positions({ nPositions: 1, netToGross: 1, headlineShare: 1, headlineCoin: 'ASTER', headlineNotionalUsd: 7_500_000 }),
+      orders: orders({}),
+      hedge: hedge({ hedgeUsd: 7_500_000, hedgeRatio: 1 }),
+    });
+    expect(result.verdict).toBe('hedged');
+    expect(result.reasons).toContain('hedge_leg');
+  });
+
+  it('calls it hedged when a handful of positions roughly net out even without a spot leg', () => {
+    const result = computeVerdict({
+      positions: positions({ nPositions: 4, netToGross: 0.1, headlineShare: 0.3 }),
+      orders: orders({}),
+      hedge: hedge({}),
+    });
+    expect(result.verdict).toBe('hedged');
+    expect(result.reasons).toContain('balanced_book');
+  });
+
+  it('calls it a bet for one concentrated leveraged position with no hedge and no quotes', () => {
+    const result = computeVerdict({
+      positions: positions({ nPositions: 1, netToGross: 1, headlineShare: 1, headlineCoin: 'BTC', headlineNotionalUsd: 1_250_000_000 }),
+      orders: orders({}),
+      hedge: hedge({ hedgeRatio: 0 }),
+    });
+    expect(result.verdict).toBe('looks_like_a_bet');
+  });
+
+  it('falls back to unknown when a small account is too concentrated for a hedge but not clean enough for a bet', () => {
+    const result = computeVerdict({
+      positions: positions({ nPositions: 2, netToGross: 0.6, headlineShare: 0.7, headlineCoin: 'BTC', headlineNotionalUsd: 500_000 }),
+      orders: orders({}),
+      hedge: hedge({ hedgeRatio: 0.05 }),
+    });
+    expect(result.verdict).toBe('unknown');
+  });
+
+  it('exposes the default thresholds so calibration can diff against them', () => {
+    expect(DEFAULT_THRESHOLDS.book.minPositions).toBe(20);
+    expect(DEFAULT_THRESHOLDS.bet.maxPositions).toBe(5);
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npm test -- test/engine/verdict.test.ts`
+Expected: FAIL - `src/engine/verdict.ts` does not exist yet.
+
+- [ ] **Step 3: Write the verdict engine**
+
+```typescript
+// src/engine/verdict.ts
+import type { PositionFeatures, OrderFeatures, HedgeFeatures } from './features';
+
+export type Verdict = 'book' | 'hedged' | 'looks_like_a_bet' | 'unknown';
+export type BookStrength = 'likely' | 'strong' | null;
+
+export interface VerdictThresholds {
+  book: {
+    minPositions: number;
+    maxNetToGross: number;
+    minRestingOrders: number;
+    minBidShare: number;
+    maxBidShare: number;
+    minCoinsBothSides: number;
+    minTradesPerDay: number;
+    maxCrossedShare: number;
+  };
+  hedged: {
+    minHedgeRatio: number;
+    minPositionsForBalancedBook: number;
+    maxPositionsForBalancedBook: number;
+  };
+  bet: {
+    maxPositions: number;
+    minNetToGross: number;
+    minHeadlineShare: number;
+    maxHedgeRatio: number;
+  };
+}
+
+export const DEFAULT_THRESHOLDS: VerdictThresholds = {
+  book: {
+    minPositions: 20,
+    maxNetToGross: 0.35,
+    minRestingOrders: 50,
+    minBidShare: 0.25,
+    maxBidShare: 0.75,
+    minCoinsBothSides: 5,
+    minTradesPerDay: 200,
+    maxCrossedShare: 0.4,
+  },
+  hedged: {
+    minHedgeRatio: 0.5,
+    minPositionsForBalancedBook: 2,
+    maxPositionsForBalancedBook: 19,
+  },
+  bet: {
+    maxPositions: 5,
+    minNetToGross: 0.8,
+    minHeadlineShare: 0.5,
+    maxHedgeRatio: 0.1,
+  },
+};
+
+export interface VerdictInput {
+  positions: PositionFeatures;
+  orders: OrderFeatures;
+  hedge: HedgeFeatures;
+  /** Trade-history signal (book rule (в)). Wired in once Phase 2 adds paginated trade history. */
+  trades?: { tradesPerDay: number; crossedShare: number };
+}
+
+export interface VerdictResult {
+  verdict: Verdict;
+  strength: BookStrength;
+  reasons: string[];
+}
+
+function bookSignals(input: VerdictInput, t: VerdictThresholds['book']): string[] {
+  const signals: string[] = [];
+  if (input.positions.nPositions >= t.minPositions && input.positions.netToGross <= t.maxNetToGross) {
+    signals.push('positions');
+  }
+  if (
+    input.orders.restingOrders >= t.minRestingOrders &&
+    input.orders.bidShare >= t.minBidShare &&
+    input.orders.bidShare <= t.maxBidShare &&
+    input.orders.coinsBothSides >= t.minCoinsBothSides
+  ) {
+    signals.push('orders');
+  }
+  if (
+    input.trades &&
+    input.trades.tradesPerDay >= t.minTradesPerDay &&
+    input.trades.crossedShare <= t.maxCrossedShare
+  ) {
+    signals.push('trades');
+  }
+  return signals;
+}
+
+export function computeVerdict(
+  input: VerdictInput,
+  thresholds: VerdictThresholds = DEFAULT_THRESHOLDS,
+): VerdictResult {
+  if (input.positions.nPositions === 0) {
+    return { verdict: 'unknown', strength: null, reasons: ['no open positions found'] };
+  }
+
+  const book = bookSignals(input, thresholds.book);
+  if (book.length >= 1) {
+    return { verdict: 'book', strength: book.length >= 2 ? 'strong' : 'likely', reasons: book };
+  }
+
+  const h = thresholds.hedged;
+  const balancedBook =
+    input.positions.nPositions >= h.minPositionsForBalancedBook &&
+    input.positions.nPositions <= h.maxPositionsForBalancedBook &&
+    input.positions.netToGross <= thresholds.book.maxNetToGross;
+  if (input.hedge.hedgeRatio >= h.minHedgeRatio || balancedBook) {
+    return {
+      verdict: 'hedged',
+      strength: null,
+      reasons: input.hedge.hedgeRatio >= h.minHedgeRatio ? ['hedge_leg'] : ['balanced_book'],
+    };
+  }
+
+  const b = thresholds.bet;
+  const looksLikeABet =
+    input.positions.nPositions <= b.maxPositions &&
+    input.positions.netToGross >= b.minNetToGross &&
+    input.positions.headlineShare >= b.minHeadlineShare &&
+    input.hedge.hedgeRatio < b.maxHedgeRatio &&
+    input.orders.coinsBothSides === 0;
+  if (looksLikeABet) {
+    return { verdict: 'looks_like_a_bet', strength: null, reasons: ['directional_concentration'] };
+  }
+
+  return {
+    verdict: 'unknown',
+    strength: null,
+    reasons: ['signals disagree: not enough evidence for book, hedge, or bet'],
+  };
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npm test -- test/engine/verdict.test.ts`
+Expected: PASS, 8 tests.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/engine/verdict.ts test/engine/verdict.test.ts
+git commit -m "feat: verdict engine with configurable thresholds"
+```
+
+---
+
+## Task 8: Guard - address extraction, validation, rate limiting
+
+**Files:**
+- Create: `src/guard.ts`
+- Test: `test/guard.test.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+```typescript
+// test/guard.test.ts
+import { describe, expect, it } from 'vitest';
+import { extractAddress, isValidAddress, InMemoryRateLimiter } from '../src/guard';
+
+describe('extractAddress', () => {
+  it('extracts a bare address', () => {
+    const addr = '0x' + 'ab'.repeat(20);
+    expect(extractAddress(addr)).toBe(addr);
+  });
+
+  it('extracts an address embedded in a URL', () => {
+    const addr = '0x' + '12'.repeat(20);
+    expect(extractAddress(`https://hyperdash.com/address/${addr}`)).toBe(addr);
+  });
+
+  it('lowercases the result', () => {
+    const addr = '0x' + 'AB'.repeat(20);
+    expect(extractAddress(addr)).toBe(addr.toLowerCase());
+  });
+
+  it('returns null when no address is present', () => {
+    expect(extractAddress('not an address')).toBeNull();
+  });
+
+  it('returns null for a short hex string', () => {
+    expect(extractAddress('0x1234')).toBeNull();
+  });
+});
+
+describe('isValidAddress', () => {
+  it('accepts a well-formed address with nothing else in the string', () => {
+    expect(isValidAddress('0x' + '0'.repeat(40))).toBe(true);
+  });
+
+  it('rejects a string with extra text', () => {
+    expect(isValidAddress('address: 0x' + '0'.repeat(40))).toBe(false);
+  });
+});
+
+describe('InMemoryRateLimiter', () => {
+  it('allows up to the configured number of hits in the window', async () => {
+    const limiter = new InMemoryRateLimiter(3, 60_000);
+    expect(await limiter.allow('ip1')).toBe(true);
+    expect(await limiter.allow('ip1')).toBe(true);
+    expect(await limiter.allow('ip1')).toBe(true);
+    expect(await limiter.allow('ip1')).toBe(false);
+  });
+
+  it('tracks separate keys independently', async () => {
+    const limiter = new InMemoryRateLimiter(1, 60_000);
+    expect(await limiter.allow('ip1')).toBe(true);
+    expect(await limiter.allow('ip2')).toBe(true);
+    expect(await limiter.allow('ip1')).toBe(false);
+  });
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npm test -- test/guard.test.ts`
+Expected: FAIL - `src/guard.ts` does not exist yet.
+
+- [ ] **Step 3: Write the guard module**
+
+```typescript
+// src/guard.ts
+const BARE_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
+const EMBEDDED_ADDRESS_RE = /0x[0-9a-fA-F]{40}/;
+
+/** Pulls a 20-byte hex address out of arbitrary input (a bare address or a
+ * URL containing one). Never used to fetch the input string itself - only
+ * the extracted address is ever sent to an upstream API. */
+export function extractAddress(input: string): string | null {
+  const match = input.trim().match(EMBEDDED_ADDRESS_RE);
+  return match ? match[0].toLowerCase() : null;
+}
+
+export function isValidAddress(input: string): boolean {
+  return BARE_ADDRESS_RE.test(input.trim());
+}
+
+export interface RateLimiter {
+  allow(key: string): Promise<boolean>;
+}
+
+/** In-memory limiter for tests and local dev. Not shared across Worker
+ * isolates - Phase 2 swaps this for a Workers KV-backed implementation
+ * behind the same interface before deployment. */
+export class InMemoryRateLimiter implements RateLimiter {
+  private hits = new Map<string, number[]>();
+
+  constructor(
+    private readonly maxHits: number,
+    private readonly windowMs: number,
+  ) {}
+
+  async allow(key: string): Promise<boolean> {
+    const now = Date.now();
+    const recent = (this.hits.get(key) ?? []).filter((t) => now - t < this.windowMs);
+    if (recent.length >= this.maxHits) {
+      this.hits.set(key, recent);
+      return false;
+    }
+    recent.push(now);
+    this.hits.set(key, recent);
+    return true;
+  }
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `npm test -- test/guard.test.ts`
+Expected: PASS, 7 tests.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/guard.ts test/guard.test.ts
+git commit -m "feat: address extraction, validation, and an in-memory rate limiter"
+```
+
+---
+
+## Task 9: Wire it together - check API and Worker handler
+
+**Files:**
+- Create: `src/api/check.ts`
+- Modify: `src/index.ts`
+
+- [ ] **Step 1: Write check.ts**
+
+No new unit test here - this module is pure orchestration of already-tested pieces. It is exercised by the Task 9 Step 3 manual smoke test and by Task 10's live calibration.
+
+```typescript
+// src/api/check.ts
+import {
+  getClearinghouseState,
+  getOpenOrders,
+  getSpotBalances,
+  getSpotMeta,
+  getPerpMetaAndAssetCtxs,
+} from '../sources/hyperliquid';
+import { normalizePositions, normalizeOrders, buildSpotPriceIndex, normalizeSpotHoldings } from '../sources/normalize';
+import {
+  computePositionFeatures,
+  computeOrderFeatures,
+  computeHedgeFeatures,
+  computeSizeVsOi,
+  type PositionFeatures,
+  type OrderFeatures,
+  type HedgeFeatures,
+} from '../engine/features';
+import { computeVerdict, type VerdictResult } from '../engine/verdict';
+
+export interface CheckResult {
+  address: string;
+  verdict: VerdictResult;
+  positions: PositionFeatures;
+  orders: OrderFeatures;
+  hedge: HedgeFeatures;
+  sizeVsOi: number | null;
+  source: 'hyperliquid';
+  checkedAt: string;
+}
+
+export async function checkAddress(address: string): Promise<CheckResult> {
+  const [clearinghouse, rawOrders, spotBalances, spotMetaPair, perpMetaPair] = await Promise.all([
+    getClearinghouseState(address),
+    getOpenOrders(address),
+    getSpotBalances(address),
+    getSpotMeta(),
+    getPerpMetaAndAssetCtxs(),
+  ]);
+
+  const positionFeatures = computePositionFeatures(normalizePositions(clearinghouse));
+
+  const orderFeatures = computeOrderFeatures(normalizeOrders(rawOrders));
+
+  const [spotMeta, spotAssetCtxs] = spotMetaPair;
+  const priceIndex = buildSpotPriceIndex(spotMeta, spotAssetCtxs);
+  const spotHoldings = normalizeSpotHoldings(spotBalances.balances, priceIndex);
+  const hedgeFeatures = computeHedgeFeatures(
+    positionFeatures.headlineCoin,
+    positionFeatures.headlineNotionalUsd,
+    spotHoldings,
+  );
+
+  const [perpMeta, perpAssetCtxs] = perpMetaPair;
+  const headlineIndex = perpMeta.universe.findIndex((a) => a.name === positionFeatures.headlineCoin);
+  const openInterestUsd =
+    headlineIndex >= 0 ? Number(perpAssetCtxs[headlineIndex].openInterest) * Number(perpAssetCtxs[headlineIndex].markPx) : 0;
+
+  const verdict = computeVerdict({ positions: positionFeatures, orders: orderFeatures, hedge: hedgeFeatures });
+
+  return {
+    address,
+    verdict,
+    positions: positionFeatures,
+    orders: orderFeatures,
+    hedge: hedgeFeatures,
+    sizeVsOi: computeSizeVsOi(positionFeatures.headlineNotionalUsd, openInterestUsd),
+    source: 'hyperliquid',
+    checkedAt: new Date().toISOString(),
+  };
+}
+```
+
+- [ ] **Step 2: Replace the placeholder Worker handler**
+
+```typescript
+// src/index.ts
+import { extractAddress } from './guard';
+import { checkAddress } from './api/check';
+
+export default {
+  async fetch(request: Request): Promise<Response> {
+    const url = new URL(request.url);
+
+    if (url.pathname === '/api/check') {
+      const raw = url.searchParams.get('address') ?? '';
+      const address = extractAddress(raw);
+      if (!address) {
+        return Response.json(
+          { error: 'no valid Hyperliquid address found in the address parameter' },
+          { status: 400 },
+        );
+      }
+      try {
+        const result = await checkAddress(address);
+        return Response.json(result);
+      } catch (err) {
+        console.error('check failed', err);
+        return Response.json({ error: 'could not read this address right now, try again shortly' }, { status: 502 });
+      }
+    }
+
+    return new Response('bet or book - phase 1 scaffold', { status: 200 });
+  },
+};
+```
+
+- [ ] **Step 3: Smoke-test against the live Hyperliquid API**
+
+Run: `npm run typecheck`
+Expected: exits 0.
+
+Run: `npm run dev` in the background.
+
+Run (reuse one of the addresses captured in Task 2):
+```bash
+curl "http://localhost:8787/api/check?address=<addr>"
+```
+Expected: a JSON body with `verdict`, `positions`, `orders`, `hedge`, `sizeVsOi`, `source: "hyperliquid"`. Read it and confirm the numbers look sane (e.g. `positions.nPositions` matches what the fixture/explorer shows for that address).
+
+Run: `curl "http://localhost:8787/api/check?address=not-an-address"`
+Expected: HTTP 400 with the "no valid Hyperliquid address" error body.
+
+Stop the dev server.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/api/check.ts src/index.ts
+git commit -m "feat: wire sources, engine, and guard into a working /api/check endpoint"
+```
+
+---
+
+## Task 10: Calibration against known real accounts
+
+**Files:**
+- Create: `docs/wiki/calibration.md`
+
+- [ ] **Step 1: Find three real addresses of known character**
+
+Using the Browser pane or WebSearch, find the Hyperliquid address for:
+1. An account publicly reported as running a large, two-sided, many-position book (for example, search for public writeups of Wintermute's or a similar market maker's Hyperliquid address - the research already done for this project's design found a 76-position, 1,732-resting-order account discussed at `https://github.com/0xLoris/wintermute-hyperliquid-analysis`; confirm the address there or find an equivalent).
+2. An account publicly reported as running a hedged or delta-neutral position (for example, search recent coverage of Abraxas Capital's Hyperliquid shorts and its accompanying spot hedge).
+3. An account publicly reported as a large single-direction directional bet (for example, search for the Hyperliquid address tied to James Wynn's 2025 liquidation, or any similarly documented one-sided whale).
+
+If a specific address cannot be confirmed from a credible public source, substitute any live address you can verify independently (via HyperDash or Hypurrscan) matches that shape - many positions and orders on both sides for (1), a large position with a visible offsetting spot or perp leg for (2), one or two positions at high leverage with no offsetting leg for (3). Do not guess an address - every address in this table must come from a page actually read.
+
+- [ ] **Step 2: Run the live check against each address**
+
+Run: `npm run dev` in the background.
+
+For each address:
+```bash
+curl "http://localhost:8787/api/check?address=<addr>"
+```
+Record the returned `verdict.verdict`, `verdict.strength`, `verdict.reasons`, `positions.nPositions`, `positions.netToGross`, `hedge.hedgeRatio`.
+
+Stop the dev server.
+
+- [ ] **Step 3: Write up the calibration table**
+
+```markdown
+# Bet or Book - calibration (Phase 1, Hyperliquid-only)
+
+Date: <fill in when run>. Source for every address: <exact URL read>.
+
+| Address | Expected shape | Source | Verdict | Strength | nPositions | netToGross | hedgeRatio | Reasons | Match? |
+|---|---|---|---|---|---|---|---|---|---|
+| 0x... | book | <url> | | | | | | | |
+| 0x... | hedged | <url> | | | | | | | |
+| 0x... | looks_like_a_bet | <url> | | | | | | | |
+
+## Notes
+
+<For any row where the verdict did not match the expected shape: which
+threshold in src/engine/verdict.ts DEFAULT_THRESHOLDS was closest to
+flipping the result, and by how much. This is the input for a follow-up
+threshold-tuning task - do not silently adjust thresholds here without
+recording why.>
+```
+
+Fill in every cell from the actual Step 2 output - no placeholders left in the committed file.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add docs/wiki/calibration.md
+git commit -m "docs: calibrate verdict thresholds against three known real accounts"
+```
+
+---
+
+## Self-review notes
+
+- **Spec coverage:** section 3 verdict table (Tasks 6-7, book rules а/б implemented, в deferred to Phase 2 per the Architecture note above), section 4 honesty rules (rule 1 "an unreachable source is not a number" is carried by `checkAddress` letting a rejected promise become a 502 rather than a fabricated feature; rule 6 "kошельки, не люди" is satisfied by never introducing a name or label field anywhere in Phase 1), section 6 file layout (Tasks 3-9 match it module-for-module), section 10 tests-on-real-data (Tasks 2-4 fixture capture and normalize tests; Task 10 live calibration).
+- **Placeholder scan:** no "TBD"/"TODO" left in any step; the one open item (exact real addresses for calibration) is explicitly assigned to Task 10 Step 1 as something to go find, not something skipped.
+- **Type consistency:** `PositionFeatures`/`OrderFeatures`/`HedgeFeatures` are defined once in Task 6 and imported (never redefined) in Tasks 7 and 9; `VerdictResult`/`VerdictInput` defined once in Task 7 and imported in Task 9; `Position`/`RestingOrder`/`SpotHolding` defined once in Task 4 and used by Tasks 4, 6, 9.
+- **Out of scope for this plan, by design:** Nansen client and calibration against Nansen's richer data, the trades-based book signal (в), the cross-chain part of the hedge leg, the gallery/prescan script, the shareable card, the credit ledger, KV-backed rate limiting, and the actual `wrangler deploy`. These become Phase 2, planned once this lands and the Nansen key and credits exist (spec section 13).
