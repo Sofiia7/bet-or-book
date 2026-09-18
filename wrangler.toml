@@ -9,7 +9,7 @@ rules = [
 
 [[kv_namespaces]]
 binding = "KV"
-id = "placeholder-local-dev-id"
+id = "864e48a08ae343af924217c67a0669b2"
 
 [vars]
 NANSEN_DAILY_CREDIT_CAP = "300"
