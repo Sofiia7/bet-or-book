@@ -52,9 +52,12 @@ export default {
         const result = await withCache(kv, `check:${address}`, CHECK_CACHE_TTL_SECONDS, async () => {
           const day = new Date().toISOString().slice(0, 10);
           const calls: NansenCallMeta[] = [];
+          // Fails closed: if KV failed anywhere in this request (the limiter's
+          // write, the cap's read), the cap cannot be trusted, so no credits.
           const useNansen =
             !!env.NANSEN_API_KEY &&
-            (await nansenAllowed(kv, day, Number(env.NANSEN_DAILY_CREDIT_CAP), Number(env.NANSEN_CREDIT_FLOOR)));
+            (await nansenAllowed(kv, day, Number(env.NANSEN_DAILY_CREDIT_CAP), Number(env.NANSEN_CREDIT_FLOOR))) &&
+            !kv.degraded;
           const nansen = useNansen
             ? createNansenClient(env.NANSEN_API_KEY!, (m) => {
                 calls.push(m);

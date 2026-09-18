@@ -115,25 +115,33 @@ async function rankCandidates(pool: number): Promise<Candidate[]> {
     .slice(0, pool);
   console.log(`leaderboard: ${board.leaderboardRows.length} accounts, ranking the top ${top.length} by largest position`);
 
+  // clearinghouseState weighs 2 against Hyperliquid's 1 200 per minute; four
+  // readers with a 100 ms pause stay near half of that.
   const ranked: Candidate[] = [];
   let unreadable = 0;
-  for (const [i, acct] of top.entries()) {
-    try {
-      const state = await getClearinghouseState(acct.address);
-      const sizes = state.assetPositions.map(({ position }) => ({
-        coin: position.coin,
-        usd: Math.abs(Number(position.positionValue)),
-      }));
-      if (sizes.length > 0) {
-        const largest = sizes.reduce((m, s) => (s.usd > m.usd ? s : m), sizes[0]);
-        ranked.push({ ...acct, largestCoin: largest.coin, largestUsd: largest.usd, mainDexPositions: sizes.length });
+  let next = 0;
+  let finished = 0;
+  const reader = async () => {
+    while (next < top.length) {
+      const acct = top[next++];
+      try {
+        const state = await getClearinghouseState(acct.address);
+        const sizes = state.assetPositions.map(({ position }) => ({
+          coin: position.coin,
+          usd: Math.abs(Number(position.positionValue)),
+        }));
+        if (sizes.length > 0) {
+          const largest = sizes.reduce((m, s) => (s.usd > m.usd ? s : m), sizes[0]);
+          ranked.push({ ...acct, largestCoin: largest.coin, largestUsd: largest.usd, mainDexPositions: sizes.length });
+        }
+      } catch {
+        unreadable++;
       }
-    } catch {
-      unreadable++;
+      if (++finished % 250 === 0) console.log(`  ranked ${finished}/${top.length}, with positions: ${ranked.length}`);
+      await sleep(100);
     }
-    if ((i + 1) % 100 === 0) console.log(`  ranked ${i + 1}/${top.length}, with positions: ${ranked.length}`);
-    await sleep(150);
-  }
+  };
+  await Promise.all(Array.from({ length: 4 }, reader));
   ranked.sort((a, b) => b.largestUsd - a.largestUsd);
   console.log(`ranked: ${ranked.length} with open positions, ${unreadable} unreadable`);
   writeAtomically(CANDIDATES_FILE, { pool, rankedAt: new Date().toISOString(), candidates: ranked });

@@ -26,4 +26,17 @@ describe('safeKv', () => {
     expect(log).toHaveBeenCalledTimes(2);
     log.mockRestore();
   });
+
+  it('reports degraded after any failure, so spend guards can fail closed', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const healthy = safeKv(new FakeKV());
+    await healthy.put('k', 'v');
+    await healthy.get('k');
+    expect(healthy.degraded).toBe(false);
+    const broken = safeKv(new BrokenKV());
+    expect(broken.degraded).toBe(false);
+    await broken.put('k', 'v');
+    expect(broken.degraded).toBe(true);
+    log.mockRestore();
+  });
 });
