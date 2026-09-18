@@ -100,6 +100,12 @@ const CALLS: Call[] = [
     path: 'profiler/address/current-balance',
     body: { address: ABRAXAS_FUNDER_ETH, chain: 'all', hide_spam_token: true, pagination: { page: 1, per_page: 100 } },
   },
+  { name: 'perp-positions-abraxas', path: 'profiler/perp-positions', body: { address: ABRAXAS } },
+  {
+    name: 'perp-pnl-summary-abraxas',
+    path: 'profiler/perp-pnl-summary',
+    body: { address: ABRAXAS, date: { from: isoDate(30), to: isoDate(0) } },
+  },
 ];
 
 async function main(): Promise<void> {

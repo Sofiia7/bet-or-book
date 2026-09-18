@@ -34,7 +34,7 @@ export default {
 
       try {
         const result = await withCache(env.KV, `check:${address}`, CHECK_CACHE_TTL_SECONDS, () =>
-          checkAddress(address),
+          checkAddress(address, { nansen: null }),
         );
         return Response.json(result);
       } catch (err) {

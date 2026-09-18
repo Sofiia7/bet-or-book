@@ -1,0 +1,49 @@
+{
+  "data": {
+    "top5_coins": [
+      {
+        "coin": "XRP",
+        "realized_pnl_usd": 286793.966143,
+        "realized_roi": 0.047654717202933364,
+        "closed_trade_count": 2540,
+        "fees_usd": 3103.369843
+      },
+      {
+        "coin": "xyz:SILVER",
+        "realized_pnl_usd": 123717.402552,
+        "realized_roi": 0.009149793998253785,
+        "closed_trade_count": 17380,
+        "fees_usd": 1900.211115
+      },
+      {
+        "coin": "xyz:NVDA",
+        "realized_pnl_usd": 97879.897309,
+        "realized_roi": 0.043229104286776655,
+        "closed_trade_count": 1753,
+        "fees_usd": 99.106378
+      },
+      {
+        "coin": "xyz:MU",
+        "realized_pnl_usd": 92714.010869,
+        "realized_roi": 0.016093842684619657,
+        "closed_trade_count": 6522,
+        "fees_usd": 302.675675
+      },
+      {
+        "coin": "xyz:META",
+        "realized_pnl_usd": 27663.575775,
+        "realized_roi": 0.0675753205002107,
+        "closed_trade_count": 666,
+        "fees_usd": 19.261264
+      }
+    ],
+    "traded_coin_count": 21,
+    "traded_times": 210345,
+    "closed_trade_count": 84394,
+    "winning_trade_count": 28107,
+    "realized_pnl_usd": -15479288.099574,
+    "realized_pnl_percent": -0.08702119539435683,
+    "win_rate": 0.33304500319927954,
+    "fees_usd": 85729.39893000001
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "balances": [
+    {
+      "coin": "USDC",
+      "token": 0,
+      "total": "81998590.1894019544",
+      "hold": "81998590.1894019544",
+      "entryNtl": "0.0"
+    },
+    {
+      "coin": "HYPE",
+      "token": 150,
+      "total": "624504.70094427",
+      "hold": "0.0",
+      "entryNtl": "42760590.0844504014"
+    },
+    {
+      "coin": "UBTC",
+      "token": 197,
+      "total": "0.0",
+      "hold": "0.0",
+      "entryNtl": "0.0"
+    },
+    {
+      "coin": "LATINA",
+      "token": 223,
+      "total": "35470.3668",
+      "hold": "0.0",
+      "entryNtl": "0.0"
+    },
+    {
+      "coin": "USDE",
+      "token": 235,
+      "total": "0.0",
+      "hold": "0.0",
+      "entryNtl": "0.0"
+    },
+    {
+      "coin": "USDT0",
+      "token": 268,
+      "total": "0.0",
+      "hold": "0.0",
+      "entryNtl": "0.0"
+    },
+    {
+      "coin": "UFART",
+      "token": 269,
+      "total": "20822401.9866629988",
+      "hold": "0.0",
+      "entryNtl": "3699953.34990991"
+    },
+    {
+      "coin": "LICKO",
+      "token": 307,
+      "total": "11189.06185739",
+      "hold": "0.0",
+      "entryNtl": "0.06713437"
+    },
+    {
+      "coin": "UXPL",
+      "token": 343,
+      "total": "846761.509855",
+      "hold": "0.0",
+      "entryNtl": "92009.802717"
+    },
+    {
+      "coin": "USDH",
+      "token": 360,
+      "total": "0.0",
+      "hold": "0.0",
+      "entryNtl": "0.0"
+    }
+  ],
+  "tokenToAvailableAfterMaintenance": [
+    [
+      0,
+      "66573801.2416099608"
+    ]
+  ]
+}
