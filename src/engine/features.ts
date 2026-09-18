@@ -1,4 +1,4 @@
-import type { Position, RestingOrder, SpotHolding, Trade } from '../types';
+import type { Position, PositionSide, RestingOrder, SpotHolding, Trade, LinkedWallet } from '../types';
 import { spotHedgesPerp } from './assets';
 
 export interface PositionFeatures {
@@ -7,6 +7,7 @@ export interface PositionFeatures {
   netUsd: number;
   netToGross: number;
   headlineCoin: string | null;
+  headlineSide: PositionSide | null;
   headlineNotionalUsd: number;
   headlineShare: number;
   headlineLiqDistancePct: number | null;
@@ -20,6 +21,7 @@ export function computePositionFeatures(positions: Position[]): PositionFeatures
       netUsd: 0,
       netToGross: 0,
       headlineCoin: null,
+      headlineSide: null,
       headlineNotionalUsd: 0,
       headlineShare: 0,
       headlineLiqDistancePct: null,
@@ -45,6 +47,7 @@ export function computePositionFeatures(positions: Position[]): PositionFeatures
     netUsd,
     netToGross,
     headlineCoin: headline.coin,
+    headlineSide: headline.side,
     headlineNotionalUsd: headline.sizeUsd,
     headlineShare,
     headlineLiqDistancePct,
@@ -80,18 +83,54 @@ export interface HedgeFeatures {
   hedgeRatio: number;
 }
 
+/** Spot can offset only a short: holding the asset while also long the perp
+ * is more of the same bet, not a hedge. */
 export function computeHedgeFeatures(
   headlineCoin: string | null,
+  headlineSide: PositionSide | null,
   headlineNotionalUsd: number,
-  spotHoldings: SpotHolding[],
+  holdings: SpotHolding[],
 ): HedgeFeatures {
-  if (headlineCoin === null || headlineNotionalUsd === 0) {
+  if (headlineCoin === null || headlineSide !== 'short' || headlineNotionalUsd === 0) {
     return { hedgeUsd: 0, hedgeRatio: 0 };
   }
-  const hedgeUsd = spotHoldings
+  const hedgeUsd = holdings
     .filter((h) => spotHedgesPerp(h.coin, headlineCoin))
     .reduce((sum, h) => sum + h.valueUsd, 0);
   return { hedgeUsd, hedgeRatio: hedgeUsd / headlineNotionalUsd };
+}
+
+export interface LinkedHedgeFeatures {
+  linkedHedgeUsd: number;
+  linkedHedgeRatio: number;
+  funders: Array<{ address: string; relation: string; chain: string; matchingUsd: number }>;
+}
+
+/** Holdings of wallets linked by a funding transaction. Ownership through
+ * such a link is inferred, not proven - the verdict layer treats this as a
+ * separate, weaker kind of evidence than the account's own holdings. */
+export function computeLinkedHedge(
+  headlineCoin: string | null,
+  headlineSide: PositionSide | null,
+  headlineNotionalUsd: number,
+  linked: Array<{ wallet: LinkedWallet; holdings: SpotHolding[] }>,
+): LinkedHedgeFeatures {
+  const followed = linked.filter((l) => !l.wallet.isSharedService);
+  const funders = followed.map((l) => ({
+    address: l.wallet.address,
+    relation: l.wallet.relation,
+    chain: l.wallet.chain,
+    matchingUsd:
+      headlineCoin === null || headlineSide !== 'short'
+        ? 0
+        : l.holdings.filter((h) => spotHedgesPerp(h.coin, headlineCoin)).reduce((s, h) => s + h.valueUsd, 0),
+  }));
+  const linkedHedgeUsd = funders.reduce((s, f) => s + f.matchingUsd, 0);
+  return {
+    linkedHedgeUsd,
+    linkedHedgeRatio: headlineNotionalUsd > 0 ? linkedHedgeUsd / headlineNotionalUsd : 0,
+    funders,
+  };
 }
 
 export function computeSizeVsOi(headlineNotionalUsd: number, openInterestUsd: number): number | null {

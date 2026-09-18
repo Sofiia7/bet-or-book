@@ -5,6 +5,7 @@ import {
   computeHedgeFeatures,
   computeSizeVsOi,
   computeTradeFeatures,
+  computeLinkedHedge,
 } from '../../src/engine/features';
 import type { Position, RestingOrder, SpotHolding, Trade } from '../../src/types';
 
@@ -13,6 +14,7 @@ describe('computePositionFeatures', () => {
     const result = computePositionFeatures([]);
     expect(result.nPositions).toBe(0);
     expect(result.headlineCoin).toBeNull();
+    expect(result.headlineSide).toBeNull();
   });
 
   it('identifies the headline position and its share of gross exposure', () => {
@@ -23,6 +25,7 @@ describe('computePositionFeatures', () => {
     const result = computePositionFeatures(positions);
     expect(result.nPositions).toBe(2);
     expect(result.headlineCoin).toBe('BTC');
+    expect(result.headlineSide).toBe('short');
     expect(result.grossUsd).toBe(199_050_000);
     expect(result.headlineShare).toBeCloseTo(190_000_000 / 199_050_000, 6);
   });
@@ -72,15 +75,48 @@ describe('computeHedgeFeatures', () => {
       { coin: 'UBTC', valueUsd: 40_000_000 },
       { coin: 'USDC', valueUsd: 5_000_000 },
     ];
-    const result = computeHedgeFeatures('BTC', 190_000_000, spot);
+    const result = computeHedgeFeatures('BTC', 'short', 190_000_000, spot);
     expect(result.hedgeUsd).toBe(40_000_000);
     expect(result.hedgeRatio).toBeCloseTo(40_000_000 / 190_000_000, 6);
   });
 
   it('returns zero when there is no headline position', () => {
-    const result = computeHedgeFeatures(null, 0, [{ coin: 'UBTC', valueUsd: 1000 }]);
+    const result = computeHedgeFeatures(null, null, 0, [{ coin: 'UBTC', valueUsd: 1000 }]);
     expect(result.hedgeUsd).toBe(0);
     expect(result.hedgeRatio).toBe(0);
+  });
+
+  it('does not treat spot of the same asset as a hedge of a LONG perp', () => {
+    const spot: SpotHolding[] = [{ coin: 'UBTC', valueUsd: 40_000_000 }];
+    const result = computeHedgeFeatures('BTC', 'long', 190_000_000, spot);
+    expect(result.hedgeUsd).toBe(0);
+    expect(result.hedgeRatio).toBe(0);
+  });
+});
+
+describe('computeLinkedHedge', () => {
+  const funder = (address: string, holdings: SpotHolding[], isSharedService = false) => ({
+    wallet: { address, relation: 'First Funder', chain: 'ethereum', isSharedService },
+    holdings,
+  });
+
+  it('sums matching holdings of linked wallets against a short', () => {
+    const result = computeLinkedHedge('ETH', 'short', 100_000_000, [
+      funder('0xa', [
+        { coin: 'WSTETH', valueUsd: 60_000_000, chain: 'ethereum' },
+        { coin: 'USDC', valueUsd: 9_000_000 },
+      ]),
+      funder('0xb', [{ coin: 'AETHWETH', valueUsd: 20_000_000, chain: 'ethereum' }]),
+    ]);
+    expect(result.linkedHedgeUsd).toBe(80_000_000);
+    expect(result.linkedHedgeRatio).toBeCloseTo(0.8, 6);
+    expect(result.funders.map((f) => f.matchingUsd)).toEqual([60_000_000, 20_000_000]);
+  });
+
+  it('ignores shared-service wallets and long headlines', () => {
+    const holdings = [{ coin: 'WETH', valueUsd: 50_000_000 }];
+    expect(computeLinkedHedge('ETH', 'short', 100_000_000, [funder('0xa', holdings, true)]).linkedHedgeUsd).toBe(0);
+    expect(computeLinkedHedge('ETH', 'long', 100_000_000, [funder('0xa', holdings)]).linkedHedgeUsd).toBe(0);
   });
 });
 

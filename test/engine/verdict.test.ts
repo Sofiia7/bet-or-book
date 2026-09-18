@@ -9,6 +9,7 @@ function positions(overrides: Partial<PositionFeatures>): PositionFeatures {
     netUsd: 0,
     netToGross: 0,
     headlineCoin: null,
+    headlineSide: null,
     headlineNotionalUsd: 0,
     headlineShare: 0,
     headlineLiqDistancePct: null,

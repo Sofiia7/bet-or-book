@@ -60,6 +60,7 @@ export async function checkAddress(address: string): Promise<CheckResult> {
   const spotHoldings = normalizeSpotHoldings(spotBalances.balances, priceIndex);
   const hedgeFeatures = computeHedgeFeatures(
     positionFeatures.headlineCoin,
+    positionFeatures.headlineSide,
     positionFeatures.headlineNotionalUsd,
     spotHoldings,
   );
