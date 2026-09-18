@@ -4,8 +4,13 @@
 // section 3.
 
 const SPOT_ALIASES: Record<string, string[]> = {
-  BTC: ['UBTC', 'WBTC', 'CBBTC', 'TBTC', 'BTCB'],
-  ETH: ['UETH', 'WETH', 'STETH', 'WSTETH', 'WEETH', 'RETH', 'CBETH'],
+  BTC: ['UBTC', 'WBTC', 'CBBTC', 'TBTC', 'BTCB', 'LBTC', 'AETHWBTC', 'AARBWBTC'],
+  ETH: [
+    'UETH', 'WETH', 'STETH', 'WSTETH', 'WEETH', 'RETH', 'CBETH',
+    // Seen in real Nansen balances (Abraxas funders, 18.09): Aave's aToken
+    // for WETH and Kelp's restaked ETH. The rest of each family by name.
+    'AETHWETH', 'AETHWSTETH', 'AETHWEETH', 'AARBWETH', 'RSETH', 'EZETH', 'METH', 'ETHX', 'OSETH',
+  ],
   SOL: ['USOL', 'SOL', 'MSOL', 'JITOSOL'],
   HYPE: ['HYPE', 'WHYPE'],
 };

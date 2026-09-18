@@ -25,4 +25,15 @@ describe('spotHedgesPerp', () => {
     expect(spotHedgesPerp('FART', 'FART')).toBe(true);
     expect(spotHedgesPerp('FART', 'BONK')).toBe(false);
   });
+
+  it('matches the wrapped and staked ETH seen in Abraxas funder balances', () => {
+    for (const sym of ['AETHWETH', 'WEETH', 'WSTETH', 'RSETH']) {
+      expect(spotHedgesPerp(sym, 'ETH')).toBe(true);
+    }
+  });
+
+  it('does not match tokens that merely contain the ticker', () => {
+    expect(spotHedgesPerp('ETHFI', 'ETH')).toBe(false);
+    expect(spotHedgesPerp('HYPER', 'HYPE')).toBe(false);
+  });
 });
