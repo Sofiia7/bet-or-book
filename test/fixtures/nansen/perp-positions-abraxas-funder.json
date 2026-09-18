@@ -1,0 +1,16 @@
+{
+  "data": {
+    "asset_positions": [],
+    "cross_maintenance_margin_used_usd": "0.0",
+    "cross_margin_summary_account_value_usd": "0.0",
+    "cross_margin_summary_total_margin_used_usd": "0.0",
+    "cross_margin_summary_total_net_liquidation_position_on_usd": "0.0",
+    "cross_margin_summary_total_raw_usd": "0.0",
+    "margin_summary_account_value_usd": "0.0",
+    "margin_summary_total_margin_used_usd": "0.0",
+    "margin_summary_total_net_liquidation_position_usd": "0.0",
+    "margin_summary_total_raw_usd": "0.0",
+    "timestamp": 1789735625592,
+    "withdrawable_usd": "0.0"
+  }
+}

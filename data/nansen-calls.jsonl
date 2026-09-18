@@ -1,0 +1,10 @@
+{"at":"2026-09-18T12:44:57.461Z","source":"fetch-nansen-fixtures","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":1004}
+{"at":"2026-09-18T12:44:58.411Z","source":"fetch-nansen-fixtures","endpoint":"profiler/perp-trades","status":200,"creditsCost":1,"creditsRemaining":1003}
+{"at":"2026-09-18T12:44:59.787Z","source":"fetch-nansen-fixtures","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":1002}
+{"at":"2026-09-18T12:45:00.816Z","source":"fetch-nansen-fixtures","endpoint":"profiler/address/current-balance","status":200,"creditsCost":1,"creditsRemaining":1001}
+{"at":"2026-09-18T12:45:01.699Z","source":"fetch-nansen-fixtures","endpoint":"profiler/address/related-wallets","status":200,"creditsCost":1,"creditsRemaining":1000}
+{"at":"2026-09-18T12:47:04.898Z","source":"fetch-nansen-fixtures","endpoint":"profiler/address/current-balance","status":200,"creditsCost":1,"creditsRemaining":999}
+{"at":"2026-09-18T12:47:06.051Z","source":"fetch-nansen-fixtures","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":998}
+{"at":"2026-09-18T12:48:31.123Z","source":"fetch-nansen-fixtures","endpoint":"profiler/address/related-wallets","status":200,"creditsCost":1,"creditsRemaining":997}
+{"at":"2026-09-18T12:48:32.153Z","source":"fetch-nansen-fixtures","endpoint":"profiler/address/related-wallets","status":200,"creditsCost":1,"creditsRemaining":996}
+{"at":"2026-09-18T12:49:23.492Z","source":"fetch-nansen-fixtures","endpoint":"profiler/address/current-balance","status":200,"creditsCost":1,"creditsRemaining":995}

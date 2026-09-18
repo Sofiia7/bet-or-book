@@ -1,0 +1,49 @@
+{
+  "data": {
+    "top5_coins": [
+      {
+        "coin": "BTC",
+        "realized_pnl_usd": 4766552.731466,
+        "realized_roi": 0.0013736559622246963,
+        "closed_trade_count": 164040,
+        "fees_usd": -193061.135104
+      },
+      {
+        "coin": "FARTCOIN",
+        "realized_pnl_usd": 534647.859738,
+        "realized_roi": 0.07442649264878795,
+        "closed_trade_count": 12113,
+        "fees_usd": 1383.017838
+      },
+      {
+        "coin": "CASHCAT",
+        "realized_pnl_usd": 357892.741625,
+        "realized_roi": 0.005481958822466894,
+        "closed_trade_count": 185751,
+        "fees_usd": 2395.758207
+      },
+      {
+        "coin": "SUI",
+        "realized_pnl_usd": 236892.446683,
+        "realized_roi": 0.010066251948957614,
+        "closed_trade_count": 27248,
+        "fees_usd": -1401.968838
+      },
+      {
+        "coin": "xyz:MSTR",
+        "realized_pnl_usd": 138347.095595,
+        "realized_roi": 0.003755223688201736,
+        "closed_trade_count": 16101,
+        "fees_usd": 1026.830746
+      }
+    ],
+    "traded_coin_count": 113,
+    "traded_times": 3514003,
+    "closed_trade_count": 2423158,
+    "winning_trade_count": 1129970,
+    "realized_pnl_usd": -13625651.411366997,
+    "realized_pnl_percent": -0.001679604762045818,
+    "win_rate": 0.4663212221406941,
+    "fees_usd": -195139.28235199995
+  }
+}

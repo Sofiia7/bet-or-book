@@ -1,0 +1,139 @@
+{
+  "pagination": {
+    "page": 1,
+    "per_page": 100,
+    "is_last_page": true
+  },
+  "data": [
+    {
+      "chain": "plasma",
+      "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+      "token_address": "0x6100e367285b01f48d07953803a2d8dca5d19873",
+      "token_symbol": "WXPL",
+      "token_name": "Wrapped XPL",
+      "token_amount": 37269.232130149125,
+      "price_usd": 0.088204,
+      "value_usd": 3287.2953508076735
+    },
+    {
+      "chain": "arbitrum",
+      "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+      "token_address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "token_symbol": "ETH",
+      "token_name": "Ethereum",
+      "token_amount": 0.1971707923257382,
+      "price_usd": 2504.5187719728046,
+      "value_usd": 493.8179506645627
+    },
+    {
+      "chain": "ethereum",
+      "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+      "token_address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "token_symbol": "ETH",
+      "token_name": "Ethereum",
+      "token_amount": 0.022652195752282785,
+      "price_usd": 2504.5187719728046,
+      "value_usd": 56.73284948799486
+    },
+    {
+      "chain": "bnb",
+      "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+      "token_address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "token_symbol": "BNB",
+      "token_name": "BinanceCoin",
+      "token_amount": 0.05,
+      "price_usd": 745.8715495220204,
+      "value_usd": 37.29357747610102
+    },
+    {
+      "chain": "bnb",
+      "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+      "token_address": "0x55d398326f99059ff775485246999027b3197955",
+      "token_symbol": "USDT",
+      "token_name": "Tether USD",
+      "token_amount": 13.70807328,
+      "price_usd": 0.999637304832573,
+      "value_usd": 13.703101428066608
+    },
+    {
+      "chain": "plasma",
+      "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+      "token_address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "token_symbol": "XPL",
+      "token_name": "XPL",
+      "token_amount": 39.44208869528996,
+      "price_usd": 0.08809698825137505,
+      "value_usd": 3.474729224398652
+    },
+    {
+      "chain": "monad",
+      "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+      "token_address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "token_symbol": "MON",
+      "token_name": "Monad",
+      "token_amount": 1,
+      "price_usd": 0.023833131402340123,
+      "value_usd": 0.023833131402340123
+    },
+    {
+      "chain": "arbitrum",
+      "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+      "token_address": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+      "token_symbol": "USDC",
+      "token_name": "USD Coin",
+      "token_amount": 0.009132,
+      "price_usd": 1.00086645070782,
+      "value_usd": 0.009139912427863812
+    },
+    {
+      "chain": "plasma",
+      "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+      "token_address": "0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb",
+      "token_symbol": "USDT0",
+      "token_name": "USDT0",
+      "token_amount": 0.007779,
+      "price_usd": 1.00245191130234,
+      "value_usd": 0.0077980734180209035
+    },
+    {
+      "chain": "hyperevm",
+      "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+      "token_address": "0xf2e6a23b1aa09565fdb3a77af7772709de3f4f95",
+      "token_symbol": "LILLY",
+      "token_name": "Lilly",
+      "token_amount": 1,
+      "price_usd": 0.00014668990260086092,
+      "value_usd": 0.00014668990260086092
+    },
+    {
+      "chain": "ethereum",
+      "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+      "token_address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "token_symbol": "USDC",
+      "token_name": "USD Coin",
+      "token_amount": 0.0001,
+      "price_usd": 0.999781794289868,
+      "value_usd": 0.0000999781794289868
+    },
+    {
+      "chain": "avalanche",
+      "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+      "token_address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "token_symbol": "AVAX",
+      "token_name": "Avalanche",
+      "token_amount": 0.0000076016,
+      "price_usd": 8.004154703299221,
+      "value_usd": 0.000060844382392599365
+    },
+    {
+      "chain": "hyperevm",
+      "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+      "token_address": "0xb88339cb7199b77e23db6e890353e22632ba630f",
+      "token_symbol": "USDC",
+      "token_name": "USDC",
+      "token_amount": 0.00001,
+      "price_usd": 1.00222656003907,
+      "value_usd": 0.000010022265600390702
+    }
+  ]
+}

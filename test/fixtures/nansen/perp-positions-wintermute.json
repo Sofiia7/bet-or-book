@@ -1,0 +1,2697 @@
+{
+  "data": {
+    "asset_positions": [
+      {
+        "position": {
+          "token_symbol": "ETH",
+          "size": "-14435.7258",
+          "position_value_usd": "36139839.5402999967",
+          "entry_price_usd": "2471.89",
+          "liquidation_price_usd": "5029.1178015916",
+          "leverage_value": 15,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "2409322.6360200001",
+          "max_leverage_value": 25,
+          "return_on_equity": "-0.1917842511",
+          "unrealized_pnl_usd": "-456236.867753",
+          "cumulative_funding_all_time_usd": "-7971379.9873620002",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-207126.369589"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "SOL",
+          "size": "-163674.44",
+          "position_value_usd": "17338033.4292000011",
+          "entry_price_usd": "101.4304",
+          "liquidation_price_usd": "327.5973334209",
+          "leverage_value": 20,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "866901.67146",
+          "max_leverage_value": 20,
+          "return_on_equity": "-0.8872174984",
+          "unrealized_pnl_usd": "-736460.308656",
+          "cumulative_funding_all_time_usd": "-2473606.5068100002",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-254576.568757"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "HYPE",
+          "size": "-162315.02",
+          "position_value_usd": "14810271.6848799996",
+          "entry_price_usd": "82.6715",
+          "liquidation_price_usd": "300.9809054118",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "4936757.2282929998",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.3110803268",
+          "unrealized_pnl_usd": "-1391444.393193",
+          "cumulative_funding_all_time_usd": "-3533002.352004",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-7197.587358"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "XRP",
+          "size": "-3718957.0",
+          "position_value_usd": "4926130.4422000004",
+          "entry_price_usd": "1.317015",
+          "liquidation_price_usd": "11.0726365801",
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "492613.04422",
+          "max_leverage_value": 20,
+          "return_on_equity": "-0.057587306",
+          "unrealized_pnl_usd": "-28205.828356",
+          "cumulative_funding_all_time_usd": "-1419433.85121",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-5633.064178"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:SP500",
+          "size": "584.128",
+          "position_value_usd": "4458006.4831999997",
+          "entry_price_usd": "7660.183",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "1486002.1610659999",
+          "max_leverage_value": 50,
+          "return_on_equity": "-0.0110767233",
+          "unrealized_pnl_usd": "-16521.034331",
+          "cumulative_funding_all_time_usd": "6414.873046",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "172.413029"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "DOGE",
+          "size": "-47372525.0",
+          "position_value_usd": "4050871.9852749999",
+          "entry_price_usd": "0.084534",
+          "liquidation_price_usd": "0.814467576",
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "405087.198527",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.1154778346",
+          "unrealized_pnl_usd": "-46244.570236",
+          "cumulative_funding_all_time_usd": "-926243.217754",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-145041.050839"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "BTC",
+          "size": "49.07022",
+          "position_value_usd": "3832256.5994279999",
+          "entry_price_usd": "78054.6",
+          "liquidation_price_usd": null,
+          "leverage_value": 20,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "191612.829971",
+          "max_leverage_value": 40,
+          "return_on_equity": "0.0109528621",
+          "unrealized_pnl_usd": "2097.56018",
+          "cumulative_funding_all_time_usd": "-5051796.8054139996",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "83.890198"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "SUI",
+          "size": "-2920270.6000000001",
+          "position_value_usd": "2329237.033266",
+          "entry_price_usd": "0.74805",
+          "liquidation_price_usd": "12.6495150096",
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "232923.703326",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.6624876364",
+          "unrealized_pnl_usd": "-144721.45614",
+          "cumulative_funding_all_time_usd": "-379252.375402",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-50580.689973"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "CASHCAT",
+          "size": "-8752755.0",
+          "position_value_usd": "1805780.88405",
+          "entry_price_usd": "0.188896",
+          "liquidation_price_usd": "0.3242204919",
+          "leverage_value": 1,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "3310792.9531950001",
+          "margin_used_usd": "1505012.0691450001",
+          "max_leverage_value": 3,
+          "return_on_equity": "-0.0921862747",
+          "unrealized_pnl_usd": "-152417.418568",
+          "cumulative_funding_all_time_usd": "-93374.832936",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-93341.705161"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "XPL",
+          "size": "-18904499.0",
+          "position_value_usd": "1668983.6942149999",
+          "entry_price_usd": "0.086236",
+          "liquidation_price_usd": "1.879819068",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "333796.738843",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.118797586",
+          "unrealized_pnl_usd": "-38733.94691",
+          "cumulative_funding_all_time_usd": "-193481.907087",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-163948.344335"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "TRX",
+          "size": "4605746.0",
+          "position_value_usd": "1555590.7115",
+          "entry_price_usd": "0.335375",
+          "liquidation_price_usd": null,
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "155559.07115",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.0708073445",
+          "unrealized_pnl_usd": "10937.280753",
+          "cumulative_funding_all_time_usd": "-58049.493481",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-14747.579853"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "kPEPE",
+          "size": "-372665587.0",
+          "position_value_usd": "1378862.6719",
+          "entry_price_usd": "0.003539",
+          "liquidation_price_usd": "0.0966894517",
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "137886.26719",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.4546434401",
+          "unrealized_pnl_usd": "-59962.912385",
+          "cumulative_funding_all_time_usd": "-471333.001856",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-1483.855604"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "MON",
+          "size": "-56785315.0",
+          "position_value_usd": "1360860.0739750001",
+          "entry_price_usd": "0.028045",
+          "liquidation_price_usd": "0.6193223253",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "453620.024658",
+          "max_leverage_value": 5,
+          "return_on_equity": "0.4365292783",
+          "unrealized_pnl_usd": "231738.658442",
+          "cumulative_funding_all_time_usd": "-36167.824693",
+          "cumulative_funding_since_change_usd": "-722.128669",
+          "cumulative_funding_since_open_usd": "-7776.199132"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "LTC",
+          "size": "-21335.95",
+          "position_value_usd": "1177381.7288500001",
+          "entry_price_usd": "53.9606",
+          "liquidation_price_usd": "1679.8177977398",
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "117738.172885",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.2265319574",
+          "unrealized_pnl_usd": "-26080.648727",
+          "cumulative_funding_all_time_usd": "-139548.165887",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-38065.234925"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "ASTER",
+          "size": "-1490895.0",
+          "position_value_usd": "1117858.1620499999",
+          "entry_price_usd": "0.729719",
+          "liquidation_price_usd": "23.4258022309",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "372619.38735",
+          "max_leverage_value": 5,
+          "return_on_equity": "-0.0825136308",
+          "unrealized_pnl_usd": "-29923.155807",
+          "cumulative_funding_all_time_usd": "-160253.636268",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-24118.744941"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "BNB",
+          "size": "-1316.966",
+          "position_value_usd": "982870.163324",
+          "entry_price_usd": "733.952",
+          "liquidation_price_usd": "26486.7210985167",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "196574.032664",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.0842092114",
+          "unrealized_pnl_usd": "-16279.172999",
+          "cumulative_funding_all_time_usd": "-142633.134642",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-18927.054687"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:META",
+          "size": "-1332.628",
+          "position_value_usd": "920526.11728",
+          "entry_price_usd": "681.455",
+          "liquidation_price_usd": "8168.1490696352",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "306842.039093",
+          "max_leverage_value": 20,
+          "return_on_equity": "-0.0409625344",
+          "unrealized_pnl_usd": "-12399.719591",
+          "cumulative_funding_all_time_usd": "-6628.785758",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-1028.788055"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "ARB",
+          "size": "-4445825.4000000004",
+          "position_value_usd": "918596.444148",
+          "entry_price_usd": "0.1804",
+          "liquidation_price_usd": "7.8322371706",
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "91859.644414",
+          "max_leverage_value": 10,
+          "return_on_equity": "-1.4530566973",
+          "unrealized_pnl_usd": "-116542.923917",
+          "cumulative_funding_all_time_usd": "-46159.717466",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-5004.442407"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "UNI",
+          "size": "-102690.1",
+          "position_value_usd": "894399.96397",
+          "entry_price_usd": "8.53833",
+          "liquidation_price_usd": "346.3857721854",
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "89439.996397",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.2007049145",
+          "unrealized_pnl_usd": "-17597.849346",
+          "cumulative_funding_all_time_usd": "-224331.927752",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-626.192802"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "LIT",
+          "size": "-181018.0",
+          "position_value_usd": "892418.74",
+          "entry_price_usd": "4.534062",
+          "liquidation_price_usd": "191.693489018",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "297472.913333",
+          "max_leverage_value": 5,
+          "return_on_equity": "-0.2619754359",
+          "unrealized_pnl_usd": "-71671.842103",
+          "cumulative_funding_all_time_usd": "-47304.706778",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-13160.493727"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "ENA",
+          "size": "-5456651.0",
+          "position_value_usd": "890470.8766899999",
+          "entry_price_usd": "0.153421",
+          "liquidation_price_usd": "6.5180344303",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "178094.175338",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.3183700076",
+          "unrealized_pnl_usd": "-53305.659316",
+          "cumulative_funding_all_time_usd": "-271523.349593",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-81331.760838"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "TAO",
+          "size": "-3566.219",
+          "position_value_usd": "879964.53825",
+          "entry_price_usd": "234.854",
+          "liquidation_price_usd": "9726.6931148385",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "175992.90765",
+          "max_leverage_value": 5,
+          "return_on_equity": "-0.2532456271",
+          "unrealized_pnl_usd": "-42420.855047",
+          "cumulative_funding_all_time_usd": "-161693.486017",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-805.694596"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:HOOD",
+          "size": "-7327.975",
+          "position_value_usd": "825496.38375",
+          "entry_price_usd": "109.198",
+          "liquidation_price_usd": "156.0747886927",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "1200897.757154",
+          "margin_used_usd": "375401.373404",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.0632239455",
+          "unrealized_pnl_usd": "-25295.915415",
+          "cumulative_funding_all_time_usd": "-13305.4805",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-720.699175"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:NVDA",
+          "size": "-3694.987",
+          "position_value_usd": "811234.39585",
+          "entry_price_usd": "220.232",
+          "liquidation_price_usd": "2916.3329767979",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "270411.465283",
+          "max_leverage_value": 20,
+          "return_on_equity": "0.0092944936",
+          "unrealized_pnl_usd": "2521.148566",
+          "cumulative_funding_all_time_usd": "-7367.097775",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-299.047852"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "ZRO",
+          "size": "724814.8",
+          "position_value_usd": "806356.465",
+          "entry_price_usd": "1.13805",
+          "liquidation_price_usd": null,
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "161271.293",
+          "max_leverage_value": 5,
+          "return_on_equity": "-0.112286572",
+          "unrealized_pnl_usd": "-18524.61373",
+          "cumulative_funding_all_time_usd": "38725.605462",
+          "cumulative_funding_since_change_usd": "208.149964",
+          "cumulative_funding_since_open_usd": "38724.682516"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "PUMP",
+          "size": "-185724080.0",
+          "position_value_usd": "785241.41024",
+          "entry_price_usd": "0.003832",
+          "liquidation_price_usd": "0.1909617363",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "261747.136746",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.3098957526",
+          "unrealized_pnl_usd": "-73519.831445",
+          "cumulative_funding_all_time_usd": "-462888.654701",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-171976.936292"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "VVV",
+          "size": "-29962.82",
+          "position_value_usd": "781460.30842",
+          "entry_price_usd": "25.117",
+          "liquidation_price_usd": "1089.9225566042",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "260486.769473",
+          "max_leverage_value": 3,
+          "return_on_equity": "-0.1151320379",
+          "unrealized_pnl_usd": "-28881.959646",
+          "cumulative_funding_all_time_usd": "-67519.55379",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-49269.512845"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "ZEC",
+          "size": "-496.83",
+          "position_value_usd": "720701.598",
+          "entry_price_usd": "1485.1368",
+          "liquidation_price_usd": "71260.9677326285",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "144140.3196",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.1162751042",
+          "unrealized_pnl_usd": "17158.962714",
+          "cumulative_funding_all_time_usd": "-40429.988875",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-231.441999"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "kBONK",
+          "size": "-248251089.0",
+          "position_value_usd": "703295.335137",
+          "entry_price_usd": "0.002931",
+          "liquidation_price_usd": "0.1425491089",
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "70329.533513",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.3346355542",
+          "unrealized_pnl_usd": "24349.586146",
+          "cumulative_funding_all_time_usd": "-331676.1368",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-14208.154522"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "WLD",
+          "size": "-1561255.2",
+          "position_value_usd": "696023.180712",
+          "entry_price_usd": "0.41009",
+          "liquidation_price_usd": "22.6619132654",
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "69602.318071",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.8709999944",
+          "unrealized_pnl_usd": "-55766.368027",
+          "cumulative_funding_all_time_usd": "-375866.988074",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-6514.249609"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "AAVE",
+          "size": "-4780.79",
+          "position_value_usd": "657502.0487",
+          "entry_price_usd": "127.4669",
+          "liquidation_price_usd": "7392.9747502166",
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "65750.20487",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.7894636089",
+          "unrealized_pnl_usd": "-48109.336948",
+          "cumulative_funding_all_time_usd": "-200121.558031",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-144906.4961"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:GOOGL",
+          "size": "-1765.585",
+          "position_value_usd": "629201.52645",
+          "entry_price_usd": "352.023",
+          "liquidation_price_usd": "6000.1526788795",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "209733.84215",
+          "max_leverage_value": 20,
+          "return_on_equity": "-0.037039096",
+          "unrealized_pnl_usd": "-7673.610706",
+          "cumulative_funding_all_time_usd": "-3097.980146",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-315.133009"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "LDO",
+          "size": "-1611765.1000000001",
+          "position_value_usd": "626573.682625",
+          "entry_price_usd": "0.37665",
+          "liquidation_price_usd": "21.3642341168",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "125314.736525",
+          "max_leverage_value": 5,
+          "return_on_equity": "-0.1605832186",
+          "unrealized_pnl_usd": "-19497.257263",
+          "cumulative_funding_all_time_usd": "-203430.973613",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-200309.687556"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:MSTR",
+          "size": "-4454.283",
+          "position_value_usd": "607608.7440299999",
+          "entry_price_usd": "132.987",
+          "liquidation_price_usd": "190.0245944593",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "888744.486716",
+          "margin_used_usd": "281135.742686",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.0514714558",
+          "unrealized_pnl_usd": "-15244.914333",
+          "cumulative_funding_all_time_usd": "-5008.31834",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-543.468915"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "VIRTUAL",
+          "size": "-862805.2",
+          "position_value_usd": "558640.482844",
+          "entry_price_usd": "0.64564",
+          "liquidation_price_usd": "39.8307679855",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "111728.096568",
+          "max_leverage_value": 5,
+          "return_on_equity": "-0.0141634855",
+          "unrealized_pnl_usd": "-1577.989308",
+          "cumulative_funding_all_time_usd": "-168567.937202",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-46544.426171"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "MORPHO",
+          "size": "-208898.0",
+          "position_value_usd": "505136.2538",
+          "entry_price_usd": "2.19432",
+          "liquidation_price_usd": "164.2557109635",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "101027.25076",
+          "max_leverage_value": 5,
+          "return_on_equity": "-0.5098880404",
+          "unrealized_pnl_usd": "-46745.584062",
+          "cumulative_funding_all_time_usd": "-12941.798135",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-3336.587592"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:CRCL",
+          "size": "-5574.243",
+          "position_value_usd": "485951.356254",
+          "entry_price_usd": "84.148",
+          "liquidation_price_usd": "120.241817467",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "703769.964789",
+          "margin_used_usd": "217818.608535",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.0719956608",
+          "unrealized_pnl_usd": "-16885.358246",
+          "cumulative_funding_all_time_usd": "-10243.453855",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-4808.658503"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "SPX",
+          "size": "-980678.9",
+          "position_value_usd": "476815.887969",
+          "entry_price_usd": "0.51008",
+          "liquidation_price_usd": "34.9598315443",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "95363.177593",
+          "max_leverage_value": 5,
+          "return_on_equity": "0.2340657019",
+          "unrealized_pnl_usd": "23417.49561",
+          "cumulative_funding_all_time_usd": "-110530.435432",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-15851.568307"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:TSLA",
+          "size": "-1285.105",
+          "position_value_usd": "472173.2791",
+          "entry_price_usd": "367.672",
+          "liquidation_price_usd": "8121.3218532254",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "157391.093033",
+          "max_leverage_value": 20,
+          "return_on_equity": "0.0020599157",
+          "unrealized_pnl_usd": "324.435152",
+          "cumulative_funding_all_time_usd": "-935.755127",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-580.040177"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "EIGEN",
+          "size": "-2007285.6699999999",
+          "position_value_usd": "458664.775595",
+          "entry_price_usd": "0.2224",
+          "liquidation_price_usd": "17.0709224615",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "91732.955119",
+          "max_leverage_value": 5,
+          "return_on_equity": "-0.1366824153",
+          "unrealized_pnl_usd": "-12204.649672",
+          "cumulative_funding_all_time_usd": "-112976.813083",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-9422.214995"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:COIN",
+          "size": "2557.51",
+          "position_value_usd": "452909.4459",
+          "entry_price_usd": "172.935",
+          "liquidation_price_usd": "91.0584061084",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "-221238.644996",
+          "margin_used_usd": "231670.800904",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.0480471762",
+          "unrealized_pnl_usd": "10625.253268",
+          "cumulative_funding_all_time_usd": "-6571.288327",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "241.332928"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "TIA",
+          "size": "-1118244.7",
+          "position_value_usd": "447286.697553",
+          "entry_price_usd": "0.38091",
+          "liquidation_price_usd": "30.6326870609",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "89457.33951",
+          "max_leverage_value": 5,
+          "return_on_equity": "-0.2503626698",
+          "unrealized_pnl_usd": "-21328.791705",
+          "cumulative_funding_all_time_usd": "-125081.622388",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-819.807249"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "CRV",
+          "size": "-1336020.3999999999",
+          "position_value_usd": "446751.861556",
+          "entry_price_usd": "0.33777",
+          "liquidation_price_usd": "26.3043057748",
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "44675.186155",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.1001845496",
+          "unrealized_pnl_usd": "4521.057415",
+          "cumulative_funding_all_time_usd": "-248514.429846",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-20147.846077"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:SKHY",
+          "size": "-2260.11",
+          "position_value_usd": "415589.0268",
+          "entry_price_usd": "184.5604",
+          "liquidation_price_usd": "4487.7971469391",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "138529.6756",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.0110601054",
+          "unrealized_pnl_usd": "1537.822304",
+          "cumulative_funding_all_time_usd": "2737.65191",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "873.173279"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:INTC",
+          "size": "-3644.5",
+          "position_value_usd": "400056.765",
+          "entry_price_usd": "109.7187",
+          "liquidation_price_usd": "156.7603646209",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "599878.806304",
+          "margin_used_usd": "199822.041304",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.0009350901",
+          "unrealized_pnl_usd": "-186.957143",
+          "cumulative_funding_all_time_usd": "-1755.426011",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-523.171434"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "POPCAT",
+          "size": "-8330451.0",
+          "position_value_usd": "394838.386047",
+          "entry_price_usd": "0.051799",
+          "liquidation_price_usd": "3.8738036458",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "131612.795349",
+          "max_leverage_value": 3,
+          "return_on_equity": "0.2549989304",
+          "unrealized_pnl_usd": "36678.807603",
+          "cumulative_funding_all_time_usd": "-341421.14881",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-9893.968973"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "LINK",
+          "size": "-33118.1",
+          "position_value_usd": "392574.671418",
+          "entry_price_usd": "11.52313",
+          "liquidation_price_usd": "1059.5829631627",
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "39257.467141",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.2869379587",
+          "unrealized_pnl_usd": "-10950.253156",
+          "cumulative_funding_all_time_usd": "-383026.213565",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-310369.2504"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "NEAR",
+          "size": "-85372.5",
+          "position_value_usd": "306026.2635",
+          "entry_price_usd": "3.40318",
+          "liquidation_price_usd": "410.0706918849",
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "30602.62635",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.5330633419",
+          "unrealized_pnl_usd": "-15487.553567",
+          "cumulative_funding_all_time_usd": "-34278.057194",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-10120.750195"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "APT",
+          "size": "-443113.75",
+          "position_value_usd": "302956.870875",
+          "entry_price_usd": "0.6147",
+          "liquidation_price_usd": "78.9996479869",
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "30295.687087",
+          "max_leverage_value": 10,
+          "return_on_equity": "-1.1213234879",
+          "unrealized_pnl_usd": "-30546.06365",
+          "cumulative_funding_all_time_usd": "-212358.3955",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-1119.673592"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:AMZN",
+          "size": "-1146.092",
+          "position_value_usd": "288964.17596",
+          "entry_price_usd": "251.687",
+          "liquidation_price_usd": "8946.5262972342",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "96321.391986",
+          "max_leverage_value": 20,
+          "return_on_equity": "-0.0052798115",
+          "unrealized_pnl_usd": "-507.665331",
+          "cumulative_funding_all_time_usd": "-7375.958413",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-2950.289203"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:AAPL",
+          "size": "-855.077",
+          "position_value_usd": "288007.03514",
+          "entry_price_usd": "337.291",
+          "liquidation_price_usd": "11990.2477510555",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "96002.345046",
+          "max_leverage_value": 20,
+          "return_on_equity": "0.0041936772",
+          "unrealized_pnl_usd": "403.166427",
+          "cumulative_funding_all_time_usd": "408.062104",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "2.819001"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "JUP",
+          "size": "-1109728.0",
+          "position_value_usd": "284767.30208",
+          "entry_price_usd": "0.251953",
+          "liquidation_price_usd": "30.8325465567",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "56953.460416",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.0924100107",
+          "unrealized_pnl_usd": "-5167.562978",
+          "cumulative_funding_all_time_usd": "-83241.080371",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-50.178441"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:SNDK",
+          "size": "-173.82",
+          "position_value_usd": "282057.714",
+          "entry_price_usd": "1629.205",
+          "liquidation_price_usd": "2327.5347914811",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "424800.702328",
+          "margin_used_usd": "142742.988328",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.0079861507",
+          "unrealized_pnl_usd": "1130.79304",
+          "cumulative_funding_all_time_usd": "-3638.24431",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-213.281361"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "MET",
+          "size": "-1056282.0",
+          "position_value_usd": "260880.52836",
+          "entry_price_usd": "0.218051",
+          "liquidation_price_usd": "30.4242367071",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "86960.17612",
+          "max_leverage_value": 3,
+          "return_on_equity": "-0.3980017192",
+          "unrealized_pnl_usd": "-30556.45858",
+          "cumulative_funding_all_time_usd": "-15224.055237",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-71.900845"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "WIF",
+          "size": "-1324426.0",
+          "position_value_usd": "257309.48328",
+          "entry_price_usd": "0.177564",
+          "liquidation_price_usd": "25.7204726714",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "51461.896656",
+          "max_leverage_value": 5,
+          "return_on_equity": "-0.470693813",
+          "unrealized_pnl_usd": "-22138.687694",
+          "cumulative_funding_all_time_usd": "-272119.011967",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-4807.965088"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:XYZ100",
+          "size": "7.7609",
+          "position_value_usd": "228923.2673",
+          "entry_price_usd": "29543.58",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "76307.755766",
+          "max_leverage_value": 30,
+          "return_on_equity": "-0.0047300379",
+          "unrealized_pnl_usd": "-361.508558",
+          "cumulative_funding_all_time_usd": "-2436.933777",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "77.5054"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:MRVL",
+          "size": "-951.93",
+          "position_value_usd": "228758.2983",
+          "entry_price_usd": "241.8462",
+          "liquidation_price_usd": "345.5284571805",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "345364.849456",
+          "margin_used_usd": "116606.551156",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.0127044974",
+          "unrealized_pnl_usd": "1462.419259",
+          "cumulative_funding_all_time_usd": "-1340.434507",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-65.101398"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "GRASS",
+          "size": "-655587.1",
+          "position_value_usd": "224138.673619",
+          "entry_price_usd": "0.35343",
+          "liquidation_price_usd": "48.9634889745",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "74712.891206",
+          "max_leverage_value": 3,
+          "return_on_equity": "0.097988124",
+          "unrealized_pnl_usd": "7568.173074",
+          "cumulative_funding_all_time_usd": "-72166.390971",
+          "cumulative_funding_since_change_usd": "-387.374017",
+          "cumulative_funding_since_open_usd": "-12928.701555"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:AMD",
+          "size": "-407.378",
+          "position_value_usd": "221866.20636",
+          "entry_price_usd": "538.839",
+          "liquidation_price_usd": "769.8463916769",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "329299.407516",
+          "margin_used_usd": "107433.201156",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.0214570153",
+          "unrealized_pnl_usd": "-2355.027364",
+          "cumulative_funding_all_time_usd": "-4948.960673",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-586.184298"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:EWY",
+          "size": "-1174.072",
+          "position_value_usd": "211332.96",
+          "entry_price_usd": "180.96",
+          "liquidation_price_usd": "264.8297450873",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "318702.418186",
+          "margin_used_usd": "107369.458186",
+          "max_leverage_value": 20,
+          "return_on_equity": "0.0106122709",
+          "unrealized_pnl_usd": "1127.343151",
+          "cumulative_funding_all_time_usd": "-2751.057248",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-29.866308"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "GRAM",
+          "size": "-149879.0",
+          "position_value_usd": "205334.23",
+          "entry_price_usd": "1.36096",
+          "liquidation_price_usd": "226.9356446537",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "41066.846",
+          "max_leverage_value": 5,
+          "return_on_equity": "-0.0332105869",
+          "unrealized_pnl_usd": "-1354.854952",
+          "cumulative_funding_all_time_usd": "-44.740065",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-44.752589"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:MU",
+          "size": "-197.079",
+          "position_value_usd": "193332.52821",
+          "entry_price_usd": "978.822",
+          "liquidation_price_usd": "1398.4309148398",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "289381.434579",
+          "margin_used_usd": "96048.906369",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.0044291487",
+          "unrealized_pnl_usd": "-427.203181",
+          "cumulative_funding_all_time_usd": "-3808.211174",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-945.853004"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "USELESS",
+          "size": "-786980.0",
+          "position_value_usd": "191613.8904",
+          "entry_price_usd": "0.213719",
+          "liquidation_price_usd": "40.7472959408",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "63871.2968",
+          "max_leverage_value": 3,
+          "return_on_equity": "-0.4177470139",
+          "unrealized_pnl_usd": "-23420.730149",
+          "cumulative_funding_all_time_usd": "-707.166079",
+          "cumulative_funding_since_change_usd": "-523.229855",
+          "cumulative_funding_since_open_usd": "-707.241626"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "PENGU",
+          "size": "-24407426.0",
+          "position_value_usd": "186008.993546",
+          "entry_price_usd": "0.007248",
+          "liquidation_price_usd": "1.3927549037",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "37201.798709",
+          "max_leverage_value": 5,
+          "return_on_equity": "-0.2569082826",
+          "unrealized_pnl_usd": "-9090.371851",
+          "cumulative_funding_all_time_usd": "-142952.61919",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-79.47571"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:LITE",
+          "size": "199.667",
+          "position_value_usd": "181421.42954",
+          "entry_price_usd": "897.355",
+          "liquidation_price_usd": "472.4826390783",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "-89622.231542",
+          "margin_used_usd": "91799.197998",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.0251066684",
+          "unrealized_pnl_usd": "2249.208765",
+          "cumulative_funding_all_time_usd": "-1757.134458",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "110.443756"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:SKHX",
+          "size": "-135.914",
+          "position_value_usd": "179719.0822",
+          "entry_price_usd": "1337.79",
+          "liquidation_price_usd": "72892.0145472032",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "59906.360733",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.0347370448",
+          "unrealized_pnl_usd": "2105.347792",
+          "cumulative_funding_all_time_usd": "5512.808744",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-160.294061"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "SEI",
+          "size": "-3624655.0",
+          "position_value_usd": "171409.93495",
+          "entry_price_usd": "0.044254",
+          "liquidation_price_usd": "9.3743992711",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "34281.98699",
+          "max_leverage_value": 5,
+          "return_on_equity": "-0.3430072425",
+          "unrealized_pnl_usd": "-11004.074382",
+          "cumulative_funding_all_time_usd": "-29632.072567",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-134.770611"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:PLTR",
+          "size": "-951.045",
+          "position_value_usd": "167364.8991",
+          "entry_price_usd": "174.03",
+          "liquidation_price_usd": "248.5999389944",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "248251.21543",
+          "margin_used_usd": "80886.31633",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.0224054766",
+          "unrealized_pnl_usd": "-1854.173345",
+          "cumulative_funding_all_time_usd": "-2255.486566",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "108.142751"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "ADA",
+          "size": "755774.0",
+          "position_value_usd": "162491.41",
+          "entry_price_usd": "0.20077",
+          "liquidation_price_usd": null,
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "16249.141",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.7087551949",
+          "unrealized_pnl_usd": "10754.436801",
+          "cumulative_funding_all_time_usd": "-23412.45664",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-12.079603"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "XLM",
+          "size": "-830562.0",
+          "position_value_usd": "154924.72986",
+          "entry_price_usd": "0.187235",
+          "liquidation_price_usd": "40.8909605603",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "30984.945972",
+          "max_leverage_value": 5,
+          "return_on_equity": "0.0188268275",
+          "unrealized_pnl_usd": "585.553054",
+          "cumulative_funding_all_time_usd": "-26064.795771",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-27.765654"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "BCH",
+          "size": "-591.644",
+          "position_value_usd": "147981.99728",
+          "entry_price_usd": "232.05",
+          "liquidation_price_usd": "58917.0171708079",
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "14798.199728",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.7787074174",
+          "unrealized_pnl_usd": "-10690.955275",
+          "cumulative_funding_all_time_usd": "-7687.405204",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-39.573356"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "AVAX",
+          "size": "18355.02",
+          "position_value_usd": "147192.576384",
+          "entry_price_usd": "7.4375",
+          "liquidation_price_usd": null,
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "14719.257638",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.7820748096",
+          "unrealized_pnl_usd": "10676.572755",
+          "cumulative_funding_all_time_usd": "-116016.125114",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-41.093138"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:GOLD",
+          "size": "-31.2912",
+          "position_value_usd": "136776.96432",
+          "entry_price_usd": "4335.91",
+          "liquidation_price_usd": "324378.7702676477",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "45592.32144",
+          "max_leverage_value": 25,
+          "return_on_equity": "-0.0243456826",
+          "unrealized_pnl_usd": "-1101.040989",
+          "cumulative_funding_all_time_usd": "-1201.616057",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-58.006092"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:CRWV",
+          "size": "-1700.26",
+          "position_value_usd": "136286.04056",
+          "entry_price_usd": "81.7092",
+          "liquidation_price_usd": "116.753145147",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "208436.237696",
+          "margin_used_usd": "72150.197136",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.0380193171",
+          "unrealized_pnl_usd": "2640.954746",
+          "cumulative_funding_all_time_usd": "-6893.963168",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-98.862199"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "MELANIA",
+          "size": "1343751.0",
+          "position_value_usd": "135893.53863",
+          "entry_price_usd": "0.10294",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "45297.84621",
+          "max_leverage_value": 3,
+          "return_on_equity": "-0.0528491216",
+          "unrealized_pnl_usd": "-2436.880379",
+          "cumulative_funding_all_time_usd": "-144203.041516",
+          "cumulative_funding_since_change_usd": "3.380037",
+          "cumulative_funding_since_open_usd": "4627.697053"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:ARM",
+          "size": "-459.7",
+          "position_value_usd": "122854.825",
+          "entry_price_usd": "269.464",
+          "liquidation_price_usd": "384.9986156065",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "185833.056774",
+          "margin_used_usd": "62978.231774",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.0164327013",
+          "unrealized_pnl_usd": "1017.780765",
+          "cumulative_funding_all_time_usd": "-1764.246521",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-134.140502"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "ATOM",
+          "size": "67312.03",
+          "position_value_usd": "111233.129575",
+          "entry_price_usd": "1.5487",
+          "liquidation_price_usd": null,
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "22246.625915",
+          "max_leverage_value": 5,
+          "return_on_equity": "0.3348068826",
+          "unrealized_pnl_usd": "6980.874505",
+          "cumulative_funding_all_time_usd": "-8388.861983",
+          "cumulative_funding_since_change_usd": "1.379896",
+          "cumulative_funding_since_open_usd": "-10.320635"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:QCOM",
+          "size": "-490.93",
+          "position_value_usd": "92751.4049",
+          "entry_price_usd": "190.0918",
+          "liquidation_price_usd": "271.6070075687",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "140007.029637",
+          "margin_used_usd": "47255.624737",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.0122236911",
+          "unrealized_pnl_usd": "570.368264",
+          "cumulative_funding_all_time_usd": "4997.080451",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-33.858392"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "TRUMP",
+          "size": "44911.5",
+          "position_value_usd": "91866.47325",
+          "entry_price_usd": "1.96337",
+          "liquidation_price_usd": null,
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "9186.647325",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.4183000812",
+          "unrealized_pnl_usd": "3688.485926",
+          "cumulative_funding_all_time_usd": "-340660.68832",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-29.078799"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:MSFT",
+          "size": "-181.722",
+          "position_value_usd": "90246.77964",
+          "entry_price_usd": "497.006",
+          "liquidation_price_usd": "55330.8065106578",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "30082.25988",
+          "max_leverage_value": 20,
+          "return_on_equity": "0.0023304954",
+          "unrealized_pnl_usd": "70.161071",
+          "cumulative_funding_all_time_usd": "-5026.173132",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-41.694976"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:ORCL",
+          "size": "585.221",
+          "position_value_usd": "87636.84475",
+          "entry_price_usd": "145.849",
+          "liquidation_price_usd": "76.819928011",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "-42708.803336",
+          "margin_used_usd": "44928.041414",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.0534908378",
+          "unrealized_pnl_usd": "2282.828908",
+          "cumulative_funding_all_time_usd": "-1705.583438",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "19.170614"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:TSM",
+          "size": "-203.477",
+          "position_value_usd": "87238.72898",
+          "entry_price_usd": "423.329",
+          "liquidation_price_usd": "604.8383029789",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "129224.217544",
+          "margin_used_usd": "41985.488564",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.0255595553",
+          "unrealized_pnl_usd": "-1100.82328",
+          "cumulative_funding_all_time_usd": "-2327.082995",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-2373.903552"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:AVGO",
+          "size": "224.41",
+          "position_value_usd": "78265.2316",
+          "entry_price_usd": "346.35",
+          "liquidation_price_usd": "182.5419686804",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "-38916.031032",
+          "margin_used_usd": "39349.200568",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.0139163589",
+          "unrealized_pnl_usd": "540.820401",
+          "cumulative_funding_all_time_usd": "746.234178",
+          "cumulative_funding_since_change_usd": "0.490476",
+          "cumulative_funding_since_open_usd": "168.997061"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:SPCX",
+          "size": "-474.68",
+          "position_value_usd": "73613.3744",
+          "entry_price_usd": "155.2429",
+          "liquidation_price_usd": "227.1797580501",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "110533.62974",
+          "margin_used_usd": "36920.25534",
+          "max_leverage_value": 20,
+          "return_on_equity": "0.0020986962",
+          "unrealized_pnl_usd": "77.327196",
+          "cumulative_funding_all_time_usd": "371.145009",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "292.361407"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "PYTH",
+          "size": "-1236350.0",
+          "position_value_usd": "72770.32465",
+          "entry_price_usd": "0.0567",
+          "liquidation_price_usd": "27.4035051399",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "14554.06493",
+          "max_leverage_value": 5,
+          "return_on_equity": "-0.1903100166",
+          "unrealized_pnl_usd": "-2668.2263",
+          "cumulative_funding_all_time_usd": "-5702.853083",
+          "cumulative_funding_since_change_usd": "-0.906553",
+          "cumulative_funding_since_open_usd": "-3061.523493"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "PONS",
+          "size": "98301.0",
+          "position_value_usd": "70068.9528",
+          "entry_price_usd": "0.713548",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "23356.3176",
+          "max_leverage_value": 3,
+          "return_on_equity": "-0.0031452087",
+          "unrealized_pnl_usd": "-73.537591",
+          "cumulative_funding_all_time_usd": "-2578.673199",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "13.082299"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "AVNT",
+          "size": "-641886.0",
+          "position_value_usd": "65490.986694",
+          "entry_price_usd": "0.10119",
+          "liquidation_price_usd": "52.7711217284",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "13098.197338",
+          "max_leverage_value": 5,
+          "return_on_equity": "-0.0414550494",
+          "unrealized_pnl_usd": "-538.52153",
+          "cumulative_funding_all_time_usd": "41140.13895",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-139.113059"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:NATGAS",
+          "size": "21092.4",
+          "position_value_usd": "63677.9556",
+          "entry_price_usd": "3.00985",
+          "liquidation_price_usd": "1.5841620224",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "-31743.090089",
+          "margin_used_usd": "31934.865511",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.0060745856",
+          "unrealized_pnl_usd": "192.822937",
+          "cumulative_funding_all_time_usd": "11583.608786",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "256.140132"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:NBIS",
+          "size": "-282.31",
+          "position_value_usd": "61258.4469",
+          "entry_price_usd": "219.3572",
+          "liquidation_price_usd": "313.5161629347",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "92934.185356",
+          "margin_used_usd": "31675.738456",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.0215839357",
+          "unrealized_pnl_usd": "668.311588",
+          "cumulative_funding_all_time_usd": "916.95788",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-186.388073"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "ONDO",
+          "size": "-143469.0",
+          "position_value_usd": "56990.19087",
+          "entry_price_usd": "0.392019",
+          "liquidation_price_usd": "236.9732598615",
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "5699.019087",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.1329239946",
+          "unrealized_pnl_usd": "-747.598998",
+          "cumulative_funding_all_time_usd": "-91414.737979",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-2.645018"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:BRENTOIL",
+          "size": "-561.57",
+          "position_value_usd": "55531.41102",
+          "entry_price_usd": "98.814",
+          "liquidation_price_usd": "17843.0283884632",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "18510.47034",
+          "max_leverage_value": 20,
+          "return_on_equity": "-0.0021838598",
+          "unrealized_pnl_usd": "-40.394866",
+          "cumulative_funding_all_time_usd": "3019.294378",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-0.982764"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "WLFI",
+          "size": "808319.0",
+          "position_value_usd": "46761.25415",
+          "entry_price_usd": "0.05638",
+          "liquidation_price_usd": null,
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "9352.25083",
+          "max_leverage_value": 5,
+          "return_on_equity": "0.1303109436",
+          "unrealized_pnl_usd": "1187.745386",
+          "cumulative_funding_all_time_usd": "-34144.913943",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "1522.176997"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:SMSN",
+          "size": "238.335",
+          "position_value_usd": "44354.1435",
+          "entry_price_usd": "187.669",
+          "liquidation_price_usd": "98.7970192155",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "-22369.448196",
+          "margin_used_usd": "21984.695304",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.0167287489",
+          "unrealized_pnl_usd": "-374.123978",
+          "cumulative_funding_all_time_usd": "4634.359828",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "63.752595"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "SNX",
+          "size": "198840.4",
+          "position_value_usd": "43870.157452",
+          "entry_price_usd": "0.21221",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "14623.385817",
+          "max_leverage_value": 3,
+          "return_on_equity": "0.1189368574",
+          "unrealized_pnl_usd": "1672.935009",
+          "cumulative_funding_all_time_usd": "-6831.747427",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-2771.63523"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "PAXG",
+          "size": "9.776",
+          "position_value_usd": "42677.128",
+          "entry_price_usd": "4366.495",
+          "liquidation_price_usd": null,
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "8535.4256",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.0011399552",
+          "unrealized_pnl_usd": "-9.732222",
+          "cumulative_funding_all_time_usd": "-80842.576835",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "3.717908"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:DRAM",
+          "size": "-693.7",
+          "position_value_usd": "40102.1033",
+          "entry_price_usd": "58.27357",
+          "liquidation_price_usd": "85.2788624829",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "60636.895577",
+          "margin_used_usd": "20534.792277",
+          "max_leverage_value": 20,
+          "return_on_equity": "0.0159447407",
+          "unrealized_pnl_usd": "322.27814",
+          "cumulative_funding_all_time_usd": "-3178.498561",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-1.294609"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "STBL",
+          "size": "1340633.0",
+          "position_value_usd": "35247.922836",
+          "entry_price_usd": "0.025488",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "11749.307612",
+          "max_leverage_value": 3,
+          "return_on_equity": "0.0945909248",
+          "unrealized_pnl_usd": "1077.406901",
+          "cumulative_funding_all_time_usd": "-53101.116969",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "755.636717"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:HIMS",
+          "size": "-960.46",
+          "position_value_usd": "27128.1927",
+          "entry_price_usd": "27.9902",
+          "liquidation_price_usd": "39.9974453075",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "40336.743636",
+          "margin_used_usd": "13208.550936",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.0182043394",
+          "unrealized_pnl_usd": "-244.69813",
+          "cumulative_funding_all_time_usd": "9.447668",
+          "cumulative_funding_since_change_usd": "0.220775",
+          "cumulative_funding_since_open_usd": "0.424081"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "AIXBT",
+          "size": "-1262518.0",
+          "position_value_usd": "25871.518856",
+          "entry_price_usd": "0.019973",
+          "liquidation_price_usd": "25.2682057507",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "8623.839618",
+          "max_leverage_value": 3,
+          "return_on_equity": "-0.0779345483",
+          "unrealized_pnl_usd": "-655.077327",
+          "cumulative_funding_all_time_usd": "-43035.000368",
+          "cumulative_funding_since_change_usd": "-0.642226",
+          "cumulative_funding_since_open_usd": "-243.490057"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "2Z",
+          "size": "373704.0",
+          "position_value_usd": "18236.381496",
+          "entry_price_usd": "0.04677",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "6078.793832",
+          "max_leverage_value": 3,
+          "return_on_equity": "0.1301009156",
+          "unrealized_pnl_usd": "757.985124",
+          "cumulative_funding_all_time_usd": "-10596.636719",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "-8046.287422"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "kFLOKI",
+          "size": "621440.0",
+          "position_value_usd": "15579.5008",
+          "entry_price_usd": "0.023948",
+          "liquidation_price_usd": null,
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "3115.90016",
+          "max_leverage_value": 5,
+          "return_on_equity": "0.234178224",
+          "unrealized_pnl_usd": "697.030111",
+          "cumulative_funding_all_time_usd": "-13307.25084",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "88.626318"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:SILVER",
+          "size": "-213.62",
+          "position_value_usd": "14231.57802",
+          "entry_price_usd": "66.6533",
+          "liquidation_price_usd": "46941.5578592782",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "4743.85934",
+          "max_leverage_value": 25,
+          "return_on_equity": "0.0014558983",
+          "unrealized_pnl_usd": "6.90993",
+          "cumulative_funding_all_time_usd": "1474.641115",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "0.0"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:RKLB",
+          "size": "175.45",
+          "position_value_usd": "11917.9676",
+          "entry_price_usd": "68.1443",
+          "liquidation_price_usd": "35.8665356152",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "-5978.14449",
+          "margin_used_usd": "5939.82311",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.0063503586",
+          "unrealized_pnl_usd": "-37.962221",
+          "cumulative_funding_all_time_usd": "-1169.062633",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "57.707075"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "FARTCOIN",
+          "size": "75321.8",
+          "position_value_usd": "11491.847026",
+          "entry_price_usd": "0.15301",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "3830.615675",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.0087268757",
+          "unrealized_pnl_usd": "-33.526835",
+          "cumulative_funding_all_time_usd": "-1853872.0490570001",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "0.264047"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:ASML",
+          "size": "5.016",
+          "position_value_usd": "8194.1376",
+          "entry_price_usd": "1639.357",
+          "liquidation_price_usd": "863.1202295811",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "-4112.940518",
+          "margin_used_usd": "4081.197082",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.0070241449",
+          "unrealized_pnl_usd": "-28.879833",
+          "cumulative_funding_all_time_usd": "-32.452921",
+          "cumulative_funding_since_change_usd": "0.144975",
+          "cumulative_funding_since_open_usd": "10.093081"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:CL",
+          "size": "-75.941",
+          "position_value_usd": "7344.937579",
+          "entry_price_usd": "96.705",
+          "liquidation_price_usd": "141.5208258401",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "11015.913861",
+          "margin_used_usd": "3670.976282",
+          "max_leverage_value": 20,
+          "return_on_equity": "-0.0002729997",
+          "unrealized_pnl_usd": "-1.002446",
+          "cumulative_funding_all_time_usd": "-24854.504831",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "0.0"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:CXMT",
+          "size": "-550.8",
+          "position_value_usd": "4507.36164",
+          "entry_price_usd": "8.22817",
+          "liquidation_price_usd": "11.7544050126",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "6798.042595",
+          "margin_used_usd": "2290.680955",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.0109070603",
+          "unrealized_pnl_usd": "24.715821",
+          "cumulative_funding_all_time_usd": "-1058.768002",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "0.287198"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:PALLADIUM",
+          "size": "1.6698",
+          "position_value_usd": "2206.30674",
+          "entry_price_usd": "1291.38",
+          "liquidation_price_usd": "0.6240384999",
+          "leverage_value": 1,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "-1.015969",
+          "margin_used_usd": "2205.290771",
+          "max_leverage_value": 20,
+          "return_on_equity": "0.0231637594",
+          "unrealized_pnl_usd": "49.949344",
+          "cumulative_funding_all_time_usd": "311.504993",
+          "cumulative_funding_since_change_usd": "0.041567",
+          "cumulative_funding_since_open_usd": "1.215711"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:CBRS",
+          "size": "10.36",
+          "position_value_usd": "2020.4072",
+          "entry_price_usd": "194.69",
+          "liquidation_price_usd": "102.4443017679",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "-1008.256818",
+          "margin_used_usd": "1012.150382",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.0033900046",
+          "unrealized_pnl_usd": "3.4188",
+          "cumulative_funding_all_time_usd": "-3523.191541",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "0.0"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:BABA",
+          "size": "14.92",
+          "position_value_usd": "1657.612",
+          "entry_price_usd": "108.344",
+          "liquidation_price_usd": "57.3632242133",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "-813.06634",
+          "margin_used_usd": "844.54566",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.050864312",
+          "unrealized_pnl_usd": "41.111103",
+          "cumulative_funding_all_time_usd": "38.831483",
+          "cumulative_funding_since_change_usd": "3.868661",
+          "cumulative_funding_since_open_usd": "5.117856"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:PLATINUM",
+          "size": "0.4801",
+          "position_value_usd": "866.19642",
+          "entry_price_usd": "1810.71",
+          "liquidation_price_usd": "0.0198356112",
+          "leverage_value": 1,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "-0.009285",
+          "margin_used_usd": "866.187135",
+          "max_leverage_value": 20,
+          "return_on_equity": "-0.0035979695",
+          "unrealized_pnl_usd": "-3.127802",
+          "cumulative_funding_all_time_usd": "48.192",
+          "cumulative_funding_since_change_usd": "0.0",
+          "cumulative_funding_since_open_usd": "0.040439"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:KIOXIA",
+          "size": "-0.73",
+          "position_value_usd": "249.7476",
+          "entry_price_usd": "326.0",
+          "liquidation_price_usd": "469.4943992172",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "359.867457",
+          "margin_used_usd": "110.119857",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.0988957055",
+          "unrealized_pnl_usd": "-11.7676",
+          "cumulative_funding_all_time_usd": "154.29442",
+          "cumulative_funding_since_change_usd": "-1.532753",
+          "cumulative_funding_since_open_usd": "-1.532753"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "GRIFFAIN",
+          "size": "-3535.0",
+          "position_value_usd": "46.997825",
+          "entry_price_usd": "0.007898",
+          "liquidation_price_usd": "9017.1824800219",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "15.665941",
+          "max_leverage_value": 3,
+          "return_on_equity": "-2.0498265448",
+          "unrealized_pnl_usd": "-19.077366",
+          "cumulative_funding_all_time_usd": "-108633.46173",
+          "cumulative_funding_since_change_usd": "-4.578819",
+          "cumulative_funding_since_open_usd": "-1367.528224"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "PURR",
+          "size": "121.0",
+          "position_value_usd": "15.54245",
+          "entry_price_usd": "0.087038",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "5.180816",
+          "max_leverage_value": 3,
+          "return_on_equity": "1.4273395542",
+          "unrealized_pnl_usd": "5.010764",
+          "cumulative_funding_all_time_usd": "-485366.058843",
+          "cumulative_funding_since_change_usd": "2.102282",
+          "cumulative_funding_since_open_usd": "2.102282"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "MOODENG",
+          "size": "245.0",
+          "position_value_usd": "10.49972",
+          "entry_price_usd": "0.094647",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "3.499906",
+          "max_leverage_value": 3,
+          "return_on_equity": "-1.6416051222",
+          "unrealized_pnl_usd": "-12.688795",
+          "cumulative_funding_all_time_usd": "-203120.411409",
+          "cumulative_funding_since_change_usd": "-2.437094",
+          "cumulative_funding_since_open_usd": "-2.437094"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "KAITO",
+          "size": "25.0",
+          "position_value_usd": "8.01925",
+          "entry_price_usd": "0.34043",
+          "liquidation_price_usd": null,
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "1.60385",
+          "max_leverage_value": 5,
+          "return_on_equity": "-0.2887524601",
+          "unrealized_pnl_usd": "-0.4915",
+          "cumulative_funding_all_time_usd": "-59934.641776",
+          "cumulative_funding_since_change_usd": "-4.669032",
+          "cumulative_funding_since_open_usd": "-4.679028"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "BERA",
+          "size": "36.9",
+          "position_value_usd": "7.2324",
+          "entry_price_usd": "0.2609",
+          "liquidation_price_usd": null,
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "1.44648",
+          "max_leverage_value": 5,
+          "return_on_equity": "-1.2438722206",
+          "unrealized_pnl_usd": "-2.395068",
+          "cumulative_funding_all_time_usd": "-5677.503192",
+          "cumulative_funding_since_change_usd": "0.027295",
+          "cumulative_funding_since_open_usd": "0.099703"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "xyz:SHAZ",
+          "size": "0.12",
+          "position_value_usd": "6.906",
+          "entry_price_usd": "70.1684",
+          "liquidation_price_usd": "37.3091578947",
+          "leverage_value": 2,
+          "leverage_type": "isolated",
+          "leverage_raw_usd": "-4.253244",
+          "margin_used_usd": "2.652756",
+          "max_leverage_value": 10,
+          "return_on_equity": "-0.3596616428",
+          "unrealized_pnl_usd": "-1.514214",
+          "cumulative_funding_all_time_usd": "-63.800512",
+          "cumulative_funding_since_change_usd": "0.042158",
+          "cumulative_funding_since_open_usd": "16.458579"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "ETHFI",
+          "size": "9.0",
+          "position_value_usd": "6.28704",
+          "entry_price_usd": "1.1562",
+          "liquidation_price_usd": null,
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "1.257408",
+          "max_leverage_value": 5,
+          "return_on_equity": "-1.9790693652",
+          "unrealized_pnl_usd": "-4.11876",
+          "cumulative_funding_all_time_usd": "-344.069616",
+          "cumulative_funding_since_change_usd": "0.871468",
+          "cumulative_funding_since_open_usd": "0.871468"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "CHIP",
+          "size": "132.0",
+          "position_value_usd": "5.609868",
+          "entry_price_usd": "0.03071",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "1.869956",
+          "max_leverage_value": 3,
+          "return_on_equity": "1.1516444155",
+          "unrealized_pnl_usd": "1.556148",
+          "cumulative_funding_all_time_usd": "8321.423754",
+          "cumulative_funding_since_change_usd": "0.071531",
+          "cumulative_funding_since_open_usd": "0.071531"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "BOME",
+          "size": "-5093.0",
+          "position_value_usd": "4.868908",
+          "entry_price_usd": "0.000572",
+          "liquidation_price_usd": "6258.727260546",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "1.622969",
+          "max_leverage_value": 3,
+          "return_on_equity": "-2.0057519085",
+          "unrealized_pnl_usd": "-1.95092",
+          "cumulative_funding_all_time_usd": "-499.126599",
+          "cumulative_funding_since_change_usd": "-0.127829",
+          "cumulative_funding_since_open_usd": "-498.425363"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "GOAT",
+          "size": "234.0",
+          "position_value_usd": "3.729024",
+          "entry_price_usd": "0.046428",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "1.243008",
+          "max_leverage_value": 3,
+          "return_on_equity": "-1.9702765572",
+          "unrealized_pnl_usd": "-7.135128",
+          "cumulative_funding_all_time_usd": "-322775.971787",
+          "cumulative_funding_since_change_usd": "-0.084854",
+          "cumulative_funding_since_open_usd": "-0.084854"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "kSHIB",
+          "size": "-584.0",
+          "position_value_usd": "3.148928",
+          "entry_price_usd": "0.014599",
+          "liquidation_price_usd": "58123.150508929",
+          "leverage_value": 10,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "0.314892",
+          "max_leverage_value": 10,
+          "return_on_equity": "6.3065963422",
+          "unrealized_pnl_usd": "5.376888",
+          "cumulative_funding_all_time_usd": "-128424.113547",
+          "cumulative_funding_since_change_usd": "-0.116052",
+          "cumulative_funding_since_open_usd": "-0.116052"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "INJ",
+          "size": "-0.4",
+          "position_value_usd": "2.60704",
+          "entry_price_usd": "7.83",
+          "liquidation_price_usd": "88543598.3760809302",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "0.521408",
+          "max_leverage_value": 10,
+          "return_on_equity": "0.8380587484",
+          "unrealized_pnl_usd": "0.52496",
+          "cumulative_funding_all_time_usd": "-2309.620832",
+          "cumulative_funding_since_change_usd": "-0.136709",
+          "cumulative_funding_since_open_usd": "-0.122499"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "PNUT",
+          "size": "-50.1",
+          "position_value_usd": "2.544078",
+          "entry_price_usd": "0.17553",
+          "liquidation_price_usd": "674801.5129567591",
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "0.848026",
+          "max_leverage_value": 5,
+          "return_on_equity": "2.1321141685",
+          "unrealized_pnl_usd": "6.249975",
+          "cumulative_funding_all_time_usd": "-6790.500274",
+          "cumulative_funding_since_change_usd": "-0.543114",
+          "cumulative_funding_since_open_usd": "-0.543114"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "STRK",
+          "size": "38.9",
+          "position_value_usd": "1.310541",
+          "entry_price_usd": "0.18052",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "0.436847",
+          "max_leverage_value": 5,
+          "return_on_equity": "-2.4401174385",
+          "unrealized_pnl_usd": "-5.711687",
+          "cumulative_funding_all_time_usd": "-40581.658669",
+          "cumulative_funding_since_change_usd": "0.122605",
+          "cumulative_funding_since_open_usd": "0.118202"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "STX",
+          "size": "-4.1",
+          "position_value_usd": "1.12422",
+          "entry_price_usd": "0.6031",
+          "liquidation_price_usd": "8245744.9705552105",
+          "leverage_value": 5,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "0.224844",
+          "max_leverage_value": 5,
+          "return_on_equity": "2.7267451501",
+          "unrealized_pnl_usd": "1.34849",
+          "cumulative_funding_all_time_usd": "-1530.067555",
+          "cumulative_funding_since_change_usd": "-0.087573",
+          "cumulative_funding_since_open_usd": "-0.339494"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "ZORA",
+          "size": "139.0",
+          "position_value_usd": "1.10366",
+          "entry_price_usd": "0.026761",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "0.367886",
+          "max_leverage_value": 3,
+          "return_on_equity": "-2.1099090225",
+          "unrealized_pnl_usd": "-2.616162",
+          "cumulative_funding_all_time_usd": "350.590967",
+          "cumulative_funding_since_change_usd": "-0.652056",
+          "cumulative_funding_since_open_usd": "-0.652056"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "TURBO",
+          "size": "853.0",
+          "position_value_usd": "0.82741",
+          "entry_price_usd": "0.002621",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "0.275803",
+          "max_leverage_value": 3,
+          "return_on_equity": "-1.8897367417",
+          "unrealized_pnl_usd": "-1.408303",
+          "cumulative_funding_all_time_usd": "-3603.965765",
+          "cumulative_funding_since_change_usd": "-0.492521",
+          "cumulative_funding_since_open_usd": "-0.562421"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "0G",
+          "size": "3.0",
+          "position_value_usd": "0.63372",
+          "entry_price_usd": "1.8125",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "0.21124",
+          "max_leverage_value": 3,
+          "return_on_equity": "-2.6503613793",
+          "unrealized_pnl_usd": "-4.80378",
+          "cumulative_funding_all_time_usd": "-869.897874",
+          "cumulative_funding_since_change_usd": "-5.265576",
+          "cumulative_funding_since_open_usd": "-5.265576"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "SOPH",
+          "size": "112.0",
+          "position_value_usd": "0.442288",
+          "entry_price_usd": "0.053636",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "0.147429",
+          "max_leverage_value": 5,
+          "return_on_equity": "-2.7791256875",
+          "unrealized_pnl_usd": "-5.565038",
+          "cumulative_funding_all_time_usd": "-4952.632661",
+          "cumulative_funding_since_change_usd": "-1.711496",
+          "cumulative_funding_since_open_usd": "-4952.632661"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "LAYER",
+          "size": "6.0",
+          "position_value_usd": "0.42822",
+          "entry_price_usd": "1.141",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "0.14274",
+          "max_leverage_value": 3,
+          "return_on_equity": "-2.8123488168",
+          "unrealized_pnl_usd": "-6.41778",
+          "cumulative_funding_all_time_usd": "38329.977543",
+          "cumulative_funding_since_change_usd": "-1.045317",
+          "cumulative_funding_since_open_usd": "-1.045317"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "USUAL",
+          "size": "17.7",
+          "position_value_usd": "0.214524",
+          "entry_price_usd": "0.15174",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "0.071508",
+          "max_leverage_value": 5,
+          "return_on_equity": "-2.7603795967",
+          "unrealized_pnl_usd": "-2.471274",
+          "cumulative_funding_all_time_usd": "-52971.509411",
+          "cumulative_funding_since_change_usd": "-0.109645",
+          "cumulative_funding_since_open_usd": "-0.108809"
+        },
+        "position_type": "oneWay"
+      },
+      {
+        "position": {
+          "token_symbol": "ME",
+          "size": "2.1",
+          "position_value_usd": "0.137445",
+          "entry_price_usd": "1.5",
+          "liquidation_price_usd": null,
+          "leverage_value": 3,
+          "leverage_type": "cross",
+          "leverage_raw_usd": null,
+          "margin_used_usd": "0.045815",
+          "max_leverage_value": 5,
+          "return_on_equity": "-2.8691",
+          "unrealized_pnl_usd": "-3.012555",
+          "cumulative_funding_all_time_usd": "-5810.779601",
+          "cumulative_funding_since_change_usd": "-1.360765",
+          "cumulative_funding_since_open_usd": "-1.369688"
+        },
+        "position_type": "oneWay"
+      }
+    ],
+    "cross_maintenance_margin_used_usd": "4463452.1528599998",
+    "cross_margin_summary_account_value_usd": "41651760.7334220037",
+    "cross_margin_summary_total_margin_used_usd": "14782913.6706750002",
+    "cross_margin_summary_total_net_liquidation_position_on_usd": "110449971.0288150012",
+    "cross_margin_summary_total_raw_usd": "137847979.6304630041",
+    "margin_summary_account_value_usd": "43156772.8025669977",
+    "margin_summary_total_margin_used_usd": "16287925.7398199998",
+    "margin_summary_total_net_liquidation_position_usd": "112255751.912864998",
+    "margin_summary_total_raw_usd": "141158772.5836580098",
+    "timestamp": 1789735496963,
+    "withdrawable_usd": "17199276.5957229994"
+  }
+}
