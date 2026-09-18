@@ -176,6 +176,29 @@ describe('explain', () => {
     );
   });
 
+  it('counts only funding wallets holding at least 1% of the short', () => {
+    const e = explain(
+      input({
+        verdict: { verdict: 'unknown', strength: null, reasons: ['signals disagree: not enough evidence for book, hedge, or bet'] },
+        positions: positions({ nPositions: 15, headlineShare: 0.39, headlineNotionalUsd: 264_000_000 }),
+        linkedHedge: {
+          linkedHedgeUsd: 9_855_747,
+          linkedHedgeRatio: 0.0373,
+          funders: [
+            { address: '0xaaa', relation: 'First Funder', chain: 'arbitrum', matchingUsd: 9_855_746 },
+            { address: '0xbbb', relation: 'First Funder', chain: 'ethereum', matchingUsd: 1 },
+          ],
+        },
+      }),
+    );
+    expect(e.evidence).toContainEqual({ label: 'Hedge found', value: '3.7% via 1 funding wallet', source: 'Nansen' });
+  });
+
+  it('says no trades were closed instead of a zero PnL', () => {
+    const e = explain(input({ pnl: { realizedPnlUsd: 0, winRate: 0, closedTrades: 0, windowDays: 30 } }));
+    expect(e.evidence).toContainEqual({ label: 'Realized PnL, 30d', value: 'no closed trades', source: 'Nansen' });
+  });
+
   it('labels positions read from Hyperliquid when Nansen was not used', () => {
     const e = explain(input({ source: 'hyperliquid', pnl: null, hedgeScope: 'hyperliquid' }));
     expect(e.evidence[0]).toEqual({ label: 'Largest position', value: '$100.0M ETH short', source: 'Hyperliquid' });

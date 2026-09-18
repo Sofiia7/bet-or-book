@@ -72,9 +72,15 @@ function fillsText(t: TradeFeatures): string {
   return `${count(t.sampleSize)}${t.cappedByApiLimit ? '+' : ''}`;
 }
 
-/** Linked wallets that actually hold the headline asset. */
-function matchingFunders(linked: LinkedHedgeFeatures | null): number {
-  return linked ? linked.funders.filter((f) => f.matchingUsd > 0).length : 0;
+/** A funding wallet counts as holding the hedge from 1% of the headline up:
+ * "via 2 funding wallets" should not stand for one wallet and $1 of dust. */
+const MIN_FUNDER_SHARE = 0.01;
+
+/** Linked wallets that hold a meaningful amount of the headline asset. */
+function matchingFunders(linked: LinkedHedgeFeatures | null, headlineNotionalUsd: number): number {
+  if (!linked) return 0;
+  return linked.funders.filter((f) => f.matchingUsd > 0 && f.matchingUsd >= MIN_FUNDER_SHARE * headlineNotionalUsd)
+    .length;
 }
 
 function bookSummary(input: EvidenceInput): string {
@@ -100,7 +106,7 @@ function hedgedSummary(input: EvidenceInput): string {
   }
   if (reason === 'linked_wallet_hedge') {
     const total = h.hedgeRatio + (input.linkedHedge?.linkedHedgeRatio ?? 0);
-    const k = matchingFunders(input.linkedHedge);
+    const k = matchingFunders(input.linkedHedge, p.headlineNotionalUsd);
     const holders = k === 1 ? 'a wallet' : `${count(k)} wallets`;
     return (
       `The ${formatUsd(p.headlineNotionalUsd)} ${p.headlineCoin} short is ${formatPct(total)} covered by ` +
@@ -146,7 +152,7 @@ function undecidedSummary(input: EvidenceInput): string {
 
 function hedgeItem(input: EvidenceInput): EvidenceItem | null {
   if (input.hedgeScope === 'none') return null;
-  const k = matchingFunders(input.linkedHedge);
+  const k = matchingFunders(input.linkedHedge, input.positions.headlineNotionalUsd);
   if (input.linkedHedge && k > 0) {
     const total = input.hedge.hedgeRatio + input.linkedHedge.linkedHedgeRatio;
     return { label: 'Hedge found', value: `${formatPct(total)} via ${plural(k, 'funding wallet')}`, source: 'Nansen' };
@@ -158,7 +164,9 @@ function hedgeItem(input: EvidenceInput): EvidenceItem | null {
 }
 
 function pnlItem(pnl: PnlSummary | null): EvidenceItem | null {
-  return pnl ? { label: `Realized PnL, ${pnl.windowDays}d`, value: formatUsd(pnl.realizedPnlUsd), source: 'Nansen' } : null;
+  if (!pnl) return null;
+  const value = pnl.closedTrades === 0 ? 'no closed trades' : formatUsd(pnl.realizedPnlUsd);
+  return { label: `Realized PnL, ${pnl.windowDays}d`, value, source: 'Nansen' };
 }
 
 export function explain(input: EvidenceInput): Explanation {
