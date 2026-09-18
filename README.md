@@ -166,4 +166,4 @@ Checked against a twelve-point launch checklist ([`docs/specs/2026-09-17-bet-or-
 
 ## Stack
 
-Cloudflare Workers and Workers KV, TypeScript, Vitest (102 tests on recorded real responses). No runtime dependencies, no frontend framework: one HTML page with a canvas for the share card.
+Cloudflare Workers and Workers KV, TypeScript, Vitest (108 tests on recorded real responses). No runtime dependencies, no frontend framework: one HTML page with a canvas for the share card.
