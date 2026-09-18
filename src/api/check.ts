@@ -28,10 +28,11 @@ import {
   type PositionFeatures,
   type OrderFeatures,
   type HedgeFeatures,
+  type HedgeScope,
   type LinkedHedgeFeatures,
   type TradeFeatures,
 } from '../engine/features';
-import { computeVerdict, type VerdictResult } from '../engine/verdict';
+import { computeVerdict, hedgeCanChangeVerdict, DEFAULT_THRESHOLDS, type VerdictResult } from '../engine/verdict';
 import type { Position, SpotHolding, LinkedWallet, PnlSummary } from '../types';
 
 const TRADES_WINDOW_HOURS = 24;
@@ -50,6 +51,7 @@ export interface CheckResult {
   positions: PositionFeatures;
   orders: OrderFeatures;
   hedge: HedgeFeatures;
+  hedgeScope: HedgeScope;
   linkedHedge: LinkedHedgeFeatures | null;
   trades: TradeFeatures;
   pnl: PnlSummary | null;
@@ -60,12 +62,18 @@ export interface CheckResult {
   checkedAt: string;
 }
 
+/** Reads in stages so that every Nansen credit is spent only where its answer
+ * can still change the verdict: positions and PnL always; the account's own
+ * balances on other chains only when a hedge could move the answer; linked
+ * wallets only when those balances leave it open. */
 export async function checkAddress(address: string, opts: CheckOptions): Promise<CheckResult> {
   const now = (opts.now ?? Date.now)();
   const day = (daysAgo: number) => new Date(now - daysAgo * 86_400_000).toISOString().slice(0, 10);
   const coverage: string[] = [];
   const nansen = opts.nansen;
 
+  // The free reads go first: if Hyperliquid is down, the check fails before a
+  // single credit is spent.
   const [rawOrders, spotBalances, spotMetaPair, perpMetaPair, rawFills] = await Promise.all([
     getOpenOrders(address),
     getSpotBalances(address),
@@ -77,16 +85,11 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
   let source: CheckResult['source'] = 'hyperliquid';
   let positions: Position[] | null = null;
   let pnl: PnlSummary | null = null;
-  let ownChain: SpotHolding[] = [];
-  const links: LinkedWallet[] = [];
 
   if (nansen) {
-    const [pos, pnlRes, bal, relArb, relEth] = await Promise.allSettled([
+    const [pos, pnlRes] = await Promise.allSettled([
       nansen.perpPositions(address),
       nansen.perpPnlSummary(address, day(PNL_WINDOW_DAYS), day(0)),
-      nansen.currentBalance(address),
-      nansen.relatedWallets(address, 'arbitrum'),
-      nansen.relatedWallets(address, 'ethereum'),
     ]);
     if (pos.status === 'fulfilled') {
       positions = normalizeNansenPositions(pos.value);
@@ -96,16 +99,6 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     }
     if (pnlRes.status === 'fulfilled') pnl = normalizeNansenPnl(pnlRes.value, PNL_WINDOW_DAYS);
     else coverage.push('Realized PnL unavailable');
-    if (bal.status === 'fulfilled') {
-      ownChain = normalizeNansenBalances(bal.value.rows);
-      if (!bal.value.complete) coverage.push('Holdings on other chains: first 100 tokens only');
-    } else {
-      coverage.push('Holdings on other chains unavailable');
-    }
-    for (const r of [relArb, relEth]) {
-      if (r.status === 'fulfilled') links.push(...normalizeRelatedWallets(r.value));
-      else coverage.push('Linked wallets unavailable on one chain');
-    }
   } else {
     coverage.push('Nansen not used: main-dex positions only, no other chains, no linked wallets');
   }
@@ -113,6 +106,25 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
 
   const positionFeatures = computePositionFeatures(positions);
   const orderFeatures = computeOrderFeatures(normalizeOrders(rawOrders));
+  const tradeFeatures = computeTradeFeatures(normalizeTrades(rawFills), TRADES_WINDOW_HOURS);
+  const hedgeMatters = hedgeCanChangeVerdict({
+    positions: positionFeatures,
+    orders: orderFeatures,
+    trades: { tradesPerDay: tradeFeatures.tradesPerDay, crossedShare: tradeFeatures.crossedShare },
+  });
+
+  let ownChain: SpotHolding[] = [];
+  let otherChainsRead = false;
+  if (nansen && hedgeMatters) {
+    try {
+      const bal = await nansen.currentBalance(address);
+      ownChain = normalizeNansenBalances(bal.rows);
+      otherChainsRead = true;
+      if (!bal.complete) coverage.push('Holdings on other chains: first 100 tokens only');
+    } catch {
+      coverage.push('Holdings on other chains unavailable');
+    }
+  }
   const [spotMeta, spotAssetCtxs] = spotMetaPair;
   const hlSpot = normalizeSpotHoldings(spotBalances.balances, buildSpotPriceIndex(spotMeta, spotAssetCtxs));
   const hedgeFeatures = computeHedgeFeatures(
@@ -121,39 +133,14 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     positionFeatures.headlineNotionalUsd,
     [...hlSpot, ...ownChain],
   );
+  const hedgeScope: HedgeScope =
+    positionFeatures.headlineSide !== 'short' ? 'none' : otherChainsRead ? 'all-chains' : 'hyperliquid';
 
-  // A funder costs a credit, so it is read only when it could change the
-  // answer: the headline is a short that the account's own holdings do not
-  // already hedge.
-  let linkedHedge: LinkedHedgeFeatures | null = null;
-  if (nansen) {
-    const firstFunders = links.filter((w) => w.relation === 'First Funder' && w.address !== address.toLowerCase());
-    const skipped = firstFunders.filter((w) => w.isSharedService).length;
-    if (skipped > 0) coverage.push(`${skipped} funding link(s) lead to an exchange or bridge and were not followed`);
-    const candidates = firstFunders
-      .filter((w) => !w.isSharedService)
-      .filter((w, i, all) => all.findIndex((x) => x.address === w.address) === i)
-      .slice(0, MAX_FUNDERS);
-    const worthIt =
-      positionFeatures.headlineSide === 'short' && hedgeFeatures.hedgeRatio < 0.5 && candidates.length > 0;
-    if (worthIt) {
-      const balances = await Promise.allSettled(candidates.map((w) => nansen.currentBalance(w.address)));
-      const linked = candidates.flatMap((wallet, i) => {
-        const b = balances[i];
-        if (b.status === 'fulfilled') return [{ wallet, holdings: normalizeNansenBalances(b.value.rows) }];
-        coverage.push('One linked wallet could not be read');
-        return [];
-      });
-      linkedHedge = computeLinkedHedge(
-        positionFeatures.headlineCoin,
-        positionFeatures.headlineSide,
-        positionFeatures.headlineNotionalUsd,
-        linked,
-      );
-    }
-  }
+  const linkedHedge =
+    nansen && hedgeMatters && hedgeFeatures.hedgeRatio < DEFAULT_THRESHOLDS.hedged.minHedgeRatio
+      ? await readLinkedHedge(nansen, address, positionFeatures, coverage)
+      : null;
 
-  const tradeFeatures = computeTradeFeatures(normalizeTrades(rawFills), TRADES_WINDOW_HOURS);
   const [perpMeta, perpAssetCtxs] = perpMetaPair;
   const headlineIndex = perpMeta.universe.findIndex((a) => a.name === positionFeatures.headlineCoin);
   const openInterestUsd =
@@ -178,6 +165,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     positions: positionFeatures,
     orders: orderFeatures,
     hedge: hedgeFeatures,
+    hedgeScope,
     linkedHedge,
     trades: tradeFeatures,
     pnl,
@@ -186,4 +174,47 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     coverage,
     checkedAt: new Date(now).toISOString(),
   };
+}
+
+/** Two credits for the funding links, then one per funder followed: First
+ * Funders only, never an exchange or bridge, at most two. Returns null when
+ * no link is worth following. */
+async function readLinkedHedge(
+  nansen: NansenClient,
+  address: string,
+  positionFeatures: PositionFeatures,
+  coverage: string[],
+): Promise<LinkedHedgeFeatures | null> {
+  const links: LinkedWallet[] = [];
+  const related = await Promise.allSettled([
+    nansen.relatedWallets(address, 'arbitrum'),
+    nansen.relatedWallets(address, 'ethereum'),
+  ]);
+  for (const r of related) {
+    if (r.status === 'fulfilled') links.push(...normalizeRelatedWallets(r.value));
+    else coverage.push('Linked wallets unavailable on one chain');
+  }
+
+  const firstFunders = links.filter((w) => w.relation === 'First Funder' && w.address !== address.toLowerCase());
+  const skipped = firstFunders.filter((w) => w.isSharedService).length;
+  if (skipped > 0) coverage.push(`${skipped} funding link(s) lead to an exchange or bridge and were not followed`);
+  const candidates = firstFunders
+    .filter((w) => !w.isSharedService)
+    .filter((w, i, all) => all.findIndex((x) => x.address === w.address) === i)
+    .slice(0, MAX_FUNDERS);
+  if (candidates.length === 0) return null;
+
+  const balances = await Promise.allSettled(candidates.map((w) => nansen.currentBalance(w.address)));
+  const linked = candidates.flatMap((wallet, i) => {
+    const b = balances[i];
+    if (b.status === 'fulfilled') return [{ wallet, holdings: normalizeNansenBalances(b.value.rows) }];
+    coverage.push('One linked wallet could not be read');
+    return [];
+  });
+  return computeLinkedHedge(
+    positionFeatures.headlineCoin,
+    positionFeatures.headlineSide,
+    positionFeatures.headlineNotionalUsd,
+    linked,
+  );
 }

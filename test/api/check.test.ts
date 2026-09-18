@@ -1,6 +1,14 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { checkAddress } from '../../src/api/check';
-import { createNansenClient, type NansenCallMeta } from '../../src/sources/nansen';
+import {
+  createNansenClient,
+  type NansenCallMeta,
+  type NansenClient,
+  type NansenPerpPositions,
+  type NansenPnlSummary,
+  type NansenBalance,
+  type NansenRelatedWallet,
+} from '../../src/sources/nansen';
 import abxClearinghouse from '../fixtures/hyperliquid/abraxas/clearinghouse.json';
 import abxOrders from '../fixtures/hyperliquid/abraxas/open-orders.json';
 import abxSpot from '../fixtures/hyperliquid/abraxas/spot-balances.json';
@@ -58,6 +66,54 @@ function route(failNansen: string[] = []) {
   }) as unknown as typeof fetch;
 }
 
+/** A client that answers from memory and counts calls per method - for
+ * asserting which reads a check skips, not what Nansen returns. */
+function fakeNansen(opts: { positions: NansenPerpPositions; balances?: NansenBalance[] }) {
+  return {
+    perpPositions: vi.fn(async () => opts.positions),
+    perpPnlSummary: vi.fn(async () => abxPnl.data as unknown as NansenPnlSummary),
+    currentBalance: vi.fn(async () => ({ rows: opts.balances ?? [], complete: true })),
+    relatedWallets: vi.fn(async () => [] as NansenRelatedWallet[]),
+  } satisfies NansenClient;
+}
+
+function syntheticPositions(list: Array<{ coin: string; size: number; valueUsd: number }>): NansenPerpPositions {
+  return {
+    asset_positions: list.map((p) => ({
+      position: {
+        token_symbol: p.coin,
+        size: String(p.size),
+        position_value_usd: String(p.valueUsd),
+        entry_price_usd: '100',
+        liquidation_price_usd: null,
+        leverage_value: 5,
+        leverage_type: 'cross',
+        margin_used_usd: '0',
+        unrealized_pnl_usd: '0',
+        cumulative_funding_since_open_usd: '0',
+        return_on_equity: '0',
+      },
+      position_type: 'oneWay',
+    })),
+    margin_summary_account_value_usd: '0',
+    withdrawable_usd: '0',
+    timestamp: 0,
+  };
+}
+
+function balanceRow(symbol: string, valueUsd: number): NansenBalance {
+  return {
+    chain: 'ethereum',
+    address: ABRAXAS,
+    token_address: '0x0',
+    token_symbol: symbol,
+    token_name: symbol,
+    token_amount: 1,
+    price_usd: valueUsd,
+    value_usd: valueUsd,
+  };
+}
+
 describe('checkAddress (offline, real fixtures)', () => {
   const originalFetch = global.fetch;
   afterEach(() => {
@@ -93,6 +149,49 @@ describe('checkAddress (offline, real fixtures)', () => {
     expect(result.source).toBe('hyperliquid');
     expect(result.positions.nPositions).toBe(14);
     expect(result.coverage.some((c) => c.includes('main dex'))).toBe(true);
+  });
+
+  it('reads nothing past positions and PnL for a book', async () => {
+    route();
+    // Thirty offsetting positions fire book rule (а) on positions alone. Not
+    // Wintermute's real set: its Nansen net/gross is 0.80, and what makes it a
+    // book live is its orders and fills, which these Abraxas fixtures lack.
+    const offsetting = Array.from({ length: 30 }, (_, i) => ({
+      coin: `C${i}`,
+      size: i % 2 === 0 ? 10 : -10,
+      valueUsd: 1_000_000,
+    }));
+    const nansen = fakeNansen({ positions: syntheticPositions(offsetting) });
+    const result = await checkAddress(ABRAXAS, { nansen });
+    expect(result.verdict.verdict).toBe('book');
+    expect(nansen.perpPositions).toHaveBeenCalledTimes(1);
+    expect(nansen.perpPnlSummary).toHaveBeenCalledTimes(1);
+    expect(nansen.currentBalance).not.toHaveBeenCalled();
+    expect(nansen.relatedWallets).not.toHaveBeenCalled();
+  });
+
+  it('reads nothing past positions and PnL when the headline is a long', async () => {
+    route();
+    const nansen = fakeNansen({ positions: syntheticPositions([{ coin: 'BTC', size: 500, valueUsd: 50_000_000 }]) });
+    const result = await checkAddress(ABRAXAS, { nansen });
+    expect(result.positions.headlineSide).toBe('long');
+    expect(result.hedgeScope).toBe('none');
+    expect(nansen.currentBalance).not.toHaveBeenCalled();
+    expect(nansen.relatedWallets).not.toHaveBeenCalled();
+  });
+
+  it('stops after own balances when they already hedge the short', async () => {
+    route();
+    const nansen = fakeNansen({
+      positions: syntheticPositions([{ coin: 'ETH', size: -25_000, valueUsd: 100_000_000 }]),
+      balances: [balanceRow('WETH', 60_000_000)],
+    });
+    const result = await checkAddress(ABRAXAS, { nansen });
+    expect(result.verdict.verdict).toBe('hedged');
+    expect(result.verdict.reasons).toEqual(['hedge_leg']);
+    expect(result.hedgeScope).toBe('all-chains');
+    expect(nansen.currentBalance).toHaveBeenCalledTimes(1);
+    expect(nansen.relatedWallets).not.toHaveBeenCalled();
   });
 
   it('runs Hyperliquid-only when no Nansen client is given', async () => {

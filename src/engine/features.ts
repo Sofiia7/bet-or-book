@@ -83,6 +83,12 @@ export interface HedgeFeatures {
   hedgeRatio: number;
 }
 
+/** What a hedge ratio was measured over: `none` when the headline is not a
+ * short (spot cannot offset it, so the ratio is zero by definition),
+ * `all-chains` when the account's balances on every chain were read,
+ * `hyperliquid` when only its Hyperliquid spot was. */
+export type HedgeScope = 'none' | 'hyperliquid' | 'all-chains';
+
 /** Spot can offset only a short: holding the asset while also long the perp
  * is more of the same bet, not a hedge. */
 export function computeHedgeFeatures(
