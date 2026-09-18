@@ -113,3 +113,48 @@ shape already driving the `looks_like_a_bet` verdict.
 // 0xbf732ea04197942783e34730ed6e0f6099575d58 (ZEC long)
 {"address":"0xbf732ea04197942783e34730ed6e0f6099575d58","verdict":{"verdict":"looks_like_a_bet","strength":null,"reasons":["directional_concentration"]},"positions":{"nPositions":1,"grossUsd":21553257.782596,"netUsd":21553257.782596,"netToGross":1,"headlineCoin":"ZEC","headlineNotionalUsd":21553257.782596,"headlineShare":1,"headlineLiqDistancePct":0.16979161887224903},"orders":{"restingOrders":28,"bidShare":0,"coinsBothSides":0},"hedge":{"hedgeUsd":0,"hedgeRatio":0},"trades":{"tradesPerDay":1482,"crossedShare":0.9507422402159245,"sampleSize":1482,"cappedByApiLimit":false},"sizeVsOi":0.02280365610511598,"source":"hyperliquid","checkedAt":"2026-09-17T17:25:39.235Z"}
 ```
+
+## 2026-09-18, after Nansen
+
+Same three addresses, one live check each through the Worker
+(`wrangler dev`, key from `.dev.vars`), source `nansen` for all three,
+`coverage` empty for all three. Spend read back from the Worker's own KV
+ledger: 19 calls, 19 credits, last reported balance 974 (7 + 7 + 5: the
+ZEC account's headline is a long, so its funders were not read - spot
+cannot hedge a long).
+
+| Address | Hyperliquid-only (17.09) | With Nansen (18.09) |
+|---|---|---|
+| Wintermute | book (strong), 85 positions | book (strong), **134 positions** (48 on HIP-3 dexes the default Hyperliquid call never reads), realized PnL 30d **-$13.6M** over 2.4M closed trades |
+| Abraxas-linked | unknown, 14 positions, no hedge visible | **hedged (probable)**, 17 positions (3 on HIP-3, incl. a $26.4M `xyz:GOLD` short), ETH short $179.4M covered **222%** by its two First Funders |
+| ZEC long | looks like a bet | looks like a bet, realized PnL 30d **+$7.7M**, win rate 59.8% |
+
+**Abraxas, the case Phase 1 could not answer.** Its own address holds
+no hedge on any chain (largest holding $3.3k). Nansen's related-wallets
+names two First Funders, one per chain, and neither is labeled as an
+exchange (labels checked internally, never stored or shown):
+
+| Funder | Chain | ETH-like holdings | What |
+|---|---|---|---|
+| `0xb38e...891d` | Arbitrum | $31.4M | ETH |
+| `0xed0c...4312` | Ethereum | $367.6M | weETH $136.3M, aEthWETH (Aave) $117.5M, wstETH $113.7M, rsETH, ETH |
+
+About $399M of staked and wrapped ETH against a $179.4M ETH short is a
+delta-neutral carry trade, not a bet on ETH falling - the opposite of
+the "$980M of shorts, bearish signal" reading in the press (CryptoBriefing,
+14.09). The verdict strength is `probable`, not plain `hedged`:
+ownership through a funding link is inferred, not proven, and the card
+has to say so. The BTC and SOL shorts ($138M together) have no hedge
+visible on-chain.
+
+**Wintermute's funders** were read too (2 credits: headline is a short,
+own hedge 3.8%) and hold $913 of ETH between them - the book verdict
+had already been decided by orders and trades, so those two calls
+changed nothing. Worth skipping funder reads once a book signal fires;
+noted for Phase 2b, not changed here.
+
+**ZEC's PnL** makes the useful contrast for the card: the one account
+here that is actually a directional bet is also the one with positive
+realized PnL (+$7.7M in 30 days). "Looks like a bet" answers what the
+position is; the PnL line answers whether copying the wallet would
+have paid.
