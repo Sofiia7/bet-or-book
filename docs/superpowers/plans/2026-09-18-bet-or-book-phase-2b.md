@@ -10,7 +10,7 @@
 
 ## Budget, stated once
 
-On 18.09: 31 calls made (12 fixture captures + 19 through `wrangler dev`), 974 credits left, every call 1 credit. The buildathon needs 1 000 calls inside 14-27.09, so 969 more. Sofia's word on 18.09: "continue to the end with the live key, I will top up if needed".
+On 18.09: 31 calls made (12 fixture captures + 19 through `wrangler dev`), 974 credits left, every call 1 credit. The buildathon needs 1 000 calls inside 14-27.09, so 969 more. Decision on 18.09: continue with the live key; a credit top-up is acceptable if needed.
 
 Two documented facts from `docs.nansen.ai/getting-started/credits` (read 18.09): all endpoints we use cost 1 credit; the free plan tops the balance up to 10 credits daily when it falls below 10. What the API returns when credits run out is not documented - Task 3 treats 401/402/403 as "stop using Nansen for today".
 
