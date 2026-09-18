@@ -97,9 +97,27 @@ function installHyperliquidRetry(): void {
   }) as typeof fetch;
 }
 
+/** On Windows a rename over a file another process has open (the dev
+ * server's watcher reading the gallery, an editor) fails with EPERM or
+ * EBUSY; seen live 18.09 on check 41. Retry, then write in place - the data
+ * matters more than the atomicity. */
 function writeAtomically(path: string, data: unknown): void {
-  writeFileSync(`${path}.tmp`, JSON.stringify(data, null, 1) + '\n');
-  renameSync(`${path}.tmp`, path);
+  const text = JSON.stringify(data, null, 1) + '\n';
+  writeFileSync(`${path}.tmp`, text);
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      renameSync(`${path}.tmp`, path);
+      return;
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      if (code !== 'EPERM' && code !== 'EBUSY' && code !== 'EACCES') throw err;
+      const until = Date.now() + 200 * (attempt + 1);
+      while (Date.now() < until) {
+        // brief synchronous wait before the next attempt
+      }
+    }
+  }
+  writeFileSync(path, text);
 }
 
 async function rankCandidates(pool: number): Promise<Candidate[]> {
