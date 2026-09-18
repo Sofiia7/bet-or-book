@@ -72,7 +72,9 @@ export interface VerdictResult {
   reasons: string[];
 }
 
-function bookSignals(input: VerdictInput, t: VerdictThresholds['book']): string[] {
+type StructureInput = Pick<VerdictInput, 'positions' | 'orders' | 'trades'>;
+
+function bookSignals(input: StructureInput, t: VerdictThresholds['book']): string[] {
   const signals: string[] = [];
   if (input.positions.nPositions >= t.minPositions && input.positions.netToGross <= t.maxNetToGross) {
     signals.push('positions');
@@ -95,6 +97,31 @@ function bookSignals(input: VerdictInput, t: VerdictThresholds['book']): string[
   return signals;
 }
 
+function isBalancedBook(input: StructureInput, thresholds: VerdictThresholds): boolean {
+  const h = thresholds.hedged;
+  return (
+    input.positions.nPositions >= h.minPositionsForBalancedBook &&
+    input.positions.nPositions <= h.maxPositionsForBalancedBook &&
+    input.positions.netToGross <= thresholds.book.maxNetToGross
+  );
+}
+
+/** A hedge read costs a credit, so it is worth making only when its answer
+ * could move the verdict: positions exist, no book signal fired, the book is
+ * not already balanced, and the headline is a short - spot offsets nothing
+ * else. Mirrors the order of the rules in computeVerdict. */
+export function hedgeCanChangeVerdict(
+  input: StructureInput,
+  thresholds: VerdictThresholds = DEFAULT_THRESHOLDS,
+): boolean {
+  return (
+    input.positions.nPositions > 0 &&
+    input.positions.headlineSide === 'short' &&
+    bookSignals(input, thresholds.book).length === 0 &&
+    !isBalancedBook(input, thresholds)
+  );
+}
+
 export function computeVerdict(
   input: VerdictInput,
   thresholds: VerdictThresholds = DEFAULT_THRESHOLDS,
@@ -109,10 +136,7 @@ export function computeVerdict(
   }
 
   const h = thresholds.hedged;
-  const balancedBook =
-    input.positions.nPositions >= h.minPositionsForBalancedBook &&
-    input.positions.nPositions <= h.maxPositionsForBalancedBook &&
-    input.positions.netToGross <= thresholds.book.maxNetToGross;
+  const balancedBook = isBalancedBook(input, thresholds);
   if (input.hedge.hedgeRatio >= h.minHedgeRatio || balancedBook) {
     return {
       verdict: 'hedged',

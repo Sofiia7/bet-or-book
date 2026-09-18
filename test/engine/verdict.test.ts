@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeVerdict, DEFAULT_THRESHOLDS } from '../../src/engine/verdict';
+import { computeVerdict, hedgeCanChangeVerdict, DEFAULT_THRESHOLDS } from '../../src/engine/verdict';
 import type { PositionFeatures, OrderFeatures, HedgeFeatures } from '../../src/engine/features';
 
 function positions(overrides: Partial<PositionFeatures>): PositionFeatures {
@@ -126,5 +126,40 @@ describe('computeVerdict', () => {
       linkedHedge: { linkedHedgeRatio: 0.2 },
     });
     expect(result.verdict).toBe('unknown');
+  });
+});
+
+describe('hedgeCanChangeVerdict', () => {
+  const concentratedShort = positions({
+    nPositions: 1,
+    netToGross: 1,
+    headlineShare: 1,
+    headlineCoin: 'ETH',
+    headlineSide: 'short',
+    headlineNotionalUsd: 100_000_000,
+  });
+
+  it('is true for a concentrated short with no book signal', () => {
+    expect(hedgeCanChangeVerdict({ positions: concentratedShort, orders: orders({}) })).toBe(true);
+  });
+
+  it('is false for a long headline - spot offsets only a short', () => {
+    expect(
+      hedgeCanChangeVerdict({ positions: { ...concentratedShort, headlineSide: 'long' }, orders: orders({}) }),
+    ).toBe(false);
+  });
+
+  it('is false when a book signal already fired', () => {
+    const many = positions({ ...concentratedShort, nPositions: 40, netToGross: 0.1, headlineShare: 0.1 });
+    expect(hedgeCanChangeVerdict({ positions: many, orders: orders({}) })).toBe(false);
+  });
+
+  it('is false for a balanced book', () => {
+    const balanced = positions({ ...concentratedShort, nPositions: 6, netToGross: 0.2, headlineShare: 0.3 });
+    expect(hedgeCanChangeVerdict({ positions: balanced, orders: orders({}) })).toBe(false);
+  });
+
+  it('is false with no positions', () => {
+    expect(hedgeCanChangeVerdict({ positions: positions({}), orders: orders({}) })).toBe(false);
   });
 });
