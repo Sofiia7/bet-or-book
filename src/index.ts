@@ -5,7 +5,11 @@ import { safeKv } from './safeKv';
 import { recordCalls, nansenAllowed } from './credits';
 import { createNansenClient, type NansenCallMeta } from './sources/nansen';
 import pageHtml from '../web/index.html';
+import galleryData from '../data/gallery.json';
+import type { Gallery } from './gallery';
 import type { KVLike } from './kv';
+
+const gallery = galleryData as unknown as Gallery;
 
 interface Env {
   KV: KVLike;
@@ -54,7 +58,8 @@ export default {
               })
             : null;
           try {
-            return await checkAddress(address, { nansen });
+            const result = await checkAddress(address, { nansen });
+            return { ...result, nansenCalls: calls.length };
           } finally {
             await recordCalls(kv, day, calls);
           }
@@ -64,6 +69,10 @@ export default {
         console.error('check failed', err);
         return Response.json({ error: 'could not read this address right now, try again shortly' }, { status: 502 });
       }
+    }
+
+    if (url.pathname === '/api/gallery') {
+      return Response.json(gallery, { headers: { 'cache-control': 'public, max-age=300' } });
     }
 
     if (url.pathname === '/') {

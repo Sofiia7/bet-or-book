@@ -1,0 +1,256 @@
+{
+ "scannedAt": "2026-09-18T13:48:18.389Z",
+ "finishedAt": "2026-09-18T13:48:29.061Z",
+ "universe": "Largest open positions among the top 1,000 Hyperliquid accounts by value",
+ "entries": [
+  {
+   "address": "0xecb63caa47c7c4e77f60f1ce858cf28dc2b82b00",
+   "verdict": {
+    "verdict": "book",
+    "strength": "strong",
+    "reasons": [
+     "orders",
+     "trades"
+    ]
+   },
+   "positions": {
+    "nPositions": 134,
+    "grossUsd": 134072424.84480791,
+    "netUsd": 120644553.68042,
+    "netToGross": 0.8998461377876099,
+    "headlineCoin": "ETH",
+    "headlineSide": "short",
+    "headlineNotionalUsd": 37890956.49946,
+    "headlineShare": 0.2826155829084146,
+    "headlineLiqDistancePct": 0.9949934868270565
+   },
+   "orders": {
+    "restingOrders": 1403,
+    "bidShare": 0.5060584461867427,
+    "coinsBothSides": 76
+   },
+   "hedge": {
+    "hedgeUsd": 1152972.035277737,
+    "hedgeRatio": 0.03042868646755245
+   },
+   "hedgeScope": "hyperliquid",
+   "linkedHedge": null,
+   "trades": {
+    "tradesPerDay": 2000,
+    "crossedShare": 0.2685,
+    "sampleSize": 2000,
+    "cappedByApiLimit": true
+   },
+   "pnl": {
+    "realizedPnlUsd": -13763183.535539,
+    "winRate": 0.4659720846235568,
+    "closedTrades": 2427551,
+    "windowDays": 30
+   },
+   "sizeVsOi": 0.014136076023963176,
+   "source": "nansen",
+   "summary": "1,403 resting orders quote both sides of 76 markets; 2,000+ fills in the last 24 hours, 73% of them as maker. There is nothing to copy.",
+   "evidence": [
+    {
+     "label": "Open positions",
+     "value": "134",
+     "source": "Nansen"
+    },
+    {
+     "label": "Net / gross exposure",
+     "value": "90%",
+     "source": "Nansen"
+    },
+    {
+     "label": "Resting orders",
+     "value": "1,403, two-sided in 76 markets",
+     "source": "Hyperliquid"
+    },
+    {
+     "label": "Fills, last 24h",
+     "value": "2,000+",
+     "source": "Hyperliquid"
+    },
+    {
+     "label": "Realized PnL, 30d",
+     "value": "-$13.8M",
+     "source": "Nansen"
+    }
+   ],
+   "coverage": [],
+   "checkedAt": "2026-09-18T13:48:18.390Z",
+   "nansenCalls": 2
+  },
+  {
+   "address": "0xbf732ea04197942783e34730ed6e0f6099575d58",
+   "verdict": {
+    "verdict": "looks_like_a_bet",
+    "strength": null,
+    "reasons": [
+     "directional_concentration"
+    ]
+   },
+   "positions": {
+    "nPositions": 1,
+    "grossUsd": 21127372.64,
+    "netUsd": 21127372.64,
+    "netToGross": 1,
+    "headlineCoin": "ZEC",
+    "headlineSide": "long",
+    "headlineNotionalUsd": 21127372.64,
+    "headlineShare": 1,
+    "headlineLiqDistancePct": 0.17555246548279962
+   },
+   "orders": {
+    "restingOrders": 0,
+    "bidShare": 0.5,
+    "coinsBothSides": 0
+   },
+   "hedge": {
+    "hedgeUsd": 0,
+    "hedgeRatio": 0
+   },
+   "hedgeScope": "none",
+   "linkedHedge": null,
+   "trades": {
+    "tradesPerDay": 281,
+    "crossedShare": 0.5836298932384342,
+    "sampleSize": 281,
+    "cappedByApiLimit": false
+   },
+   "pnl": {
+    "realizedPnlUsd": 7743178.071131,
+    "winRate": 0.5983434625934492,
+    "closedTrades": 18593,
+    "windowDays": 30
+   },
+   "sizeVsOi": 0.023390893646123588,
+   "source": "nansen",
+   "summary": "100% of the exposure is one $21.1M ZEC long, and nothing in this account offsets it.",
+   "evidence": [
+    {
+     "label": "Largest position",
+     "value": "$21.1M ZEC long",
+     "source": "Nansen"
+    },
+    {
+     "label": "Share of exposure",
+     "value": "100%",
+     "source": "Nansen"
+    },
+    {
+     "label": "Net / gross exposure",
+     "value": "100%",
+     "source": "Nansen"
+    },
+    {
+     "label": "Realized PnL, 30d",
+     "value": "$7.7M",
+     "source": "Nansen"
+    },
+    {
+     "label": "Size vs open interest",
+     "value": "2.3%",
+     "source": "Hyperliquid"
+    }
+   ],
+   "coverage": [],
+   "checkedAt": "2026-09-18T13:48:22.310Z",
+   "nansenCalls": 2
+  },
+  {
+   "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+   "verdict": {
+    "verdict": "hedged",
+    "strength": "probable",
+    "reasons": [
+     "linked_wallet_hedge"
+    ]
+   },
+   "positions": {
+    "nPositions": 17,
+    "grossUsd": 470739809.12431496,
+    "netUsd": 469337765.11931497,
+    "netToGross": 0.9970216158102113,
+    "headlineCoin": "ETH",
+    "headlineSide": "short",
+    "headlineNotionalUsd": 182886318.80832,
+    "headlineShare": 0.3885082911269622,
+    "headlineLiqDistancePct": 0.44738967122520357
+   },
+   "orders": {
+    "restingOrders": 0,
+    "bidShare": 0.5,
+    "coinsBothSides": 0
+   },
+   "hedge": {
+    "hedgeUsd": 556.2097465853167,
+    "hedgeRatio": 0.0000030412867961341086
+   },
+   "hedgeScope": "all-chains",
+   "linkedHedge": {
+    "linkedHedgeUsd": 400859795.74136513,
+    "linkedHedgeRatio": 2.191852284814696,
+    "funders": [
+     {
+      "address": "0xb38e8c17e38363af6ebdcb3dae12e0243582891d",
+      "relation": "First Funder",
+      "chain": "arbitrum",
+      "matchingUsd": 32473381.991977036
+     },
+     {
+      "address": "0xed0c6079229e2d407672a117c22b62064f4a4312",
+      "relation": "First Funder",
+      "chain": "ethereum",
+      "matchingUsd": 368386413.7493881
+     }
+    ]
+   },
+   "trades": {
+    "tradesPerDay": 803,
+    "crossedShare": 0.5703611457036114,
+    "sampleSize": 803,
+    "cappedByApiLimit": false
+   },
+   "pnl": {
+    "realizedPnlUsd": -15479288.099574,
+    "winRate": 0.33304500319927954,
+    "closedTrades": 84394,
+    "windowDays": 30
+   },
+   "sizeVsOi": 0.06826628176103969,
+   "source": "nansen",
+   "summary": "The $182.9M ETH short is 219% covered by ETH held in 2 wallets that funded this account. Ownership is inferred from the funding link, not confirmed.",
+   "evidence": [
+    {
+     "label": "Largest position",
+     "value": "$182.9M ETH short",
+     "source": "Nansen"
+    },
+    {
+     "label": "Share of exposure",
+     "value": "39%",
+     "source": "Nansen"
+    },
+    {
+     "label": "Net / gross exposure",
+     "value": "100%",
+     "source": "Nansen"
+    },
+    {
+     "label": "Hedge found",
+     "value": "219% via 2 funding wallets",
+     "source": "Nansen"
+    },
+    {
+     "label": "Realized PnL, 30d",
+     "value": "-$15.5M",
+     "source": "Nansen"
+    }
+   ],
+   "coverage": [],
+   "checkedAt": "2026-09-18T13:48:24.775Z",
+   "nansenCalls": 7
+  }
+ ]
+}

@@ -10,3 +10,14 @@
 {"at":"2026-09-18T12:49:23.492Z","source":"fetch-nansen-fixtures","endpoint":"profiler/address/current-balance","status":200,"creditsCost":1,"creditsRemaining":995}
 {"at":"2026-09-18T13:04:21.891Z","source":"fetch-nansen-fixtures","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":994}
 {"at":"2026-09-18T13:04:24.543Z","source":"fetch-nansen-fixtures","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":993}
+{"at":"2026-09-18T13:48:21.333Z","source":"smoke","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":973}
+{"at":"2026-09-18T13:48:22.290Z","source":"smoke","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":972}
+{"at":"2026-09-18T13:48:24.299Z","source":"smoke","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":971}
+{"at":"2026-09-18T13:48:24.767Z","source":"smoke","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":970}
+{"at":"2026-09-18T13:48:25.915Z","source":"smoke","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":969}
+{"at":"2026-09-18T13:48:26.784Z","source":"smoke","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":968}
+{"at":"2026-09-18T13:48:27.633Z","source":"smoke","endpoint":"profiler/address/current-balance","status":200,"creditsCost":1,"creditsRemaining":967}
+{"at":"2026-09-18T13:48:28.059Z","source":"smoke","endpoint":"profiler/address/related-wallets","status":200,"creditsCost":1,"creditsRemaining":966}
+{"at":"2026-09-18T13:48:28.213Z","source":"smoke","endpoint":"profiler/address/related-wallets","status":200,"creditsCost":1,"creditsRemaining":965}
+{"at":"2026-09-18T13:48:29.016Z","source":"smoke","endpoint":"profiler/address/current-balance","status":200,"creditsCost":1,"creditsRemaining":964}
+{"at":"2026-09-18T13:48:29.034Z","source":"smoke","endpoint":"profiler/address/current-balance","status":200,"creditsCost":1,"creditsRemaining":963}

@@ -201,7 +201,7 @@ async function main(): Promise<void> {
     if (reported) lastRemaining = reported.creditsRemaining;
 
     if (result) {
-      gallery.entries.push(result);
+      gallery.entries.push({ ...result, nansenCalls: calls.length });
       gallery.finishedAt = new Date().toISOString();
       writeAtomically(args.out, gallery);
       const v = result.verdict;

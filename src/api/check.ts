@@ -67,6 +67,10 @@ export interface CheckResult {
   checkedAt: string;
 }
 
+/** What /api/check and the gallery serve: the result plus how many Nansen
+ * calls producing it took, counted by the caller's recorder. */
+export type CheckResponse = CheckResult & { nansenCalls: number };
+
 /** Reads in stages so that every Nansen credit is spent only where its answer
  * can still change the verdict: positions and PnL always; the account's own
  * balances on other chains only when a hedge could move the answer; linked
