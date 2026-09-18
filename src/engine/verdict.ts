@@ -1,7 +1,10 @@
 import type { PositionFeatures, OrderFeatures, HedgeFeatures } from './features';
 
 export type Verdict = 'book' | 'hedged' | 'looks_like_a_bet' | 'unknown';
-export type BookStrength = 'likely' | 'strong' | null;
+/** `likely`/`strong` grade a book by how many independent signals agree;
+ * `probable` marks a hedge that sits in wallets linked by a funding
+ * transaction - inferred ownership, not the account's own holdings. */
+export type VerdictStrength = 'likely' | 'strong' | 'probable' | null;
 
 export interface VerdictThresholds {
   book: {
@@ -55,13 +58,17 @@ export interface VerdictInput {
   positions: PositionFeatures;
   orders: OrderFeatures;
   hedge: HedgeFeatures;
-  /** Trade-history signal (book rule (в)). Wired in once Phase 2 adds paginated trade history. */
+  /** Trade-history signal (book rule (в)), from Hyperliquid's fill-level
+   * `userFillsByTime`. Its thresholds are calibrated on fills; Nansen's
+   * perp-trades aggregates fills per order and must not be fed in here. */
   trades?: { tradesPerDay: number; crossedShare: number };
+  /** Hedge held by wallets linked through a funding transaction. */
+  linkedHedge?: { linkedHedgeRatio: number };
 }
 
 export interface VerdictResult {
   verdict: Verdict;
-  strength: BookStrength;
+  strength: VerdictStrength;
   reasons: string[];
 }
 
@@ -114,12 +121,17 @@ export function computeVerdict(
     };
   }
 
+  const linkedRatio = input.linkedHedge?.linkedHedgeRatio ?? 0;
+  if (input.hedge.hedgeRatio + linkedRatio >= h.minHedgeRatio) {
+    return { verdict: 'hedged', strength: 'probable', reasons: ['linked_wallet_hedge'] };
+  }
+
   const b = thresholds.bet;
   const looksLikeABet =
     input.positions.nPositions <= b.maxPositions &&
     input.positions.netToGross >= b.minNetToGross &&
     input.positions.headlineShare >= b.minHeadlineShare &&
-    input.hedge.hedgeRatio < b.maxHedgeRatio &&
+    input.hedge.hedgeRatio + linkedRatio < b.maxHedgeRatio &&
     input.orders.coinsBothSides === 0;
   if (looksLikeABet) {
     return { verdict: 'looks_like_a_bet', strength: null, reasons: ['directional_concentration'] };

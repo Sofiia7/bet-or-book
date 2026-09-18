@@ -91,4 +91,40 @@ describe('computeVerdict', () => {
     expect(DEFAULT_THRESHOLDS.book.minPositions).toBe(20);
     expect(DEFAULT_THRESHOLDS.bet.maxPositions).toBe(5);
   });
+
+  it('calls it a probable hedge when linked wallets cover the short and the account itself does not', () => {
+    const result = computeVerdict({
+      positions: positions({
+        nPositions: 14,
+        netToGross: 1,
+        headlineShare: 0.44,
+        headlineCoin: 'ETH',
+        headlineSide: 'short',
+        headlineNotionalUsd: 177_500_000,
+      }),
+      orders: orders({}),
+      hedge: hedge({ hedgeRatio: 0 }),
+      linkedHedge: { linkedHedgeRatio: 2.25 },
+    });
+    expect(result.verdict).toBe('hedged');
+    expect(result.strength).toBe('probable');
+    expect(result.reasons).toEqual(['linked_wallet_hedge']);
+  });
+
+  it('does not call a concentrated account a bet when linked wallets partly hedge it', () => {
+    const result = computeVerdict({
+      positions: positions({
+        nPositions: 1,
+        netToGross: 1,
+        headlineShare: 1,
+        headlineCoin: 'BTC',
+        headlineSide: 'short',
+        headlineNotionalUsd: 10_000_000,
+      }),
+      orders: orders({}),
+      hedge: hedge({ hedgeRatio: 0 }),
+      linkedHedge: { linkedHedgeRatio: 0.2 },
+    });
+    expect(result.verdict).toBe('unknown');
+  });
 });
