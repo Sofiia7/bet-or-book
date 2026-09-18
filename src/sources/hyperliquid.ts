@@ -1,4 +1,7 @@
 const BASE_URL = 'https://api.hyperliquid.xyz/info';
+/** Without a timeout a hanging response holds the check open for minutes;
+ * failing fast lets the page say "try again shortly". */
+const TIMEOUT_MS = 10_000;
 
 export interface HlPosition {
   coin: string;
@@ -100,6 +103,7 @@ async function postInfo<T>(body: Record<string, unknown>): Promise<T> {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   if (!res.ok) {
     throw new Error(`hyperliquid ${String(body.type)} failed: ${res.status}`);

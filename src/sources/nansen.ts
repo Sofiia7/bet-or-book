@@ -4,6 +4,9 @@
 // differently. The key is passed in per client and never stored globally or
 // put into an error message.
 const BASE_URL = 'https://api.nansen.ai/api/v1';
+/** A timed-out call may still be charged; it fails one read, and the check
+ * says what it could not read instead of hanging. */
+const TIMEOUT_MS = 20_000;
 
 export interface NansenPosition {
   token_symbol: string;
@@ -98,6 +101,7 @@ export function createNansenClient(apiKey: string, record: NansenCallRecorder = 
       method: 'POST',
       headers: { 'Content-Type': 'application/json', apikey: apiKey },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     await record({
       path,

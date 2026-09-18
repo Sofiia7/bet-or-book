@@ -28,6 +28,7 @@ describe('nansen client', () => {
     expect(String(url)).toBe('https://api.nansen.ai/api/v1/profiler/perp-positions');
     expect((init?.headers as Record<string, string>).apikey).toBe(KEY);
     expect(JSON.parse(String(init?.body))).toEqual({ address: '0xabc' });
+    expect(init?.signal).toBeInstanceOf(AbortSignal);
   });
 
   it('records every call with the credit headers', async () => {

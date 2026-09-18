@@ -24,6 +24,13 @@ describe('hyperliquid client', () => {
     global.fetch = originalFetch;
   });
 
+  it('passes an abort signal, so a hanging request cannot hold a check open', async () => {
+    const spy = vi.fn(async (_url: string, _init?: RequestInit) => new Response('[]'));
+    global.fetch = spy as unknown as typeof fetch;
+    await getOpenOrders('0xtest');
+    expect(spy.mock.calls[0][1]?.signal).toBeInstanceOf(AbortSignal);
+  });
+
   it('parses clearinghouseState from a real captured response', async () => {
     mockFetchOnce(clearinghouseFixture);
     const state = await getClearinghouseState('0xtest');
