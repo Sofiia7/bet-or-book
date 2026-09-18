@@ -79,6 +79,7 @@ export function normalizeTrades(fills: HlFill[]): Trade[] {
     coin: f.coin,
     timestamp: f.time,
     crossed: f.crossed,
+    side: f.side === 'B' ? 'buy' : 'sell',
     closedPnlUsd: Number(f.closedPnl),
   }));
 }

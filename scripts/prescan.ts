@@ -30,6 +30,10 @@ const LEADERBOARD_URL = 'https://stats-data.hyperliquid.xyz/Mainnet/leaderboard'
 const LEDGER = 'data/nansen-calls.jsonl';
 const CANDIDATES_FILE = 'data/prescan-candidates.json';
 const MAX_FAILED_IN_A_ROW = 5;
+/** The most Nansen calls one check can make (the full funder search). */
+const WORST_CASE_CALLS = 7;
+/** What a check costs when its headline is a long: positions and PnL. */
+const LONG_CHECK_CALLS = 2;
 
 interface Candidate {
   address: string;
@@ -169,12 +173,33 @@ async function main(): Promise<void> {
   let lostInARow = 0;
   let failedInARow = 0;
   let totalCalls = 0;
+  let skippedInEndgame = 0;
   let stopReason = 'candidates exhausted';
 
   for (const [i, address] of todo.entries()) {
     if (lastRemaining !== null && lastRemaining <= args.reserve) {
       stopReason = `credit reserve reached (${lastRemaining} left)`;
       break;
+    }
+    // Endgame: once the balance cannot cover a worst-case check, take only
+    // accounts whose largest position is a long - those cost exactly two
+    // calls - so the last credits are spent without overdrawing.
+    if (lastRemaining !== null && lastRemaining < args.reserve + WORST_CASE_CALLS) {
+      if (lastRemaining < args.reserve + LONG_CHECK_CALLS) {
+        stopReason = `credit reserve reached (${lastRemaining} left)`;
+        break;
+      }
+      const state = await getClearinghouseState(address).catch(() => null);
+      const largest = (state?.assetPositions ?? [])
+        .map(({ position }) => position)
+        .reduce<{ szi: string; positionValue: string } | null>(
+          (m, p) => (m === null || Math.abs(Number(p.positionValue)) > Math.abs(Number(m.positionValue)) ? p : m),
+          null,
+        );
+      if (!largest || Number(largest.szi) <= 0) {
+        skippedInEndgame++;
+        continue;
+      }
     }
     const started = Date.now();
     const calls: NansenCallMeta[] = [];
@@ -235,7 +260,7 @@ async function main(): Promise<void> {
 
   const counts: Record<string, number> = {};
   for (const e of gallery.entries) counts[e.verdict.verdict] = (counts[e.verdict.verdict] ?? 0) + 1;
-  console.log(`stopped: ${stopReason}`);
+  console.log(`stopped: ${stopReason}; skipped in the endgame (short headline): ${skippedInEndgame}`);
   console.log(`this run: ${totalCalls} Nansen calls, ${lastRemaining ?? '?'} credits left`);
   console.log(`gallery: ${gallery.entries.length} entries ${JSON.stringify(counts)}`);
 }

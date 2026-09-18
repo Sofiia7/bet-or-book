@@ -93,7 +93,9 @@ function bookSummary(input: EvidenceInput): string {
     clauses.push(`${plural(o.restingOrders, 'resting order')} quote both sides of ${plural(o.coinsBothSides, 'market')}`);
   }
   if (input.verdict.reasons.includes('trades')) {
-    clauses.push(`${fillsText(t)} fills in the last 24 hours, ${formatPct(1 - t.crossedShare)} of them as maker`);
+    clauses.push(
+      `${fillsText(t)} fills in the last 24 hours, ${formatPct(t.buyShare)} of them buys, ${formatPct(1 - t.crossedShare)} as maker`,
+    );
   }
   return `${clauses.join('; ')}. There is nothing to copy.`;
 }

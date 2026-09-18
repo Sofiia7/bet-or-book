@@ -25,7 +25,7 @@ function input(overrides: Partial<EvidenceInput>): EvidenceInput {
     hedge: { hedgeUsd: 0, hedgeRatio: 0 },
     hedgeScope: 'all-chains',
     linkedHedge: null,
-    trades: { tradesPerDay: 0, crossedShare: 0, sampleSize: 0, cappedByApiLimit: false },
+    trades: { tradesPerDay: 0, crossedShare: 0, buyShare: 0, sampleSize: 0, cappedByApiLimit: false },
     pnl: { realizedPnlUsd: -15_512_000, winRate: 0.41, closedTrades: 120, windowDays: 30 },
     sizeVsOi: 0.032,
     source: 'nansen',
@@ -67,11 +67,11 @@ describe('explain', () => {
         verdict: { verdict: 'book', strength: 'strong', reasons: ['orders', 'trades'] },
         positions: positions({ nPositions: 134, netToGross: 0.8, headlineShare: 0.3 }),
         orders: { restingOrders: 212, bidShare: 0.5, coinsBothSides: 31 },
-        trades: { tradesPerDay: 2000, crossedShare: 0.24, sampleSize: 2000, cappedByApiLimit: true },
+        trades: { tradesPerDay: 2000, crossedShare: 0.24, buyShare: 0.53, sampleSize: 2000, cappedByApiLimit: true },
       }),
     );
     expect(e.summary).toBe(
-      '212 resting orders quote both sides of 31 markets; 2,000+ fills in the last 24 hours, 76% of them as maker. There is nothing to copy.',
+      '212 resting orders quote both sides of 31 markets; 2,000+ fills in the last 24 hours, 53% of them buys, 76% as maker. There is nothing to copy.',
     );
     expect(e.evidence.map((i) => i.label)).toEqual([
       'Open positions',

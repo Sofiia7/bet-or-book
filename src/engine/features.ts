@@ -147,6 +147,10 @@ export function computeSizeVsOi(headlineNotionalUsd: number, openInterestUsd: nu
 export interface TradeFeatures {
   tradesPerDay: number;
   crossedShare: number;
+  /** Share of fills that were buys. A market maker buys the bid and sells
+   * the ask, so its flow runs both ways; a position being built with
+   * post-only orders is maker flow in one direction. */
+  buyShare: number;
   sampleSize: number;
   /** True when the raw sample hit Hyperliquid's 2000-fill-per-call cap, so
    * tradesPerDay is a lower bound, not an exact count - a full page is a
@@ -158,12 +162,14 @@ const HL_FILLS_PAGE_CAP = 2000;
 
 export function computeTradeFeatures(trades: Trade[], windowHours: number): TradeFeatures {
   if (trades.length === 0) {
-    return { tradesPerDay: 0, crossedShare: 0, sampleSize: 0, cappedByApiLimit: false };
+    return { tradesPerDay: 0, crossedShare: 0, buyShare: 0.5, sampleSize: 0, cappedByApiLimit: false };
   }
   const crossedCount = trades.filter((t) => t.crossed).length;
+  const buyCount = trades.filter((t) => t.side === 'buy').length;
   return {
     tradesPerDay: (trades.length / windowHours) * 24,
     crossedShare: crossedCount / trades.length,
+    buyShare: buyCount / trades.length,
     sampleSize: trades.length,
     cappedByApiLimit: trades.length >= HL_FILLS_PAGE_CAP,
   };

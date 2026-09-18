@@ -16,6 +16,8 @@ export interface VerdictThresholds {
     minCoinsBothSides: number;
     minTradesPerDay: number;
     maxCrossedShare: number;
+    minFillBuyShare: number;
+    maxFillBuyShare: number;
   };
   hedged: {
     minHedgeRatio: number;
@@ -40,6 +42,11 @@ export const DEFAULT_THRESHOLDS: VerdictThresholds = {
     minCoinsBothSides: 5,
     minTradesPerDay: 200,
     maxCrossedShare: 0.4,
+    // Added 18.09 after the gallery scan: without a side condition, one-way
+    // maker flow (535 fills, all "Open Short"; 2 000 fills, all "Sell") read
+    // as a book. Same window as the bid share of resting orders.
+    minFillBuyShare: 0.25,
+    maxFillBuyShare: 0.75,
   },
   hedged: {
     minHedgeRatio: 0.5,
@@ -61,7 +68,7 @@ export interface VerdictInput {
   /** Trade-history signal (book rule (в)), from Hyperliquid's fill-level
    * `userFillsByTime`. Its thresholds are calibrated on fills; Nansen's
    * perp-trades aggregates fills per order and must not be fed in here. */
-  trades?: { tradesPerDay: number; crossedShare: number };
+  trades?: { tradesPerDay: number; crossedShare: number; buyShare: number };
   /** Hedge held by wallets linked through a funding transaction. */
   linkedHedge?: { linkedHedgeRatio: number };
 }
@@ -90,7 +97,9 @@ function bookSignals(input: StructureInput, t: VerdictThresholds['book']): strin
   if (
     input.trades &&
     input.trades.tradesPerDay >= t.minTradesPerDay &&
-    input.trades.crossedShare <= t.maxCrossedShare
+    input.trades.crossedShare <= t.maxCrossedShare &&
+    input.trades.buyShare >= t.minFillBuyShare &&
+    input.trades.buyShare <= t.maxFillBuyShare
   ) {
     signals.push('trades');
   }

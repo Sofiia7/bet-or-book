@@ -119,11 +119,12 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
   const positionFeatures = computePositionFeatures(positions);
   const orderFeatures = computeOrderFeatures(normalizeOrders(rawOrders));
   const tradeFeatures = computeTradeFeatures(normalizeTrades(rawFills), TRADES_WINDOW_HOURS);
-  const hedgeMatters = hedgeCanChangeVerdict({
-    positions: positionFeatures,
-    orders: orderFeatures,
-    trades: { tradesPerDay: tradeFeatures.tradesPerDay, crossedShare: tradeFeatures.crossedShare },
-  });
+  const tradeSignal = {
+    tradesPerDay: tradeFeatures.tradesPerDay,
+    crossedShare: tradeFeatures.crossedShare,
+    buyShare: tradeFeatures.buyShare,
+  };
+  const hedgeMatters = hedgeCanChangeVerdict({ positions: positionFeatures, orders: orderFeatures, trades: tradeSignal });
 
   let ownChain: SpotHolding[] = [];
   let otherChainsRead = false;
@@ -167,7 +168,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     positions: positionFeatures,
     orders: orderFeatures,
     hedge: hedgeFeatures,
-    trades: { tradesPerDay: tradeFeatures.tradesPerDay, crossedShare: tradeFeatures.crossedShare },
+    trades: tradeSignal,
     linkedHedge: linkedHedge ? { linkedHedgeRatio: linkedHedge.linkedHedgeRatio } : undefined,
   });
 

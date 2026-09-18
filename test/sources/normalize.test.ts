@@ -104,6 +104,9 @@ describe('normalizeTrades', () => {
       expect(typeof t.crossed).toBe('boolean');
       expect(typeof t.closedPnlUsd).toBe('number');
     }
+    const rawBuys = (fillsFixture as HlFill[]).filter((f) => f.side === 'B').length;
+    expect(trades.filter((t) => t.side === 'buy').length).toBe(rawBuys);
+    expect(trades.every((t) => t.side === 'buy' || t.side === 'sell')).toBe(true);
   });
 });
 

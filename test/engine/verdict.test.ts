@@ -163,3 +163,37 @@ describe('hedgeCanChangeVerdict', () => {
     expect(hedgeCanChangeVerdict({ positions: positions({}), orders: orders({}) })).toBe(false);
   });
 });
+
+describe('book rule (c): fills', () => {
+  const directional = positions({
+    nPositions: 1,
+    netToGross: 1,
+    headlineShare: 1,
+    headlineCoin: 'BTC',
+    headlineSide: 'short',
+    headlineNotionalUsd: 60_000_000,
+  });
+
+  it('calls balanced maker flow a book', () => {
+    const result = computeVerdict({
+      positions: directional,
+      orders: orders({}),
+      hedge: hedge({}),
+      trades: { tradesPerDay: 2000, crossedShare: 0.2, buyShare: 0.53 },
+    });
+    expect(result.verdict).toBe('book');
+    expect(result.reasons).toEqual(['trades']);
+  });
+
+  it('does not call one-sided maker flow a book - that is a position being built', () => {
+    // Seen live 18.09: 535 maker fills a day, every one of them "Open Short"
+    // on one coin, read as a book by the rule without a side condition.
+    const result = computeVerdict({
+      positions: directional,
+      orders: orders({}),
+      hedge: hedge({}),
+      trades: { tradesPerDay: 535, crossedShare: 0, buyShare: 0 },
+    });
+    expect(result.verdict).not.toBe('book');
+  });
+});

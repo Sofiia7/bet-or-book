@@ -28,6 +28,7 @@ export interface Trade {
   coin: string;
   timestamp: number;
   crossed: boolean;
+  side: 'buy' | 'sell';
   closedPnlUsd: number;
 }
 

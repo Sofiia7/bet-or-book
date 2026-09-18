@@ -143,11 +143,13 @@ describe('computeTradeFeatures', () => {
       coin: 'BTC',
       timestamp: i,
       crossed: i % 2 === 0,
+      side: i % 4 === 0 ? 'buy' : 'sell',
       closedPnlUsd: 0,
     }));
     const result = computeTradeFeatures(trades, 12);
     expect(result.tradesPerDay).toBe(200);
     expect(result.crossedShare).toBeCloseTo(0.5, 6);
+    expect(result.buyShare).toBeCloseTo(0.25, 6);
     expect(result.sampleSize).toBe(100);
     expect(result.cappedByApiLimit).toBe(false);
   });
@@ -157,6 +159,7 @@ describe('computeTradeFeatures', () => {
       coin: 'BTC',
       timestamp: i,
       crossed: i % 4 === 0,
+      side: 'buy',
       closedPnlUsd: 0,
     }));
     const result = computeTradeFeatures(trades, 24);
