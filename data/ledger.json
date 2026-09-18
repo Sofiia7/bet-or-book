@@ -1,0 +1,24 @@
+{
+  "generatedAt": "2026-09-18T13:58:17.945Z",
+  "window": {
+    "from": "2026-09-14",
+    "to": "2026-09-27"
+  },
+  "calls": 23,
+  "okCalls": 23,
+  "credits": 23,
+  "byEndpoint": {
+    "profiler/perp-positions": 6,
+    "profiler/perp-trades": 1,
+    "profiler/perp-pnl-summary": 5,
+    "profiler/address/current-balance": 6,
+    "profiler/address/related-wallets": 5
+  },
+  "bySource": {
+    "fetch-nansen-fixtures": 12,
+    "smoke": 11
+  },
+  "byDay": {
+    "2026-09-18": 23
+  }
+}

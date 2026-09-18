@@ -146,15 +146,12 @@ async function main(): Promise<void> {
   installHyperliquidRetry();
 
   const addresses = args.addresses ?? (await rankCandidates(args.pool)).map((c) => c.address);
+  const universe = `Largest open positions among the top ${args.pool.toLocaleString('en-US')} Hyperliquid accounts by value`;
   const gallery: Gallery =
     args.resume && existsSync(args.out)
       ? (JSON.parse(readFileSync(args.out, 'utf-8')) as Gallery)
-      : {
-          scannedAt: null,
-          finishedAt: null,
-          universe: `Largest open positions among the top ${args.pool.toLocaleString('en-US')} Hyperliquid accounts by value`,
-          entries: [],
-        };
+      : { scannedAt: null, finishedAt: null, universe, entries: [] };
+  if (!args.addresses) gallery.universe = universe;
   gallery.scannedAt ??= new Date().toISOString();
   const done = new Set(gallery.entries.map((e) => e.address));
   const todo = addresses.filter((a) => !done.has(a)).slice(0, args.limit);

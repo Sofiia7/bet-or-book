@@ -1,7 +1,7 @@
 import type { KVLike } from './kv';
 import type { NansenCallMeta } from './sources/nansen';
 
-interface DayStats {
+export interface DayStats {
   calls: number;
   credits: number;
   lastRemaining: number | null;
@@ -9,7 +9,7 @@ interface DayStats {
 
 const dayKey = (day: string) => `nansen:day:${day}`;
 
-async function readDay(kv: KVLike, day: string): Promise<DayStats> {
+export async function readDay(kv: KVLike, day: string): Promise<DayStats> {
   const raw = await kv.get(dayKey(day));
   return raw ? (JSON.parse(raw) as DayStats) : { calls: 0, credits: 0, lastRemaining: null };
 }

@@ -128,6 +128,7 @@
 
 <footer>
   <p>Positions, realized PnL, balances on other chains and linked wallets: <strong>Powered by Nansen API</strong>. Resting orders and fills: Hyperliquid API.</p>
+  <p id="ledger" hidden></p>
   <p>This tool only inspects. It is not financial advice and never trades.</p>
 </footer>
 
@@ -481,8 +482,28 @@ $('copy-link').addEventListener('click', async () => {
   }
 });
 
+async function loadLedger() {
+  try {
+    const res = await fetch('/api/ledger');
+    if (!res.ok) return;
+    const data = await res.json();
+    const w = data.scripted.window;
+    const p = $('ledger');
+    p.replaceChildren(
+      'Nansen API calls made by this project between ' + w.from + ' and ' + w.to + ': ' + data.totalCalls.toLocaleString('en-US') + ' (',
+    );
+    const a = el('a', null, 'ledger');
+    a.href = '/api/ledger';
+    p.append(a, ').');
+    p.hidden = false;
+  } catch (e) {
+    // The counter is a footnote; the page works without it.
+  }
+}
+
 loadGallery();
-const preset = new URLSearchParams(window.location.search).get('address');
+loadLedger();
+const preset =new URLSearchParams(window.location.search).get('address');
 if (preset) {
   $('address').value = preset;
   runCheck();

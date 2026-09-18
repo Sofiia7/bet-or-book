@@ -6,10 +6,13 @@ import { recordCalls, nansenAllowed } from './credits';
 import { createNansenClient, type NansenCallMeta } from './sources/nansen';
 import pageHtml from '../web/index.html';
 import galleryData from '../data/gallery.json';
+import ledgerData from '../data/ledger.json';
 import type { Gallery } from './gallery';
+import { liveCallsInWindow, type LedgerSummary } from './ledger';
 import type { KVLike } from './kv';
 
 const gallery = galleryData as unknown as Gallery;
+const scriptedLedger = ledgerData as unknown as LedgerSummary;
 
 interface Env {
   KV: KVLike;
@@ -73,6 +76,18 @@ export default {
 
     if (url.pathname === '/api/gallery') {
       return Response.json(gallery, { headers: { 'cache-control': 'public, max-age=300' } });
+    }
+
+    // Scripted calls (fixtures, smoke runs, the gallery prescan) come bundled
+    // from data/ledger.json; the Worker's own calls come from its KV day
+    // counters. Under `wrangler dev` the local KV also holds the dev calls
+    // that the ledger already lists, so the sum double-counts them there.
+    if (url.pathname === '/api/ledger') {
+      const live = await liveCallsInWindow(kv, new Date().toISOString().slice(0, 10));
+      return Response.json(
+        { totalCalls: scriptedLedger.calls + live.calls, scripted: scriptedLedger, live },
+        { headers: { 'cache-control': 'public, max-age=60' } },
+      );
     }
 
     if (url.pathname === '/') {
