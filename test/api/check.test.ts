@@ -141,6 +141,9 @@ describe('checkAddress (offline, real fixtures)', () => {
     expect(result.pnl?.realizedPnlUsd).toBeLessThan(0);
     expect(calls.length).toBe(7);
     expect(result.coverage).toEqual([]);
+    expect(result.summary).toMatch(/ETH short is \d+% covered by ETH held in 2 wallets that funded this account/);
+    expect(result.summary).toContain('Ownership is inferred from the funding link, not confirmed.');
+    expect(result.evidence.find((e) => e.label === 'Hedge found')?.value).toMatch(/via 2 funding wallets$/);
   });
 
   it('falls back to Hyperliquid positions and says so when Nansen positions fail', async () => {

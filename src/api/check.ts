@@ -33,6 +33,7 @@ import {
   type TradeFeatures,
 } from '../engine/features';
 import { computeVerdict, hedgeCanChangeVerdict, DEFAULT_THRESHOLDS, type VerdictResult } from '../engine/verdict';
+import { explain, type EvidenceItem } from '../engine/evidence';
 import type { Position, SpotHolding, LinkedWallet, PnlSummary } from '../types';
 
 const TRADES_WINDOW_HOURS = 24;
@@ -57,6 +58,10 @@ export interface CheckResult {
   pnl: PnlSummary | null;
   sizeVsOi: number | null;
   source: 'nansen' | 'hyperliquid';
+  /** One sentence built from the numbers that decided the verdict. */
+  summary: string;
+  /** Up to five numbers for the card, each with its source. */
+  evidence: EvidenceItem[];
   /** Plain-language notes on anything that could not be read. */
   coverage: string[];
   checkedAt: string;
@@ -159,8 +164,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     linkedHedge: linkedHedge ? { linkedHedgeRatio: linkedHedge.linkedHedgeRatio } : undefined,
   });
 
-  return {
-    address,
+  const measured = {
     verdict,
     positions: positionFeatures,
     orders: orderFeatures,
@@ -171,9 +175,9 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     pnl,
     sizeVsOi: computeSizeVsOi(positionFeatures.headlineNotionalUsd, openInterestUsd),
     source,
-    coverage,
-    checkedAt: new Date(now).toISOString(),
   };
+  const { summary, evidence } = explain(measured);
+  return { address, ...measured, summary, evidence, coverage, checkedAt: new Date(now).toISOString() };
 }
 
 /** Two credits for the funding links, then one per funder followed: First
