@@ -1,0 +1,6054 @@
+{
+ "pool": 3000,
+ "rankedAt": "2026-09-18T14:06:57.263Z",
+ "candidates": [
+  {
+   "address": "0x5b5d51203a0f9079f8aeb098a6523a13f298c060",
+   "accountValueUsd": 179720253.54298,
+   "largestCoin": "ETH",
+   "largestUsd": 263876582.02059,
+   "mainDexPositions": 12
+  },
+  {
+   "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+   "accountValueUsd": 152116586.433736,
+   "largestCoin": "ETH",
+   "largestUsd": 184099721.28471,
+   "mainDexPositions": 14
+  },
+  {
+   "address": "0x082e843a431aef031264dc232693dd710aedca88",
+   "accountValueUsd": 36899701.273593,
+   "largestCoin": "HYPE",
+   "largestUsd": 124944922.30842,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x0392a716dbee1661ea781881826b928daeb5d7d9",
+   "accountValueUsd": 16357876.40494,
+   "largestCoin": "ETH",
+   "largestUsd": 115518294.05459,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x92ea19eceb7a8de0f50978a1583a5d8b018050e9",
+   "accountValueUsd": 143161984.088806,
+   "largestCoin": "BTC",
+   "largestUsd": 107057367.69376,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x8ea85cbd59affca28162fc286d5c093dd0f8edbc",
+   "accountValueUsd": 29290286.49925,
+   "largestCoin": "BTC",
+   "largestUsd": 80332000,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x15a4f009bb324a3fb9e36137136b201e3fe0dfdb",
+   "accountValueUsd": 25638280.826464,
+   "largestCoin": "BTC",
+   "largestUsd": 80332000,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xde8d9e530b0528ffa7b1190f862536c055dd9524",
+   "accountValueUsd": 23987906.459416,
+   "largestCoin": "ETH",
+   "largestUsd": 77659223.77575,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x020ca66c30bec2c4fe3861a94e4db4a498a35872",
+   "accountValueUsd": 1927724.728541,
+   "largestCoin": "ETH",
+   "largestUsd": 75049020,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x9c6a5b4662c722d2c47f43d6c9813cb080ffa4ed",
+   "accountValueUsd": 22274740.505569,
+   "largestCoin": "SOL",
+   "largestUsd": 59926552.9486,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xb695651daa495f59dd2725c6fe98322d8b51a92d",
+   "accountValueUsd": 23160089.647091,
+   "largestCoin": "BTC",
+   "largestUsd": 59742456,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x60468ba27448f88b19f52ed02f1a8c52f7a0b21d",
+   "accountValueUsd": 5232742.9035,
+   "largestCoin": "BTC",
+   "largestUsd": 56345017.49214,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xedcdcaa1f18350c50c10bef860e64daa9785d05a",
+   "accountValueUsd": 29466812.369369,
+   "largestCoin": "ETH",
+   "largestUsd": 51308600,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x31b1ecf848443472e34d204a134812d86ab01434",
+   "accountValueUsd": 14925249.259474,
+   "largestCoin": "XRP",
+   "largestUsd": 47782870.52,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xfc27136e42af1732ddc9ce2605ea9bff1b959d9d",
+   "accountValueUsd": 29665350.576957,
+   "largestCoin": "BTC",
+   "largestUsd": 46936169.68684,
+   "mainDexPositions": 22
+  },
+  {
+   "address": "0x7fdafde5cfb5465924316eced2d3715494c517d1",
+   "accountValueUsd": 51303273.739181995,
+   "largestCoin": "ETH",
+   "largestUsd": 44985188.07463,
+   "mainDexPositions": 34
+  },
+  {
+   "address": "0x218a65e21eddeece7a9df38c6bbdd89f692b7da2",
+   "accountValueUsd": 8981696.885834,
+   "largestCoin": "BTC",
+   "largestUsd": 42107143.86144,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xdd9f274410c8c704bdbb599dce6c4fb34be4f50a",
+   "accountValueUsd": 18611220.138044,
+   "largestCoin": "BTC",
+   "largestUsd": 41022595.49207,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x6666885961fec8ed58ddb45637ea41c02d6423f5",
+   "accountValueUsd": 22849592.952055,
+   "largestCoin": "HYPE",
+   "largestUsd": 40747500,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xcfe2729438475c5eb9e8e6da6b314a0b9e2d8fb3",
+   "accountValueUsd": 19944803.236328,
+   "largestCoin": "BTC",
+   "largestUsd": 40139500,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x45d26f28196d226497130c4bac709d808fed4029",
+   "accountValueUsd": 56718317.913472,
+   "largestCoin": "HYPE",
+   "largestUsd": 39206732.4,
+   "mainDexPositions": 52
+  },
+  {
+   "address": "0xecb63caa47c7c4e77f60f1ce858cf28dc2b82b00",
+   "accountValueUsd": 102981476.806972,
+   "largestCoin": "ETH",
+   "largestUsd": 39099736.79766,
+   "mainDexPositions": 86
+  },
+  {
+   "address": "0x77ddcc4b6440b3a32b7802f053105c2fad3ae0e9",
+   "accountValueUsd": 6198420.924736,
+   "largestCoin": "ETH",
+   "largestUsd": 38255713.86767,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xaeaab54bbf65bfd6efed7d2eb68372298e3c2416",
+   "accountValueUsd": 18874375.605833,
+   "largestCoin": "BTC",
+   "largestUsd": 36125550,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xf02d16a272a842f8bac1d9a9e773aba1933454c6",
+   "accountValueUsd": 31941747.880969,
+   "largestCoin": "HYPE",
+   "largestUsd": 35215035.26208,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xdf954bbe619273a56e0cfa90dad8382195dc7d72",
+   "accountValueUsd": 34891392.22385,
+   "largestCoin": "ETH",
+   "largestUsd": 34481057.760849,
+   "mainDexPositions": 146
+  },
+  {
+   "address": "0x237152b038d88f4156a0cd71090462de7e3f0883",
+   "accountValueUsd": 9673770.223249,
+   "largestCoin": "BTC",
+   "largestUsd": 32067600,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x93ab7dbdeb996806454de19c35c8247f4b2511f8",
+   "accountValueUsd": 9559773.225314,
+   "largestCoin": "BTC",
+   "largestUsd": 32067600,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x8c028b7c65d86d9721874c87819c6196e6cdb73f",
+   "accountValueUsd": 7336952.233645,
+   "largestCoin": "BTC",
+   "largestUsd": 32060000,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x06bc596fb16734f7abc3a5996b580be932c2fb72",
+   "accountValueUsd": 1929647.138301,
+   "largestCoin": "ETH",
+   "largestUsd": 30795034.96584,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x13da9d69a9b8a28495ade07d3ff1c61d024808be",
+   "accountValueUsd": 10326322.896392,
+   "largestCoin": "SOL",
+   "largestUsd": 30707018.9253,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xdd53c5297309130ab5fe5623dc905752e3342b13",
+   "accountValueUsd": 41749333.777573,
+   "largestCoin": "HYPE",
+   "largestUsd": 30508238.40408,
+   "mainDexPositions": 18
+  },
+  {
+   "address": "0x6c93641c0a049a171bf80b34d639c51c31b259a4",
+   "accountValueUsd": 10528531.062971,
+   "largestCoin": "ETH",
+   "largestUsd": 28134700,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xa9de65e6e288fa6ff806692c2464582efce3e049",
+   "accountValueUsd": 10078898.696896,
+   "largestCoin": "ETH",
+   "largestUsd": 28134700,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x0c5d0549a1f7ad185286a08bfc10f8e9a1c936b3",
+   "accountValueUsd": 10032559.113671,
+   "largestCoin": "ETH",
+   "largestUsd": 28134700,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x09dccb6f33b986987457d33db6801b74d2a2c094",
+   "accountValueUsd": 10829672.113801,
+   "largestCoin": "ETH",
+   "largestUsd": 28127000,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xd1581ae3dc981bfb70cceace6647a1c35df09dab",
+   "accountValueUsd": 1394290.157066,
+   "largestCoin": "BTC",
+   "largestUsd": 26181505.044,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xa2ce501d9c0c5e23d34272f84402cfb7835b3126",
+   "accountValueUsd": 16803871.478777,
+   "largestCoin": "ETH",
+   "largestUsd": 25664235.94992,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0xea0027b6ea9b6d7d401b5266979cc3b3ca87a918",
+   "accountValueUsd": 22019733.721051,
+   "largestCoin": "ETH",
+   "largestUsd": 25654812.54635,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0x66466428990e0f42a4c54f64bee0db6bf2336de5",
+   "accountValueUsd": 9120057.041318,
+   "largestCoin": "ETH",
+   "largestUsd": 25563000,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x37b81ab9e3ab04b9e3738e4891621205aaa31fd5",
+   "accountValueUsd": 13833154.460743,
+   "largestCoin": "HYPE",
+   "largestUsd": 24879412.729446,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x9321d8117e73b0c79035f0e87debcfd8dbb1d75a",
+   "accountValueUsd": 17575887.213349,
+   "largestCoin": "LIT",
+   "largestUsd": 24612475.077504,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x7d54a6772903c4f45f05c9b4e89f1dd2a0f52794",
+   "accountValueUsd": 13890921.100711,
+   "largestCoin": "HYPE",
+   "largestUsd": 24241482.83161,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x519c721de735f7c9e6146d167852e60d60496a47",
+   "accountValueUsd": 23142956.461271,
+   "largestCoin": "BTC",
+   "largestUsd": 24089700,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x15b325660a1c4a9582a7d834c31119c0cb9e3a42",
+   "accountValueUsd": 11620699.09775,
+   "largestCoin": "BTC",
+   "largestUsd": 24069000,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xbd1c84113c6deb5044be0c2221f9e9403811ff0e",
+   "accountValueUsd": 7825770.924686,
+   "largestCoin": "BTC",
+   "largestUsd": 24045000,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xec7f9f5b31b8f5da6ac6c0973bbd496e16f9df39",
+   "accountValueUsd": 7771820.105765,
+   "largestCoin": "BTC",
+   "largestUsd": 24045000,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xec4a6f59960fb55a7fa49262e2628687b322cf62",
+   "accountValueUsd": 8185841.585043,
+   "largestCoin": "BTC",
+   "largestUsd": 24041100,
+   "mainDexPositions": 11
+  },
+  {
+   "address": "0x666073af75b8d2e6e9efea414db566494e61aafe",
+   "accountValueUsd": 11628551.517802,
+   "largestCoin": "HYPE",
+   "largestUsd": 22680404.2933,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xa9b95f2a2e7ef219021efc5c04c32761b8553bbd",
+   "accountValueUsd": 40204401.929002,
+   "largestCoin": "HYPE",
+   "largestUsd": 22588981.5,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xf02d028ffeddc120a3ec59602a6617303ca55eb3",
+   "accountValueUsd": 15462773.446941,
+   "largestCoin": "HYPE",
+   "largestUsd": 22142387.216169,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x939f95036d2e7b6d7419ec072bf9d967352204d2",
+   "accountValueUsd": 5962145.102474,
+   "largestCoin": "HYPE",
+   "largestUsd": 21942677.15772,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x77375a8c9d13bf79afb2a87f1b0ac1dfd5f5bf66",
+   "accountValueUsd": 44345466.98373599,
+   "largestCoin": "NEAR",
+   "largestUsd": 21032170.93377,
+   "mainDexPositions": 8
+  },
+  {
+   "address": "0xbf732ea04197942783e34730ed6e0f6099575d58",
+   "accountValueUsd": 7548121.39193,
+   "largestCoin": "ZEC",
+   "largestUsd": 20910938.904,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x9546b9d4103be41ce13483a8f299d0df0eeb181c",
+   "accountValueUsd": 3204203.770462,
+   "largestCoin": "HYPE",
+   "largestUsd": 20811550,
+   "mainDexPositions": 9
+  },
+  {
+   "address": "0x9eec98d048d06d9cd75318fffa3f3960e081daab",
+   "accountValueUsd": 12346324.435638,
+   "largestCoin": "ETH",
+   "largestUsd": 20725579.07331,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x62f82c3ef1da6093118fadb29090c4e3263f02e6",
+   "accountValueUsd": 3076367.536849,
+   "largestCoin": "HYPE",
+   "largestUsd": 20682820.125,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x9c89f595f5515609ad61f6fda94beff85ae6600e",
+   "accountValueUsd": 15403027.047167,
+   "largestCoin": "SOL",
+   "largestUsd": 20627871.075,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xfe7ce058edc7cfcde9ef8262ba51f8d4796ab7ae",
+   "accountValueUsd": 21189747.67388,
+   "largestCoin": "NEAR",
+   "largestUsd": 20556317.52372,
+   "mainDexPositions": 34
+  },
+  {
+   "address": "0x152e41f0b83e6cad4b5dc730c1d6279b7d67c9dc",
+   "accountValueUsd": 24348492.772567,
+   "largestCoin": "HYPE",
+   "largestUsd": 20462390.3005,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x5f912dbde4530bc43f8322196db54592e3dd65aa",
+   "accountValueUsd": 6981764.469944,
+   "largestCoin": "ETH",
+   "largestUsd": 20375182.72338,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xba5d9cc840745aeeeeedac5712e32f13ab8ea352",
+   "accountValueUsd": 5352290.600658,
+   "largestCoin": "ETH",
+   "largestUsd": 20360684.02948,
+   "mainDexPositions": 14
+  },
+  {
+   "address": "0xcf5343ba750a6e30afbb1dadda08bc78f8c8ee11",
+   "accountValueUsd": 10978138.271849,
+   "largestCoin": "ETH",
+   "largestUsd": 19442476.5403,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xcd98da856b021a6efcc7d766118531ad64aec433",
+   "accountValueUsd": 1133893.859225,
+   "largestCoin": "ETH",
+   "largestUsd": 19404448.29231,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xd4c1f7e8d876c4749228d515473d36f919583d1d",
+   "accountValueUsd": 6315910.469299001,
+   "largestCoin": "BTC",
+   "largestUsd": 18904137.336504,
+   "mainDexPositions": 20
+  },
+  {
+   "address": "0x5cee0ca5f78503820d857371bc018dceab01a723",
+   "accountValueUsd": 4814537.03031,
+   "largestCoin": "ZEC",
+   "largestUsd": 18900502.356,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x3bcae23e8c380dab4732e9a159c0456f12d866f3",
+   "accountValueUsd": 7706484.815082,
+   "largestCoin": "BTC",
+   "largestUsd": 18686187.03,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0x30afce2f6842bf183c7e3fe7162e279ff0b6393e",
+   "accountValueUsd": 12890430.73095,
+   "largestCoin": "NEAR",
+   "largestUsd": 18478445.12784,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xcbab8e70638b939b21d0c5467a31e69e1361dc70",
+   "accountValueUsd": 1649362.395879,
+   "largestCoin": "ZEC",
+   "largestUsd": 18410535.26,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x362ad6209a5e904a5569f69884375809c5781d9f",
+   "accountValueUsd": 2094417.121635,
+   "largestCoin": "ZEC",
+   "largestUsd": 18016990.342,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x880ac484a1743862989a441d6d867238c7aa311c",
+   "accountValueUsd": 20699363.739066,
+   "largestCoin": "ZEC",
+   "largestUsd": 17977157.115,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xec0b9ebf2a304c99cafe85c548c14dd7783cb078",
+   "accountValueUsd": 13134639.166177,
+   "largestCoin": "ETH",
+   "largestUsd": 17949776.10246,
+   "mainDexPositions": 10
+  },
+  {
+   "address": "0xf517639a8872e756ac98d3c65507d2ebc25cc032",
+   "accountValueUsd": 12961292.832520999,
+   "largestCoin": "HYPE",
+   "largestUsd": 17910737.680665,
+   "mainDexPositions": 11
+  },
+  {
+   "address": "0x4044570e13b5184f7eb2709de25a4eb766a4794c",
+   "accountValueUsd": 4194553.50134,
+   "largestCoin": "BTC",
+   "largestUsd": 17333398.6761,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x418aa6bf98a2b2bc93779f810330d88cde488888",
+   "accountValueUsd": 5144952.909546,
+   "largestCoin": "ETH",
+   "largestUsd": 17206350.70864,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xd62d484bda5391d75b414e68f9ddcedb207b7d91",
+   "accountValueUsd": 4970256.570285,
+   "largestCoin": "BTC",
+   "largestUsd": 17082218.63692,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x3dc908374e11623d8eb9f07dfc7a2e5e803a54b0",
+   "accountValueUsd": 24400534.062111,
+   "largestCoin": "SOL",
+   "largestUsd": 16345530.5116,
+   "mainDexPositions": 9
+  },
+  {
+   "address": "0x1bbfb3a33600338d5a948618189649a4588d5fc4",
+   "accountValueUsd": 7462524.829941,
+   "largestCoin": "BTC",
+   "largestUsd": 16003032.731,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xc36af149b64a41aab6c26ea6b71c37082d9e105b",
+   "accountValueUsd": 8166388.026257,
+   "largestCoin": "ZEC",
+   "largestUsd": 15697644.48,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x60b081bd8ee2b0e5a2b8f17503322cf7ee7a991e",
+   "accountValueUsd": 9596317.699706,
+   "largestCoin": "ZEC",
+   "largestUsd": 15520501.39,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x90dbb196cacf24bd212b377a0dd62eaad5e8151b",
+   "accountValueUsd": 9560951.70201,
+   "largestCoin": "HYPE",
+   "largestUsd": 15386615,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xd9e7a8ea48fb62cc9bdb2a4a7befbc2675824aff",
+   "accountValueUsd": 7072383.05642,
+   "largestCoin": "ETH",
+   "largestUsd": 15349200,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xf929122994e177079c924631ba13fb280f5cd1f9",
+   "accountValueUsd": 3297198.674497,
+   "largestCoin": "ETH",
+   "largestUsd": 15349200,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xde6b2a06407575b98724818445178c1f5fd53361",
+   "accountValueUsd": 1404512.053747,
+   "largestCoin": "BTC",
+   "largestUsd": 14065800,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x4e23288cee4960f9f962195c22948e4bc7ae20c3",
+   "accountValueUsd": 29685814.018747,
+   "largestCoin": "ETH",
+   "largestUsd": 13535731.514634,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0xf78c5d8d4b604a140d43a46209fade655536c581",
+   "accountValueUsd": 4044090.782222,
+   "largestCoin": "ETH",
+   "largestUsd": 13222324.4641,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x4a20b9496610941053858bd0b7e92493f44c3c26",
+   "accountValueUsd": 9396988.638097,
+   "largestCoin": "SOL",
+   "largestUsd": 13039200,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x5aa13316231716ea438eb243feabc296a9094b2b",
+   "accountValueUsd": 2603830.521744,
+   "largestCoin": "ETH",
+   "largestUsd": 12863901.04605,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xa61c57d0d1a83c02542092b431999b9870dd66b9",
+   "accountValueUsd": 5936095.681713,
+   "largestCoin": "ETH",
+   "largestUsd": 12794150,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xe2ad376800c2da03d611700ffc1d013090733c8c",
+   "accountValueUsd": 5650575.143637,
+   "largestCoin": "ETH",
+   "largestUsd": 12451226.06837,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x61ceef212ff4a86933c69fb6aca2fe35d8f2a62b",
+   "accountValueUsd": 9300802.917022,
+   "largestCoin": "LIT",
+   "largestUsd": 12383475.1881,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0xf29c6bc1147a841519b382459a6d7a373c6b9971",
+   "accountValueUsd": 13629193.624276,
+   "largestCoin": "ZEC",
+   "largestUsd": 12378550,
+   "mainDexPositions": 8
+  },
+  {
+   "address": "0xad59ed47c226987cf458a63428ca10887773ba81",
+   "accountValueUsd": 4476579.81413,
+   "largestCoin": "ZEC",
+   "largestUsd": 12313980,
+   "mainDexPositions": 9
+  },
+  {
+   "address": "0x58f0bf4307c61bc7a5fe11e24fe36e64300b0d20",
+   "accountValueUsd": 4850964.016284,
+   "largestCoin": "XRP",
+   "largestUsd": 12226998.141,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x5559da6ec434c5723d0ce9c4da7f29e3f8a3d43b",
+   "accountValueUsd": 2864733.0019,
+   "largestCoin": "ETH",
+   "largestUsd": 11573956.4727,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0xa98143608a6846453c88f29506d64a8b85532e65",
+   "accountValueUsd": 6641405.204365,
+   "largestCoin": "HYPE",
+   "largestUsd": 11570370.4644,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x469e9a7f624b04c24f0e64edf8d8a277e6bf58a5",
+   "accountValueUsd": 24602768.140514,
+   "largestCoin": "HYPE",
+   "largestUsd": 10867527.622508,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x28bbaaa5b431ed61ea6a9b3394f76616e00cfca6",
+   "accountValueUsd": 2200393.334137,
+   "largestCoin": "ETH",
+   "largestUsd": 10782505.81188,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xca4903c207a0df58bf37d4bc8bbc5210726f53c8",
+   "accountValueUsd": 6611269.673619,
+   "largestCoin": "BTC",
+   "largestUsd": 10683780.4409,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x32008fcb6bbd16532afc83ca8b6c920dde22c407",
+   "accountValueUsd": 5899199.833721,
+   "largestCoin": "ETH",
+   "largestUsd": 10639671.43426,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xfc667adba8d4837586078f4fdcdc29804337ca06",
+   "accountValueUsd": 112541333.750674,
+   "largestCoin": "XRP",
+   "largestUsd": 10570648.2168,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0x091159a8106b077c13e89bc09701117e8b5f129a",
+   "accountValueUsd": 7754913.969174,
+   "largestCoin": "BTC",
+   "largestUsd": 10495410.065,
+   "mainDexPositions": 33
+  },
+  {
+   "address": "0xc619b01f1a4f894c5e83338c42f98dcb82b710f5",
+   "accountValueUsd": 4732229.062901,
+   "largestCoin": "ETH",
+   "largestUsd": 10492310,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xbb34960afec64f3f1cc78b0c9c342c4657021696",
+   "accountValueUsd": 3671475.992792,
+   "largestCoin": "ETH",
+   "largestUsd": 10485340,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x8cc94dc843e1ea7a19805e0cca43001123512b6a",
+   "accountValueUsd": 7686059.937498,
+   "largestCoin": "ETH",
+   "largestUsd": 10230400,
+   "mainDexPositions": 119
+  },
+  {
+   "address": "0x4f12b217aa59e6d3e1f91ca2dc96f9543576618b",
+   "accountValueUsd": 3276019.348912,
+   "largestCoin": "BTC",
+   "largestUsd": 10215685.4674,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x5e9eadc22514f35af45de3ea4c3c9e56d21435ee",
+   "accountValueUsd": 1039523.219949,
+   "largestCoin": "ETH",
+   "largestUsd": 10173239.67126,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x29de2668d0c8a5879ebb2f6afbec1c6f485a3e93",
+   "accountValueUsd": 8184948.447967,
+   "largestCoin": "ETH",
+   "largestUsd": 10072910.57388,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x72774e2fe1992d5da8c6e9cef73fd2ab980c0b98",
+   "accountValueUsd": 4119909.982968,
+   "largestCoin": "ZEC",
+   "largestUsd": 9974856.645,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x9c062c0575c30a3b7614d0c6ea8de67faab00560",
+   "accountValueUsd": 1995557.596361,
+   "largestCoin": "BTC",
+   "largestUsd": 9914693.01504,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x8def9f50456c6c4e37fa5d3d57f108ed23992dae",
+   "accountValueUsd": 54286326.892356,
+   "largestCoin": "HYPE",
+   "largestUsd": 9900613.3787,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x0424d6bf39e35d21af32014257589040c1055cec",
+   "accountValueUsd": 1108999.642477,
+   "largestCoin": "BTC",
+   "largestUsd": 9763792.99201,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xb7e0b9fbc9479330d70bcc82a7d4325a20e8d1aa",
+   "accountValueUsd": 4800696.499447,
+   "largestCoin": "BTC",
+   "largestUsd": 9761719.90446,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x8607a7d180de23645db594d90621d837749408d5",
+   "accountValueUsd": 20306260.152140003,
+   "largestCoin": "BTC",
+   "largestUsd": 9663060.40313,
+   "mainDexPositions": 20
+  },
+  {
+   "address": "0x795cfd1b03eafc11c4ec958b8a94cfc9aa64a242",
+   "accountValueUsd": 8273950.515603,
+   "largestCoin": "HYPE",
+   "largestUsd": 9643152.55071,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xdd7a372377fc633f74ab6e20963803d52f448830",
+   "accountValueUsd": 5506074.81539,
+   "largestCoin": "BTC",
+   "largestUsd": 9625434.20778,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x175bd0e31ea1d99270521e9bf578a0c155b2c824",
+   "accountValueUsd": 3451801.128992,
+   "largestCoin": "ETH",
+   "largestUsd": 9479094.6512,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x350e33a777d510616fbdb483d1de3b50d1edfcfb",
+   "accountValueUsd": 8627885.724429,
+   "largestCoin": "ZEC",
+   "largestUsd": 9471082.8,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0x0c4a3a7ac74d43732f9b5ea507f01ab72a381b19",
+   "accountValueUsd": 1715177.810807,
+   "largestCoin": "BTC",
+   "largestUsd": 9357300.0423,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xbd334a55db91617545e8d1b09941e036ad8e4200",
+   "accountValueUsd": 7422980.432632,
+   "largestCoin": "HYPE",
+   "largestUsd": 9329859.87282,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xc179e03922afe8fa9533d3f896338b9fb87ce0c8",
+   "accountValueUsd": 13213835.29583,
+   "largestCoin": "XMR",
+   "largestUsd": 9170336.77576,
+   "mainDexPositions": 8
+  },
+  {
+   "address": "0xd47587702a91731dc1089b5db0932cf820151a91",
+   "accountValueUsd": 24689780.189577002,
+   "largestCoin": "HYPE",
+   "largestUsd": 9144507.955491,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xc63a0f0db2c9604283172e83bd035902e0f0a3cd",
+   "accountValueUsd": 7993091.460649,
+   "largestCoin": "XRP",
+   "largestUsd": 9127287.1854,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x186db447f4de2f258ec100aa194b6e9974a46482",
+   "accountValueUsd": 1830972.465307,
+   "largestCoin": "HYPE",
+   "largestUsd": 9074100,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x734531e87f8c1643321355f7143fcc6169c4b404",
+   "accountValueUsd": 2299616.675217,
+   "largestCoin": "HYPE",
+   "largestUsd": 9072770,
+   "mainDexPositions": 14
+  },
+  {
+   "address": "0x0b8aa35c28b7c6ab18f11dc168f437a8a69fd4f8",
+   "accountValueUsd": 40670724.60175301,
+   "largestCoin": "HYPE",
+   "largestUsd": 9054152.685,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x8a3cf3c4b300be69429cce5beb2ef14d7200b6b7",
+   "accountValueUsd": 3938977.577803,
+   "largestCoin": "HYPE",
+   "largestUsd": 9047300,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x66f889094739dbb7d20aa60f645acd88feba75a9",
+   "accountValueUsd": 1442812.180421,
+   "largestCoin": "ETH",
+   "largestUsd": 8968400,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xfb941d2344b72ea9101400392b818173772d0ddf",
+   "accountValueUsd": 12962023.043455,
+   "largestCoin": "ETH",
+   "largestUsd": 8964900,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xbc1bc64be47052fbab69d12fe5da1c3327788d1b",
+   "accountValueUsd": 7319528.281962,
+   "largestCoin": "BTC",
+   "largestUsd": 8895746.7095,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xdfe5195e7cc1a2eca9b0df09d4646472a8c4a402",
+   "accountValueUsd": 1154285.189174,
+   "largestCoin": "BTC",
+   "largestUsd": 8854890,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x77ee3604adbdefa66a817b3cf776412a6613a018",
+   "accountValueUsd": 2677645.703689,
+   "largestCoin": "BTC",
+   "largestUsd": 8838847.39881,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x089fe537f4b2af55fa990bc64ff4125800bba4f8",
+   "accountValueUsd": 21891334.705041,
+   "largestCoin": "ZEC",
+   "largestUsd": 8769557.37,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xe091330c53b971ed4e886f902f18e8544a8d6705",
+   "accountValueUsd": 1056253.035701,
+   "largestCoin": "ETH",
+   "largestUsd": 8720049.10068,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x610b8dd6b392d010c2b6ad8d121dfc09524cb613",
+   "accountValueUsd": 5153008.226319,
+   "largestCoin": "DOGE",
+   "largestUsd": 8604896.169888,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xe927f4a34074229d5432c17091af8828514498ef",
+   "accountValueUsd": 5585865.511786,
+   "largestCoin": "SOL",
+   "largestUsd": 8477040,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x8ae4c5b303bc77c3aa68f2b71f37c9fa6d3b3d60",
+   "accountValueUsd": 10152480.18845,
+   "largestCoin": "BTC",
+   "largestUsd": 8322549.32925,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xdb3a56575b99abf9a58e3dcbd9227d45f203cf3b",
+   "accountValueUsd": 4157361.399269,
+   "largestCoin": "SOL",
+   "largestUsd": 8296894.4289,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x5faed49291db46f90e9af7331e41046e65776e5f",
+   "accountValueUsd": 5981926.1384310005,
+   "largestCoin": "BTC",
+   "largestUsd": 8261285.209212,
+   "mainDexPositions": 9
+  },
+  {
+   "address": "0xb86dad6ceedd625cb860e6762516f9647f2ef2f3",
+   "accountValueUsd": 2477860.612554,
+   "largestCoin": "HYPE",
+   "largestUsd": 8253425.4782,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xc5f033a47dde827133850ced50009c3802c989ba",
+   "accountValueUsd": 1528304.704013,
+   "largestCoin": "BTC",
+   "largestUsd": 8225098.20594,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xb829fd12a23c88e0f1eb85238799f8fd400a3a81",
+   "accountValueUsd": 5038644.690794,
+   "largestCoin": "HYPE",
+   "largestUsd": 8219286.0596,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x051c2e6d49cf82ebc47f08f9b85800f94fc9693c",
+   "accountValueUsd": 12212756.381149,
+   "largestCoin": "ETH",
+   "largestUsd": 8168363.87043,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0x016e7005d7648b3aabb8023f02601b8b9b8746b0",
+   "accountValueUsd": 6941561.879626,
+   "largestCoin": "LIT",
+   "largestUsd": 8150208.8048,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x926a8a1bc7fa22e2fdd4459c443158aa38adaf36",
+   "accountValueUsd": 1329490.677134,
+   "largestCoin": "BTC",
+   "largestUsd": 8047100,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x767a1e1f1796b9c8def2f1e8ed08a7596e930ace",
+   "accountValueUsd": 2662760.0389,
+   "largestCoin": "BTC",
+   "largestUsd": 8022300,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xea6670ebdb4a388a8cfc16f6497bf4f267b061ee",
+   "accountValueUsd": 2852752.937905,
+   "largestCoin": "BTC",
+   "largestUsd": 8014000,
+   "mainDexPositions": 12
+  },
+  {
+   "address": "0xfb1898bb5955fdd11704e397104c6a0e0725eb17",
+   "accountValueUsd": 1547723.244672,
+   "largestCoin": "ETH",
+   "largestUsd": 8000769.40416,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x3440f23a87f1950e7a88cd248fd270e92d1132c5",
+   "accountValueUsd": 1829681.68864,
+   "largestCoin": "BTC",
+   "largestUsd": 7925233.52784,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xe6e0e0dd371e4f9bd5218ab4bc0634d59705ae71",
+   "accountValueUsd": 2738594.610803,
+   "largestCoin": "ETH",
+   "largestUsd": 7895037.7532,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0xbe19541903f64af97bcf8436f4d15bf3a56b8bd1",
+   "accountValueUsd": 16114953.772756,
+   "largestCoin": "HYPE",
+   "largestUsd": 7878294.226176,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0xe0ffc829349c88c159462942ad885f12130e7610",
+   "accountValueUsd": 5213360.499538,
+   "largestCoin": "LIT",
+   "largestUsd": 7739847.3798,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x77eeda199553e33b246e4b4666849b9ad0972902",
+   "accountValueUsd": 6800439.944715,
+   "largestCoin": "NEAR",
+   "largestUsd": 7638629.15655,
+   "mainDexPositions": 11
+  },
+  {
+   "address": "0x936cf4fb95c30ce83f658b5bbb247e4bb381bb0f",
+   "accountValueUsd": 21109378.030011,
+   "largestCoin": "PONS",
+   "largestUsd": 7553423.92497,
+   "mainDexPositions": 26
+  },
+  {
+   "address": "0xe187055ff406f8cdf59fbae53ec20d4ecd9b771d",
+   "accountValueUsd": 3408658.565886,
+   "largestCoin": "BTC",
+   "largestUsd": 7483109.26392,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0x2c6f7831be3fe15cc7025672f27623a921553725",
+   "accountValueUsd": 5023727.464749,
+   "largestCoin": "ETH",
+   "largestUsd": 7482161.41873,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x66799bc69d7a7daaf50b6aa03cd5c6a2df1a9454",
+   "accountValueUsd": 5865992.097127,
+   "largestCoin": "HYPE",
+   "largestUsd": 7443628.62716,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xb1ec7febea4f841d525785955b7fe0e812d6e86a",
+   "accountValueUsd": 7620172.891017,
+   "largestCoin": "BTC",
+   "largestUsd": 7351491.8505,
+   "mainDexPositions": 8
+  },
+  {
+   "address": "0xe83b5e3644b50e802a25b34b38b91a061a0d3ca8",
+   "accountValueUsd": 5409816.319568,
+   "largestCoin": "ZEC",
+   "largestUsd": 7309500,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x51f3a19c1dfd8d7fe670e43ce0f66648789c8b34",
+   "accountValueUsd": 4463508.954423,
+   "largestCoin": "HYPE",
+   "largestUsd": 7236800,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x6ea486a3426563e23023125f18867117878f0ea7",
+   "accountValueUsd": 3615125.050236,
+   "largestCoin": "ETH",
+   "largestUsd": 7227748.1753,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x6859da14835424957a1e6b397d8026b1d9ff7e1e",
+   "accountValueUsd": 7495543.110108,
+   "largestCoin": "BTC",
+   "largestUsd": 7088133.3775,
+   "mainDexPositions": 30
+  },
+  {
+   "address": "0xcac19662ec88d23fa1c81ac0e8570b0cf2ff26b3",
+   "accountValueUsd": 24128908.171158,
+   "largestCoin": "NEAR",
+   "largestUsd": 7008717.69114,
+   "mainDexPositions": 34
+  },
+  {
+   "address": "0xc6877a65349b0fa45cc61a267ee682c7abf2b369",
+   "accountValueUsd": 3574732.77855,
+   "largestCoin": "HYPE",
+   "largestUsd": 6786375,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x8328446602cb4c3b2b4a25beca6488e947b6f54a",
+   "accountValueUsd": 1546639.81748,
+   "largestCoin": "ETH",
+   "largestUsd": 6584039.55072,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x5986347c1d0133d02d307f08bb1efd44c2eb89d9",
+   "accountValueUsd": 3666954.040347,
+   "largestCoin": "SOL",
+   "largestUsd": 6517800,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xe4b3936f5594f8d5b352dd3540622f995d04f543",
+   "accountValueUsd": 1026880.988675,
+   "largestCoin": "BTC",
+   "largestUsd": 6433360,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x833b99b27dac651d02080f5e220e929df891db06",
+   "accountValueUsd": 994720.438758,
+   "largestCoin": "BTC",
+   "largestUsd": 6428632.5729,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xbf046beaf400721efd210d87a0132f6ae8d819f7",
+   "accountValueUsd": 1595108.070709,
+   "largestCoin": "BTC",
+   "largestUsd": 6428240,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xb632c6580173a16154f17cdafc6eb27e95cf73b7",
+   "accountValueUsd": 4772849.361723,
+   "largestCoin": "BTC",
+   "largestUsd": 6414560,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x08c14b32c8a48894e4b933090ebcc9ce33b21135",
+   "accountValueUsd": 6452547.338223,
+   "largestCoin": "ZRO",
+   "largestUsd": 6378476.1462,
+   "mainDexPositions": 10
+  },
+  {
+   "address": "0x6e2efd5bd0f8204a2962d476db97428130879587",
+   "accountValueUsd": 4392899.043839,
+   "largestCoin": "HYPE",
+   "largestUsd": 6332200,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x023a3d058020fb76cca98f01b3c48c8938a22355",
+   "accountValueUsd": 33171128.258842,
+   "largestCoin": "ETH",
+   "largestUsd": 6208204.63221,
+   "mainDexPositions": 111
+  },
+  {
+   "address": "0x7a51ce9751493a2448c3ebc76667c6e7cf27900d",
+   "accountValueUsd": 3033624.412651,
+   "largestCoin": "HYPE",
+   "largestUsd": 6079838.7375,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x3ee505ba316879d246a8fd2b3d7ee63b51b44fab",
+   "accountValueUsd": 9119310.837902,
+   "largestCoin": "AAVE",
+   "largestUsd": 6016634.1402,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0x960b6c2c4b1498681b8422eb572a8b3a6aa3f0fc",
+   "accountValueUsd": 7580176.339226,
+   "largestCoin": "ETH",
+   "largestUsd": 5984023.62552,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x65a093e4f2ee1063ea9d97f4bc30453b3dce23af",
+   "accountValueUsd": 6987299.935219,
+   "largestCoin": "HYPE",
+   "largestUsd": 5981407.01008,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xbcd420d13362532756c968f663f96ba95e240dd2",
+   "accountValueUsd": 5044404.855516,
+   "largestCoin": "HYPE",
+   "largestUsd": 5938730.94296,
+   "mainDexPositions": 20
+  },
+  {
+   "address": "0x8c830d21e41ad688dbf1727ae4425573849daf41",
+   "accountValueUsd": 5617107.046443,
+   "largestCoin": "HYPE",
+   "largestUsd": 5913997.9932,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x5b5f798b94f54d33ba316c8b1c837e930c90c052",
+   "accountValueUsd": 1647025.22191,
+   "largestCoin": "ZEC",
+   "largestUsd": 5870800,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x03ef8f736498047c3349bb2c18311d1bb4a79054",
+   "accountValueUsd": 8048242.045716,
+   "largestCoin": "HYPE",
+   "largestUsd": 5862814.49901,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xb1505ad1a4c7755e0eb236aa2f4327bfc3474768",
+   "accountValueUsd": 2081150.785453,
+   "largestCoin": "BTC",
+   "largestUsd": 5857520,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xa0b7020185b97f496f523c3f769eebcffcc56165",
+   "accountValueUsd": 5451976.559063,
+   "largestCoin": "SOL",
+   "largestUsd": 5856037.044,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xe170ed9d77792397271d564c7161351d69fe9300",
+   "accountValueUsd": 1944094.919983,
+   "largestCoin": "ETH",
+   "largestUsd": 5798812.92,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x54dbc1fbf6b1cd59807db61109b1d9eb91fd1a04",
+   "accountValueUsd": 4267769.888769,
+   "largestCoin": "HYPE",
+   "largestUsd": 5693072.1,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xf2500dbc34617daf22b5186a1bfb9f5f3a33ae13",
+   "accountValueUsd": 2423664.868735,
+   "largestCoin": "ZEC",
+   "largestUsd": 5634644.3,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xf220c9b7b4c0e5e785ebe4b40b17576ce24473e0",
+   "accountValueUsd": 1168947.379432,
+   "largestCoin": "BTC",
+   "largestUsd": 5634370,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xda744273f80b22412417f7cfe0503f3d721f987d",
+   "accountValueUsd": 5734676.058291,
+   "largestCoin": "BTC",
+   "largestUsd": 5613160,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x781e95fdc049433565cf8e05265361b8402196b7",
+   "accountValueUsd": 4323425.187799,
+   "largestCoin": "ZEC",
+   "largestUsd": 5588398.06309,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0xfb8720d7b7d09b6fd44291a3bf1ed805e50b833b",
+   "accountValueUsd": 2196341.878511,
+   "largestCoin": "BTC",
+   "largestUsd": 5586573.10302,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x2e2b6070bec9be9f50887cfe306ac6ca93002fab",
+   "accountValueUsd": 3244718.617794,
+   "largestCoin": "SOL",
+   "largestUsd": 5431500,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x0facac3bd128fe6d799898a059d3634b877c7a0a",
+   "accountValueUsd": 2432324.0745240003,
+   "largestCoin": "HYPE",
+   "largestUsd": 5420697.1446,
+   "mainDexPositions": 33
+  },
+  {
+   "address": "0x2d891ef03177dd17372c5efecbd80f301d96436b",
+   "accountValueUsd": 1123990.07902,
+   "largestCoin": "BTC",
+   "largestUsd": 5322821.14768,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xac04753928961a06af540078410802cc443f5176",
+   "accountValueUsd": 9853700.543835,
+   "largestCoin": "HYPE",
+   "largestUsd": 5313628.10562,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x7e23ead98212f5476768cf51b5dd76da34a35a5a",
+   "accountValueUsd": 8798658.074532,
+   "largestCoin": "SOL",
+   "largestUsd": 5273139.9248,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xd21d931890d27b6e7e2e668f27931e17698e90f1",
+   "accountValueUsd": 9448382.166536,
+   "largestCoin": "PUMP",
+   "largestUsd": 5130605.310075,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x53969485d7422b35c7fe5a4025498f9b69268b79",
+   "accountValueUsd": 1533444.204315,
+   "largestCoin": "ETH",
+   "largestUsd": 5126404.87008,
+   "mainDexPositions": 8
+  },
+  {
+   "address": "0x7e1ad5e2bbe30d6d202e7c41036ea0a07c560be9",
+   "accountValueUsd": 1894708.155601,
+   "largestCoin": "ETH",
+   "largestUsd": 5107064.0391,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x45ab58a2034f03aa446baf3bb1d236706f866cbc",
+   "accountValueUsd": 5895595.095188,
+   "largestCoin": "ETH",
+   "largestUsd": 5072418.862068,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x6463f53d916cb7741a05a2c11aebdbd7324342f5",
+   "accountValueUsd": 4422370.927738,
+   "largestCoin": "ETH",
+   "largestUsd": 5002078.64676,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xfbe28a0bb38e52338dd5f1188cd22cebcdc3c8ea",
+   "accountValueUsd": 1472978.35398,
+   "largestCoin": "ETH",
+   "largestUsd": 5000811.87,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0x8b61a50f7091abbc7ab292d3a24b9eeb4a29c0c2",
+   "accountValueUsd": 2311913.836007,
+   "largestCoin": "HYPE",
+   "largestUsd": 4937141.952778,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x456f1049c0f2ec990091bbd3f30af62aca3fcdf1",
+   "accountValueUsd": 3031942.876194,
+   "largestCoin": "ZEC",
+   "largestUsd": 4872935.512,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xd67ca2c6f8bc84acf4fa4472b82a8740dc0a53ff",
+   "accountValueUsd": 1145682.725979,
+   "largestCoin": "BTC",
+   "largestUsd": 4830840,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xe77cdee1aa1affa10231654fe438b63ab0ab15db",
+   "accountValueUsd": 2127423.115415,
+   "largestCoin": "BTC",
+   "largestUsd": 4813860,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x9aa589355bf745db9784c8ef3c646360f11b58af",
+   "accountValueUsd": 4903588.037013,
+   "largestCoin": "ETH",
+   "largestUsd": 4763814.05672,
+   "mainDexPositions": 17
+  },
+  {
+   "address": "0x12f7aea21eed5461d30212ea771c4441656b8750",
+   "accountValueUsd": 1690400.945676,
+   "largestCoin": "BTC",
+   "largestUsd": 4746100.34828,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x96a7923964dbfc5010079619e8af33ce240f79df",
+   "accountValueUsd": 3957990.53722,
+   "largestCoin": "HYPE",
+   "largestUsd": 4722052.76535,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x1338a67b37aeaf796357d78501a0c3695c51c48e",
+   "accountValueUsd": 2307903.848056,
+   "largestCoin": "ZEC",
+   "largestUsd": 4615004.937207,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xaf0fdd39e5d92499b0ed9f68693da99c0ec1e92e",
+   "accountValueUsd": 17984858.244269,
+   "largestCoin": "HYPE",
+   "largestUsd": 4528631.556911,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0xceec48581b3145a575508719f45da07dc57fa7ce",
+   "accountValueUsd": 17369569.565261,
+   "largestCoin": "HYPE",
+   "largestUsd": 4528205,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xc298efc4785f2f282838924103509156c9578a9c",
+   "accountValueUsd": 11176034.60707,
+   "largestCoin": "HYPE",
+   "largestUsd": 4526052.5016,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xdbe0780a5c5a0e3b345101bbc01ac2218196d6d5",
+   "accountValueUsd": 6367632.504262,
+   "largestCoin": "ZEC",
+   "largestUsd": 4503714.589,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x6e25e5d971bda9799f7a5242f4720b5b3f939200",
+   "accountValueUsd": 2324462.736994,
+   "largestCoin": "HYPE",
+   "largestUsd": 4449299.109878,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xaac091f502a773498fb9336f41500fd13098245b",
+   "accountValueUsd": 5981781.337328,
+   "largestCoin": "BTC",
+   "largestUsd": 4416247.858064,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xcd2123d3f00325fa83b2743ed85844f8d4bb9826",
+   "accountValueUsd": 1092672.325512,
+   "largestCoin": "BTC",
+   "largestUsd": 4370511.58202,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x2d99fe0f36c1aebd28a1a2c0e82e8ca13c2ea351",
+   "accountValueUsd": 5026327.857105,
+   "largestCoin": "ZEC",
+   "largestUsd": 4356695.904,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x73ce82fb75868af2a687e9889fcf058dd1cf8ce9",
+   "accountValueUsd": 1520484.255553,
+   "largestCoin": "LINK",
+   "largestUsd": 4331160,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xbf6dd537825deeec24eb456e133c91b8d014ecc0",
+   "accountValueUsd": 1111692.905406,
+   "largestCoin": "BTC",
+   "largestUsd": 4327192.11838,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x044ab66014ae8c747ea89313c9400953bc65464a",
+   "accountValueUsd": 1478369.874875,
+   "largestCoin": "WLD",
+   "largestUsd": 4324369.0194,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x8af700ba841f30e0a3fcb0ee4c4a9d223e1efa05",
+   "accountValueUsd": 35234119.727794,
+   "largestCoin": "HYPE",
+   "largestUsd": 4321494.89728,
+   "mainDexPositions": 18
+  },
+  {
+   "address": "0x99967871e6c4f9a5185abc57edede9e9540191f6",
+   "accountValueUsd": 5381902.01181,
+   "largestCoin": "LIT",
+   "largestUsd": 4276479.1488,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x4c6d679eac539bf7c5a0b7ebd8949ae93b1e5ee9",
+   "accountValueUsd": 29193284.179563,
+   "largestCoin": "XMR",
+   "largestUsd": 4256650.42778,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x0514f2f3e0277c47117e3f33d9390efb0acfbdfe",
+   "accountValueUsd": 1425773.052139,
+   "largestCoin": "ETH",
+   "largestUsd": 4229610,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xc6758a779bccee1ef0190dbe8292fdf44076795d",
+   "accountValueUsd": 2497923.50565,
+   "largestCoin": "BTC",
+   "largestUsd": 4219408.12422,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x4fe260d11bf48ba3a94459771259c910a398ac59",
+   "accountValueUsd": 967958.833962,
+   "largestCoin": "HYPE",
+   "largestUsd": 4214418.34968,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x64702807a1f0f9888ea22b858099d7f481227b55",
+   "accountValueUsd": 2789767.554163,
+   "largestCoin": "HYPE",
+   "largestUsd": 4186496.16,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xeee0d806e4f0a427277433d6b580619918770b53",
+   "accountValueUsd": 8474765.969395,
+   "largestCoin": "ETH",
+   "largestUsd": 4184685.143268,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xb69eec8fea0081343c3b09e652ba1fa7dcf7033a",
+   "accountValueUsd": 1270503.873424,
+   "largestCoin": "BTC",
+   "largestUsd": 4184637.403437,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x982be5105a4d1e7062281e80ec780b8b151e4606",
+   "accountValueUsd": 1676773.278244,
+   "largestCoin": "ETH",
+   "largestUsd": 4166604.46876,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x27b8de41a06623a72e1ea72d38a8fbf547cd12fc",
+   "accountValueUsd": 4076298.055724,
+   "largestCoin": "ETH",
+   "largestUsd": 4163754.34374,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xeb0f432beecf10dcc828fc1e36a3386caf634637",
+   "accountValueUsd": 1887483.243208,
+   "largestCoin": "ZEC",
+   "largestUsd": 4151343.294,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x31dea2516beee92135b96f464eeec3cf292a13f2",
+   "accountValueUsd": 13349519.772279,
+   "largestCoin": "BTC",
+   "largestUsd": 4093758.38862,
+   "mainDexPositions": 8
+  },
+  {
+   "address": "0x482b0f4dad512fe086e121882a81e34c374acae4",
+   "accountValueUsd": 2953080.141062,
+   "largestCoin": "HYPE",
+   "largestUsd": 4079433.62098,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0x123dbca6a27005a3c4ce10cb66ee8ece8fc13bff",
+   "accountValueUsd": 5992026.647019,
+   "largestCoin": "NEAR",
+   "largestUsd": 4073420.87601,
+   "mainDexPositions": 79
+  },
+  {
+   "address": "0xee2b489196431a9442f73c52b2363436fdabd67e",
+   "accountValueUsd": 2322616.850579,
+   "largestCoin": "BTC",
+   "largestUsd": 4042463.48365,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x9b864dde6ed1c21608b1665a0ac0faa4f7e36e6e",
+   "accountValueUsd": 3099343.511384,
+   "largestCoin": "ZEC",
+   "largestUsd": 4030690.752,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xb2662fca65f6446b8b1898340118d44d680a4449",
+   "accountValueUsd": 2509419.181594,
+   "largestCoin": "ZEC",
+   "largestUsd": 4030125,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xbcfbbf38789d63721e800f1f8595af816e52c417",
+   "accountValueUsd": 3518482.002781,
+   "largestCoin": "HYPE",
+   "largestUsd": 4027547.77204,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x4da577b56741299e2c3fcdfa3ffa41a771b80abe",
+   "accountValueUsd": 3052905.860295,
+   "largestCoin": "BTC",
+   "largestUsd": 4009350,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x638f189825aaa4d5f85fd2e3fe38620df2f7f5f0",
+   "accountValueUsd": 3013527.589043,
+   "largestCoin": "BTC",
+   "largestUsd": 4007150,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x5a72a5f89b44473a33136a7c3253c519c474eec4",
+   "accountValueUsd": 3848192.374367,
+   "largestCoin": "HYPE",
+   "largestUsd": 3997513.3158,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x89720b1831fd8457ea9026f5ffb476ed6d35e6bd",
+   "accountValueUsd": 3823589.037386,
+   "largestCoin": "HYPE",
+   "largestUsd": 3933504.57303,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x5647249079e257329ecb6f46ed41821d3c69e7de",
+   "accountValueUsd": 4391819.883453,
+   "largestCoin": "NEAR",
+   "largestUsd": 3923642.81715,
+   "mainDexPositions": 36
+  },
+  {
+   "address": "0x837686cfda8a79adfb8465d39240c54166bf9a1e",
+   "accountValueUsd": 1218263.990295,
+   "largestCoin": "ETH",
+   "largestUsd": 3913354.8888,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0xedeaa967b0100a4df613533df634ffe6cb5fd773",
+   "accountValueUsd": 1304342.567427,
+   "largestCoin": "ZEC",
+   "largestUsd": 3843551.684,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x53f8f390fd4f70941c5d160a964f6893c8dbceff",
+   "accountValueUsd": 5863077.21869,
+   "largestCoin": "BTC",
+   "largestUsd": 3803947.478212,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x6891ed9ee6a9d0649ffac2bcee814e6899a0e075",
+   "accountValueUsd": 3490916.85416,
+   "largestCoin": "HYPE",
+   "largestUsd": 3778625.5,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x615a2071e01b28093e65d81be32cea6e173d69d5",
+   "accountValueUsd": 1367824.039797,
+   "largestCoin": "XMR",
+   "largestUsd": 3775684.2721,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x780825f3f0ad6799e304fb843387934c1fa06e70",
+   "accountValueUsd": 1053747.486369,
+   "largestCoin": "ZEC",
+   "largestUsd": 3727572.939,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x28cee4465f95720cb8464d56faea656751119040",
+   "accountValueUsd": 1429869.166668,
+   "largestCoin": "HYPE",
+   "largestUsd": 3706585.74,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xacb66d1996501bcc82a0e7819c9e041599f5efbd",
+   "accountValueUsd": 8392831.576559,
+   "largestCoin": "HYPE",
+   "largestUsd": 3696354.79248,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0xa1830e8d9f019feb448478a171bb37cc6c4c0482",
+   "accountValueUsd": 13464509.078615,
+   "largestCoin": "ZEC",
+   "largestUsd": 3690264.2,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xeadc152ac1014ace57c6b353f89adf5faffe9d55",
+   "accountValueUsd": 13189597.282715,
+   "largestCoin": "NEAR",
+   "largestUsd": 3679507.19808,
+   "mainDexPositions": 38
+  },
+  {
+   "address": "0xf93f055e03a8ba214eec82ab80b814e40dd93376",
+   "accountValueUsd": 1349731.829703,
+   "largestCoin": "ZEC",
+   "largestUsd": 3668750,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xbadbb1de95b5f333623ebece7026932fa5039ee6",
+   "accountValueUsd": 2297570.881166,
+   "largestCoin": "ETH",
+   "largestUsd": 3656375.232,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x47472cd62c99b8b5ce7e84e733515133e9aec0bd",
+   "accountValueUsd": 34862974.891848,
+   "largestCoin": "ETH",
+   "largestUsd": 3648177.42779,
+   "mainDexPositions": 77
+  },
+  {
+   "address": "0xa4dedda59f2908b92ae192cfd494839373bcb3c4",
+   "accountValueUsd": 2637232.716076,
+   "largestCoin": "HYPE",
+   "largestUsd": 3628000,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xea2a1ddcdd7762381355ca1e84e808e75232b10a",
+   "accountValueUsd": 1398394.965994,
+   "largestCoin": "BTC",
+   "largestUsd": 3624178.75656,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x153c8444380512cabdc34f6cea09c322e14e319a",
+   "accountValueUsd": 4295985.192357,
+   "largestCoin": "NEAR",
+   "largestUsd": 3608493.50218,
+   "mainDexPositions": 10
+  },
+  {
+   "address": "0xfb751fa655f5e7cb9e4a474cf616e1439600bec2",
+   "accountValueUsd": 1812278.080214,
+   "largestCoin": "BTC",
+   "largestUsd": 3595763.37015,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x27c9fa86c91b84ddfa15de58c482ff662498d65d",
+   "accountValueUsd": 1703622.703894,
+   "largestCoin": "ETH",
+   "largestUsd": 3568772.49432,
+   "mainDexPositions": 61
+  },
+  {
+   "address": "0xb885ed57cd16985f347d26f13a79dc4abd2e3c54",
+   "accountValueUsd": 3351345.550353,
+   "largestCoin": "BTC",
+   "largestUsd": 3541482.310065,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x888e000c78b8f1aada5b3c99f880794907b76d77",
+   "accountValueUsd": 2270365.177575,
+   "largestCoin": "BTC",
+   "largestUsd": 3531528,
+   "mainDexPositions": 43
+  },
+  {
+   "address": "0x5f94a51948d2376ad34a6fadfa2544e651b74b96",
+   "accountValueUsd": 17904676.429404,
+   "largestCoin": "LIT",
+   "largestUsd": 3517630.409088,
+   "mainDexPositions": 20
+  },
+  {
+   "address": "0x498216a21f5b028797c1d3d4250e14d09c9959e6",
+   "accountValueUsd": 2218133.29877,
+   "largestCoin": "ETH",
+   "largestUsd": 3496662.42408,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0x1f1690074a8744e8d38cdca1ab2b75fafe5d6d07",
+   "accountValueUsd": 2159205.167696,
+   "largestCoin": "ETH",
+   "largestUsd": 3479893.34445,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0xac26cf5f3c46b5e102048c65b977d2551b72a9c7",
+   "accountValueUsd": 2946119.564799,
+   "largestCoin": "HYPE",
+   "largestUsd": 3453135.46052,
+   "mainDexPositions": 38
+  },
+  {
+   "address": "0x47a127f496d001f187ac65fc24852274dc51d080",
+   "accountValueUsd": 8598295.394117,
+   "largestCoin": "BTC",
+   "largestUsd": 3451620.99744,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xfdf891f2b214a4c9374d26595ec6d4080262e381",
+   "accountValueUsd": 2119867.37822,
+   "largestCoin": "AERO",
+   "largestUsd": 3444299.04,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x654016a8c9fcf0c4cb7ed6078aba21f7f399f7b7",
+   "accountValueUsd": 4052437.228457,
+   "largestCoin": "BTC",
+   "largestUsd": 3442016.35374,
+   "mainDexPositions": 13
+  },
+  {
+   "address": "0x3e516cf3c9d4f29fae6c1324c2414dc872fc9c09",
+   "accountValueUsd": 2069208.801272,
+   "largestCoin": "ZEC",
+   "largestUsd": 3422707.082,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x31e60e6f6be0f5a4a2de743be66d3dd312788b48",
+   "accountValueUsd": 4634019.91357,
+   "largestCoin": "HYPE",
+   "largestUsd": 3392338.6508,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xd142479997958a4fefd1f8d5373b31ce36987d73",
+   "accountValueUsd": 1856022.530905,
+   "largestCoin": "ETH",
+   "largestUsd": 3334707.61282,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0x51f63885534cb494f4592a0311551f369bff2b39",
+   "accountValueUsd": 3028452.152858,
+   "largestCoin": "HYPE",
+   "largestUsd": 3320260.9209,
+   "mainDexPositions": 51
+  },
+  {
+   "address": "0x6041f881358c71d64bc9253c9ba0391df69f7d98",
+   "accountValueUsd": 1873448.470986,
+   "largestCoin": "BTC",
+   "largestUsd": 3299893.344,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x015354106478dda69c4aae3c0cf801290b738052",
+   "accountValueUsd": 6349414.98273,
+   "largestCoin": "PONS",
+   "largestUsd": 3235130.144556,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xc94285029b3a5efaad09fe55e36320e6fbf82bf6",
+   "accountValueUsd": 1245167.017805,
+   "largestCoin": "BTC",
+   "largestUsd": 3221004,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x59275149ee03ac34f8a94ea9063359bad5527a78",
+   "accountValueUsd": 968825.726633,
+   "largestCoin": "BTC",
+   "largestUsd": 3215760,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xe09726ff25f5001f37b15049f54116cb83d7d0fe",
+   "accountValueUsd": 6556716.911156,
+   "largestCoin": "BTC",
+   "largestUsd": 3207400,
+   "mainDexPositions": 11
+  },
+  {
+   "address": "0xbac48231e71d5e24735d3cb6a26e597b13062979",
+   "accountValueUsd": 1052477.422227,
+   "largestCoin": "BTC",
+   "largestUsd": 3167339.50728,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x7178cc2d79160d524858c843e350ed8207de0854",
+   "accountValueUsd": 1928501.062296,
+   "largestCoin": "ETH",
+   "largestUsd": 3121402.7241,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x1d045240a2f916683e3691f817ad846c88997c43",
+   "accountValueUsd": 1004780.754563,
+   "largestCoin": "HYPE",
+   "largestUsd": 3108691.18431,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x64f80d81f4ae9858a9e92dce8d19ee1686cc8e04",
+   "accountValueUsd": 4395280.806426,
+   "largestCoin": "HYPE",
+   "largestUsd": 3103136.2216,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x45a5aea03e5a6dbc6f46a708562250c83afc4fc4",
+   "accountValueUsd": 2156163.41408,
+   "largestCoin": "HYPE",
+   "largestUsd": 3087947.672236,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xca230e816bdb34a46960c2f978a30a563d1ae9e0",
+   "accountValueUsd": 1820539.350718,
+   "largestCoin": "HYPE",
+   "largestUsd": 3075784.1583,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x02745fb27d7cee999fccf295f9d4a897fd22a7f7",
+   "accountValueUsd": 1743243.843101,
+   "largestCoin": "XMR",
+   "largestUsd": 3064130.16273,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x7facb3ec0415d6605e0cf5dff744f1108224ff4d",
+   "accountValueUsd": 1844352.157202,
+   "largestCoin": "HYPE",
+   "largestUsd": 3048897.6,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xe7f3ec7725bf9a5e377caddc8874bb360308200b",
+   "accountValueUsd": 1562015.384731,
+   "largestCoin": "BTC",
+   "largestUsd": 3041468.892,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x3e2fbe61f37f11d68e3d1e4f25c53c73f414b269",
+   "accountValueUsd": 2903063.469931,
+   "largestCoin": "ZEC",
+   "largestUsd": 3016538.343,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xd4c7294dbb84a8bd5ee51d9fa33acf12300a1513",
+   "accountValueUsd": 3053364.081498,
+   "largestCoin": "HYPE",
+   "largestUsd": 3016480.5,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x4cae5bed586f6e73ae54ebd40a4ac4ed2c477c34",
+   "accountValueUsd": 3997970.60629,
+   "largestCoin": "ZEC",
+   "largestUsd": 2997256.707,
+   "mainDexPositions": 8
+  },
+  {
+   "address": "0xf1e2783541c3edbe783c6b89e7cfd493c7894af5",
+   "accountValueUsd": 947669.557155,
+   "largestCoin": "ZEC",
+   "largestUsd": 2977454.352,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x266b5569ed3017e74dd48059c6db804e016eefcb",
+   "accountValueUsd": 2759354.314864,
+   "largestCoin": "HYPE",
+   "largestUsd": 2967700.2,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x5371c4517b448006941ae335e5cafd54af573c11",
+   "accountValueUsd": 1730902.46526,
+   "largestCoin": "LIT",
+   "largestUsd": 2949510.8925,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xbbfb6566ad064c233af6314aeb1eee4c26a5f921",
+   "accountValueUsd": 2215797.190399,
+   "largestCoin": "HYPE",
+   "largestUsd": 2949277.5,
+   "mainDexPositions": 11
+  },
+  {
+   "address": "0x59629e23c52a0d7c092436870ef2db1dc382ddf8",
+   "accountValueUsd": 3641832.425893,
+   "largestCoin": "ZEC",
+   "largestUsd": 2923847.67,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xdf6097a9e585e3d72556d19fa147562ffef5d3c7",
+   "accountValueUsd": 3615251.229158,
+   "largestCoin": "ZEC",
+   "largestUsd": 2923000,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xabe6724948b47deb99ae12fce930ea4b35d51d99",
+   "accountValueUsd": 1074287.387291,
+   "largestCoin": "ETH",
+   "largestUsd": 2905661.70108,
+   "mainDexPositions": 11
+  },
+  {
+   "address": "0x45f717946a3fb49054ebebecbb1ab8ce9325f166",
+   "accountValueUsd": 2781181.289727,
+   "largestCoin": "ZEC",
+   "largestUsd": 2894993.647,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x2e5af7bc3ca942491366ae5672fdc702e9a4fb3e",
+   "accountValueUsd": 4340624.785348,
+   "largestCoin": "HYPE",
+   "largestUsd": 2862944.21286,
+   "mainDexPositions": 11
+  },
+  {
+   "address": "0x07fd993f0fa3a185f7207adccd29f7a87404689d",
+   "accountValueUsd": 15757232.809484,
+   "largestCoin": "XMR",
+   "largestUsd": 2823650.07412,
+   "mainDexPositions": 60
+  },
+  {
+   "address": "0x962bdd83c3943fe08b62101fd9f9a8b923a0b475",
+   "accountValueUsd": 2140696.848471,
+   "largestCoin": "ETH",
+   "largestUsd": 2819749.07454,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x3fc56e944aa7b1594c85861b2d46a07f82a2c0c1",
+   "accountValueUsd": 3349493.51571,
+   "largestCoin": "BTC",
+   "largestUsd": 2804882.5,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0x9e39d6282e4525526f33092c8aad27005e0ea02d",
+   "accountValueUsd": 2842180.310938,
+   "largestCoin": "HYPE",
+   "largestUsd": 2804771.1936,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x4fd04553468610e5a88a2cffa38e057c954312da",
+   "accountValueUsd": 3088081.820578,
+   "largestCoin": "HYPE",
+   "largestUsd": 2791834.863048,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x8ab947b3a29ede9e7995b859d217a685fbce43a2",
+   "accountValueUsd": 2754461.599273,
+   "largestCoin": "HYPE",
+   "largestUsd": 2772498.926448,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xb0026ca48937bd18c5941c05decab68b0fcced8a",
+   "accountValueUsd": 5698468.717194,
+   "largestCoin": "ETH",
+   "largestUsd": 2737009.64284,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xbfc79c444c41a74516bf31237ebf586a231480b4",
+   "accountValueUsd": 3992986.505903,
+   "largestCoin": "ZEC",
+   "largestUsd": 2727508.425,
+   "mainDexPositions": 32
+  },
+  {
+   "address": "0xa2710511e1dac83973de2b394f669183a175a3f7",
+   "accountValueUsd": 1239001.382865,
+   "largestCoin": "HYPE",
+   "largestUsd": 2722350,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x91a9cadcd7e36cbe8ff604cb634307d7b7643f70",
+   "accountValueUsd": 3922381.434605,
+   "largestCoin": "ETH",
+   "largestUsd": 2711329.216,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x4a96036fb1529561fa3eeeb2781fad2d4f25500e",
+   "accountValueUsd": 3671366.691911,
+   "largestCoin": "HYPE",
+   "largestUsd": 2687404.5,
+   "mainDexPositions": 12
+  },
+  {
+   "address": "0x404ca2035b37bf2e83505134ebcf8d03babb5f03",
+   "accountValueUsd": 1098415.058793,
+   "largestCoin": "BTC",
+   "largestUsd": 2676891.39322,
+   "mainDexPositions": 18
+  },
+  {
+   "address": "0x597568694fe6ee1b701ec8578bd57102c9a29abd",
+   "accountValueUsd": 3433835.984065,
+   "largestCoin": "LIT",
+   "largestUsd": 2651400,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x866d4903b256ce7e7caac46a91e83128bb0fd6e1",
+   "accountValueUsd": 4082583.884565,
+   "largestCoin": "ZEC",
+   "largestUsd": 2632975.255,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xfd6a531508649697c6e133adcb82efcd0c737737",
+   "accountValueUsd": 3540951.153524,
+   "largestCoin": "BTC",
+   "largestUsd": 2600772.83684,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x1c983ff3686c9d344c9141633a713898bb877fc7",
+   "accountValueUsd": 1302758.405572,
+   "largestCoin": "ETH",
+   "largestUsd": 2567630.42204,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x8ab13dbc3d2ab5ea4c4b37f40696254a730015ef",
+   "accountValueUsd": 2176457.858536,
+   "largestCoin": "ETH",
+   "largestUsd": 2561100,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x7a6d5fc57f6906f337c48fe2763c3a501304f79c",
+   "accountValueUsd": 3068426.399894,
+   "largestCoin": "ETH",
+   "largestUsd": 2558699.74413,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0xd7b8209d95d4c05faaa505671211058d51529f55",
+   "accountValueUsd": 2073210.782954,
+   "largestCoin": "ETH",
+   "largestUsd": 2558538.9,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x9eb4348964d9943fc8579734d1a6e2fb2d88c83e",
+   "accountValueUsd": 1730192.115375,
+   "largestCoin": "PUMP",
+   "largestUsd": 2484121.599924,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x7345985dd7e2c521a0ba97929aea93614627d58e",
+   "accountValueUsd": 3843116.77765,
+   "largestCoin": "HYPE",
+   "largestUsd": 2432837.96933,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x3e470a0bf8460c3a8320327cf5db7deed3a3aaf6",
+   "accountValueUsd": 1139884.340422,
+   "largestCoin": "BTC",
+   "largestUsd": 2415420,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xf215c807672f168f6894bb2f5154000de11b4d85",
+   "accountValueUsd": 1210429.188699,
+   "largestCoin": "BTC",
+   "largestUsd": 2413677.97272,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xaea8e3bd369217cc6e3e6abddf0da318fba8e59b",
+   "accountValueUsd": 4370354.880292,
+   "largestCoin": "BTC",
+   "largestUsd": 2413023.5173,
+   "mainDexPositions": 8
+  },
+  {
+   "address": "0xebd7c4b3677a4480fb5f69ac2f51c51d66a19990",
+   "accountValueUsd": 958632.428392,
+   "largestCoin": "BTC",
+   "largestUsd": 2403277.628,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x3c83dbcda8d9fbefb75181f40d51205648defc7d",
+   "accountValueUsd": 6074250.611357,
+   "largestCoin": "SOL",
+   "largestUsd": 2398716.67475,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x58b27998b4ff896949d5f57466b259e50ee211f3",
+   "accountValueUsd": 1887052.112129,
+   "largestCoin": "BTC",
+   "largestUsd": 2394490.6872,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xe639710e64d7094f7f82ab495915559c2f612953",
+   "accountValueUsd": 1649353.145751,
+   "largestCoin": "XRP",
+   "largestUsd": 2389670.9984,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xcafe9392d902f6f517b1573371923ebf7ffa7b3b",
+   "accountValueUsd": 7201360.507043,
+   "largestCoin": "BTC",
+   "largestUsd": 2377416.5135,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x09969138013fdfae9438fbd705515f047f8a0ba6",
+   "accountValueUsd": 1181223.706998,
+   "largestCoin": "AAVE",
+   "largestUsd": 2367760,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xe86351e0f69bd808def36e7bb2f9107443838bb8",
+   "accountValueUsd": 1225309.302281,
+   "largestCoin": "HYPE",
+   "largestUsd": 2359162,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x005a09b498f2a28b54652a70d7812e63414161fe",
+   "accountValueUsd": 1359550.964914,
+   "largestCoin": "NEAR",
+   "largestUsd": 2356130.08644,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xb3e475368ed0fa0ad23c04de0423d48a0758806f",
+   "accountValueUsd": 5474750.975103,
+   "largestCoin": "LIT",
+   "largestUsd": 2352816,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x065fb6cfdb32ccaa5747122fd979b88b3844b68c",
+   "accountValueUsd": 2663150.715517,
+   "largestCoin": "ZEC",
+   "largestUsd": 2344375.005,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x9606f4e2f924cb0216b83ca7deca2ab486e64e5d",
+   "accountValueUsd": 1312785.187921,
+   "largestCoin": "ETH",
+   "largestUsd": 2340274.73187,
+   "mainDexPositions": 15
+  },
+  {
+   "address": "0x9a0825ca6c4c577a1202a8fae3b8f044c1d5711d",
+   "accountValueUsd": 1935079.838501,
+   "largestCoin": "BTC",
+   "largestUsd": 2327424,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x248ee78390f5505d34f36ce2df87d79fbcdb6be2",
+   "accountValueUsd": 1808939.602889,
+   "largestCoin": "HYPE",
+   "largestUsd": 2301807.3276,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x991e044d97b946fe549e92ac9bfa5119592a0e54",
+   "accountValueUsd": 1646972.079022,
+   "largestCoin": "ZEC",
+   "largestUsd": 2298051.275,
+   "mainDexPositions": 10
+  },
+  {
+   "address": "0x6dc903ab5fe0d286cbef6c5042dd2684b7fd78d7",
+   "accountValueUsd": 1492447.100434,
+   "largestCoin": "HYPE",
+   "largestUsd": 2297296.023975,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xf21d494bb47339f399267c5519cbe11da0753b2d",
+   "accountValueUsd": 2026657.861947,
+   "largestCoin": "UNI",
+   "largestUsd": 2292423.13148,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xc46e57114835d392ce1aef7b3c884d953bffc761",
+   "accountValueUsd": 1014186.52107,
+   "largestCoin": "HYPE",
+   "largestUsd": 2270321.7399,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x4f24303e0af2e4a94abcd516a3c80d38262bde6a",
+   "accountValueUsd": 2188410.493378,
+   "largestCoin": "HYPE",
+   "largestUsd": 2268753.94989,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xc7290b4b308431a985fa9e3e8a335c2f7650517c",
+   "accountValueUsd": 1698089.532671,
+   "largestCoin": "HYPE",
+   "largestUsd": 2267575,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xb0088e7991b62ef58483e5f524ed9d482e5bac8b",
+   "accountValueUsd": 1502297.458373,
+   "largestCoin": "HYPE",
+   "largestUsd": 2267500,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xd93db9fc95c19c1eaab854281890e9e77b18ae3f",
+   "accountValueUsd": 1427305.30541,
+   "largestCoin": "HYPE",
+   "largestUsd": 2265750,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x856c35038594767646266bc7fd68dc26480e910d",
+   "accountValueUsd": 81600282.640483,
+   "largestCoin": "XPL",
+   "largestUsd": 2223075.5535,
+   "mainDexPositions": 28
+  },
+  {
+   "address": "0x75ec3ba266176e733f1b1fdaa15052f5eff724b8",
+   "accountValueUsd": 3186150.915464,
+   "largestCoin": "ZEC",
+   "largestUsd": 2212436.703344,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x230963164d9637a4c536270a06b4e3636d44a2d9",
+   "accountValueUsd": 2197105.181445,
+   "largestCoin": "ZEC",
+   "largestUsd": 2199106.966,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xcf67e4da9e9cd38c0afd26338d0fbddb3036eb24",
+   "accountValueUsd": 2692080.16912,
+   "largestCoin": "ZEC",
+   "largestUsd": 2198250,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0x0eba880f6be60142c70019d2dd46c49c47204eea",
+   "accountValueUsd": 1260080.119197,
+   "largestCoin": "HYPE",
+   "largestUsd": 2177814.35194,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x8bcf7a888c66f635ac4a2caf42a8dd12a3b20b14",
+   "accountValueUsd": 4608688.405418,
+   "largestCoin": "HYPE",
+   "largestUsd": 2171040,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x1e771e1b95c86491299d6e2a5c3b3842d03b552e",
+   "accountValueUsd": 5640155.701037,
+   "largestCoin": "HYPE",
+   "largestUsd": 2149422.5,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0x34e698305bc5c93029c12186f4e9a0a939c18d74",
+   "accountValueUsd": 1106737.493586,
+   "largestCoin": "SOL",
+   "largestUsd": 2144818.3458,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xd1dd6d99c5fb5d31ff52eacce5046c7158859e85",
+   "accountValueUsd": 5380892.318174,
+   "largestCoin": "HYPE",
+   "largestUsd": 2137133.45244,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x2ab7c8c121bba1b6b744664237ae00ded55ec2f8",
+   "accountValueUsd": 1563571.649845,
+   "largestCoin": "ZEC",
+   "largestUsd": 2136497.84,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xfd28ee5ea23a5542db41cccc9cda49bd370434f4",
+   "accountValueUsd": 2953420.505682,
+   "largestCoin": "ETH",
+   "largestUsd": 2133418.62786,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x71dfc07de32c2ebf1c4801f4b1c9e40b76d4a23d",
+   "accountValueUsd": 2450177.726791,
+   "largestCoin": "ZEC",
+   "largestUsd": 2129920.758,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0xcac1f1c3e4599e044dc2a9d38a9b6ef1af1bdae8",
+   "accountValueUsd": 997743.460527,
+   "largestCoin": "HYPE",
+   "largestUsd": 2129846.25,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xb40da15b8cc492fff87d9b1e06bb45769d7e75d9",
+   "accountValueUsd": 2843133.721061,
+   "largestCoin": "HYPE",
+   "largestUsd": 2118167.7,
+   "mainDexPositions": 8
+  },
+  {
+   "address": "0x4fe53e953f1ff4454d144cb6f4fee3f2ca9363fe",
+   "accountValueUsd": 11439113.39573,
+   "largestCoin": "HYPE",
+   "largestUsd": 2117765.38238,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x0748e296e5a350ec36c8487a1cea406e1b57d4b2",
+   "accountValueUsd": 5777225.361218,
+   "largestCoin": "AAVE",
+   "largestUsd": 2100782.1076,
+   "mainDexPositions": 9
+  },
+  {
+   "address": "0xf47237079aeec748370d5ac827747f490e8f5d8b",
+   "accountValueUsd": 4141121.339633,
+   "largestCoin": "UNI",
+   "largestUsd": 2091096.24053,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x308fd47d492cf32d0f504c2a3e82bc25583b455b",
+   "accountValueUsd": 1389324.1348980002,
+   "largestCoin": "ETH",
+   "largestUsd": 2063954.926016,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xd6e56265890b76413d1d527eb9b75e334c0c5b42",
+   "accountValueUsd": 9159419.507076,
+   "largestCoin": "HYPE",
+   "largestUsd": 2062272.14648,
+   "mainDexPositions": 37
+  },
+  {
+   "address": "0xbe10fd36393c8b677281d0bc2cf1bb8c98ad4b34",
+   "accountValueUsd": 2588366.887505,
+   "largestCoin": "ETH",
+   "largestUsd": 2048400,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x5bc43f38c2ddcd85857f218674cd384f172c3b0c",
+   "accountValueUsd": 3365268.749334,
+   "largestCoin": "ZEC",
+   "largestUsd": 2042111.836,
+   "mainDexPositions": 14
+  },
+  {
+   "address": "0x30729cac1a6075e04a29c18078b486b2b118d04a",
+   "accountValueUsd": 1490421.481392,
+   "largestCoin": "HYPE",
+   "largestUsd": 2023699.759425,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x6fbb33de5f39c690d2decb95b9ab46ed0c83e3bc",
+   "accountValueUsd": 3178178.640129,
+   "largestCoin": "BTC",
+   "largestUsd": 2004177.5,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x81d4163289cf61a0eaaac4862cb88ef0f4215c29",
+   "accountValueUsd": 2890886.338147,
+   "largestCoin": "BTC",
+   "largestUsd": 2003500,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xe6df4ed7a6ccb8426cbc87bdcdd3cc6d0e6c0690",
+   "accountValueUsd": 2971504.703466,
+   "largestCoin": "HYPE",
+   "largestUsd": 1986655.58836,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x8e096995c3e4a3f0bc5b3ea1cba94de2aa4d70c9",
+   "accountValueUsd": 2684345.72635,
+   "largestCoin": "BTC",
+   "largestUsd": 1973480.98662,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xdd0c5de50d72e5eaa96816e920e41ce89c4b8888",
+   "accountValueUsd": 991686.303744,
+   "largestCoin": "BTC",
+   "largestUsd": 1953484.15248,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x159bfedc86e8b3676183293eee58c723bb717cd4",
+   "accountValueUsd": 2172514.587729,
+   "largestCoin": "BTC",
+   "largestUsd": 1929641.2088,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x75dacaf3c87ffa170aaf0482af68086e091ccdaa",
+   "accountValueUsd": 6031783.510803,
+   "largestCoin": "MON",
+   "largestUsd": 1929021.915067,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0xdafc555a97b358bc09fccf4c0e583c1ec5838b16",
+   "accountValueUsd": 2402929.799285,
+   "largestCoin": "HYPE",
+   "largestUsd": 1927672.5,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x757df2c060ec6c7ba898fa6570aa98c1f46294ba",
+   "accountValueUsd": 11145810.05874,
+   "largestCoin": "PUMP",
+   "largestUsd": 1924200,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xaecfe4eff84a1cd9a24accc1914ac537af7f6e1b",
+   "accountValueUsd": 1190551.373156,
+   "largestCoin": "PUMP",
+   "largestUsd": 1916363.053746,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xd9012a0c82242b04ee09e45e98b24903f982d975",
+   "accountValueUsd": 3312220.1747739995,
+   "largestCoin": "ETH",
+   "largestUsd": 1900229.93672,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x7c976f00e84db0b44f945fc6d7fad34b43150a1a",
+   "accountValueUsd": 4335606.431176,
+   "largestCoin": "BTC",
+   "largestUsd": 1866570.1307,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x47f5a6397b79deaaca5c456503e7c1a49357b942",
+   "accountValueUsd": 2359305.702012,
+   "largestCoin": "PUMP",
+   "largestUsd": 1857400.46816,
+   "mainDexPositions": 65
+  },
+  {
+   "address": "0xb75a08e82a1bf0fcceb89bbdaf9aae00be8ca29a",
+   "accountValueUsd": 3303038.068068,
+   "largestCoin": "ZEC",
+   "largestUsd": 1843802.997,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xbdbc4233ce2f349a9112f9890415050f57053ffe",
+   "accountValueUsd": 1572998.482155,
+   "largestCoin": "BTC",
+   "largestUsd": 1822794.51585,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xa38847f4db1a322da0c07bf9cc09672ee471ae3a",
+   "accountValueUsd": 1120185.7472,
+   "largestCoin": "HYPE",
+   "largestUsd": 1817420,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x8d98364af06ed95cc794550456378d67ac99343b",
+   "accountValueUsd": 1490123.71582,
+   "largestCoin": "HYPE",
+   "largestUsd": 1813950,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x2f930a0160442fe42e4040077f54055a48a34404",
+   "accountValueUsd": 2092674.861181,
+   "largestCoin": "ETH",
+   "largestUsd": 1811905.25865,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xdf9ea6ec3b7109935ccb4fb267e15ac1fb077ab1",
+   "accountValueUsd": 4242475.249092,
+   "largestCoin": "HYPE",
+   "largestUsd": 1808760.90438,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x3c363e96d22c056d748f199fb728fc80d70e461a",
+   "accountValueUsd": 1014761.801304,
+   "largestCoin": "SUI",
+   "largestUsd": 1791002.2,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x8cf051405995581de2cbbdc9a3e9951325607e18",
+   "accountValueUsd": 1280564.281659,
+   "largestCoin": "HYPE",
+   "largestUsd": 1768962,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x6788e111b25a244e7168847fe19bb1456a8398d4",
+   "accountValueUsd": 1967318.995137,
+   "largestCoin": "ZEC",
+   "largestUsd": 1760280,
+   "mainDexPositions": 8
+  },
+  {
+   "address": "0x5d908c88be270889c0953e7dff1c8e1d699ceea3",
+   "accountValueUsd": 2251453.840565,
+   "largestCoin": "BTC",
+   "largestUsd": 1759224.25224,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0x72653a3f413561ae35f6b6d0eb14b878eabf91a5",
+   "accountValueUsd": 1138696.479076,
+   "largestCoin": "ETH",
+   "largestUsd": 1742558.574,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x75d415edcb3c3782e5952470821e983f9053a209",
+   "accountValueUsd": 1133757.658412,
+   "largestCoin": "ZRO",
+   "largestUsd": 1730388.4585,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x18194850b4c0dac10af055fb5be772233be376b0",
+   "accountValueUsd": 2181005.468392,
+   "largestCoin": "HYPE",
+   "largestUsd": 1704196.89855,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x21be931c74bcc8cbf106abd5ac9d2a0970f7042f",
+   "accountValueUsd": 1170671.556683,
+   "largestCoin": "BTC",
+   "largestUsd": 1702155.25065,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x49a648936441b22f28f069d3c088928682b277ae",
+   "accountValueUsd": 1382913.899205,
+   "largestCoin": "BTC",
+   "largestUsd": 1694684.064,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xadd12adbbd5db87674b38af99b6dd34dd2a45e0d",
+   "accountValueUsd": 2385596.919397,
+   "largestCoin": "HYPE",
+   "largestUsd": 1657256.78742,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xe330ac756dabf22466317a01f5d1e9baa00e77a1",
+   "accountValueUsd": 2258789.143283,
+   "largestCoin": "BTC",
+   "largestUsd": 1652755.104,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0x270a9d32f893a5d3ff1878185010894dd890593d",
+   "accountValueUsd": 1680574.497084,
+   "largestCoin": "HYPE",
+   "largestUsd": 1649825.89196,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xf48d169abbcaecea883d4116913ac67563e4cd54",
+   "accountValueUsd": 2917174.873289,
+   "largestCoin": "GRAM",
+   "largestUsd": 1648440,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xc26cbb6483229e0d0f9a1cab675271eda535b8f4",
+   "accountValueUsd": 28287419.275679,
+   "largestCoin": "HYPE",
+   "largestUsd": 1639303.507137,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x7823c552f54f0ba55bdd49f02d4cb370ba0f1ede",
+   "accountValueUsd": 1171958.431725,
+   "largestCoin": "BTC",
+   "largestUsd": 1609820,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xfce053a5e461683454bf37ad66d20344c0e3f4c0",
+   "accountValueUsd": 4977718.202177,
+   "largestCoin": "ETH",
+   "largestUsd": 1583272.03535,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x42fd5648cf21c158d15e4f58785760755b3f6623",
+   "accountValueUsd": 2837486.205116,
+   "largestCoin": "BTC",
+   "largestUsd": 1579850.3082,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x57f2819c959abbcf22623d5ec1d3164b213e9711",
+   "accountValueUsd": 1467736.856205,
+   "largestCoin": "ETH",
+   "largestUsd": 1577796.77504,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xb33b01c9821a99d3d4ec14b1c9a2197524b9af97",
+   "accountValueUsd": 5679682.097576,
+   "largestCoin": "HYPE",
+   "largestUsd": 1574752.2,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x50b309f78e774a756a2230e1769729094cac9f20",
+   "accountValueUsd": 1057179.653318,
+   "largestCoin": "BTC",
+   "largestUsd": 1574039.2339,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x2d760d867ebebd7da5b0be18fed71b4bcc9610eb",
+   "accountValueUsd": 1389879.755152,
+   "largestCoin": "BTC",
+   "largestUsd": 1560481.992,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x9cbf099ff424979439dfba03f00b5961784c06ce",
+   "accountValueUsd": 2811574.634021,
+   "largestCoin": "AAVE",
+   "largestUsd": 1548773.6355,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x718cc7ee2ae2493ebf7d454316df6b61f4e1a868",
+   "accountValueUsd": 1261520.794197,
+   "largestCoin": "ZEC",
+   "largestUsd": 1547526.19525,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x18478dfe4e5103a9213db5c4eab9b4a17abbff84",
+   "accountValueUsd": 1788290.502589,
+   "largestCoin": "HYPE",
+   "largestUsd": 1542444,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xdbd1bac81ad581c7198c9d155ca468f32a0c29dd",
+   "accountValueUsd": 2652915.358139,
+   "largestCoin": "ETH",
+   "largestUsd": 1536006.4,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x183d0567c33e7591c22540e45d2f74730b42a0ca",
+   "accountValueUsd": 1758155.64301,
+   "largestCoin": "BTC",
+   "largestUsd": 1523186.45114,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xe2af8f54b54dd85978147ec505b63a77bdbde205",
+   "accountValueUsd": 2421591.584418,
+   "largestCoin": "ETH",
+   "largestUsd": 1507899.95656,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x265eac78fb57495674227c93065d67abe6f97f70",
+   "accountValueUsd": 10546315.647832,
+   "largestCoin": "PONS",
+   "largestUsd": 1498075.96554,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0x4e6b51c5f3e4b74c866e78983d335e9d7339b7d4",
+   "accountValueUsd": 1240319.854304,
+   "largestCoin": "BTC",
+   "largestUsd": 1497900.43731,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x98265c164a55b7b348bc3c4ab0bf109e047fed8a",
+   "accountValueUsd": 8022598.198437,
+   "largestCoin": "HYPE",
+   "largestUsd": 1489440.365,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x9e8b1e51c642f4c8b87c6ba11c53d516a218afc4",
+   "accountValueUsd": 9276538.45137,
+   "largestCoin": "ZEC",
+   "largestUsd": 1475187.56,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x24d8969e2bd6aabb6c4dfe042ef8b2cd8085217e",
+   "accountValueUsd": 1169462.067967,
+   "largestCoin": "BTC",
+   "largestUsd": 1468634.76145,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x422d82d5e532fccfadc6a72d8c6b64727892239e",
+   "accountValueUsd": 1651429.483345,
+   "largestCoin": "ZEC",
+   "largestUsd": 1468389.819,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xad5455057feac38a2dd2210d0fac0854d1eb6203",
+   "accountValueUsd": 1008964.606452,
+   "largestCoin": "ETH",
+   "largestUsd": 1467270.69648,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x72db642e6c803993aef6fc17e9b159c536508bb6",
+   "accountValueUsd": 1969879.72857,
+   "largestCoin": "ZEC",
+   "largestUsd": 1466900,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xe2823659be02e0f48a4660e4da008b5e1abfdf29",
+   "accountValueUsd": 2606128.267609,
+   "largestCoin": "ZEC",
+   "largestUsd": 1465500,
+   "mainDexPositions": 10
+  },
+  {
+   "address": "0x9a991732cd4cf14712b07fbeb8c5d87de90dd21a",
+   "accountValueUsd": 3058466.906628,
+   "largestCoin": "ZEC",
+   "largestUsd": 1464800,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x779e5e469d5de3a13e563f736ffcf47ebe5584c5",
+   "accountValueUsd": 2003617.198442,
+   "largestCoin": "HYPE",
+   "largestUsd": 1459639.79448,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xa4aac05f092f273e3544039dc5b458a5d222bb6f",
+   "accountValueUsd": 1266058.185165,
+   "largestCoin": "HYPE",
+   "largestUsd": 1451910.11164,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x9219e5840b07351a6525fe958603bd0986cb24b8",
+   "accountValueUsd": 1341749.336668,
+   "largestCoin": "HYPE",
+   "largestUsd": 1451440,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xc2db8ad66d5956e2889c23fb513b8459a0f206f9",
+   "accountValueUsd": 2540463.943221,
+   "largestCoin": "NEAR",
+   "largestUsd": 1446767.41944,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0x77746ff04a7014752ab12d81d531aa5e50775343",
+   "accountValueUsd": 9455466.998126,
+   "largestCoin": "HYPE",
+   "largestUsd": 1439101.05,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x92cbb22a9b9fc01da9914c9b39ed904dd61b859c",
+   "accountValueUsd": 1966242.678414,
+   "largestCoin": "BTC",
+   "largestUsd": 1434130.5792,
+   "mainDexPositions": 10
+  },
+  {
+   "address": "0xe86b057f5eb764c9738d6b0d38170befd0723664",
+   "accountValueUsd": 6166539.822496,
+   "largestCoin": "NEAR",
+   "largestUsd": 1411693.20747,
+   "mainDexPositions": 45
+  },
+  {
+   "address": "0xf58b673c1633ccef0ac58263cdc95ed80f817fc7",
+   "accountValueUsd": 3801548.4461459997,
+   "largestCoin": "BTC",
+   "largestUsd": 1405892.27457,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x4b1c09fa8322548360a76a3747e32a60a864bc38",
+   "accountValueUsd": 1799113.317198,
+   "largestCoin": "ETH",
+   "largestUsd": 1391151.81693,
+   "mainDexPositions": 23
+  },
+  {
+   "address": "0x2057d4f2b6ea957b63371980775b0a5505a438f0",
+   "accountValueUsd": 3618287.7359749996,
+   "largestCoin": "HYPE",
+   "largestUsd": 1390275.78435,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x601ced9aa14005d645d0b495acc60f21edab4f54",
+   "accountValueUsd": 1027376.703684,
+   "largestCoin": "LIT",
+   "largestUsd": 1387956.4136,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0x0afb823319994e2add29e6b39c43127e38028930",
+   "accountValueUsd": 7604007.912405,
+   "largestCoin": "VIRTUAL",
+   "largestUsd": 1361820.07482,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x8fbb1aad00013c4e32bb033337b7cb792ab2fc4e",
+   "accountValueUsd": 1633355.710285,
+   "largestCoin": "HYPE",
+   "largestUsd": 1360605,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x5ccaf678b74464fac20f6cae8cbaa9b402010c45",
+   "accountValueUsd": 1234124.957333,
+   "largestCoin": "ZEC",
+   "largestUsd": 1357900,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x52c912aa379242a2dab2c555703a78c573e650ba",
+   "accountValueUsd": 967800.466268,
+   "largestCoin": "ETH",
+   "largestUsd": 1354833.03206,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x28473085ba4aa761eb541914f50a75dd685cd47b",
+   "accountValueUsd": 3269336.334136,
+   "largestCoin": "BTC",
+   "largestUsd": 1350703.62669,
+   "mainDexPositions": 14
+  },
+  {
+   "address": "0xfb996bd6467d1575d338967415dc0ee72c6037f3",
+   "accountValueUsd": 1052355.450493,
+   "largestCoin": "ETH",
+   "largestUsd": 1334278.43022,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xd13552538def5cecc78a20aa2236573f0bee6443",
+   "accountValueUsd": 1912199.516996,
+   "largestCoin": "PUMP",
+   "largestUsd": 1313943.404802,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x3e8734ec146c981e3ed1f6b582d447dde701d90c",
+   "accountValueUsd": 3077752.791798,
+   "largestCoin": "HYPE",
+   "largestUsd": 1313482.5,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x92bbd8110393350dda7e9c32089e95af071a9b6f",
+   "accountValueUsd": 989322.128492,
+   "largestCoin": "LIT",
+   "largestUsd": 1310115.023,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x7df034b39420cb594128b3428c501dae8176ceb3",
+   "accountValueUsd": 1092557.752286,
+   "largestCoin": "BTC",
+   "largestUsd": 1297973.55762,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x9e1186d05b9fffb9f05e024ddfd716fda70422a3",
+   "accountValueUsd": 1413535.251078,
+   "largestCoin": "BTC",
+   "largestUsd": 1290404.5296,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x4f0a01badaa24f762cee620883f16c4460c06be0",
+   "accountValueUsd": 999561.3779119999,
+   "largestCoin": "ETH",
+   "largestUsd": 1282400,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xa559edb06548fb5d9b2066ec43320e5f9726ff95",
+   "accountValueUsd": 1462290.810294,
+   "largestCoin": "ETH",
+   "largestUsd": 1281200,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xd320d8420c35035581c754305582511bf45d099a",
+   "accountValueUsd": 3148216.9848889997,
+   "largestCoin": "ETH",
+   "largestUsd": 1279200,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xd1f9bc03d7395134647c6a7d3b468cfdd4b38292",
+   "accountValueUsd": 1236221.407986,
+   "largestCoin": "ZEC",
+   "largestUsd": 1277512.32,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x72988778525f0ce15c5ac1804ac460606a987d6c",
+   "accountValueUsd": 1605883.453568,
+   "largestCoin": "ETH",
+   "largestUsd": 1276557.39618,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xe02e420ec55b4e03924d77c7b342c012541ba2d3",
+   "accountValueUsd": 5488433.960211,
+   "largestCoin": "MON",
+   "largestUsd": 1276528.3884,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xaa8253fb249498d0b6c31106539aaea0c76b9556",
+   "accountValueUsd": 3799676.250238,
+   "largestCoin": "ZEC",
+   "largestUsd": 1273597.53,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x9c2694984f6831bc81a04cd917a67b03629cb666",
+   "accountValueUsd": 4271203.799414,
+   "largestCoin": "BTC",
+   "largestUsd": 1272631.8717,
+   "mainDexPositions": 10
+  },
+  {
+   "address": "0x25a34b7f2533761a0eea417d4613b54861278e79",
+   "accountValueUsd": 1192466.158185,
+   "largestCoin": "HYPE",
+   "largestUsd": 1271944.00704,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x0ad9e656d9e6211d0ea1c5462342e1fc94cc4cbf",
+   "accountValueUsd": 18766623.727068,
+   "largestCoin": "PONS",
+   "largestUsd": 1251717.35856,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x7ca3976954fc6d03376be6d59ed18ce38ab2569a",
+   "accountValueUsd": 1129150.464468,
+   "largestCoin": "HYPE",
+   "largestUsd": 1238417.2493,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x45e7014f092c5f9c39482caec131346f13ac5e73",
+   "accountValueUsd": 992288.469866,
+   "largestCoin": "BTC",
+   "largestUsd": 1207792.96122,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x170519f69ef4bf7940eb8f9f16b1d60c50b92d79",
+   "accountValueUsd": 1881460.667561,
+   "largestCoin": "BTC",
+   "largestUsd": 1204200,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0x413c2724b62975c18b1415650f998a8f0a67886c",
+   "accountValueUsd": 4335039.647947,
+   "largestCoin": "BTC",
+   "largestUsd": 1202025,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xabdbca561f51626a217cbacdd95fcbd95b6484ac",
+   "accountValueUsd": 9529224.368071,
+   "largestCoin": "ZEC",
+   "largestUsd": 1199975.685,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x1bf629cd9f4dbcc9fca616ccf7a19891007f5bfa",
+   "accountValueUsd": 2060356.602687,
+   "largestCoin": "ZEC",
+   "largestUsd": 1187946,
+   "mainDexPositions": 9
+  },
+  {
+   "address": "0xd67f9ed4f542cfa6b70d8a92b40070a2bc080a5e",
+   "accountValueUsd": 1284010.609362,
+   "largestCoin": "HYPE",
+   "largestUsd": 1179308,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x2e30c32738a28833e3d85189c04895c25ee54cb5",
+   "accountValueUsd": 2730032.404134,
+   "largestCoin": "ETH",
+   "largestUsd": 1168188.155745,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x67450916a71c4cce8f86e0b43d4dfbd6b5fa8732",
+   "accountValueUsd": 1999734.2726490002,
+   "largestCoin": "HYPE",
+   "largestUsd": 1161503.12124,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x9edc7f0ac907b31bacc00b79f2a41dccb006cee0",
+   "accountValueUsd": 1198551.166461,
+   "largestCoin": "HYPE",
+   "largestUsd": 1156896.75,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x0daf132c5554fd7d5eb422585426af557d8847e0",
+   "accountValueUsd": 1870834.149526,
+   "largestCoin": "MON",
+   "largestUsd": 1151865.43262,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xa6a1140c06c35619038823f58a54f25eb33c29eb",
+   "accountValueUsd": 3894547.905991,
+   "largestCoin": "SOL",
+   "largestUsd": 1129713.1923,
+   "mainDexPositions": 37
+  },
+  {
+   "address": "0x89c0fee4b7ca37711219092cd1c0d2b4f7af87c1",
+   "accountValueUsd": 2930419.7671189997,
+   "largestCoin": "UNI",
+   "largestUsd": 1127143.02649,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xa312114b5795dff9b8db50474dd57701aa78ad1e",
+   "accountValueUsd": 6637921.589229,
+   "largestCoin": "NEAR",
+   "largestUsd": 1126896.3846,
+   "mainDexPositions": 15
+  },
+  {
+   "address": "0x6b06da993b1f12d82463fec75006913f98499b7c",
+   "accountValueUsd": 1392042.133975,
+   "largestCoin": "CASHCAT",
+   "largestUsd": 1122056,
+   "mainDexPositions": 9
+  },
+  {
+   "address": "0xcc58accacd0db8010e4c8a20ba49d2dc9d4d7f59",
+   "accountValueUsd": 980909.835772,
+   "largestCoin": "HYPE",
+   "largestUsd": 1098475.31744,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xab04d040dec929a204298d44701476968b238b69",
+   "accountValueUsd": 2820580.0333640003,
+   "largestCoin": "BTC",
+   "largestUsd": 1093636.9212,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x328fa7c33c90f0d77460a2bc5c341bb2478d7fb0",
+   "accountValueUsd": 1213503.023152,
+   "largestCoin": "HYPE",
+   "largestUsd": 1088844,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xf79ff138ad12140c6d2d7ee8bae563addcc7ee09",
+   "accountValueUsd": 954882.000524,
+   "largestCoin": "HYPE",
+   "largestUsd": 1087623.81576,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x36e285138b9b81eb72d2cdd65ca320111fd42da1",
+   "accountValueUsd": 2914505.157247,
+   "largestCoin": "HYPE",
+   "largestUsd": 1087401.6,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x0682f4ee106d167ca46ed015918e83f6f4e5b571",
+   "accountValueUsd": 2307018.078289,
+   "largestCoin": "PENDLE",
+   "largestUsd": 1063138.433,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x436c9c7c0eb3611565591eedee51ad149b76b3d1",
+   "accountValueUsd": 2731570.076809,
+   "largestCoin": "ZEC",
+   "largestUsd": 1062487.5,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0xf2f79c84483b18f23404c2936977e1d86ce5e177",
+   "accountValueUsd": 1778096.142677,
+   "largestCoin": "HYPE",
+   "largestUsd": 1036550.49492,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x2e32935bfd5b2718f99bc8fdf8b37c16811f7d97",
+   "accountValueUsd": 1598562.185901,
+   "largestCoin": "HYPE",
+   "largestUsd": 1034868.53745,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xd82724a01bce06bbc3face916bd14b5b06ef59bd",
+   "accountValueUsd": 1309883.628394,
+   "largestCoin": "ETH",
+   "largestUsd": 1031156.4918,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x7f47bf4025bd2178741058a10cd829e406ef4d0c",
+   "accountValueUsd": 5457797.751958,
+   "largestCoin": "ETH",
+   "largestUsd": 1028709.5771,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x34ea1e25034eb9d49f23c5c55483c84a9d642f47",
+   "accountValueUsd": 1598988.257962,
+   "largestCoin": "ZEC",
+   "largestUsd": 1027733.63,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0x7b7f72a28fe109fa703eeed7984f2a8a68fedee2",
+   "accountValueUsd": 6756870.89802,
+   "largestCoin": "ETH",
+   "largestUsd": 1012493.09388,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x0423b4b2acb4f219ae4a270abd5dde2360e455bb",
+   "accountValueUsd": 3234502.257351,
+   "largestCoin": "HYPE",
+   "largestUsd": 1004736.3915,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x99cbb867ff038057dda7b78e5f7e5beadbe3bebb",
+   "accountValueUsd": 1812993.067917,
+   "largestCoin": "HYPE",
+   "largestUsd": 1001736.62652,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x778a089374cf94f372958ad26a0b7cc397c0236d",
+   "accountValueUsd": 1487928.403547,
+   "largestCoin": "HYPE",
+   "largestUsd": 997672.5,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x5b53358eca5790fa4c268ad6813386b3a86549c7",
+   "accountValueUsd": 16718627.195493998,
+   "largestCoin": "ENA",
+   "largestUsd": 991920.37917,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xa0f2e2f7b3ab58e3e52b74f08d94ae52778d46df",
+   "accountValueUsd": 3201076.20603,
+   "largestCoin": "LIT",
+   "largestUsd": 987449.1072,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x14c624428f50785e26d94779769e3b0f3340b280",
+   "accountValueUsd": 1771624.195526,
+   "largestCoin": "CASHCAT",
+   "largestUsd": 986700,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x5c1b55d30981425dbc58dda9caba0171eb44a11d",
+   "accountValueUsd": 1541233.471314,
+   "largestCoin": "BTC",
+   "largestUsd": 982677.4384,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x05904930cae1e9a48c055f4a8a83480ba7fc6abf",
+   "accountValueUsd": 1209318.018169,
+   "largestCoin": "LIT",
+   "largestUsd": 976728.672,
+   "mainDexPositions": 14
+  },
+  {
+   "address": "0x622fc18a3f1a616a331b96e4c17f1b457feb5c6f",
+   "accountValueUsd": 3186926.708847,
+   "largestCoin": "HYPE",
+   "largestUsd": 975172.839795,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x21eaaee21905a7b9fbbb093caba2ee27fc1e9352",
+   "accountValueUsd": 1275370.851133,
+   "largestCoin": "BTC",
+   "largestUsd": 966301.2,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x4916efbf56bcaea1130b2a631f6f093095f614a2",
+   "accountValueUsd": 2910139.69009,
+   "largestCoin": "HYPE",
+   "largestUsd": 958256.348976,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x7717a7a245d9f950e586822b8c9b46863ed7bd7e",
+   "accountValueUsd": 9670283.94287,
+   "largestCoin": "ETHFI",
+   "largestUsd": 954635.076246,
+   "mainDexPositions": 173
+  },
+  {
+   "address": "0x9f08dac303c518a4c781bcc0d701b8732dbdb6a7",
+   "accountValueUsd": 1149366.617703,
+   "largestCoin": "HYPE",
+   "largestUsd": 928855.46775,
+   "mainDexPositions": 17
+  },
+  {
+   "address": "0xa0373c932d2287dfca94beba76523da4f4f13941",
+   "accountValueUsd": 1520221.696571,
+   "largestCoin": "CASHCAT",
+   "largestUsd": 922451.71191,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xd5563ea4cedaf6013027304fbb83f9ab59f463f0",
+   "accountValueUsd": 1610940.039491,
+   "largestCoin": "HYPE",
+   "largestUsd": 921967.71768,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x279dbeaae93533a5c4607712b027b04aff62d625",
+   "accountValueUsd": 1648242.709564,
+   "largestCoin": "HYPE",
+   "largestUsd": 912405.646892,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x3aee6da9161e0a2a8985413ceaa5a3562225e8e8",
+   "accountValueUsd": 1949430.966022,
+   "largestCoin": "HYPE",
+   "largestUsd": 909973.38663,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xe79d69fd1ed52dd14d7f55155259519ea20d0534",
+   "accountValueUsd": 2053082.904023,
+   "largestCoin": "HYPE",
+   "largestUsd": 909615.4494,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x0e7ab13d5a85c650364de4a618a908d98897fd17",
+   "accountValueUsd": 1919196.666646,
+   "largestCoin": "HYPE",
+   "largestUsd": 907500,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x48c6aaa647ad5197e85797f8eb95d7b9ce1ec5b6",
+   "accountValueUsd": 1257884.329066,
+   "largestCoin": "HYPE",
+   "largestUsd": 907420,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x63c786a8d291440713d0f1fc45b69c3e7547cb78",
+   "accountValueUsd": 2308012.343549,
+   "largestCoin": "HYPE",
+   "largestUsd": 907277,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xaa2a33c424b92cdc042e40c522cb48e586e83026",
+   "accountValueUsd": 1307264.752784,
+   "largestCoin": "HYPE",
+   "largestUsd": 907160,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x85e410e4c535cb1709dbd36468f132037a5b2087",
+   "accountValueUsd": 1343372.781309,
+   "largestCoin": "HYPE",
+   "largestUsd": 907150,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x40f20b734d7d25ba0b6219e921382fa992a56a9e",
+   "accountValueUsd": 2571203.812976,
+   "largestCoin": "HYPE",
+   "largestUsd": 907090,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xa2c6263fd7d2b81859d35710533a24060f23bdf0",
+   "accountValueUsd": 1068382.020621,
+   "largestCoin": "BTC",
+   "largestUsd": 903951.14362,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x2457cbddbed202b7a3f5c21b3fb37058cbdfc871",
+   "accountValueUsd": 1651143.837134,
+   "largestCoin": "ZEC",
+   "largestUsd": 899700.1,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x1a1bbb975952a9d3450055b278ed5526f4ebba4c",
+   "accountValueUsd": 1183911.05013,
+   "largestCoin": "HYPE",
+   "largestUsd": 895312.38816,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x6555e1cc97d3cba6eaddebbcd7ca51d75771e0b8",
+   "accountValueUsd": 33937853.883914,
+   "largestCoin": "ENA",
+   "largestUsd": 894918.86975,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x5ad96a3986b9d2cfab1d39c68002edd17263f5ef",
+   "accountValueUsd": 1856313.018823,
+   "largestCoin": "XMR",
+   "largestUsd": 894446.14476,
+   "mainDexPositions": 23
+  },
+  {
+   "address": "0x64bddab5f13a99576fca6747f0aa205422c5f708",
+   "accountValueUsd": 2563476.917553,
+   "largestCoin": "BTC",
+   "largestUsd": 893332.87563,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xa31441e058492bc7cfffda9aa7623c407ae83a81",
+   "accountValueUsd": 5030145.337387,
+   "largestCoin": "XMR",
+   "largestUsd": 862837.29876,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xcb15941180ed7cff8b3547117eca6b78cbdeaf9c",
+   "accountValueUsd": 3357676.019533,
+   "largestCoin": "HYPE",
+   "largestUsd": 859560,
+   "mainDexPositions": 37
+  },
+  {
+   "address": "0x8a9683697f7e534d86d9e5e433ed725047991954",
+   "accountValueUsd": 979578.900986,
+   "largestCoin": "SOL",
+   "largestUsd": 857019.1149,
+   "mainDexPositions": 10
+  },
+  {
+   "address": "0x60a8c761f39696b3b419f31dcda20b405cb685f6",
+   "accountValueUsd": 59697980.625035,
+   "largestCoin": "BTC",
+   "largestUsd": 852856.2336,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xaaabec90c8c4c90abb0ecb0c31377e7dd2ad8052",
+   "accountValueUsd": 7087871.375921,
+   "largestCoin": "CASHCAT",
+   "largestUsd": 852777.19608,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x1249351002268a45594b9c429a328a35e6981488",
+   "accountValueUsd": 1001760.015961,
+   "largestCoin": "HYPE",
+   "largestUsd": 850158.33,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x08138243c8b2c5bb825763a7b065280a57af79e5",
+   "accountValueUsd": 1494219.881599,
+   "largestCoin": "XPL",
+   "largestUsd": 845934.218514,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0x336f072a0b8d753fbe413db93da169e93ceb57e0",
+   "accountValueUsd": 947780.775697,
+   "largestCoin": "HYPE",
+   "largestUsd": 835838.4,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x56c8674648e56b6db4867fb2f1133772e6b83ea2",
+   "accountValueUsd": 2302356.589414,
+   "largestCoin": "ETH",
+   "largestUsd": 822493.6923,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x9751cec58be43e0e27d57ba49ac3d68ec269a97e",
+   "accountValueUsd": 5852739.326703,
+   "largestCoin": "PAXG",
+   "largestUsd": 821886.08718,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x9836e286fbf4f71998827d4bd6ea3b470c26457e",
+   "accountValueUsd": 1285447.153457,
+   "largestCoin": "HYPE",
+   "largestUsd": 816520.20144,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x466973822368301d32d56b2705e5a958054621e4",
+   "accountValueUsd": 970980.399518,
+   "largestCoin": "BTC",
+   "largestUsd": 816147.02496,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x6c00ba1a0840b99dfb4f6d1bc7a68cd462a21261",
+   "accountValueUsd": 1446088.422009,
+   "largestCoin": "HYPE",
+   "largestUsd": 807585.381,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x95da8596c44dd09f4b8becce87ad3b7894fb2328",
+   "accountValueUsd": 1764160.534667,
+   "largestCoin": "BTC",
+   "largestUsd": 802770,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x2fcb6898d5a0623de19c3691904927685014c4d8",
+   "accountValueUsd": 2896643.540162,
+   "largestCoin": "BTC",
+   "largestUsd": 801400,
+   "mainDexPositions": 24
+  },
+  {
+   "address": "0x36f5e448c9cf0032551e58919cf4eabefcd742c1",
+   "accountValueUsd": 4389559.559348,
+   "largestCoin": "HYPE",
+   "largestUsd": 798037.79288,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x641edd3f198101eb13ce9228a415cbf02b62b6c8",
+   "accountValueUsd": 1446295.606132,
+   "largestCoin": "ZEC",
+   "largestUsd": 797124,
+   "mainDexPositions": 17
+  },
+  {
+   "address": "0xc4241dc9bfeb5126c0766df35a87ed3fbd630c78",
+   "accountValueUsd": 1044056.272112,
+   "largestCoin": "HYPE",
+   "largestUsd": 796712.8103,
+   "mainDexPositions": 69
+  },
+  {
+   "address": "0x1b7ca89aa121890b8572d326e363185cf4780c6a",
+   "accountValueUsd": 1448709.857176,
+   "largestCoin": "ASTER",
+   "largestUsd": 793125.419775,
+   "mainDexPositions": 14
+  },
+  {
+   "address": "0xab81fef97356d57cd30f8ceb15285b988682c608",
+   "accountValueUsd": 1452197.305459,
+   "largestCoin": "BTC",
+   "largestUsd": 788044.05996,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xa20fb0c9e04063eec5be286e9269028d966646fa",
+   "accountValueUsd": 1426523.345963,
+   "largestCoin": "BNB",
+   "largestUsd": 784154.11284,
+   "mainDexPositions": 56
+  },
+  {
+   "address": "0x5e13d5cedbddd7237f659947ce64bec1294e2607",
+   "accountValueUsd": 3372554.836643,
+   "largestCoin": "BTC",
+   "largestUsd": 781795.282485,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x381fe486d87c7f2633c777f1b5be3105a2a51744",
+   "accountValueUsd": 5661375.775306,
+   "largestCoin": "SOL",
+   "largestUsd": 773760.7535,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x6e4d47dad1e97833f4ecb0ef56347ba8e6fd1c0e",
+   "accountValueUsd": 1362209.127791,
+   "largestCoin": "HYPE",
+   "largestUsd": 770889.14804,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xce508465b243216fcf372d3146fd62e8f7a7b8e2",
+   "accountValueUsd": 1493319.806982,
+   "largestCoin": "SOL",
+   "largestUsd": 769471.67,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x6839315d01084f1c4d9aec802c0e9b3c3429b16b",
+   "accountValueUsd": 2343233.333559,
+   "largestCoin": "ETH",
+   "largestUsd": 768120,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xbbcb0c0aef0b28125af2f719f81d6a5b76f56f30",
+   "accountValueUsd": 8401600.961649999,
+   "largestCoin": "ETH",
+   "largestUsd": 766836,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x63d417a577b50c96f4f09148d4e4d70950db0522",
+   "accountValueUsd": 2842691.243384,
+   "largestCoin": "LIT",
+   "largestUsd": 765707.097,
+   "mainDexPositions": 27
+  },
+  {
+   "address": "0x985f02b19dbc062e565c981aac5614baf2cf501f",
+   "accountValueUsd": 2452166.188096,
+   "largestCoin": "XMR",
+   "largestUsd": 747457.30858,
+   "mainDexPositions": 13
+  },
+  {
+   "address": "0x5d0bde4017530ed43370e332a5d30194941f73c6",
+   "accountValueUsd": 1092613.228195,
+   "largestCoin": "TAO",
+   "largestUsd": 746085.55644,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xd7b19f8aaf5c9619bd5141945a73d2ca74984451",
+   "accountValueUsd": 6639101.713584,
+   "largestCoin": "HYPE",
+   "largestUsd": 736207.62012,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x330fd47bf30b7cd90497d8a4319a6df824f0484f",
+   "accountValueUsd": 1243488.9413140002,
+   "largestCoin": "HYPE",
+   "largestUsd": 734922.18026,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xed3c678f04d92c78c101154a271a50ad9089f443",
+   "accountValueUsd": 1404393.868431,
+   "largestCoin": "XRP",
+   "largestUsd": 728315.7816,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xaa53412d2249fe47c5d2790ab5728b3c564dd265",
+   "accountValueUsd": 1902727.110929,
+   "largestCoin": "HYPE",
+   "largestUsd": 726000,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x0087188d27ac73b715ad38dff9b99554861a2b55",
+   "accountValueUsd": 1325489.680403,
+   "largestCoin": "HYPE",
+   "largestUsd": 725728,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x69906b0ed626ca01a4b7c001e5711e5714ccf207",
+   "accountValueUsd": 6496190.757997,
+   "largestCoin": "HYPE",
+   "largestUsd": 723936,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x39c3492e9171872eac6a99d9c0b6dbae5d4ae959",
+   "accountValueUsd": 1707750.119597,
+   "largestCoin": "NEAR",
+   "largestUsd": 722140,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x7c9063122c01837fe83da2521056e10c9b6dd129",
+   "accountValueUsd": 950216.9139,
+   "largestCoin": "UNI",
+   "largestUsd": 721160.05032,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xfc079a49e371976f559bea0cd1c1f87a5f5b9464",
+   "accountValueUsd": 2218135.358201,
+   "largestCoin": "HYPE",
+   "largestUsd": 698962.43304,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0x9dead8fffcbf130e7658f672d2c081d91178d617",
+   "accountValueUsd": 3518450.551252,
+   "largestCoin": "HYPE",
+   "largestUsd": 696043.63348,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x2171b50becc88d34254c7def78e8e08f9d82887b",
+   "accountValueUsd": 2095323.240353,
+   "largestCoin": "PUMP",
+   "largestUsd": 691368.363866,
+   "mainDexPositions": 8
+  },
+  {
+   "address": "0x98785f2a43fe32f972476b86ed5a5cfaf5240f00",
+   "accountValueUsd": 2007172.121867,
+   "largestCoin": "HYPE",
+   "largestUsd": 681030,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xcd0673721a489b1cea0e2580fa304bcb6cca3186",
+   "accountValueUsd": 4059574.06114,
+   "largestCoin": "PONS",
+   "largestUsd": 673117.93164,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x6bb971430554e3af58fbd469bce46ab2359a2d23",
+   "accountValueUsd": 1303811.297747,
+   "largestCoin": "PURR",
+   "largestUsd": 672498.82968,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xbc433ba7c34752448c5361e5ed3038628a1753b0",
+   "accountValueUsd": 1267433.218307,
+   "largestCoin": "BTC",
+   "largestUsd": 670935.1332,
+   "mainDexPositions": 12
+  },
+  {
+   "address": "0x0d438ba1817d0958ae3bf70b23faaf1d0117c930",
+   "accountValueUsd": 1355899.755747,
+   "largestCoin": "NEAR",
+   "largestUsd": 667463.28168,
+   "mainDexPositions": 42
+  },
+  {
+   "address": "0xc2b14fde015fe4da3a238aa0e6fb7365af32760b",
+   "accountValueUsd": 1104190.683772,
+   "largestCoin": "PAXG",
+   "largestUsd": 652785,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xf0ae4d359f07fb630a5bcb197ac3beaba4cc2f74",
+   "accountValueUsd": 2642613.441528,
+   "largestCoin": "CASHCAT",
+   "largestUsd": 647970,
+   "mainDexPositions": 10
+  },
+  {
+   "address": "0x054a01da80ee37d5220af5471b1eedbdcd2cdb2f",
+   "accountValueUsd": 1610210.256917,
+   "largestCoin": "BTC",
+   "largestUsd": 642664,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x98e073b579fd483eac8f10d5bd0b32c8c3bbd7e0",
+   "accountValueUsd": 3195501.510875,
+   "largestCoin": "ETH",
+   "largestUsd": 639550,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xa906355beaf1d69a5fe73ce55899c49c6e67916c",
+   "accountValueUsd": 24200840.514325,
+   "largestCoin": "PUMP",
+   "largestUsd": 630591.471752,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x3d89bcea338f35edfaeb313b1c713978c6dceb14",
+   "accountValueUsd": 2905782.863048,
+   "largestCoin": "PUMP",
+   "largestUsd": 628607.901512,
+   "mainDexPositions": 8
+  },
+  {
+   "address": "0xa522301c25e833b75b223a21a7f528eef9862d0e",
+   "accountValueUsd": 1277330.242993,
+   "largestCoin": "BTC",
+   "largestUsd": 626580.297618,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xfcf1dd2d209aeb1323dd9a0f2ea65187c84d6c8a",
+   "accountValueUsd": 2843846.716279,
+   "largestCoin": "BTC",
+   "largestUsd": 624444.4688,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x364a45829e8ce2940d8cff911076d8dec40b2e73",
+   "accountValueUsd": 9400092.26945,
+   "largestCoin": "PONS",
+   "largestUsd": 616428.69744,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x88250cf2f6402e856bc85fc65095e4a48bb12cb7",
+   "accountValueUsd": 974161.976166,
+   "largestCoin": "ZEC",
+   "largestUsd": 614972.666,
+   "mainDexPositions": 33
+  },
+  {
+   "address": "0x6da3738e1fc7325765facb5eae488e2e16b10512",
+   "accountValueUsd": 1607624.06335,
+   "largestCoin": "BTC",
+   "largestUsd": 612523.0584,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xf1245033de5669c24b7915256afb598ac3245bf1",
+   "accountValueUsd": 956303.151263,
+   "largestCoin": "ASTER",
+   "largestUsd": 600853.6,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x427070e33d630b0476bedba5d53db224913eb946",
+   "accountValueUsd": 1151890.707119,
+   "largestCoin": "ETH",
+   "largestUsd": 599636.0202,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x352deb23bebae8b4c57d0ae341d9c1951fd8425a",
+   "accountValueUsd": 1114991.685645,
+   "largestCoin": "BTC",
+   "largestUsd": 597699.13404,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xbbf7fbc7fa97a88c83c1b8a825692f84ef9d4b13",
+   "accountValueUsd": 1258325.304889,
+   "largestCoin": "PONS",
+   "largestUsd": 597405.5,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xd6e1a6f7bb47aca69aaa511210227d40926ff256",
+   "accountValueUsd": 3572345.490546,
+   "largestCoin": "ETH",
+   "largestUsd": 594913.0368,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x855b77fc563bb5a2c062b9ad3bdf7984883ee8b8",
+   "accountValueUsd": 958970.880659,
+   "largestCoin": "HYPE",
+   "largestUsd": 589854.46632,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x8ae20fabeb608fd307fc1ea15a294340a547d501",
+   "accountValueUsd": 1696454.005812,
+   "largestCoin": "HYPE",
+   "largestUsd": 589569.5,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xdc7be236c4b1ee77d16758451a198275ec9839b6",
+   "accountValueUsd": 2245924.243085,
+   "largestCoin": "ZEC",
+   "largestUsd": 586280,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x0b23968e02c549f99ff77b6471be3a78cbfff37b",
+   "accountValueUsd": 1231478.460977,
+   "largestCoin": "ETH",
+   "largestUsd": 577417.5,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xcfbbd8ac14fe4c0b9098bc2a9515b004b7429c6d",
+   "accountValueUsd": 1069518.785559,
+   "largestCoin": "BTC",
+   "largestUsd": 576378.27232,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xa5fd942d4badbab4fe84a9e10f565dd40d5f15ff",
+   "accountValueUsd": 2441637.291358,
+   "largestCoin": "BTC",
+   "largestUsd": 574766.51632,
+   "mainDexPositions": 35
+  },
+  {
+   "address": "0xe7b34f28c54f85533896f8827edc92edac28b17f",
+   "accountValueUsd": 1545090.024338,
+   "largestCoin": "ETH",
+   "largestUsd": 571713.51181,
+   "mainDexPositions": 24
+  },
+  {
+   "address": "0x0a3343b600d81cdaac131342652241cd32e14349",
+   "accountValueUsd": 2080157.354109,
+   "largestCoin": "HYPE",
+   "largestUsd": 569288.013,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x56cd86d6ef24a3f51ce6992b7f1db751b0a0276a",
+   "accountValueUsd": 1462727.167748,
+   "largestCoin": "SOL",
+   "largestUsd": 568025.0352,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x774f28fc243d6aa8787506869643fb4698bd2133",
+   "accountValueUsd": 1230908.581797,
+   "largestCoin": "LIT",
+   "largestUsd": 560321.4,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0x5740affc8faf8913f9f2d5fbb9bdc6e8119ea9da",
+   "accountValueUsd": 2551733.831005,
+   "largestCoin": "AAVE",
+   "largestUsd": 557520,
+   "mainDexPositions": 14
+  },
+  {
+   "address": "0x585f4fbe2d2a889c286fa71fb81d01f30773f4b1",
+   "accountValueUsd": 8882860.61551,
+   "largestCoin": "ETH",
+   "largestUsd": 557273.4,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x94b227df8fe384dfa9273334c72e5efbf934599e",
+   "accountValueUsd": 962429.685615,
+   "largestCoin": "HYPE",
+   "largestUsd": 555034.30244,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0xc69ae428f6049e78d445f053d2c1df879c59b34c",
+   "accountValueUsd": 3112829.861648,
+   "largestCoin": "LTC",
+   "largestUsd": 554870,
+   "mainDexPositions": 14
+  },
+  {
+   "address": "0x51a04fc0b977d4d453c60f70d43119a3023a3543",
+   "accountValueUsd": 1670152.442321,
+   "largestCoin": "HYPE",
+   "largestUsd": 552935.46533,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x6f97d329b072e0f7b74575565d806a4351b8f824",
+   "accountValueUsd": 2290298.1156,
+   "largestCoin": "TAO",
+   "largestUsd": 552265.20882,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0x04febde8d852931b73fd81c09904bb29d3a0e964",
+   "accountValueUsd": 1008448.189405,
+   "largestCoin": "ZEC",
+   "largestUsd": 550015.56,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xde5a8068836a16f92813104d7faf602bb0cbdf62",
+   "accountValueUsd": 1125840.684918,
+   "largestCoin": "HYPE",
+   "largestUsd": 545226,
+   "mainDexPositions": 17
+  },
+  {
+   "address": "0x30372cab9f2f7e4a3bfab04f41b6ee2e14e8c9e1",
+   "accountValueUsd": 1005794.957265,
+   "largestCoin": "HYPE",
+   "largestUsd": 544806,
+   "mainDexPositions": 15
+  },
+  {
+   "address": "0x13a0833e8201b37c161feb2df764159707f71409",
+   "accountValueUsd": 2376381.710056,
+   "largestCoin": "HYPE",
+   "largestUsd": 544284,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x68af3f19b7cf1934909bd43776050fe83b0ac654",
+   "accountValueUsd": 1760992.716751,
+   "largestCoin": "SOL",
+   "largestUsd": 543550,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x9bd64263248752d128cbdfd3f64f69f135dd4ec2",
+   "accountValueUsd": 997808.985277,
+   "largestCoin": "ENA",
+   "largestUsd": 526931.52822,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x4c3d48cbe2186beeafecc6723630ab8eda4117fc",
+   "accountValueUsd": 5480056.41248,
+   "largestCoin": "HYPE",
+   "largestUsd": 525320.66904,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xf5079c84c34051d7c4cd87494fda534fe7ecdf6d",
+   "accountValueUsd": 2312974.16946,
+   "largestCoin": "BTC",
+   "largestUsd": 521514.5,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xcb58b8f5ec6d47985f0728465c25a08ef9ad2c7b",
+   "accountValueUsd": 3795133.392829,
+   "largestCoin": "AR",
+   "largestUsd": 521424,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xefe31cff3d9eca260d5c83e9e12e9e3df547958b",
+   "accountValueUsd": 1331916.785195,
+   "largestCoin": "HYPE",
+   "largestUsd": 520057.59196,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xdc6448f803903f3178a604decb388f7959913553",
+   "accountValueUsd": 1484055.223504,
+   "largestCoin": "BTC",
+   "largestUsd": 518858.86024,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0x75d2ba3da5a598ea48d499bc172fb6b4713229a3",
+   "accountValueUsd": 2721926.970739,
+   "largestCoin": "ZEC",
+   "largestUsd": 505817.325,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x9386b9538884d849943d77f1c5412de9e72b021f",
+   "accountValueUsd": 1415692.9343750002,
+   "largestCoin": "HYPE",
+   "largestUsd": 499437.4599,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x007d76eec0ba411ce873a8819df50dd443d967a0",
+   "accountValueUsd": 12029544.225693,
+   "largestCoin": "TRUMP",
+   "largestUsd": 498284.30148,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xc7f94fb3b3ba614b9b2bf80697ab5a31917005a2",
+   "accountValueUsd": 4194679.753109,
+   "largestCoin": "BTC",
+   "largestUsd": 492799.5,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x770493a14c49ea81192b5191a536f0530041311b",
+   "accountValueUsd": 3381083.531627,
+   "largestCoin": "SKR",
+   "largestUsd": 488472.43243,
+   "mainDexPositions": 18
+  },
+  {
+   "address": "0xbf5a73e783866d34db7d76f07fda07daf22488ba",
+   "accountValueUsd": 1250492.470689,
+   "largestCoin": "DOGE",
+   "largestUsd": 483498.196512,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xd2b2a8ab7a8c903501f4db4ee45c67522a4511ed",
+   "accountValueUsd": 7208281.657489,
+   "largestCoin": "BTC",
+   "largestUsd": 480900,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xf191539a2c4ba0af951438bb6abfa0625c7df2ef",
+   "accountValueUsd": 3234604.372701,
+   "largestCoin": "BTC",
+   "largestUsd": 480841.99295,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x1187ce987026d2e769fe92834e44226b920b05e3",
+   "accountValueUsd": 1071652.630097,
+   "largestCoin": "LIT",
+   "largestUsd": 470603.392,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x8fec806c9e94ff7ab2af3d7e4875c2381413f98e",
+   "accountValueUsd": 9443965.926026,
+   "largestCoin": "BTC",
+   "largestUsd": 463231.71411,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x96488f9fcd0c6997c771a26d85d1f61cacfa502c",
+   "accountValueUsd": 1045728.741449,
+   "largestCoin": "BTC",
+   "largestUsd": 462954.86892,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0xd74916aecd93ca55deb392dfad4c3ae43951ea49",
+   "accountValueUsd": 1474775.550459,
+   "largestCoin": "HYPE",
+   "largestUsd": 453487.5,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xae67e0441a483deed7792d4572558608e5a99a49",
+   "accountValueUsd": 1364811.643331,
+   "largestCoin": "ZEC",
+   "largestUsd": 446754.286,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x2669f508f456efae73c86d99d373f885c7b32b39",
+   "accountValueUsd": 2462245.758661,
+   "largestCoin": "0G",
+   "largestUsd": 441490.2696,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x668cec05549105e5b05bcc779a43186735d7ea2e",
+   "accountValueUsd": 5573894.552769,
+   "largestCoin": "LIT",
+   "largestUsd": 441309.8544,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x6fc0af3756c7300943019e7349bcfcb80e76966c",
+   "accountValueUsd": 1135133.770605,
+   "largestCoin": "HYPE",
+   "largestUsd": 440298.08271,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x325edd95bb016c36027ce3b9f7595af7094a9564",
+   "accountValueUsd": 8068855.261345,
+   "largestCoin": "UNI",
+   "largestUsd": 428748.0417,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x9e8c646220613d68eaf2b947f46c2b4f52bf3f45",
+   "accountValueUsd": 2797273.031001,
+   "largestCoin": "HYPE",
+   "largestUsd": 427094.195592,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x7894bb4cd20e08c2ec1895968dd0b3d97edca5f7",
+   "accountValueUsd": 2634249.697841,
+   "largestCoin": "BTC",
+   "largestUsd": 420093.44237,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0x50f49b9ff9e376d8090ac799ccafdd750e40b920",
+   "accountValueUsd": 1844242.560079,
+   "largestCoin": "LIT",
+   "largestUsd": 419239.4976,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x535191d6d49922d69cc7829dbb73e48694840db7",
+   "accountValueUsd": 953638.346882,
+   "largestCoin": "HYPE",
+   "largestUsd": 416462.84244,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x7cf9f878942489b7a1725d628a9e59fb1b38ab27",
+   "accountValueUsd": 2868552.017484,
+   "largestCoin": "ETH",
+   "largestUsd": 409363.1707,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0x369daedbefcb30b82154338c8fd613a70c60d251",
+   "accountValueUsd": 1195004.281431,
+   "largestCoin": "NEAR",
+   "largestUsd": 408530.95764,
+   "mainDexPositions": 110
+  },
+  {
+   "address": "0x05b5a0ae689c17cad8155932782a5c29426abe75",
+   "accountValueUsd": 3660676.1127999993,
+   "largestCoin": "ETH",
+   "largestUsd": 406939.11428,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x24d02e64d4a2580d570666546ac937adab2b3e08",
+   "accountValueUsd": 1355612.382709,
+   "largestCoin": "BTC",
+   "largestUsd": 402130,
+   "mainDexPositions": 32
+  },
+  {
+   "address": "0x373753d4a354b34a23d04882a6ee64042f47a189",
+   "accountValueUsd": 1025758.05689,
+   "largestCoin": "BTC",
+   "largestUsd": 402085,
+   "mainDexPositions": 12
+  },
+  {
+   "address": "0xf5f4c3aa62a0f903a8529905031b1536d1cf16f8",
+   "accountValueUsd": 1143962.716422,
+   "largestCoin": "BTC",
+   "largestUsd": 402081.28002,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xbbbdbbfa1f754aea323af6cc56153e0605e89227",
+   "accountValueUsd": 1495379.326877,
+   "largestCoin": "BTC",
+   "largestUsd": 401870,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x9237794d8e5c6eb247b20f2e5edd9ad5f530d8ec",
+   "accountValueUsd": 2056031.430293,
+   "largestCoin": "BTC",
+   "largestUsd": 401242,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xba0898f80da916730912bb2c2a18b8d76bc8985c",
+   "accountValueUsd": 12319968.368652,
+   "largestCoin": "BTC",
+   "largestUsd": 401218,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x67fcc46ed2a63971697dad2fc7bb0091fe89e51d",
+   "accountValueUsd": 2727440.018861,
+   "largestCoin": "ONDO",
+   "largestUsd": 392714.09462,
+   "mainDexPositions": 20
+  },
+  {
+   "address": "0xdfb690eaae46e19c459d7a79af4844bc0d57294d",
+   "accountValueUsd": 1392564.250991,
+   "largestCoin": "kPEPE",
+   "largestUsd": 385640.879982,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x25554a80781ee62414c3747e81c3f50157c634b1",
+   "accountValueUsd": 1183498.589502,
+   "largestCoin": "ETH",
+   "largestUsd": 384885,
+   "mainDexPositions": 15
+  },
+  {
+   "address": "0x38fd9e0966dfab3cb59d6d5e5ccc7c05aabef8ae",
+   "accountValueUsd": 1686563.885743,
+   "largestCoin": "PUMP",
+   "largestUsd": 382277.123028,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x15b989222088b5a00d1283e8c2bbbe9cc7bd4b30",
+   "accountValueUsd": 2903651.489945,
+   "largestCoin": "ZEC",
+   "largestUsd": 377131.391,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x577a00a0ee907ee481791049477a3c1fa1470568",
+   "accountValueUsd": 2545492.18075,
+   "largestCoin": "HYPE",
+   "largestUsd": 368656.92262,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x94dac1facdc4afd2614c3119447187b4143bc449",
+   "accountValueUsd": 11714036.910377,
+   "largestCoin": "PUMP",
+   "largestUsd": 368599.285916,
+   "mainDexPositions": 23
+  },
+  {
+   "address": "0xbb97757984fa4408c13bd3b4a9189f520bf317d3",
+   "accountValueUsd": 2108333.621219,
+   "largestCoin": "BTC",
+   "largestUsd": 367698.673,
+   "mainDexPositions": 8
+  },
+  {
+   "address": "0x18faacc6d6a9665eb1058cea20081bfec4c21abc",
+   "accountValueUsd": 2094735.197277,
+   "largestCoin": "VVV",
+   "largestUsd": 366643.92513,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x250b6caa76cf8c72b8ecd546d78dc096fa8eb824",
+   "accountValueUsd": 1749729.053431,
+   "largestCoin": "KAITO",
+   "largestUsd": 365406.06663,
+   "mainDexPositions": 8
+  },
+  {
+   "address": "0x99460c6b44fd9d93528b3b6e3365793acb40bb46",
+   "accountValueUsd": 2001343.702821,
+   "largestCoin": "HYPE",
+   "largestUsd": 363216,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x643430283b19fa5bd70a1138b495c2b43523cdd5",
+   "accountValueUsd": 1685677.37895,
+   "largestCoin": "HYPE",
+   "largestUsd": 362812,
+   "mainDexPositions": 11
+  },
+  {
+   "address": "0xd38e2b0b3c85ae138532f9fe1a1d5f5455866b82",
+   "accountValueUsd": 1690620.391095,
+   "largestCoin": "BTC",
+   "largestUsd": 361359,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x71038a3e5fd46ba4ca5edc81339a4d1e9e493104",
+   "accountValueUsd": 5774954.282183,
+   "largestCoin": "XPL",
+   "largestUsd": 356448,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x334ebb44fd8fccb9112983247443dfae5e448887",
+   "accountValueUsd": 1451565.352826,
+   "largestCoin": "BTC",
+   "largestUsd": 352533.02184,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x3fe1303b746bb9c88b30f364a6394261b4692943",
+   "accountValueUsd": 1289501.359583,
+   "largestCoin": "ETH",
+   "largestUsd": 350064.28268,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x2aa262671b509f965af3d5f701247feac042a272",
+   "accountValueUsd": 1710857.308847,
+   "largestCoin": "UNI",
+   "largestUsd": 348724.04079,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x17c3c8fdbcb7d1b240ce08965e09b1fc91cba868",
+   "accountValueUsd": 9663213.339786999,
+   "largestCoin": "HYPE",
+   "largestUsd": 347943.86066,
+   "mainDexPositions": 19
+  },
+  {
+   "address": "0xe113311f35a53b196c0ab3ed31ad0bf937cc5c07",
+   "accountValueUsd": 1082139.492677,
+   "largestCoin": "BTC",
+   "largestUsd": 337940.4,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xd440715f2ce6f7ed1924f282e0096c863e7049f7",
+   "accountValueUsd": 1334247.841253,
+   "largestCoin": "HYPE",
+   "largestUsd": 336991.7106,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0xf005093464e14cbacf0f9b9a371269fc118776dd",
+   "accountValueUsd": 1902443.21275,
+   "largestCoin": "BTC",
+   "largestUsd": 327922.5128,
+   "mainDexPositions": 18
+  },
+  {
+   "address": "0x83c90ad4df32b7679ca7bd66a43135283f38a339",
+   "accountValueUsd": 2861186.615673,
+   "largestCoin": "HYPE",
+   "largestUsd": 327732.874392,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xc8116a8778191e351067c64bc9b80196ad3cf6e0",
+   "accountValueUsd": 1248197.243202,
+   "largestCoin": "ETH",
+   "largestUsd": 326629.66356,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x0871deb34bfd2052b1c10dc4f6c0912a2a47e927",
+   "accountValueUsd": 9757329.62233,
+   "largestCoin": "VVV",
+   "largestUsd": 325525,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x5f1055597a652a50c67e62bcf2912dc621bfd49d",
+   "accountValueUsd": 1709075.01723,
+   "largestCoin": "SOL",
+   "largestUsd": 325147.2793,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x0f7173b445ed79f316d9ebf6c3009ab034a2bc7f",
+   "accountValueUsd": 984081.845529,
+   "largestCoin": "BTC",
+   "largestUsd": 321576,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x025c62433ecf89ed45edf7f41bf05318204d0b2b",
+   "accountValueUsd": 3290313.909694,
+   "largestCoin": "PONS",
+   "largestUsd": 317878.37154,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x40a632026febd007b0e4431a29170507f7aa3896",
+   "accountValueUsd": 975245.990038,
+   "largestCoin": "HYPE",
+   "largestUsd": 317828,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x08bed3f9ae9b3db6bf9b5de117e0309e028e7aa4",
+   "accountValueUsd": 2415197.569067,
+   "largestCoin": "HYPE",
+   "largestUsd": 317499,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x9471f70f2518846f7a076636d64e5a22787da105",
+   "accountValueUsd": 1007739.651585,
+   "largestCoin": "ZEC",
+   "largestUsd": 300558.32,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0xf1e79e5cf063073deec9a0d86c178f7cde84d479",
+   "accountValueUsd": 7611797.382157999,
+   "largestCoin": "UNI",
+   "largestUsd": 296693.60525,
+   "mainDexPositions": 104
+  },
+  {
+   "address": "0x523852be2db1a76a0e088ecbff32e849544054e5",
+   "accountValueUsd": 7087097.500357,
+   "largestCoin": "RENDER",
+   "largestUsd": 295856.406884,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x6f19a8adda5a0b8d009a687d7aa2d36eb08b6688",
+   "accountValueUsd": 1434859.630956,
+   "largestCoin": "BTC",
+   "largestUsd": 295716.63642,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x389a74dac4a59046d5bff5d056498168903ae76b",
+   "accountValueUsd": 1100741.099848,
+   "largestCoin": "ZEC",
+   "largestUsd": 293834.691,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x9bf9d46627c21fe2a35df37b1f0c417fa2088b13",
+   "accountValueUsd": 968626.859161,
+   "largestCoin": "ZEC",
+   "largestUsd": 293480,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0xd223626a37fdd7f3aa0727edebcf1b94d2e5ae69",
+   "accountValueUsd": 1052075.414463,
+   "largestCoin": "ZEC",
+   "largestUsd": 293460,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xdf57c6827cac4ebe4ad60434388da1fd0c4c93f5",
+   "accountValueUsd": 1070429.780572,
+   "largestCoin": "NEAR",
+   "largestUsd": 290616.41411,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x95fde6cf0d305078b7eeac44182a931c169dd947",
+   "accountValueUsd": 1203267.393973,
+   "largestCoin": "NEAR",
+   "largestUsd": 287460.57834,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x0dd73d2b71efb30daf8cd48c9dfa8dc35868fe65",
+   "accountValueUsd": 2821314.902751,
+   "largestCoin": "HYPE",
+   "largestUsd": 287155.57752,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xae551d73161bac3315c5ade0e2d499a44ebe2236",
+   "accountValueUsd": 1952487.404859,
+   "largestCoin": "PONS",
+   "largestUsd": 283912.2185,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x1e37a337ed460039d1b15bd3bc489de789768d5e",
+   "accountValueUsd": 11729271.30934,
+   "largestCoin": "LTC",
+   "largestUsd": 282350.26176,
+   "mainDexPositions": 19
+  },
+  {
+   "address": "0xa6a34f0bf2ccea9a1ddf9e9a973f17c498dc5e40",
+   "accountValueUsd": 2203067.270722,
+   "largestCoin": "LINK",
+   "largestUsd": 279651.6456,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x84a73d875b79332b278f1785628d1a2381580be4",
+   "accountValueUsd": 1128402.348356,
+   "largestCoin": "HYPE",
+   "largestUsd": 272613,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xf0afb3f0a2e63eabe2d55ebe3e05671ebe0c6312",
+   "accountValueUsd": 1792771.926223,
+   "largestCoin": "ENA",
+   "largestUsd": 272525.3076,
+   "mainDexPositions": 20
+  },
+  {
+   "address": "0x31d65012d68d53cd2c8df06cfd2851d4afb5825a",
+   "accountValueUsd": 1038861.965967,
+   "largestCoin": "SOL",
+   "largestUsd": 272053.382292,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x53845d839c8c92822b784f2748c4932385617049",
+   "accountValueUsd": 1561927.5525,
+   "largestCoin": "HYPE",
+   "largestUsd": 271965,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xf818fa41af44a1b42ba7433f4ec472be40a2c268",
+   "accountValueUsd": 12410841.198383998,
+   "largestCoin": "XMR",
+   "largestUsd": 269715,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xe867fbdad3291530e41530301ecb77693850c78e",
+   "accountValueUsd": 97314350.353001,
+   "largestCoin": "XMR",
+   "largestUsd": 269655,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x07bebb905c6e32e6414da0bc5ba01d8e6e2b07f7",
+   "accountValueUsd": 1012605.268055,
+   "largestCoin": "TRX",
+   "largestUsd": 267539.368362,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xb0dca8d7a78d6e4c37134bab5f2ae1d5268fdfb1",
+   "accountValueUsd": 1932336.756131,
+   "largestCoin": "NEAR",
+   "largestUsd": 263868.715,
+   "mainDexPositions": 87
+  },
+  {
+   "address": "0x04cc5be7baef93144c6a1f06846d26f808b44ab5",
+   "accountValueUsd": 1048829.478575,
+   "largestCoin": "ETH",
+   "largestUsd": 262900.60818,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x8aa077f5998d234ac8641d73d6bc4976e2a210fc",
+   "accountValueUsd": 1720702.024679,
+   "largestCoin": "BTC",
+   "largestUsd": 261036.75,
+   "mainDexPositions": 11
+  },
+  {
+   "address": "0x4860d039cbc7cffb0267f86e63f4b4442b71505e",
+   "accountValueUsd": 1687196.50192,
+   "largestCoin": "ZEC",
+   "largestUsd": 258074.4,
+   "mainDexPositions": 21
+  },
+  {
+   "address": "0x7d424274a30214117c458d47dbfde5191f1f4290",
+   "accountValueUsd": 1198448.757668,
+   "largestCoin": "VVV",
+   "largestUsd": 256982.44362,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x9c00d5e11cb1f2e4fcc94a204d50797072291256",
+   "accountValueUsd": 1042892.736614,
+   "largestCoin": "ETH",
+   "largestUsd": 256570,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x44c9c226cdfae773002b3f86d3966af3cd8f277c",
+   "accountValueUsd": 1217746.762351,
+   "largestCoin": "ETH",
+   "largestUsd": 256568,
+   "mainDexPositions": 41
+  },
+  {
+   "address": "0x92ae4209e3a5760903aff0c423312392eb3f86a8",
+   "accountValueUsd": 6726485.635896,
+   "largestCoin": "ZEC",
+   "largestUsd": 248149,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0xb5e7dee094dae809f2775caf07c4d4fde863eff1",
+   "accountValueUsd": 1592717.414594,
+   "largestCoin": "CHIP",
+   "largestUsd": 240487.39,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xce5667f7194c4d9320acd28f1ee8b3d2adbdb27e",
+   "accountValueUsd": 1540611.818425,
+   "largestCoin": "HYPE",
+   "largestUsd": 237383.97901,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0xe8fad35e6f85b5c5e4875fff2f595735498c279e",
+   "accountValueUsd": 1117777.154865,
+   "largestCoin": "HYPE",
+   "largestUsd": 233352.18445,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x5e0c78f6360514ac1d4ea4ab9a2a232284458e69",
+   "accountValueUsd": 997938.7993760001,
+   "largestCoin": "BTC",
+   "largestUsd": 233238.50856,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x563bf0731cf71ad7cea05b9c48a802d8c53e7dc4",
+   "accountValueUsd": 3813812.41393,
+   "largestCoin": "PONS",
+   "largestUsd": 233134.355968,
+   "mainDexPositions": 13
+  },
+  {
+   "address": "0x01bb092c2e4fef1d68ef1ca66e9b1db29f0cf7b7",
+   "accountValueUsd": 1625563.276708,
+   "largestCoin": "HYPE",
+   "largestUsd": 232609.93787,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x18a794ea0363e75ab119d0392f172edc19625df3",
+   "accountValueUsd": 1259611.956687,
+   "largestCoin": "NEAR",
+   "largestUsd": 232421.35594,
+   "mainDexPositions": 62
+  },
+  {
+   "address": "0xbeccae9ffcb69e9d42a1d4e744abf8056149562d",
+   "accountValueUsd": 1014271.1825390001,
+   "largestCoin": "AAVE",
+   "largestUsd": 231894.4732,
+   "mainDexPositions": 45
+  },
+  {
+   "address": "0x864de5bbaf4b8c808e94a8385b95b0855d170137",
+   "accountValueUsd": 1570044.590568,
+   "largestCoin": "HYPE",
+   "largestUsd": 229159.5221,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x169ba96d963e77a87dbe58922ecdcdd0f0cf3315",
+   "accountValueUsd": 3069877.227269,
+   "largestCoin": "BNB",
+   "largestUsd": 227268,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x349bd094209d50280dfaca12779576c748395c15",
+   "accountValueUsd": 1934010.651076,
+   "largestCoin": "kPEPE",
+   "largestUsd": 226260,
+   "mainDexPositions": 9
+  },
+  {
+   "address": "0xa4beb4fbe651b00bc16d472e2e1aa1c26b3d90aa",
+   "accountValueUsd": 1318854.341966,
+   "largestCoin": "VVV",
+   "largestUsd": 225555.256,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xe7e25d4f0f0076b08459e343529c446fef04f958",
+   "accountValueUsd": 1160541.862368,
+   "largestCoin": "BTC",
+   "largestUsd": 221372.25,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0xadf8baecb2f26577f679af1255c45424e39473e0",
+   "accountValueUsd": 1502632.845887,
+   "largestCoin": "ZEC",
+   "largestUsd": 220500,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0x1c9e242d85fc0e4376ad1ea56143b9fdf9f61017",
+   "accountValueUsd": 4912339.095205,
+   "largestCoin": "NEAR",
+   "largestUsd": 217879.2979,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x115849ce84370f25cadcf0d348510d73837e1aa5",
+   "accountValueUsd": 1538624.303116,
+   "largestCoin": "SOL",
+   "largestUsd": 217560,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x138bda71236352d996b903b090f09fdb25f442d7",
+   "accountValueUsd": 7209459.781839,
+   "largestCoin": "CASHCAT",
+   "largestUsd": 214570,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x2b3349ff0c4cf96f7df87fd5f3d583ee625733f7",
+   "accountValueUsd": 1399335.597973,
+   "largestCoin": "PONS",
+   "largestUsd": 212106,
+   "mainDexPositions": 19
+  },
+  {
+   "address": "0xf17de447fdfa1778db06111e3cbdc878332adab2",
+   "accountValueUsd": 8076738.243117,
+   "largestCoin": "PONS",
+   "largestUsd": 211830,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xd42350dfad9884113f21109b5a7a6736fb4d50c3",
+   "accountValueUsd": 1033937.585837,
+   "largestCoin": "HYPE",
+   "largestUsd": 208041.73984,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x2ca69ddf1b3a838c1d37c4a55a4ab3ce4247e315",
+   "accountValueUsd": 9173110.711062,
+   "largestCoin": "XMR",
+   "largestUsd": 201680.63024,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xeba8f0c3d9dabc7c58c028b8eb7ca02adf703c61",
+   "accountValueUsd": 989231.661266,
+   "largestCoin": "BTC",
+   "largestUsd": 201470.62128,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xd0519272eaa0eb0d024b48342e83d237938a9450",
+   "accountValueUsd": 2026120.920367,
+   "largestCoin": "PONS",
+   "largestUsd": 201096.5739,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xfcf5ef76fc7736d8fe89b98bfcb0c3c0eda0d9bf",
+   "accountValueUsd": 1495871.210351,
+   "largestCoin": "ZEC",
+   "largestUsd": 198450,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xf09c63a2b47d7b383ecc517a295727312384eaed",
+   "accountValueUsd": 1085105.512266,
+   "largestCoin": "PENDLE",
+   "largestUsd": 195378.2208,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xa08a7d1abb19ef84e0756e6b77fab94f28bf9aa6",
+   "accountValueUsd": 1061265.943781,
+   "largestCoin": "ARB",
+   "largestUsd": 192231.887253,
+   "mainDexPositions": 57
+  },
+  {
+   "address": "0x85101bbcbbf09cd50d299f662448c3ae509592ee",
+   "accountValueUsd": 2862700.143845,
+   "largestCoin": "HYPE",
+   "largestUsd": 188264.557512,
+   "mainDexPositions": 39
+  },
+  {
+   "address": "0xd27c58389e30f666074160058aeccaa066f28b9f",
+   "accountValueUsd": 1374774.45718,
+   "largestCoin": "SOL",
+   "largestUsd": 186584.6411,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xe5aaacff3f4f94d5009da0503144027e75a96232",
+   "accountValueUsd": 2759192.698837,
+   "largestCoin": "HYPE",
+   "largestUsd": 185670.198528,
+   "mainDexPositions": 38
+  },
+  {
+   "address": "0x4e2d6465249145cab0a40eaa45ce8f7dc0abb504",
+   "accountValueUsd": 1012267.4992740001,
+   "largestCoin": "SOL",
+   "largestUsd": 183942.2169,
+   "mainDexPositions": 27
+  },
+  {
+   "address": "0xbbe6495f5de6805c3e28bd66b26ad2076c006dc8",
+   "accountValueUsd": 2713124.301093,
+   "largestCoin": "ARB",
+   "largestUsd": 183766.394572,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x27a3144d9d1acdec3b6bcef17693f7bdbc3d044b",
+   "accountValueUsd": 1065876.950621,
+   "largestCoin": "HYPE",
+   "largestUsd": 181586,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x3720d5a34c5239ae8c27685854c43c37214a96b9",
+   "accountValueUsd": 2791022.139718,
+   "largestCoin": "HYPE",
+   "largestUsd": 181233.6,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x9c68cd0568eb47bad36ecd8090e6c1d1396a7783",
+   "accountValueUsd": 1193519.576861,
+   "largestCoin": "UNI",
+   "largestUsd": 180255.362,
+   "mainDexPositions": 14
+  },
+  {
+   "address": "0x8438e4095783ebef8c951788ad42c3bcd084fb41",
+   "accountValueUsd": 1244212.974473,
+   "largestCoin": "XPL",
+   "largestUsd": 178396,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x807a2e2e469df84b299da5f90f15dda4380daca1",
+   "accountValueUsd": 15092264.306473,
+   "largestCoin": "LIT",
+   "largestUsd": 174650.15808,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x2cff35b62aa18287a4b866e8c0a5ab6f8781e8a3",
+   "accountValueUsd": 1937711.9424210002,
+   "largestCoin": "CHIP",
+   "largestUsd": 174462.210384,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x3d2b551c44bba75c280cc0ce1150010739a5c5dc",
+   "accountValueUsd": 1541404.174831,
+   "largestCoin": "BTC",
+   "largestUsd": 172313.5372,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x104a1edecfa4610e13428c15aef37d337cd0df80",
+   "accountValueUsd": 1085767.646599,
+   "largestCoin": "MNT",
+   "largestUsd": 170992.95946,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x512e1d1d3d17eea0a87ab9de07a2316466ea6a75",
+   "accountValueUsd": 2044177.998196,
+   "largestCoin": "BTC",
+   "largestUsd": 170831.991436,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x2239ff85f256b0ad09502e6b757ad4c0a747a899",
+   "accountValueUsd": 1174399.447811,
+   "largestCoin": "HYPE",
+   "largestUsd": 170482.50954,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x49821b90c125076793c1f2011ea7a0fb83a3d856",
+   "accountValueUsd": 1533401.76668,
+   "largestCoin": "PUMP",
+   "largestUsd": 169175.376178,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xc1aaca600fe111d956f60e977858864b7be60928",
+   "accountValueUsd": 1032037.491672,
+   "largestCoin": "HYPE",
+   "largestUsd": 164337.14,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x3e4ca2a9f6614732f00072dcac194932a1bdb6c6",
+   "accountValueUsd": 1182509.182348,
+   "largestCoin": "BTC",
+   "largestUsd": 160954,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x308ac0b8de9699b754e72a568f143d8856993336",
+   "accountValueUsd": 955850.593584,
+   "largestCoin": "BTC",
+   "largestUsd": 160792,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xb3fe34bfb501665f4329915a7024ba5a6bec495f",
+   "accountValueUsd": 1190422.891928,
+   "largestCoin": "HYPE",
+   "largestUsd": 158789.75,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x766337d18e12df977b5f54516b2333e39e7dcb5a",
+   "accountValueUsd": 1074684.235053,
+   "largestCoin": "ZEC",
+   "largestUsd": 157054.788,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x39be8fad61f5fa0cdfa2fc97c30a59833f58705d",
+   "accountValueUsd": 1813696.389122,
+   "largestCoin": "XMR",
+   "largestUsd": 154818.74056,
+   "mainDexPositions": 18
+  },
+  {
+   "address": "0x08dc574552f990322a54d600cc30a8317a2a109a",
+   "accountValueUsd": 1251806.253491,
+   "largestCoin": "ZEC",
+   "largestUsd": 152014.99908,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xa96e8f0b9e6592b77d567c712beac79f956a2d7d",
+   "accountValueUsd": 1056718.304858,
+   "largestCoin": "ETH",
+   "largestUsd": 151415.25444,
+   "mainDexPositions": 10
+  },
+  {
+   "address": "0x2ab3da753851e34ad23a4f155d1196ec8d09c9d4",
+   "accountValueUsd": 1463890.47255,
+   "largestCoin": "XLM",
+   "largestUsd": 151332.33157,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x29754d7a9f9f344327158e2d01508efa415bd558",
+   "accountValueUsd": 1455611.025194,
+   "largestCoin": "ZEC",
+   "largestUsd": 145449.44,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x09714a3282fca963a8da97c72a4226bdcec3814d",
+   "accountValueUsd": 3457752.743829,
+   "largestCoin": "HYPE",
+   "largestUsd": 138621.70478,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xa98391a65a1c1edfe0ca4dc01ac91dfe67aaf744",
+   "accountValueUsd": 2061391.361181,
+   "largestCoin": "HYPE",
+   "largestUsd": 136258.5,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x739ccf4aa388ddade09316f7aee5ed0ec7ae5739",
+   "accountValueUsd": 1018134.458139,
+   "largestCoin": "HYPE",
+   "largestUsd": 136215,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x3b5b104bf6091addbc24b1a2110c21514cf5ccf1",
+   "accountValueUsd": 2265143.05035,
+   "largestCoin": "PONS",
+   "largestUsd": 136078.7196,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x472c90153afff6b5d06e2cf0a0e6e4f91b2abf4b",
+   "accountValueUsd": 1292135.662503,
+   "largestCoin": "VVV",
+   "largestUsd": 122701.2915,
+   "mainDexPositions": 40
+  },
+  {
+   "address": "0x0ce048fe42c170e41740ee392e187f19515f339d",
+   "accountValueUsd": 2494885.507266,
+   "largestCoin": "BTC",
+   "largestUsd": 120370.5,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0x8fb5c6f3c336033deeedbb54ad95e96453c9eaa4",
+   "accountValueUsd": 2224314.1477639996,
+   "largestCoin": "BOME",
+   "largestUsd": 117650.041047,
+   "mainDexPositions": 80
+  },
+  {
+   "address": "0x19e90c5331a747661bdd2887a6f6156a1eda2ef9",
+   "accountValueUsd": 1101876.260532,
+   "largestCoin": "BTC",
+   "largestUsd": 117350.11289,
+   "mainDexPositions": 17
+  },
+  {
+   "address": "0x70c66a8569852a32386df4e23b74fadc69acef27",
+   "accountValueUsd": 1064554.648665,
+   "largestCoin": "PONS",
+   "largestUsd": 115550.0394,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xd60723d50681568d15373aa7db12020d4c685baf",
+   "accountValueUsd": 1458401.617441,
+   "largestCoin": "PONS",
+   "largestUsd": 112961.1135,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xacee3f5bfdf6bfc8ac03f534059252b14204b330",
+   "accountValueUsd": 1715480.537932,
+   "largestCoin": "CASHCAT",
+   "largestUsd": 110299.3488,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x114dc2c90b61ef68b6ccb45d8e9902609cb08f9d",
+   "accountValueUsd": 1929413.420944,
+   "largestCoin": "NEAR",
+   "largestUsd": 108075,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xb7658d7c63b6c1fc7254fe9402a95d044db70dbc",
+   "accountValueUsd": 1618339.117651,
+   "largestCoin": "PUMP",
+   "largestUsd": 107688.441608,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xfe106cc52747165a65a51d1697132aff03bd9e08",
+   "accountValueUsd": 1283808.0392280002,
+   "largestCoin": "ONDO",
+   "largestUsd": 107530.20615,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x34c6d41c5f78f7ccdf1b05ef7cb7c868ac5a6b0c",
+   "accountValueUsd": 3828303.708714,
+   "largestCoin": "XMR",
+   "largestUsd": 105765.84304,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xfcb01354e18ca1cc0eee89ca3459ef84daa2e0b6",
+   "accountValueUsd": 3207622.771189,
+   "largestCoin": "BTC",
+   "largestUsd": 105464.75459,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xf5d81a135f756ca16544e53c20fc20643ec3ad53",
+   "accountValueUsd": 73300734.530974,
+   "largestCoin": "ZEC",
+   "largestUsd": 104090.195097,
+   "mainDexPositions": 24
+  },
+  {
+   "address": "0x8231fdf9997c003a267374b45fb25c0455aa1dcb",
+   "accountValueUsd": 1205439.07505,
+   "largestCoin": "HYPE",
+   "largestUsd": 103114.43417,
+   "mainDexPositions": 39
+  },
+  {
+   "address": "0x00897e2d7168165b81558c3cd9257efb007f2410",
+   "accountValueUsd": 1909388.5688210002,
+   "largestCoin": "CHIP",
+   "largestUsd": 102831.603134,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xc492fd20c24edeb35ccb7132fa040bb910ca7a41",
+   "accountValueUsd": 1014900.108398,
+   "largestCoin": "HYPE",
+   "largestUsd": 102178.5039,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0xf482d8aba834789f5c7fabb0b48a1168c1466d43",
+   "accountValueUsd": 3650293.624935,
+   "largestCoin": "HYPE",
+   "largestUsd": 101456.30625,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xe24166173f1e956845a0660c8b26db334dced71a",
+   "accountValueUsd": 1038329.625673,
+   "largestCoin": "HYPE",
+   "largestUsd": 93339.86376,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x474baa7c6c96f85055b07dad90eba820a3812da1",
+   "accountValueUsd": 948276.755704,
+   "largestCoin": "HYPE",
+   "largestUsd": 90852,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xf42765dc149d46fe83b077d3a7ef198c510db6d6",
+   "accountValueUsd": 969575.733669,
+   "largestCoin": "HYPE",
+   "largestUsd": 90712.6516,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x051748895c6ed4fab50828bebe8e62e665134d23",
+   "accountValueUsd": 1713391.153673,
+   "largestCoin": "HYPE",
+   "largestUsd": 90704,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x68bd85dc5c94a5511e959d299617eb19cd26c298",
+   "accountValueUsd": 3070438.6397720003,
+   "largestCoin": "HYPE",
+   "largestUsd": 90585,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x7ea90af38397575a372e36bdc0f5970fb512fc7f",
+   "accountValueUsd": 3105204.060836,
+   "largestCoin": "HYPE",
+   "largestUsd": 90512.1,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x2f9beb4d627ec674e76989e672cac0ab06711118",
+   "accountValueUsd": 2379792.161105,
+   "largestCoin": "PONS",
+   "largestUsd": 89282.077767,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x80fb5880f38185661962e475ac1557817dc9faea",
+   "accountValueUsd": 5436575.175078,
+   "largestCoin": "XPL",
+   "largestUsd": 89101,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x21e9c1004717f6abb6670e1bba709d8c1d83ad4e",
+   "accountValueUsd": 1976259.256806,
+   "largestCoin": "AAVE",
+   "largestUsd": 83575.14,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xe71cbf47fff309813bcea54f3ecf49a5f129264d",
+   "accountValueUsd": 3689927.5201270003,
+   "largestCoin": "MEGA",
+   "largestUsd": 82768.37292,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x01ffcc7285866e5cee14c8e807cb2e8d5f61079f",
+   "accountValueUsd": 985786.4710370001,
+   "largestCoin": "HYPE",
+   "largestUsd": 81819.81,
+   "mainDexPositions": 8
+  },
+  {
+   "address": "0x05b51f53f09155478af947f0b6bfca30f2fc3aaa",
+   "accountValueUsd": 1551816.322037,
+   "largestCoin": "BTC",
+   "largestUsd": 80355,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x39ae2882e5e0e41f208203a9752eba6953815fd0",
+   "accountValueUsd": 1229231.434702,
+   "largestCoin": "PUMP",
+   "largestUsd": 79253.342117,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x591b0e054b6a136818519587ad16b464fe7e2483",
+   "accountValueUsd": 1439885.633567,
+   "largestCoin": "PURR",
+   "largestUsd": 77091.65728,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x5b8f1daad43d779577ac05061a6b1546a29b47d1",
+   "accountValueUsd": 1300122.762908,
+   "largestCoin": "LIT",
+   "largestUsd": 73719,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x8856a77a804789fa16b7cb51391670e4b02d55e9",
+   "accountValueUsd": 1119320.105311,
+   "largestCoin": "VVV",
+   "largestUsd": 73510.54161,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x39a04e90140793ec048323284425cd2ff53480d6",
+   "accountValueUsd": 1715536.875493,
+   "largestCoin": "CASHCAT",
+   "largestUsd": 71806.65039,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x31ca8395cf837de08b24da3f660e77761dfb974b",
+   "accountValueUsd": 3002789.038957,
+   "largestCoin": "OP",
+   "largestUsd": 71596.732256,
+   "mainDexPositions": 177
+  },
+  {
+   "address": "0x1e167fc0b27b14a0d707fba8d5325ca0db28abef",
+   "accountValueUsd": 1168451.528624,
+   "largestCoin": "HYPE",
+   "largestUsd": 70211.93596,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xfd81b27d9796a1ba7d7171ea70010c9befb2a62a",
+   "accountValueUsd": 1381290.336035,
+   "largestCoin": "LIT",
+   "largestUsd": 69583.7608,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x6dafa152f99b5b467c223ce69731c7d416b16a16",
+   "accountValueUsd": 1029633.903215,
+   "largestCoin": "LIT",
+   "largestUsd": 69096.461048,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x400d21f078bb51482fa315606529e22274352d34",
+   "accountValueUsd": 5802163.074556,
+   "largestCoin": "LIT",
+   "largestUsd": 68847.1564,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x010461c14e146ac35fe42271bdc1134ee31c703a",
+   "accountValueUsd": 3124010.502915,
+   "largestCoin": "BNB",
+   "largestUsd": 66642.33292,
+   "mainDexPositions": 177
+  },
+  {
+   "address": "0x2fe21fc5130e953b862d4a6048cfd016ecf3974d",
+   "accountValueUsd": 14068807.92912,
+   "largestCoin": "ETH",
+   "largestUsd": 65851.0942,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x11a91e6ce09ffdcc4e288657abd94ff606e688ec",
+   "accountValueUsd": 1337422.512787,
+   "largestCoin": "ADA",
+   "largestUsd": 65208,
+   "mainDexPositions": 15
+  },
+  {
+   "address": "0x3eea372582e72f1d189ce02e7a65968015622a01",
+   "accountValueUsd": 4028784.573168,
+   "largestCoin": "HYPE",
+   "largestUsd": 65107.82523,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x9f42ed009685cedea83a3d33713cfffd8051ca76",
+   "accountValueUsd": 1532777.905843,
+   "largestCoin": "ZEC",
+   "largestUsd": 63063,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x118ce6448339baaf86841fee7ba674e01b2856d5",
+   "accountValueUsd": 1167892.911684,
+   "largestCoin": "VIRTUAL",
+   "largestUsd": 63033.966612,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x29a38c8845f2849d189fb115d3a2cc73a3354c6a",
+   "accountValueUsd": 1019775.811916,
+   "largestCoin": "SEI",
+   "largestUsd": 56839.2,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x198b91b0c40dd00826b84a7467ed1fbf43d39e95",
+   "accountValueUsd": 1017978.222053,
+   "largestCoin": "AERO",
+   "largestUsd": 55603.59265,
+   "mainDexPositions": 24
+  },
+  {
+   "address": "0x6ba889db7f923622d3548f621ecc2054b80c1817",
+   "accountValueUsd": 9718630.441658,
+   "largestCoin": "TRX",
+   "largestUsd": 53927.5632,
+   "mainDexPositions": 40
+  },
+  {
+   "address": "0x2025137a136bea7446deba681cbfc7cf1970840e",
+   "accountValueUsd": 4806950.646961,
+   "largestCoin": "SPX",
+   "largestUsd": 51705.952996,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0x34b30004de2a462f60909642101d8638b1d89894",
+   "accountValueUsd": 2357414.646215,
+   "largestCoin": "NEAR",
+   "largestUsd": 51484.33559,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x81dd236893b50383256aee3ccd6ded98fdd155b6",
+   "accountValueUsd": 1488878.794224,
+   "largestCoin": "PAXG",
+   "largestUsd": 51397.421,
+   "mainDexPositions": 5
+  },
+  {
+   "address": "0x65ba4f92d7dfa813ddbd849d9faf38a723dd9b12",
+   "accountValueUsd": 1028533.1626,
+   "largestCoin": "BTC",
+   "largestUsd": 51275.76484,
+   "mainDexPositions": 11
+  },
+  {
+   "address": "0x6ee9fd015f9e3bb6bfc569e46fa54eecb6a908bc",
+   "accountValueUsd": 1754850.669176,
+   "largestCoin": "ETH",
+   "largestUsd": 51212,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xa31a661fa0247e04499291c98c57ca23dc2d26db",
+   "accountValueUsd": 996132.383677,
+   "largestCoin": "BTC",
+   "largestUsd": 51134.1957,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x2ec610bc0e0af1e4ebeece276a84d6a1e6dbfb5c",
+   "accountValueUsd": 1636065.789742,
+   "largestCoin": "AVAX",
+   "largestUsd": 50667.118722,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x87129fdaf7811d3ee0f8695522469e894d1b7bf9",
+   "accountValueUsd": 2010234.988286,
+   "largestCoin": "BTC",
+   "largestUsd": 50241.115788,
+   "mainDexPositions": 8
+  },
+  {
+   "address": "0x7dd6af227362f4115e060f39c00791ffcf4230d8",
+   "accountValueUsd": 1501605.83785,
+   "largestCoin": "SOL",
+   "largestUsd": 46011.6426,
+   "mainDexPositions": 6
+  },
+  {
+   "address": "0xf605cd3adabbc3110bc3efb85ebe7be57590a527",
+   "accountValueUsd": 45839856.055572,
+   "largestCoin": "HYPE",
+   "largestUsd": 45268.5,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xdbbdee771e62ab57894e8b8bdefbe094d3135ddd",
+   "accountValueUsd": 1704007.279862,
+   "largestCoin": "WLD",
+   "largestUsd": 39134.299164,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x087a485d58b78a183f73d8b2402f481ade0ca762",
+   "accountValueUsd": 3263708.011666,
+   "largestCoin": "HYPE",
+   "largestUsd": 35722.57315,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xdcd62a213d1009992da52d8428b5562adee065b0",
+   "accountValueUsd": 1734586.765543,
+   "largestCoin": "HYPE",
+   "largestUsd": 31768.50068,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xf27ebb91ea420f73b59b205ac7e0b77a90ec8f3c",
+   "accountValueUsd": 1962307.194141,
+   "largestCoin": "SYRUP",
+   "largestUsd": 30844.9218,
+   "mainDexPositions": 20
+  },
+  {
+   "address": "0xa9184bb57fd75c7c63e4c074d6319eceac6be53b",
+   "accountValueUsd": 956830.214613,
+   "largestCoin": "HYPE",
+   "largestUsd": 29111.12128,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x53b63a30a688beb53b5dc7bd731c661d678c555c",
+   "accountValueUsd": 1306062.929632,
+   "largestCoin": "ZEC",
+   "largestUsd": 28780.64,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x1e0b469b0f10f59bd6c76a010c4b0dd24742b1ef",
+   "accountValueUsd": 1252350.907753,
+   "largestCoin": "PNUT",
+   "largestUsd": 26887.459449,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x7540f18cc1c6ec4d0fcc162d78d666f43afee358",
+   "accountValueUsd": 1004208.290147,
+   "largestCoin": "ENA",
+   "largestUsd": 26001.92452,
+   "mainDexPositions": 9
+  },
+  {
+   "address": "0x57cd47110aa6b74b5dd256acc2e644b06254eb1c",
+   "accountValueUsd": 1133641.893841,
+   "largestCoin": "XMR",
+   "largestUsd": 25962.78144,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x7653c6fcd05d422aa02de313b0423ced64e7a663",
+   "accountValueUsd": 2102167.665053,
+   "largestCoin": "DYDX",
+   "largestUsd": 25879.571648,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x5dcf0b820318892b4aafae4aa3099e4b8fe786a7",
+   "accountValueUsd": 1086178.154548,
+   "largestCoin": "FARTCOIN",
+   "largestUsd": 23782.5822,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x28595150c2e47d8291d994883fac8fe501efd3d8",
+   "accountValueUsd": 1332270.576903,
+   "largestCoin": "ZEC",
+   "largestUsd": 23494.4,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x2eb4e287f1cf4801ca3768104fc6253c626b3401",
+   "accountValueUsd": 1186258.056264,
+   "largestCoin": "ADA",
+   "largestUsd": 23249.12766,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x1732951b80c737dbb8f367e83e530623bb612e54",
+   "accountValueUsd": 1857168.334518,
+   "largestCoin": "CRV",
+   "largestUsd": 23053.71375,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x5cfd4e2c982a66b32120e43b016f29c21cbe9b7b",
+   "accountValueUsd": 1118837.08636,
+   "largestCoin": "PONS",
+   "largestUsd": 20463.66585,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xbfb849931dc8cfa08a690c435fb4e4f47906ec8d",
+   "accountValueUsd": 1117834.318931,
+   "largestCoin": "HYPE",
+   "largestUsd": 19491.8295,
+   "mainDexPositions": 7
+  },
+  {
+   "address": "0xabceb0f84c830d6d7b94c6273f2ab27ca597aa25",
+   "accountValueUsd": 1474222.9710889999,
+   "largestCoin": "PUMP",
+   "largestUsd": 17898.601732,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x685feceec46dd4e5c9b5b726f5d7550fd0eda526",
+   "accountValueUsd": 1613980.171079,
+   "largestCoin": "ETH",
+   "largestUsd": 15232.0944,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x14ecb3f4932522b8d508fa6e237e2746a4999feb",
+   "accountValueUsd": 1035693.893952,
+   "largestCoin": "JUP",
+   "largestUsd": 15138.09016,
+   "mainDexPositions": 168
+  },
+  {
+   "address": "0xebf44413bbdfefefdeb2b8978903efa642601ad0",
+   "accountValueUsd": 1155312.909263,
+   "largestCoin": "NEAR",
+   "largestUsd": 14448,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x515f5dd1f9d7abb58e394d761ea03d7e0414a176",
+   "accountValueUsd": 1133265.44124,
+   "largestCoin": "XRP",
+   "largestUsd": 13693,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x0c684f333a7e120bce61383da670bbb0157e82d0",
+   "accountValueUsd": 5043545.052601,
+   "largestCoin": "ZEC",
+   "largestUsd": 13668.765,
+   "mainDexPositions": 10
+  },
+  {
+   "address": "0x75ada70e2792ec872b385540c710259c071dac7a",
+   "accountValueUsd": 1339517.737086,
+   "largestCoin": "HYPE",
+   "largestUsd": 12347.21865,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x75632aaf83120eae9b0618f8f50773ce347de2ad",
+   "accountValueUsd": 986516.002625,
+   "largestCoin": "PONS",
+   "largestUsd": 12298.36451,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xbac617baae57134be31c2c0206ab30ef9e3f71cb",
+   "accountValueUsd": 1415191.188446,
+   "largestCoin": "ZEC",
+   "largestUsd": 12281.301,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xd2147a366e335b89b68ace628923962393b56813",
+   "accountValueUsd": 1117574.530732,
+   "largestCoin": "HYPE",
+   "largestUsd": 11102.61878,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x92b75a5bfb7be7911747276ad335b8f5da3ce0f4",
+   "accountValueUsd": 7495847.827149,
+   "largestCoin": "BTC",
+   "largestUsd": 10616.669,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x9a1500b41519868039b1f95c447ba50b76d837e6",
+   "accountValueUsd": 14472093.786043001,
+   "largestCoin": "BTC",
+   "largestUsd": 10351.74816,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x30031f21e4927c7b7c8d9bdb803bc14e57388028",
+   "accountValueUsd": 3283963.591248,
+   "largestCoin": "ADA",
+   "largestUsd": 10343.97392,
+   "mainDexPositions": 12
+  },
+  {
+   "address": "0xd8d5b0f7219aed171efb5ae2ac3b9941206f7349",
+   "accountValueUsd": 3899977.569142,
+   "largestCoin": "kLUNC",
+   "largestUsd": 10210.50592,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x1c1c270b573d55b68b3d14722b5d5d401511bed0",
+   "accountValueUsd": 1463736.427036,
+   "largestCoin": "BTC",
+   "largestUsd": 9978.60808,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x42bc06d636e9a9a93edb1ddf781ee97821a73946",
+   "accountValueUsd": 2752715.080133,
+   "largestCoin": "HYPE",
+   "largestUsd": 9061.68,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xadb70cc8a8f1a7a68db90372308184c501b575e1",
+   "accountValueUsd": 1546232.922718,
+   "largestCoin": "BTC",
+   "largestUsd": 7966.3947,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x8ee071baaff1dc9cf19b140f47853c684d495ed4",
+   "accountValueUsd": 1692481.327005,
+   "largestCoin": "ETH",
+   "largestUsd": 7683.6,
+   "mainDexPositions": 18
+  },
+  {
+   "address": "0x736dde3e0f5c588ddc53ad7f0f65667c0cca2801",
+   "accountValueUsd": 967856.958845,
+   "largestCoin": "HYPE",
+   "largestUsd": 6438.2872,
+   "mainDexPositions": 4
+  },
+  {
+   "address": "0x7019197d2b2ae7b44eee12a76015eb1fe94abd36",
+   "accountValueUsd": 1024665.8841169999,
+   "largestCoin": "BTC",
+   "largestUsd": 6172.00475,
+   "mainDexPositions": 9
+  },
+  {
+   "address": "0x67f2d1e12bcd20f07e14f716bf5453e91cf42318",
+   "accountValueUsd": 5848164.424417,
+   "largestCoin": "ZEC",
+   "largestUsd": 5844,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x6bf7adc30d071f426193a56dad0947176fac84ba",
+   "accountValueUsd": 1457185.499335,
+   "largestCoin": "BTC",
+   "largestUsd": 5086.5348,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xb2ee477ced8d69afdb5707b31170c782f5f26f5b",
+   "accountValueUsd": 1133769.558566,
+   "largestCoin": "TAO",
+   "largestUsd": 5022.934,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x7bfee91193d9df2ac0bfe90191d40f23c773c060",
+   "accountValueUsd": 1680118.452637,
+   "largestCoin": "PURR",
+   "largestUsd": 4367.93259,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xa2d1dd0f09239349354b662f75fbd81f3dbc824e",
+   "accountValueUsd": 25009914.392955,
+   "largestCoin": "PURR",
+   "largestUsd": 3859.2,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0x5fdbf83c3d95d525704f61401db68cbec1b2a775",
+   "accountValueUsd": 1615828.307671,
+   "largestCoin": "FARTCOIN",
+   "largestUsd": 3085.8,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xeb8ebad162a9ce4cb7e2325c92b960b9df63365c",
+   "accountValueUsd": 948667.027927,
+   "largestCoin": "TAO",
+   "largestUsd": 2574.254,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x057e4ef25b051110f91102d71ae9fecb2e913220",
+   "accountValueUsd": 13162342.09524,
+   "largestCoin": "ZEC",
+   "largestUsd": 2563.68024,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x76ea20b64d69e3df3895d9a92e93665d661623e0",
+   "accountValueUsd": 1397067.013097,
+   "largestCoin": "ETH",
+   "largestUsd": 2563.4,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x1d207624c9466376e345310580c300611f3e0b20",
+   "accountValueUsd": 1937032.230191,
+   "largestCoin": "SOPH",
+   "largestUsd": 2319.5984,
+   "mainDexPositions": 21
+  },
+  {
+   "address": "0x484bc1608211d0604bf70bae72792a56884562f8",
+   "accountValueUsd": 46946630.220867,
+   "largestCoin": "FET",
+   "largestUsd": 1940.87714,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x0aa91765509599ca7f5119ff90e8e5b701a03939",
+   "accountValueUsd": 3816973.057111,
+   "largestCoin": "SOL",
+   "largestUsd": 410.3946,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x55b80f17dba49f3803d16136e82d2adc5cdd2a10",
+   "accountValueUsd": 9909235.042524,
+   "largestCoin": "XMR",
+   "largestUsd": 96.59735,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x9db1b9d343ffd38b7109b6a2c21da04fc273a7d1",
+   "accountValueUsd": 5596332.118744,
+   "largestCoin": "BTC",
+   "largestUsd": 80.202,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xd6db8b6b271e1144b4d80e1296f8a6366b010e70",
+   "accountValueUsd": 2671724.833963,
+   "largestCoin": "HYPE",
+   "largestUsd": 74.35678,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x8bdb6e4ddc3546d45e6fad84cbf9b76b02608821",
+   "accountValueUsd": 1502516.281489,
+   "largestCoin": "PONS",
+   "largestUsd": 70.649,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x63a1eb0e380d990cf92057672956fc04a3366ff9",
+   "accountValueUsd": 1154738.952141,
+   "largestCoin": "XRP",
+   "largestUsd": 38.3516,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0x3595098878d3960158b77765f3b595228385d69a",
+   "accountValueUsd": 1061474.798387,
+   "largestCoin": "AAVE",
+   "largestUsd": 25.053426,
+   "mainDexPositions": 2
+  },
+  {
+   "address": "0xa0479b2c614cbd03ceab36ae5a6d0822035e553c",
+   "accountValueUsd": 8387483.86826,
+   "largestCoin": "BTC",
+   "largestUsd": 24.0408,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xead5b7d86c681c036c59cd00a0390541061c69f2",
+   "accountValueUsd": 10620939.120202001,
+   "largestCoin": "ZEC",
+   "largestUsd": 14.557,
+   "mainDexPositions": 3
+  },
+  {
+   "address": "0xf83ff544ed6f00fe7a74782aee3fd9ea54d96728",
+   "accountValueUsd": 8328722.299378,
+   "largestCoin": "ORDI",
+   "largestUsd": 2.329986,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x956a2725e42dd701ef115bab50a06ee5bb9da8c2",
+   "accountValueUsd": 983079.663207,
+   "largestCoin": "PONS",
+   "largestUsd": 0.70729,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0x96c9487af21d18ac5f4c841af44a011968445709",
+   "accountValueUsd": 2654134.62427,
+   "largestCoin": "PUMP",
+   "largestUsd": 0.10695,
+   "mainDexPositions": 1
+  },
+  {
+   "address": "0xb7e09a94603f4fd3b67537b4c43584fe1498ae05",
+   "accountValueUsd": 1454491.579004,
+   "largestCoin": "APE",
+   "largestUsd": 0.013326,
+   "mainDexPositions": 1
+  }
+ ]
+}

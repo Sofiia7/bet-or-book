@@ -332,7 +332,11 @@ function renderGallery() {
     const b = el('button');
     const v = verdictOf(e);
     const badge = el('span', 'badge ' + v.cls, badgeText(e));
-    const pnl = e.pnl ? 'PnL 30d ' + fmtUsd(e.pnl.realizedPnlUsd) + ' · ' : '';
+    const pnl = !e.pnl
+      ? ''
+      : e.pnl.closedTrades === 0
+        ? 'no closed trades in 30d · '
+        : 'PnL 30d ' + fmtUsd(e.pnl.realizedPnlUsd) + ' · ';
     b.append(
       el('span', 'rank', '#' + (all.indexOf(e) + 1)),
       el('span', 'pos', positionText(e)),
@@ -358,7 +362,11 @@ async function loadGallery() {
   } catch (e) {
     return;
   }
-  const entries = (gallery.entries || []).slice().sort((a, b) => b.positions.headlineNotionalUsd - a.positions.headlineNotionalUsd);
+  // An account can close its position between the ranking and its check;
+  // with nothing open it is not one of the biggest positions any more.
+  const entries = (gallery.entries || [])
+    .filter((e) => e.positions.nPositions > 0)
+    .sort((a, b) => b.positions.headlineNotionalUsd - a.positions.headlineNotionalUsd);
   if (entries.length === 0) return;
   gallery.sorted = entries;
   const counts = galleryCounts(entries);

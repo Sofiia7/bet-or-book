@@ -66,7 +66,26 @@ Around it: a 10-minute cache per address, 20 checks a minute per IP, a daily cre
 
 ## The gallery: biggest positions right now
 
-GALLERY_SECTION
+On 18 September 2026 the same check ran over the largest open positions on Hyperliquid: accounts from the top 3,000 by value on Hyperliquid's public leaderboard, ranked by their largest position (864 had one open), checked from the top until the credits ran out. That is 278 accounts, led by a $263.8M ETH short; one had closed its position by the time it was checked, which leaves 277.
+
+| Verdict | Positions | Share |
+|---|---|---|
+| Looks like a bet | 135 | 49% |
+| Unknown | 80 | 29% |
+| Hedged | 38 | 14% |
+| ... of which `probable`: the hedge sits in the wallets that funded the account | 13 | |
+| Book | 24 | 9% |
+
+What stands out:
+
+- **About half of the biggest positions look like real bets**, mostly longs (109 of 135), 36 of them without a single trade closed in 30 days.
+- **13 shorts are probably hedged by the wallets that funded them, 10 of them in ETH**: the same staked-ETH carry trade as in the example above, invisible from the account alone and found only through Nansen's related-wallets and cross-chain balances.
+- Of the ten largest positions, seven look like bets. The largest of all, a $263.8M ETH short, stays **Unknown**: 15 shorts, and the wallets that funded the account hold ETH worth only 3.7% of it.
+- A check cost **3.2 Nansen calls on average**; 192 of the 278 needed only 2.
+
+Three of the 278 were read while Nansen answered 502, so their positions came from Hyperliquid's main dex; their cards say so. The scan data is in [`data/gallery.json`](data/gallery.json), the candidate ranking in [`data/prescan-candidates.json`](data/prescan-candidates.json).
+
+Calibration notes, including the fix this scan forced on book rule (c) - maker fills in one direction are a position being built, not market making - are in [`docs/wiki/calibration.md`](docs/wiki/calibration.md).
 
 ## Honest limits
 
@@ -120,7 +139,26 @@ npx wrangler deploy
 
 ## Nansen API usage
 
-LEDGER_SECTION
+Every call is logged in [`data/nansen-calls.jsonl`](data/nansen-calls.jsonl) and summed in [`data/ledger.json`](data/ledger.json); the deployed page adds its own calls from Workers KV and serves the total at `/api/ledger`.
+
+Between 14 and 27 September: **1,008 calls, 1,004 of them answered 2xx.** Nansen's own balance agrees: the three calls that got a 502 were not charged, and 1,005 credits were spent.
+
+| Endpoint | Calls |
+|---|---|
+| `profiler/perp-positions` | 308 |
+| `profiler/perp-pnl-summary` | 308 |
+| `profiler/address/current-balance` | 228 |
+| `profiler/address/related-wallets` | 163 |
+| `profiler/perp-trades` | 1 |
+
+| Purpose | Calls |
+|---|---|
+| Gallery scan (`scripts/prescan.ts`), including a first run of 66 calls discarded after the book-rule fix | 964 |
+| Local development checks through `wrangler dev` | 21 |
+| Fixture captures for the tests | 12 |
+| Live smoke test of the three calibration accounts | 11 |
+
+`profiler/perp-trades` was tried once and dropped: it aggregates partial fills into one trade, and a thousand records covered sixteen minutes of the busiest account.
 
 ## Security
 
