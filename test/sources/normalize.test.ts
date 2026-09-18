@@ -4,12 +4,20 @@ import openOrdersFixture from '../fixtures/hyperliquid/open-orders.json';
 import spotBalancesFixture from '../fixtures/hyperliquid/spot-balances.json';
 import spotMetaFixture from '../fixtures/hyperliquid/spot-meta.json';
 import fillsFixture from '../fixtures/hyperliquid/fills-24h.json';
+import nansenPositionsFixture from '../fixtures/nansen/perp-positions-wintermute.json';
+import funderEthBalancesFixture from '../fixtures/nansen/current-balance-abraxas-funder-eth-all.json';
+import relatedArbFixture from '../fixtures/nansen/related-wallets-abraxas-arbitrum.json';
+import pnlFixture from '../fixtures/nansen/perp-pnl-summary-wintermute.json';
 import {
   normalizePositions,
   normalizeOrders,
   buildSpotPriceIndex,
   normalizeSpotHoldings,
   normalizeTrades,
+  normalizeNansenPositions,
+  normalizeNansenBalances,
+  normalizeRelatedWallets,
+  normalizeNansenPnl,
 } from '../../src/sources/normalize';
 import type {
   HlClearinghouseState,
@@ -19,6 +27,12 @@ import type {
   HlSpotAssetCtx,
   HlFill,
 } from '../../src/sources/hyperliquid';
+import type {
+  NansenPerpPositions,
+  NansenBalance,
+  NansenRelatedWallet,
+  NansenPnlSummary,
+} from '../../src/sources/nansen';
 
 describe('normalizePositions', () => {
   it('converts every raw position into the domain Position shape', () => {
@@ -90,5 +104,48 @@ describe('normalizeTrades', () => {
       expect(typeof t.crossed).toBe('boolean');
       expect(typeof t.closedPnlUsd).toBe('number');
     }
+  });
+});
+
+describe('Nansen normalizers', () => {
+  it('maps every Nansen position, including HIP-3 dexes, onto Position', () => {
+    const positions = normalizeNansenPositions((nansenPositionsFixture as { data: NansenPerpPositions }).data);
+    expect(positions.length).toBe(134);
+    expect(positions.filter((p) => p.coin.includes(':')).length).toBe(48);
+    const eth = positions.find((p) => p.coin === 'ETH');
+    expect(eth?.side).toBe('short');
+    expect(eth?.sizeUsd).toBeGreaterThan(0);
+  });
+
+  it('keeps chain on balances and drops zero-value rows', () => {
+    const rows = (funderEthBalancesFixture as { data: NansenBalance[] }).data;
+    const holdings = normalizeNansenBalances(rows);
+    expect(holdings.every((h) => h.valueUsd > 0)).toBe(true);
+    expect(holdings.find((h) => h.coin === 'AETHWETH')?.chain).toBe('ethereum');
+  });
+
+  it('flags links to shared services and never returns the label itself', () => {
+    const fixtureRows = (relatedArbFixture as { data: NansenRelatedWallet[] }).data;
+    const [first] = normalizeRelatedWallets(fixtureRows);
+    expect(first.relation).toBe('First Funder');
+    expect(first.isSharedService).toBe(false);
+    expect(Object.keys(first)).not.toContain('address_label');
+
+    const synthetic = (label: string | null): NansenRelatedWallet => ({
+      ...fixtureRows[0],
+      address_label: label,
+    });
+    expect(normalizeRelatedWallets([synthetic('Binance: Hot Wallet')])[0].isSharedService).toBe(true);
+    expect(normalizeRelatedWallets([synthetic('Arbitrum Bridge')])[0].isSharedService).toBe(true);
+    expect(normalizeRelatedWallets([synthetic('High Activity')])[0].isSharedService).toBe(false);
+    expect(normalizeRelatedWallets([synthetic('Token Millionaire')])[0].isSharedService).toBe(false);
+  });
+
+  it('maps the PnL summary', () => {
+    const pnl = normalizeNansenPnl((pnlFixture as { data: NansenPnlSummary }).data, 30);
+    expect(pnl.realizedPnlUsd).toBeCloseTo(-13_625_651.41, 0);
+    expect(pnl.winRate).toBeCloseTo(0.4663, 3);
+    expect(pnl.closedTrades).toBe(2_423_158);
+    expect(pnl.windowDays).toBe(30);
   });
 });
