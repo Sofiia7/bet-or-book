@@ -158,3 +158,38 @@ here that is actually a directional bet is also the one with positive
 realized PnL (+$7.7M in 30 days). "Looks like a bet" answers what the
 position is; the PnL line answers whether copying the wallet would
 have paid.
+
+## 2026-09-18, the gallery scan: book rule (c) needed a side condition
+
+The first gallery run (the 20 largest positions among the top 3 000
+accounts by value) returned three `book (likely)` verdicts from the
+fills rule alone - 200+ fills in 24 hours, 40% or less of them taker.
+Their free 24-hour fills from Hyperliquid, measured the same hour:
+
+| Account | Positions | Fills 24h | Maker | Buys | Coins | Fill directions |
+|---|---|---|---|---|---|---|
+| Wintermute (control) | 134, net/gross 0.90 | 2 000 (cap) | 78% | 53% | 84 | Close Short 641, Open Short 603, Buy 393, Close Long 241 |
+| `0x92ea...50e9` | 2, net/gross 0.31, $107M BTC long | 2 000 (cap) | 100% | **0%** | 1 | Sell 2 000 (spot) |
+| `0xb695...a92d` | 8, net/gross 1.00, $59.8M BTC short | 535 | 100% | **0%** | 1 | Open Short 535 |
+| `0x7fda...17d1` | 44, net/gross 0.96, $45.1M ETH short | 2 000 (cap) | 100% | 54% | 14 | Close Short 1 083, Open Short 604, Close Long 311 |
+
+Two of the three were building one position with post-only orders:
+maker flow, but all of it in one direction on one coin. A market maker
+buys the bid and sells the ask, so its flow runs both ways. Rule (c)
+now also needs a 25-75% buy share among the fills - the same window
+book rule (b) already applies to the bid share of resting orders.
+
+Both outcomes on live data, as the rule for thresholds requires: it
+still fires for Wintermute (53% buys) and for `0x7fda...` (54% across 14
+coins, which stays `book (likely)`), and no longer fires for `0x92ea...`
+(now `hedged`, a balanced two-position book) or `0xb695...` (now
+`unknown` after the full hedge search: 8 shorts, no hedge found).
+
+Per-coin two-sidedness was measured too and rejected as a signal:
+Wintermute scores 0.10 on it, because its capped 2 000 fills cover only
+minutes, and in minutes a market maker's inventory in one coin often
+moves one way.
+
+The 20 checks of that first run (66 calls) were discarded and the
+gallery rescanned from scratch under the new rule, so every entry is
+judged by the same rules; the calls stay in the ledger, they were made.
