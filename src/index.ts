@@ -26,6 +26,23 @@ interface Env {
 const CHECK_CACHE_TTL_SECONDS = 600;
 const RATE_LIMIT_MAX_PER_WINDOW = 20;
 const RATE_LIMIT_WINDOW_SECONDS = 60;
+const LEDGER_MEMO_MS = 60_000;
+
+/** The page has one inline script and inline styles, so 'unsafe-inline'
+ * stays; what the policy buys is no framing (clickjacking), no requests to
+ * other origins, and no plugin content. */
+const PAGE_HEADERS = {
+  'content-type': 'text/html;charset=UTF-8',
+  'content-security-policy':
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; " +
+    "img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'strict-origin-when-cross-origin',
+};
+
+/** Per-isolate memo of /api/ledger: it costs up to 14 KV reads, and reads
+ * are a daily quota too. */
+let ledgerMemo: { at: number; body: unknown } | null = null;
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -86,15 +103,18 @@ export default {
     // counters. Under `wrangler dev` the local KV also holds the dev calls
     // that the ledger already lists, so the sum double-counts them there.
     if (url.pathname === '/api/ledger') {
-      const live = await liveCallsInWindow(kv, new Date().toISOString().slice(0, 10));
-      return Response.json(
-        { totalCalls: scriptedLedger.calls + live.calls, scripted: scriptedLedger, live },
-        { headers: { 'cache-control': 'public, max-age=60' } },
-      );
+      if (!ledgerMemo || Date.now() - ledgerMemo.at > LEDGER_MEMO_MS) {
+        const live = await liveCallsInWindow(kv, new Date().toISOString().slice(0, 10));
+        ledgerMemo = {
+          at: Date.now(),
+          body: { totalCalls: scriptedLedger.calls + live.calls, scripted: scriptedLedger, live },
+        };
+      }
+      return Response.json(ledgerMemo.body, { headers: { 'cache-control': 'public, max-age=60' } });
     }
 
     if (url.pathname === '/') {
-      return new Response(pageHtml, { headers: { 'content-type': 'text/html;charset=UTF-8' } });
+      return new Response(pageHtml, { headers: PAGE_HEADERS });
     }
 
     return new Response('not found', { status: 404 });
