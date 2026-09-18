@@ -205,4 +205,12 @@ describe('checkAddress (offline, real fixtures)', () => {
     expect(result.pnl).toBeNull();
     expect(result.coverage.some((c) => c.startsWith('Nansen not used'))).toBe(true);
   });
+
+  it('names why Nansen was not used when the caller says so', async () => {
+    route();
+    const result = await checkAddress(ABRAXAS, { nansen: null, nansenOffReason: "today's Nansen credits are used up" });
+    expect(result.coverage[0]).toBe(
+      "Nansen not used (today's Nansen credits are used up): main-dex positions only, no other chains, no linked wallets",
+    );
+  });
 });

@@ -43,6 +43,8 @@ const MAX_FUNDERS = 2;
 export interface CheckOptions {
   /** null runs Hyperliquid-only: no key, credit cap reached, or a test. */
   nansen: NansenClient | null;
+  /** Why `nansen` is null, in words for the card. */
+  nansenOffReason?: string;
   now?: () => number;
 }
 
@@ -109,7 +111,8 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     if (pnlRes.status === 'fulfilled') pnl = normalizeNansenPnl(pnlRes.value, PNL_WINDOW_DAYS);
     else coverage.push('Realized PnL unavailable');
   } else {
-    coverage.push('Nansen not used: main-dex positions only, no other chains, no linked wallets');
+    const why = opts.nansenOffReason ? ` (${opts.nansenOffReason})` : '';
+    coverage.push(`Nansen not used${why}: main-dex positions only, no other chains, no linked wallets`);
   }
   if (positions === null) positions = normalizePositions(await getClearinghouseState(address));
 

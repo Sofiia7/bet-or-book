@@ -71,17 +71,21 @@ export default {
           const calls: NansenCallMeta[] = [];
           // Fails closed: if KV failed anywhere in this request (the limiter's
           // write, the cap's read), the cap cannot be trusted, so no credits.
-          const useNansen =
-            !!env.NANSEN_API_KEY &&
-            (await nansenAllowed(kv, day, Number(env.NANSEN_DAILY_CREDIT_CAP), Number(env.NANSEN_CREDIT_FLOOR))) &&
-            !kv.degraded;
-          const nansen = useNansen
-            ? createNansenClient(env.NANSEN_API_KEY!, (m) => {
-                calls.push(m);
-              })
-            : null;
+          let nansenOffReason: string | undefined;
+          if (!env.NANSEN_API_KEY) nansenOffReason = 'no API key configured';
+          else if (
+            !(await nansenAllowed(kv, day, Number(env.NANSEN_DAILY_CREDIT_CAP), Number(env.NANSEN_CREDIT_FLOOR)))
+          ) {
+            nansenOffReason = "today's Nansen credits are used up";
+          } else if (kv.degraded) nansenOffReason = 'storage unavailable, so spending is paused';
+          const nansen =
+            nansenOffReason === undefined
+              ? createNansenClient(env.NANSEN_API_KEY!, (m) => {
+                  calls.push(m);
+                })
+              : null;
           try {
-            const result = await checkAddress(address, { nansen });
+            const result = await checkAddress(address, { nansen, nansenOffReason });
             return { ...result, nansenCalls: calls.length };
           } finally {
             await recordCalls(kv, day, calls);
