@@ -108,6 +108,51 @@ function setStatus(text, isError) {
 }
 
 /**
+ * What moved between this reading and the one it replaced.
+ *
+ * Nothing is fetched to answer it beyond the comparison itself, which is
+ * made out of two readings that already exist. The line that matters is the
+ * attribution: "the reading changed" and "the rules changed" are two
+ * different pieces of news and a card cannot leave the reader to guess.
+ */
+async function renderChanged(d) {
+  const box = $('changed');
+  box.hidden = true;
+  if (!d.supersedes || !d.snapshotId) return;
+  let c;
+  try {
+    const res = await fetch(
+      '/api/compare?a=' + encodeURIComponent(d.supersedes) + '&b=' + encodeURIComponent(d.snapshotId),
+    );
+    if (!res.ok) return;
+    c = await res.json();
+  } catch {
+    return;
+  }
+  // The card may have moved on while this was in the air.
+  if (!current || current.snapshotId !== d.snapshotId) return;
+  if (!c.changes.length && !c.verdictChange) return;
+
+  box.hidden = false;
+  $('changed-title').textContent = 'What changed since ' + fmtTime(c.from.observedAt);
+  $('changed-because').textContent = c.verdictChange
+    ? 'The answer went from "' + VERDICTS[c.verdictChange.from].label + '" to "' +
+      VERDICTS[c.verdictChange.to].label + '" because ' + c.verdictChange.because + '.'
+    : 'The answer did not change.';
+  const arrow = { up: '\u2191', down: '\u2193', sideways: '\u2192' };
+  $('changed-list').replaceChildren(
+    ...c.changes.map((ch) => {
+      const li = el('li');
+      li.append(
+        el('span', 'dir', arrow[ch.direction] + ' '),
+        ch.field + ': ' + ch.from + ' \u2192 ' + ch.to,
+      );
+      return li;
+    }),
+  );
+}
+
+/**
  * The positions this address holds, offered as a choice.
  *
  * A check answers about one position, and it used to always be the largest
@@ -285,6 +330,7 @@ function renderResult(d, opts) {
   }));
 
   renderPicker(d, kindOf(opts));
+  renderChanged(d);
   renderBreakdown(d);
 
   const funders = d.linkedHedge && Array.isArray(d.linkedHedge.funders) ? d.linkedHedge.funders : [];

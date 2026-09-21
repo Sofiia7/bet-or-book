@@ -65,6 +65,13 @@
   /* Five equal tiles made the number that decided the verdict compete with
      Net/Gross for attention, and on a wide screen the fifth became a narrow
      column of wrapped text. The decisive one is given its own row. */
+  /* Two readings of one address. A verdict that moved because the account
+     did something, and one that moved because this tool reads it
+     differently, look identical on a card and are not the same event. */
+  .changed { border-left: 3px solid var(--fg); }
+  .changed li { font-size: 13px; }
+  .changed .dir { font-variant-numeric: tabular-nums; color: var(--muted); }
+
   /* A post says BTC and the largest position at the address is ETH. Until
      this existed the answer was always about the ETH, and the reader had no
      way to say which position they came for. */
@@ -136,6 +143,10 @@
   <p style="margin: 10px 0 0;"><span class="badge" id="badge"></span></p>
   <p class="headline" id="headline"></p>
   <p class="summary" id="summary"></p>
+  <div class="box changed" id="changed" hidden>
+    <p><strong id="changed-title"></strong> <span class="muted" id="changed-because"></span></p>
+    <ul id="changed-list"></ul>
+  </div>
   <div class="picker" id="picker" hidden>
     <span class="picker-label">This answer is about</span>
     <span class="picker-chips" id="picker-chips"></span>

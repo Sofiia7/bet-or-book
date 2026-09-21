@@ -31,9 +31,13 @@ import type { Gallery } from '../src/gallery';
  * diff rather than discovered on the deployed page.
  */
 const gallery = galleryData as unknown as Gallery;
-const open = gallery.entries.filter((e) => e.positions.nPositions > 0);
-const current = gallery.entries.filter((e) => !e.historical);
-const historical = gallery.entries.filter((e) => e.historical);
+// A reading that has been read again is kept so the two can be compared,
+// and is addressable by its own id - but it is not part of the set the
+// page lists, and counting it would count that account twice.
+const live = gallery.entries.filter((e) => !e.superseded);
+const open = live.filter((e) => e.positions.nPositions > 0);
+const current = live.filter((e) => !e.historical);
+const historical = live.filter((e) => e.historical);
 
 const rejudge = (e: Gallery['entries'][number]) =>
   computeVerdict({
@@ -50,7 +54,9 @@ const rejudge = (e: Gallery['entries'][number]) =>
 describe('the saved gallery against the current rules', () => {
   it('has something to judge', () => {
     expect(open.length).toBe(277);
-    expect(gallery.entries.length).toBe(278);
+    expect(live.length).toBe(278);
+    // Plus the readings those 22 re-reads replaced, kept for comparison.
+    expect(gallery.entries.filter((e) => e.superseded).length).toBe(22);
   });
 
   it('reproduces every stored verdict it claims to have judged', () => {
@@ -79,7 +85,7 @@ describe('the saved gallery against the current rules', () => {
   });
 
   it('marks as historical exactly those entries the rules cannot read', () => {
-    const wrong = gallery.entries.filter((e) => (missingForCurrentRules(e).length > 0) !== Boolean(e.historical));
+    const wrong = live.filter((e) => (missingForCurrentRules(e).length > 0) !== Boolean(e.historical));
     expect(wrong.map((e) => e.address)).toEqual([]);
   });
 
@@ -101,6 +107,17 @@ describe('the saved gallery against the current rules', () => {
     const ids = gallery.entries.map((e) => e.snapshotId);
     expect(ids.every((id) => typeof id === 'string' && id.length > 0)).toBe(true);
     expect(new Set(ids).size).toBe(gallery.entries.length);
+  });
+
+  it('pairs every re-read with the reading it replaced', () => {
+    const replaced = gallery.entries.filter((e) => e.superseded);
+    for (const old of replaced) {
+      const current = live.find((e) => e.address === old.address);
+      expect(current?.supersedes).toBe(old.snapshotId);
+      expect(old.supersededBy).toBe(current?.snapshotId);
+      // The point of keeping it is that the two are of different moments.
+      expect(old.checkedAt < (current?.checkedAt ?? '')).toBe(true);
+    }
   });
 
   it('never calls a funding wallet a hedge, however much it holds', () => {

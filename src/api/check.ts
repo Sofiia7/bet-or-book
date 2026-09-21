@@ -159,6 +159,13 @@ export type CheckResponse = CheckResult & {
    * whatever KV did with it, so "Copy link" could produce a link that has
    * never pointed at anything (audit R02). */
   snapshotSaved?: boolean;
+  /** Set on a stored reading that has since been read again. It keeps its
+   * id and its link - it is the other half of any comparison - but the
+   * gallery lists the newer one in its place. */
+  superseded?: boolean;
+  supersededBy?: string;
+  /** The reading this one replaced, where there is one. */
+  supersedes?: string;
 };
 
 /** Reads in stages so that every Nansen credit is spent only where its answer

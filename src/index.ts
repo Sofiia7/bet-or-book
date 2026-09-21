@@ -9,6 +9,7 @@ import { CLASSIFIER_VERSION } from './engine/verdict';
 import type { CheckResponse } from './api/check';
 import { snapshotId, snapshotKey, isSnapshotId, SNAPSHOT_TTL_SECONDS, shortHash } from './snapshot';
 import { shareCard } from './engine/share';
+import { compareReadings } from './engine/compare';
 import pageHtml from '../web/index.html';
 import pageScript from '../web/app.js';
 import galleryData from '../data/gallery.json';
@@ -23,6 +24,10 @@ const gallery = galleryData as unknown as Gallery;
 const galleryById = new Map(
   gallery.entries.map((e) => [e.snapshotId ?? snapshotId(e.address, e.checkedAt), e] as const),
 );
+/** What the page lists. A reading that has since been read again is kept -
+ * it is the other half of any comparison, and its link stays good - but
+ * listing it as well would show the same account twice. */
+const listedGallery: Gallery = { ...gallery, entries: gallery.entries.filter((e) => !e.superseded) };
 const scriptedLedger = ledgerData as unknown as LedgerSummary;
 
 /**
@@ -377,8 +382,32 @@ export default {
       );
     }
 
+    // Two readings of one address, side by side. Reads what is already
+    // stored and never starts a check: a comparison is a third thing made
+    // out of two existing ones, and it costs nothing.
+    if (url.pathname === '/api/compare') {
+      const a = url.searchParams.get('a') ?? '';
+      const b = url.searchParams.get('b') ?? '';
+      if (!isSnapshotId(a) || !isSnapshotId(b)) {
+        return Response.json({ error: 'two snapshot ids are needed' }, { status: 400 });
+      }
+      const read = async (id: string) => galleryById.get(id) ?? (await readSnapshot(kv, id));
+      const [left, right] = await Promise.all([read(a), read(b)]);
+      if (!left || !right) {
+        return Response.json(
+          { error: 'one of those readings has expired or never existed' },
+          { status: 404, headers: { 'x-robots-tag': 'noindex' } },
+        );
+      }
+      try {
+        return Response.json(compareReadings(left, right), { headers: SNAPSHOT_HEADERS });
+      } catch {
+        return Response.json({ error: 'those two readings are of different addresses' }, { status: 400 });
+      }
+    }
+
     if (url.pathname === '/api/gallery') {
-      return Response.json(gallery, { headers: { 'cache-control': 'public, max-age=300' } });
+      return Response.json(listedGallery, { headers: { 'cache-control': 'public, max-age=300' } });
     }
 
     // Scripted calls (fixtures, smoke runs, the gallery prescan) come bundled

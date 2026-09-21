@@ -199,3 +199,39 @@ describe('asking about a particular position', () => {
     expect(((await res.json()) as { focus: unknown }).focus).toBeNull();
   });
 });
+
+describe('putting two readings of one address side by side', () => {
+  it('compares a gallery card with the reading it replaced', async () => {
+    const env = testEnv();
+    const list = await (await worker.fetch(request('/api/gallery'), env)).json() as {
+      entries: Array<{ snapshotId: string; supersedes?: string }>;
+    };
+    const pair = list.entries.find((e) => e.supersedes)!;
+    const res = await worker.fetch(request(`/api/compare?a=${pair.supersedes}&b=${pair.snapshotId}`), env);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { from: { observedAt: string }; to: { observedAt: string }; changes: unknown[] };
+    expect(body.from.observedAt < body.to.observedAt).toBe(true);
+    expect(Array.isArray(body.changes)).toBe(true);
+  });
+
+  it('refuses two readings of different addresses', async () => {
+    const env = testEnv();
+    const list = await (await worker.fetch(request('/api/gallery'), env)).json() as {
+      entries: Array<{ snapshotId: string; address: string }>;
+    };
+    const [a, b] = [list.entries[0], list.entries.find((e) => e.address !== list.entries[0].address)!];
+    const res = await worker.fetch(request(`/api/compare?a=${a.snapshotId}&b=${b.snapshotId}`), env);
+    expect(res.status).toBe(400);
+  });
+
+  it('says which reading it could not find', async () => {
+    const res = await worker.fetch(request('/api/compare?a=0000000000&b=1111111111'), testEnv());
+    expect(res.status).toBe(404);
+  });
+
+  it('never starts a check to answer a comparison', async () => {
+    const seen = routeUpstreams();
+    await worker.fetch(request('/api/compare?a=0000000000&b=1111111111'), testEnv());
+    expect(seen).toEqual([]);
+  });
+});
