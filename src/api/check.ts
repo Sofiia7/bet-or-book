@@ -34,12 +34,15 @@ import {
   type TradeFeatures,
 } from '../engine/features';
 import { computeVerdict, hedgeCanChangeVerdict, DEFAULT_THRESHOLDS, type VerdictResult } from '../engine/verdict';
-import { explain, type EvidenceItem } from '../engine/evidence';
+import { explain, formatUsd, type EvidenceItem } from '../engine/evidence';
 import type { Position, SpotHolding, LinkedWallet, PnlSummary } from '../types';
 
 const TRADES_WINDOW_HOURS = 24;
 const PNL_WINDOW_DAYS = 30;
 const MAX_FUNDERS = 2;
+/** Share of the headline position below which a caveat is not worth the
+ * reader's attention. */
+const MATERIAL_SHARE = 0.01;
 
 export interface CheckOptions {
   /** null runs Hyperliquid-only: no key, credit cap reached, or a test. */
@@ -156,6 +159,23 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     positionFeatures.headlineNotionalUsd,
     [...hlSpot, ...ownChain],
   );
+  // Two things the hedge number cannot say on its own, mentioned only when
+  // they are large enough to matter: real balances carry dust, and a $57
+  // footnote against a $184M position is noise, not coverage.
+  const material = MATERIAL_SHARE * positionFeatures.headlineNotionalUsd;
+  if (hedgeFeatures.unverifiedUsd >= material) {
+    coverage.push(
+      `${formatUsd(hedgeFeatures.unverifiedUsd)} of holdings named like ${positionFeatures.headlineCoin} ` +
+        'were left out: their contract is not one this tool recognises',
+    );
+  }
+  if (hedgeFeatures.lendingUsd >= material) {
+    coverage.push(
+      `${formatUsd(hedgeFeatures.lendingUsd)} of the matching assets is a lending-market deposit; ` +
+        'anything borrowed against it does not show here',
+    );
+  }
+
   const hedgeScope: HedgeScope =
     positionFeatures.headlineSide !== 'short' ? 'none' : otherChainsRead ? 'all-chains' : 'hyperliquid';
 

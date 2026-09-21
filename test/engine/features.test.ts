@@ -152,6 +152,35 @@ describe('computeSizeVsOi', () => {
   });
 });
 
+describe('computeHedgeFeatures, on-chain holdings', () => {
+  const AETHWETH = '0x4d5f47fa6a74757f35c14fd3a6ef8e3c9bc514e8';
+  const WSTETH = '0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0';
+
+  it('leaves out a look-alike contract and says what it left out', () => {
+    const result = computeHedgeFeatures('ETH', 'short', 100_000_000, [
+      { coin: 'WSTETH', valueUsd: 40_000_000, chain: 'ethereum', tokenAddress: WSTETH },
+      { coin: 'WETH', valueUsd: 60_000_000, chain: 'ethereum', tokenAddress: '0x' + 'de'.repeat(20) },
+    ]);
+    expect(result.hedgeUsd).toBe(40_000_000);
+    expect(result.unverifiedUsd).toBe(60_000_000);
+    expect(result.lendingUsd).toBe(0);
+  });
+
+  it('counts a lending deposit but records that a loan against it would not show', () => {
+    const result = computeHedgeFeatures('ETH', 'short', 100_000_000, [
+      { coin: 'AETHWETH', valueUsd: 30_000_000, chain: 'ethereum', tokenAddress: AETHWETH },
+    ]);
+    expect(result.hedgeUsd).toBe(30_000_000);
+    expect(result.lendingUsd).toBe(30_000_000);
+  });
+
+  it('still takes Hyperliquid spot at its ticker, which carries no contract', () => {
+    const result = computeHedgeFeatures('BTC', 'short', 10_000_000, [{ coin: 'UBTC', valueUsd: 9_000_000 }]);
+    expect(result.hedgeUsd).toBe(9_000_000);
+    expect(result.unverifiedUsd).toBe(0);
+  });
+});
+
 describe('computeTradeFeatures', () => {
   it('says how much of the flow was in the position being asked about', () => {
     const hour = 3_600_000;

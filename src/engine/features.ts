@@ -1,5 +1,5 @@
 import type { Position, PositionSide, RestingOrder, SpotHolding, Trade, LinkedWallet } from '../types';
-import { spotHedgesPerp } from './assets';
+import { spotHedgesPerp, looksLikeButUnverified, isLendingReceipt } from './assets';
 
 export interface PositionFeatures {
   nPositions: number;
@@ -99,6 +99,12 @@ export function computeOrderFeatures(orders: RestingOrder[]): OrderFeatures {
 export interface HedgeFeatures {
   hedgeUsd: number;
   hedgeRatio: number;
+  /** Holdings that carry the right ticker but a contract this tool does not
+   * recognise, so they were left out. Stated rather than silently dropped. */
+  unverifiedUsd: number;
+  /** Of what was counted, how much is a lending-market deposit. Real, but a
+   * loan taken against it is not visible from any endpoint read here. */
+  lendingUsd: number;
 }
 
 /** What a hedge ratio was measured over: `none` when the headline is not a
@@ -122,12 +128,20 @@ export function computeHedgeFeatures(
   holdings: SpotHolding[],
 ): HedgeFeatures {
   if (headlineCoin === null || headlineSide !== 'short' || headlineNotionalUsd === 0) {
-    return { hedgeUsd: 0, hedgeRatio: 0 };
+    return { hedgeUsd: 0, hedgeRatio: 0, unverifiedUsd: 0, lendingUsd: 0 };
   }
-  const hedgeUsd = holdings
-    .filter((h) => spotHedgesPerp(h.coin, headlineCoin))
-    .reduce((sum, h) => sum + h.valueUsd, 0);
-  return { hedgeUsd, hedgeRatio: hedgeUsd / headlineNotionalUsd };
+  const counted = holdings.filter((h) => spotHedgesPerp(h.coin, headlineCoin, h));
+  const hedgeUsd = counted.reduce((sum, h) => sum + h.valueUsd, 0);
+  return {
+    hedgeUsd,
+    hedgeRatio: hedgeUsd / headlineNotionalUsd,
+    unverifiedUsd: holdings
+      .filter((h) => looksLikeButUnverified(h.coin, headlineCoin, h))
+      .reduce((sum, h) => sum + h.valueUsd, 0),
+    lendingUsd: counted
+      .filter((h) => isLendingReceipt(h.chain, h.tokenAddress))
+      .reduce((sum, h) => sum + h.valueUsd, 0),
+  };
 }
 
 export interface LinkedHedgeFeatures {
@@ -153,7 +167,7 @@ export function computeLinkedHedge(
     matchingUsd:
       headlineCoin === null || headlineSide !== 'short'
         ? 0
-        : l.holdings.filter((h) => spotHedgesPerp(h.coin, headlineCoin)).reduce((s, h) => s + h.valueUsd, 0),
+        : l.holdings.filter((h) => spotHedgesPerp(h.coin, headlineCoin, h)).reduce((s, h) => s + h.valueUsd, 0),
   }));
   const linkedHedgeUsd = funders.reduce((s, f) => s + f.matchingUsd, 0);
   return {

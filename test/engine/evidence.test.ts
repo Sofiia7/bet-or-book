@@ -23,7 +23,7 @@ function input(overrides: Partial<EvidenceInput>): EvidenceInput {
     verdict: { verdict: 'unknown', strength: null, reasons: [] },
     positions: positions({}),
     orders: { restingOrders: 0, bidShare: 0.5, coinsBothSides: 0 },
-    hedge: { hedgeUsd: 0, hedgeRatio: 0 },
+    hedge: { hedgeUsd: 0, hedgeRatio: 0, unverifiedUsd: 0, lendingUsd: 0 },
     hedgeScope: 'all-chains',
     hedgeCoverage: 'complete',
     linkedHedge: null,
@@ -103,7 +103,7 @@ describe('explain', () => {
     const e = explain(
       input({
         verdict: { verdict: 'hedged', strength: null, reasons: ['hedge_leg'] },
-        hedge: { hedgeUsd: 60_000_000, hedgeRatio: 0.6 },
+        hedge: { hedgeUsd: 60_000_000, hedgeRatio: 0.6, unverifiedUsd: 0, lendingUsd: 0 },
       }),
     );
     expect(e.summary).toBe('The $100.0M ETH short is 60% covered by spot ETH held by the same account across chains.');
@@ -143,7 +143,7 @@ describe('explain', () => {
       input({
         verdict: { verdict: 'unknown', strength: null, reasons: ['partial_offset'] },
         positions: positions({ headlineCoin: 'HYPE', headlineNotionalUsd: 7_200_000 }),
-        hedge: { hedgeUsd: 4_270_000, hedgeRatio: 0.593 },
+        hedge: { hedgeUsd: 4_270_000, hedgeRatio: 0.593, unverifiedUsd: 0, lendingUsd: 0 },
       }),
     );
     expect(e.summary).toBe(
@@ -157,7 +157,7 @@ describe('explain', () => {
       input({
         verdict: { verdict: 'unknown', strength: null, reasons: ['over_covered'] },
         positions: positions({ headlineNotionalUsd: 15_400_000 }),
-        hedge: { hedgeUsd: 30_000_000, hedgeRatio: 1.948 },
+        hedge: { hedgeUsd: 30_000_000, hedgeRatio: 1.948, unverifiedUsd: 0, lendingUsd: 0 },
       }),
     );
     expect(e.summary).toBe(
@@ -258,7 +258,7 @@ describe('explain', () => {
     const e = explain(
       input({
         verdict: { verdict: 'looks_like_a_bet', strength: null, reasons: ['directional_concentration'] },
-        hedge: { hedgeUsd: 0, hedgeRatio: 0 },
+        hedge: { hedgeUsd: 0, hedgeRatio: 0, unverifiedUsd: 0, lendingUsd: 0 },
         linkedHedge: {
           linkedHedgeUsd: 800_000,
           linkedHedgeRatio: 0.008,
@@ -278,7 +278,7 @@ describe('explain', () => {
         verdict: { verdict: 'unknown', strength: null, reasons: ['signals disagree: not enough evidence for book, hedge, or bet'] },
         positions: positions({ nPositions: 8, netToGross: 0.6, headlineShare: 0.4 }),
         orders: { restingOrders: 4, bidShare: 0.5, coinsBothSides: 2 },
-        hedge: { hedgeUsd: 20_000_000, hedgeRatio: 0.2 },
+        hedge: { hedgeUsd: 20_000_000, hedgeRatio: 0.2, unverifiedUsd: 0, lendingUsd: 0 },
       }),
     );
     expect(e.summary).toBe(

@@ -109,11 +109,15 @@ function syntheticPositions(list: Array<{ coin: string; size: number; valueUsd: 
   };
 }
 
-function balanceRow(symbol: string, valueUsd: number): NansenBalance {
+/** Canonical WETH on Ethereum: the holdings model judges a balance by its
+ * contract, so a placeholder address is now correctly not counted as ETH. */
+const WETH_ETHEREUM = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
+
+function balanceRow(symbol: string, valueUsd: number, tokenAddress = WETH_ETHEREUM): NansenBalance {
   return {
     chain: 'ethereum',
     address: ABRAXAS,
-    token_address: '0x0',
+    token_address: tokenAddress,
     token_symbol: symbol,
     token_name: symbol,
     token_amount: 1,
@@ -207,6 +211,34 @@ describe('checkAddress (offline, real fixtures)', () => {
     expect(result.hedgeScope).toBe('all-chains');
     expect(nansen.currentBalance).toHaveBeenCalledTimes(1);
     expect(nansen.relatedWallets).not.toHaveBeenCalled();
+  });
+
+  it('does not count a token that only calls itself WETH, and says so', async () => {
+    route();
+    const nansen = fakeNansen({
+      positions: syntheticPositions([{ coin: 'ETH', size: -25_000, valueUsd: 100_000_000 }]),
+      balances: [balanceRow('WETH', 95_000_000, '0x' + 'de'.repeat(20))],
+    });
+    const result = await checkAddress(ABRAXAS, { nansen });
+    expect(result.hedge.hedgeUsd).toBe(0);
+    expect(result.coverage).toContain(
+      '$95.0M of holdings named like ETH were left out: their contract is not one this tool recognises',
+    );
+    expect(result.verdict.verdict).not.toBe('hedged');
+  });
+
+  it('counts an Aave deposit as a hedge but says the loan against it is invisible', async () => {
+    route();
+    const nansen = fakeNansen({
+      positions: syntheticPositions([{ coin: 'ETH', size: -25_000, valueUsd: 100_000_000 }]),
+      // The real aEthWETH contract, seen in the Abraxas funder balances.
+      balances: [balanceRow('AETHWETH', 95_000_000, '0x4d5f47fa6a74757f35c14fd3a6ef8e3c9bc514e8')],
+    });
+    const result = await checkAddress(ABRAXAS, { nansen });
+    expect(result.verdict.verdict).toBe('hedged');
+    expect(result.coverage).toContain(
+      '$95.0M of the matching assets is a lending-market deposit; anything borrowed against it does not show here',
+    );
   });
 
   it('calls a 60%-covered short partly offset, and still spends nothing on funders', async () => {

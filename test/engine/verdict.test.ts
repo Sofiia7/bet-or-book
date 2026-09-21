@@ -21,7 +21,7 @@ function orders(overrides: Partial<OrderFeatures>): OrderFeatures {
   return { restingOrders: 0, bidShare: 0.5, coinsBothSides: 0, ...overrides };
 }
 function hedge(overrides: Partial<HedgeFeatures>): HedgeFeatures {
-  return { hedgeUsd: 0, hedgeRatio: 0, ...overrides };
+  return { hedgeUsd: 0, hedgeRatio: 0, unverifiedUsd: 0, lendingUsd: 0, ...overrides };
 }
 
 describe('computeVerdict', () => {

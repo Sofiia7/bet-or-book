@@ -22,6 +22,10 @@ export interface SpotHolding {
   valueUsd: number;
   /** Chain the holding lives on; absent for Hyperliquid's own spot balances. */
   chain?: string;
+  /** Contract address, for on-chain balances. A ticker is a label anyone can
+   * reuse, so this is what actually identifies the asset; absent for
+   * Hyperliquid spot, whose tickers are its own namespace. */
+  tokenAddress?: string;
 }
 
 export interface Trade {

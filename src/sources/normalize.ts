@@ -104,7 +104,12 @@ export function normalizeNansenPositions(data: NansenPerpPositions): Position[] 
 export function normalizeNansenBalances(rows: NansenBalance[]): SpotHolding[] {
   return rows
     .filter((r) => r.value_usd > 0)
-    .map((r) => ({ coin: r.token_symbol, valueUsd: r.value_usd, chain: r.chain }));
+    .map((r) => ({
+      coin: r.token_symbol,
+      valueUsd: r.value_usd,
+      chain: r.chain,
+      tokenAddress: r.token_address,
+    }));
 }
 
 const SHARED_SERVICE_LABEL =
