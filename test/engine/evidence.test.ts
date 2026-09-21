@@ -13,6 +13,7 @@ function positions(overrides: Partial<PositionFeatures>): PositionFeatures {
     headlineNotionalUsd: 100_000_000,
     headlineShare: 1,
     headlineLiqDistancePct: null,
+    sameAssetOffsetShare: 0,
     ...overrides,
   };
 }
@@ -105,20 +106,60 @@ describe('explain', () => {
     expect(e.evidence).toContainEqual({ label: 'Hedge found', value: '60% (all chains)', source: 'Nansen' });
   });
 
-  it('explains a balanced book', () => {
+  it('explains a balanced book and how much of it really cancels', () => {
     const e = explain(
       input({
         verdict: { verdict: 'hedged', strength: null, reasons: ['balanced_book'] },
-        positions: positions({ nPositions: 6, netToGross: 0.2, headlineShare: 0.3 }),
+        positions: positions({ nPositions: 6, netToGross: 0.2, headlineShare: 0.3, sameAssetOffsetShare: 0.93 }),
       }),
     );
-    expect(e.summary).toBe('6 positions net out to 20% of gross exposure: the longs and shorts offset each other.');
+    expect(e.summary).toBe(
+      '6 positions net out to 20% of gross exposure, and 93% of it cancels within the same assets.',
+    );
   });
 
-  it('explains a probable hedge through funding wallets and says ownership is inferred', () => {
+  it('calls a dollar balance across different assets a portfolio, not a hedge', () => {
     const e = explain(
       input({
-        verdict: { verdict: 'hedged', strength: 'probable', reasons: ['linked_wallet_hedge'] },
+        verdict: { verdict: 'unknown', strength: null, reasons: ['mixed_long_short_book'] },
+        positions: positions({ nPositions: 2, netToGross: 0, headlineShare: 0.5, sameAssetOffsetShare: 0 }),
+      }),
+    );
+    expect(e.summary).toBe(
+      '2 positions net out to 0% of gross exposure, but the long and short legs are in different assets: ' +
+        'a dollar balance across different assets is a portfolio, not a hedge.',
+    );
+  });
+
+  it('names the part of a balanced book that really cancels', () => {
+    const e = explain(
+      input({
+        verdict: { verdict: 'unknown', strength: null, reasons: ['mixed_long_short_book'] },
+        positions: positions({ nPositions: 5, netToGross: 0.12, headlineShare: 0.4, sameAssetOffsetShare: 0.35 }),
+      }),
+    );
+    expect(e.summary).toBe(
+      '5 positions net out to 12% of gross exposure, but only 35% of that exposure cancels within one asset: ' +
+        'a dollar balance across different assets is a portfolio, not a hedge.',
+    );
+  });
+
+  it('does not pass off an unmeasured offset as a measured zero', () => {
+    const p = positions({ nPositions: 4, netToGross: 0.1, headlineShare: 0.3 });
+    delete (p as { sameAssetOffsetShare?: number }).sameAssetOffsetShare;
+    const e = explain(
+      input({ verdict: { verdict: 'unknown', strength: null, reasons: ['offset_not_measured'] }, positions: p }),
+    );
+    expect(e.summary).toBe(
+      '4 positions net out to 10% of gross exposure, but this snapshot did not record which assets the legs are in, ' +
+        'so whether they offset each other was not established.',
+    );
+  });
+
+  it('reports funding-wallet holdings as an unconfirmed link, never as a hedge', () => {
+    const e = explain(
+      input({
+        verdict: { verdict: 'unknown', strength: null, reasons: ['linked_exposure_unverified'] },
         positions: positions({ nPositions: 17, netToGross: 0.62, headlineShare: 0.7, headlineNotionalUsd: 179_400_000 }),
         linkedHedge: {
           linkedHedgeUsd: 399_000_000,
@@ -131,9 +172,11 @@ describe('explain', () => {
       }),
     );
     expect(e.summary).toBe(
-      'The $179.4M ETH short is 222% covered by ETH held in 2 wallets that funded this account. Ownership is inferred from the funding link, not confirmed.',
+      'No ETH in this account offsets the $179.4M ETH short. 2 wallets that funded it hold $399.0M of ETH, ' +
+        'but funding does not establish ownership, so it is not counted as a hedge.',
     );
-    expect(e.evidence).toContainEqual({ label: 'Hedge found', value: '222% via 2 funding wallets', source: 'Nansen' });
+    expect(e.evidence).toContainEqual({ label: 'Linked wallets', value: '$399.0M ETH in 2 wallets, owner unconfirmed', source: 'Nansen' });
+    expect(e.evidence).toContainEqual({ label: 'Hedge found', value: '0% (all chains)', source: 'Nansen' });
   });
 
   it('explains a long bet', () => {
@@ -158,8 +201,26 @@ describe('explain', () => {
       }),
     );
     expect(e.summary).toBe(
-      '100% of the exposure is one $100.0M ETH short, and no ETH was found in this account or the wallets that funded it.',
+      '100% of the exposure is one $100.0M ETH short, and no ETH was found in this account on any chain.',
     );
+  });
+
+  it('measures a short bet against what the account holds, not against its funders', () => {
+    const e = explain(
+      input({
+        verdict: { verdict: 'looks_like_a_bet', strength: null, reasons: ['directional_concentration'] },
+        hedge: { hedgeUsd: 0, hedgeRatio: 0 },
+        linkedHedge: {
+          linkedHedgeUsd: 800_000,
+          linkedHedgeRatio: 0.008,
+          funders: [{ address: '0xaaa', relation: 'First Funder', chain: 'ethereum', matchingUsd: 800_000 }],
+        },
+      }),
+    );
+    expect(e.summary).toBe(
+      '100% of the exposure is one $100.0M ETH short, and no ETH was found in this account on any chain.',
+    );
+    expect(e.summary).not.toContain('funded');
   });
 
   it('lists why an undecided account is not a clean bet', () => {
@@ -191,7 +252,7 @@ describe('explain', () => {
         },
       }),
     );
-    expect(e.evidence).toContainEqual({ label: 'Hedge found', value: '3.7% via 1 funding wallet', source: 'Nansen' });
+    expect(e.evidence).toContainEqual({ label: 'Linked wallets', value: '$9.9M ETH in 1 wallet, owner unconfirmed', source: 'Nansen' });
   });
 
   it('says no trades were closed instead of a zero PnL', () => {

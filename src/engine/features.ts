@@ -11,6 +11,11 @@ export interface PositionFeatures {
   headlineNotionalUsd: number;
   headlineShare: number;
   headlineLiqDistancePct: number | null;
+  /** Share of gross exposure that cancels within a single asset: a $1M long
+   * and a $1M short in the same coin offset each other, a $1M long in one
+   * coin and a $1M short in another do not, however neatly the dollars net
+   * out. Zero when nothing cancels, 1 when every leg has a counterpart. */
+  sameAssetOffsetShare: number;
 }
 
 export function computePositionFeatures(positions: Position[]): PositionFeatures {
@@ -25,6 +30,7 @@ export function computePositionFeatures(positions: Position[]): PositionFeatures
       headlineNotionalUsd: 0,
       headlineShare: 0,
       headlineLiqDistancePct: null,
+      sameAssetOffsetShare: 0,
     };
   }
 
@@ -41,6 +47,17 @@ export function computePositionFeatures(positions: Position[]): PositionFeatures
     headlineLiqDistancePct = Math.abs(headline.liquidationPx - headline.entryPx) / headline.entryPx;
   }
 
+  // Per coin, the smaller side is matched by the larger one, so twice it is
+  // the gross that cancels. Summed over coins this separates a real offset
+  // from a book that merely adds up to zero dollars across unrelated assets.
+  const byCoin = new Map<string, { long: number; short: number }>();
+  for (const p of positions) {
+    const e = byCoin.get(p.coin) ?? { long: 0, short: 0 };
+    e[p.side] += p.sizeUsd;
+    byCoin.set(p.coin, e);
+  }
+  const offsetGrossUsd = [...byCoin.values()].reduce((sum, e) => sum + 2 * Math.min(e.long, e.short), 0);
+
   return {
     nPositions: positions.length,
     grossUsd,
@@ -51,6 +68,7 @@ export function computePositionFeatures(positions: Position[]): PositionFeatures
     headlineNotionalUsd: headline.sizeUsd,
     headlineShare,
     headlineLiqDistancePct,
+    sameAssetOffsetShare: grossUsd === 0 ? 0 : offsetGrossUsd / grossUsd,
   };
 }
 
@@ -121,7 +139,7 @@ export function computeLinkedHedge(
   headlineNotionalUsd: number,
   linked: Array<{ wallet: LinkedWallet; holdings: SpotHolding[] }>,
 ): LinkedHedgeFeatures {
-  const followed = linked.filter((l) => !l.wallet.isSharedService);
+  const followed = linked.filter((l) => l.wallet.serviceStatus !== 'service');
   const funders = followed.map((l) => ({
     address: l.wallet.address,
     relation: l.wallet.relation,

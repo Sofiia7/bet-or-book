@@ -104,16 +104,9 @@ function hedgedSummary(input: EvidenceInput): string {
   const { positions: p, hedge: h } = input;
   const reason = input.verdict.reasons[0];
   if (reason === 'balanced_book') {
-    return `${plural(p.nPositions, 'position')} net out to ${formatPct(p.netToGross)} of gross exposure: the longs and shorts offset each other.`;
-  }
-  if (reason === 'linked_wallet_hedge') {
-    const total = h.hedgeRatio + (input.linkedHedge?.linkedHedgeRatio ?? 0);
-    const k = matchingFunders(input.linkedHedge, p.headlineNotionalUsd);
-    const holders = k === 1 ? 'a wallet' : `${count(k)} wallets`;
     return (
-      `The ${formatUsd(p.headlineNotionalUsd)} ${p.headlineCoin} short is ${formatPct(total)} covered by ` +
-      `${p.headlineCoin} held in ${holders} that funded this account. ` +
-      'Ownership is inferred from the funding link, not confirmed.'
+      `${plural(p.nPositions, 'position')} net out to ${formatPct(p.netToGross)} of gross exposure, ` +
+      `and ${formatPct(p.sameAssetOffsetShare)} of it cancels within the same assets.`
     );
   }
   const where = input.hedgeScope === 'all-chains' ? 'across chains' : 'on Hyperliquid';
@@ -123,25 +116,67 @@ function hedgedSummary(input: EvidenceInput): string {
   );
 }
 
+/** A book whose dollars net out without its legs cancelling: the balance is
+ * a property of the portfolio, not protection for any one position in it. */
+function mixedBookSummary(input: EvidenceInput): string {
+  const { positions: p } = input;
+  const head = `${plural(p.nPositions, 'position')} net out to ${formatPct(p.netToGross)} of gross exposure`;
+  const detail =
+    p.sameAssetOffsetShare > 0
+      ? `only ${formatPct(p.sameAssetOffsetShare)} of that exposure cancels within one asset`
+      : 'the long and short legs are in different assets';
+  return `${head}, but ${detail}: a dollar balance across different assets is a portfolio, not a hedge.`;
+}
+
+/** Scanned before the offset was measured: the gap is stated, not filled in. */
+function unmeasuredOffsetSummary(input: EvidenceInput): string {
+  const { positions: p } = input;
+  return (
+    `${plural(p.nPositions, 'position')} net out to ${formatPct(p.netToGross)} of gross exposure, ` +
+    'but this snapshot did not record which assets the legs are in, ' +
+    'so whether they offset each other was not established.'
+  );
+}
+
+/** Matching assets sitting in a wallet that funded the account. Reported as
+ * what it is - someone else's address holding the same asset - and kept out
+ * of the account's own coverage number. */
+function linkedSummary(input: EvidenceInput): string {
+  const { positions: p, hedge: h, linkedHedge } = input;
+  const k = matchingFunders(linkedHedge, p.headlineNotionalUsd);
+  const holders = k === 1 ? '1 wallet that funded it holds' : `${count(k)} wallets that funded it hold`;
+  // Below the dust threshold a percentage renders as "0.0%", which reads as
+  // a measurement rather than as "next to nothing".
+  const own =
+    h.hedgeRatio >= MIN_FUNDER_SHARE
+      ? `${p.headlineCoin} in this account covers ${formatPct(h.hedgeRatio)} of the ${headlineText(p)}.`
+      : h.hedgeRatio > 0
+        ? `Less than 1% of the ${headlineText(p)} is covered by ${p.headlineCoin} in this account.`
+        : `No ${p.headlineCoin} in this account offsets the ${headlineText(p)}.`;
+  return (
+    `${own} ${holders} ${formatUsd(linkedHedge?.linkedHedgeUsd ?? 0)} of ${p.headlineCoin}, ` +
+    'but funding does not establish ownership, so it is not counted as a hedge.'
+  );
+}
+
 function betSummary(input: EvidenceInput): string {
   const { positions: p } = input;
   const opening = `${formatPct(p.headlineShare)} of the exposure is one ${formatUsd(p.headlineNotionalUsd)} ${p.headlineCoin} ${p.headlineSide}`;
   if (p.headlineSide !== 'short') return `${opening}, and nothing in this account offsets it.`;
-  const where = input.linkedHedge
-    ? 'in this account or the wallets that funded it'
-    : input.hedgeScope === 'all-chains'
-      ? 'in this account on any chain'
-      : 'in this account on Hyperliquid';
-  const total = input.hedge.hedgeRatio + (input.linkedHedge?.linkedHedgeRatio ?? 0);
-  if (total === 0) return `${opening}, and no ${p.headlineCoin} was found ${where}.`;
-  return `${opening}, and only ${formatPct(total)} of it is covered by ${p.headlineCoin} ${where}.`;
+  // Only what this account holds. A funding wallet's balance belongs to
+  // whoever owns that wallet, and the link does not say who that is; it gets
+  // its own row rather than being folded into the account's coverage.
+  const where = input.hedgeScope === 'all-chains' ? 'in this account on any chain' : 'in this account on Hyperliquid';
+  const own = input.hedge.hedgeRatio;
+  if (own === 0) return `${opening}, and no ${p.headlineCoin} was found ${where}.`;
+  return `${opening}, and only ${formatPct(own)} of it is covered by ${p.headlineCoin} ${where}.`;
 }
 
 /** Names each bet condition the account fails, in the order the rule lists them. */
 function undecidedSummary(input: EvidenceInput): string {
   const { positions: p, orders: o } = input;
   const b = DEFAULT_THRESHOLDS.bet;
-  const total = input.hedge.hedgeRatio + (input.linkedHedge?.linkedHedgeRatio ?? 0);
+  const total = input.hedge.hedgeRatio;
   const misses: string[] = [];
   if (p.nPositions > b.maxPositions) misses.push(plural(p.nPositions, 'position'));
   if (p.netToGross < b.minNetToGross) misses.push(`net ${formatPct(p.netToGross)} of gross`);
@@ -154,15 +189,21 @@ function undecidedSummary(input: EvidenceInput): string {
 
 function hedgeItem(input: EvidenceInput): EvidenceItem | null {
   if (input.hedgeScope === 'none') return null;
-  const k = matchingFunders(input.linkedHedge, input.positions.headlineNotionalUsd);
-  if (input.linkedHedge && k > 0) {
-    const total = input.hedge.hedgeRatio + input.linkedHedge.linkedHedgeRatio;
-    return { label: 'Hedge found', value: `${formatPct(total)} via ${plural(k, 'funding wallet')}`, source: 'Nansen' };
-  }
   if (input.hedgeScope === 'all-chains') {
     return { label: 'Hedge found', value: `${formatPct(input.hedge.hedgeRatio)} (all chains)`, source: 'Nansen' };
   }
   return { label: 'Hedge found', value: `${formatPct(input.hedge.hedgeRatio)} (Hyperliquid spot)`, source: 'Hyperliquid' };
+}
+
+function linkedItem(input: EvidenceInput): EvidenceItem | null {
+  const { linkedHedge, positions: p } = input;
+  const k = matchingFunders(linkedHedge, p.headlineNotionalUsd);
+  if (!linkedHedge || k === 0) return null;
+  return {
+    label: 'Linked wallets',
+    value: `${formatUsd(linkedHedge.linkedHedgeUsd)} ${p.headlineCoin} in ${plural(k, 'wallet')}, owner unconfirmed`,
+    source: 'Nansen',
+  };
 }
 
 function pnlItem(pnl: PnlSummary | null): EvidenceItem | null {
@@ -206,7 +247,13 @@ export function explain(input: EvidenceInput): Explanation {
       ? hedgedSummary(input)
       : input.verdict.verdict === 'looks_like_a_bet'
         ? betSummary(input)
-        : undecidedSummary(input);
+        : input.verdict.reasons.includes('linked_exposure_unverified')
+          ? linkedSummary(input)
+          : input.verdict.reasons.includes('mixed_long_short_book')
+            ? mixedBookSummary(input)
+            : input.verdict.reasons.includes('offset_not_measured')
+              ? unmeasuredOffsetSummary(input)
+              : undecidedSummary(input);
   return {
     summary,
     evidence: present([
@@ -214,6 +261,7 @@ export function explain(input: EvidenceInput): Explanation {
       { label: 'Share of exposure', value: formatPct(p.headlineShare), source: posSource },
       { label: 'Net / gross exposure', value: formatPct(p.netToGross), source: posSource },
       hedgeItem(input),
+      linkedItem(input),
       pnlItem(input.pnl),
       input.sizeVsOi === null
         ? null

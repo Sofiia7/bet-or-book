@@ -120,7 +120,7 @@ describe('checkAddress (offline, real fixtures)', () => {
     global.fetch = originalFetch;
   });
 
-  it('finds the Abraxas hedge through its funders', async () => {
+  it('does not turn the wallets that funded Abraxas into its hedge', async () => {
     route();
     const calls: NansenCallMeta[] = [];
     const result = await checkAddress(ABRAXAS, {
@@ -133,17 +133,21 @@ describe('checkAddress (offline, real fixtures)', () => {
     expect(result.positions.headlineCoin).toBe('ETH');
     expect(result.positions.headlineSide).toBe('short');
     expect(result.hedge.hedgeRatio).toBeLessThan(0.01);
-    expect(result.verdict.verdict).toBe('hedged');
-    expect(result.verdict.strength).toBe('probable');
-    expect(result.verdict.reasons).toEqual(['linked_wallet_hedge']);
+    // Nansen sends address_label: null for both funders, so nothing here says
+    // these wallets belong to Abraxas rather than to an exchange.
+    expect(result.verdict.verdict).toBe('unknown');
+    expect(result.verdict.reasons).toEqual(['linked_exposure_unverified']);
     expect(result.linkedHedge?.funders.map((f) => f.address).sort()).toEqual([FUNDER_ARB, FUNDER_ETH].sort());
     expect(result.linkedHedge?.linkedHedgeRatio).toBeGreaterThan(2);
     expect(result.pnl?.realizedPnlUsd).toBeLessThan(0);
     expect(calls.length).toBe(7);
-    expect(result.coverage).toEqual([]);
-    expect(result.summary).toMatch(/ETH short is \d+% covered by ETH held in 2 wallets that funded this account/);
-    expect(result.summary).toContain('Ownership is inferred from the funding link, not confirmed.');
-    expect(result.evidence.find((e) => e.label === 'Hedge found')?.value).toMatch(/via 2 funding wallets$/);
+    expect(result.coverage).toEqual([
+      '2 funding wallets carry no Nansen label: whether they are private wallets or exchange addresses is unverified',
+    ]);
+    expect(result.summary).toMatch(/^Less than 1% of the \$[\d.]+M ETH short is covered by ETH in this account\./);
+    expect(result.summary).toContain('funding does not establish ownership');
+    expect(result.evidence.find((e) => e.label === 'Hedge found')?.value).toBe('0.0% (all chains)');
+    expect(result.evidence.find((e) => e.label === 'Linked wallets')?.value).toMatch(/owner unconfirmed$/);
   });
 
   it('falls back to Hyperliquid positions and says so when Nansen positions fail', async () => {

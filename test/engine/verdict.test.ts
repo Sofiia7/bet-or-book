@@ -13,6 +13,7 @@ function positions(overrides: Partial<PositionFeatures>): PositionFeatures {
     headlineNotionalUsd: 0,
     headlineShare: 0,
     headlineLiqDistancePct: null,
+    sameAssetOffsetShare: 0,
     ...overrides,
   };
 }
@@ -59,14 +60,34 @@ describe('computeVerdict', () => {
     expect(result.reasons).toContain('hedge_leg');
   });
 
-  it('calls it hedged when a handful of positions roughly net out even without a spot leg', () => {
+  it('calls it hedged when the offsetting legs are in the same assets', () => {
     const result = computeVerdict({
-      positions: positions({ nPositions: 4, netToGross: 0.1, headlineShare: 0.3 }),
+      positions: positions({ nPositions: 4, netToGross: 0.1, headlineShare: 0.3, sameAssetOffsetShare: 0.95 }),
       orders: orders({}),
       hedge: hedge({}),
     });
     expect(result.verdict).toBe('hedged');
     expect(result.reasons).toContain('balanced_book');
+  });
+
+  it('does not call a book hedged just because its dollars net out across different assets', () => {
+    // $1M BTC long against $1M TRUMP short: net zero dollars, two live bets.
+    const result = computeVerdict({
+      positions: positions({ nPositions: 2, netToGross: 0, headlineShare: 0.5, sameAssetOffsetShare: 0 }),
+      orders: orders({}),
+      hedge: hedge({}),
+    });
+    expect(result.verdict).toBe('unknown');
+    expect(result.reasons).toEqual(['mixed_long_short_book']);
+  });
+
+  it('says so when a snapshot never measured the offset', () => {
+    const p = positions({ nPositions: 4, netToGross: 0.1, headlineShare: 0.3 });
+    // Entries scanned before the offset was measured carry no such field.
+    delete (p as Partial<PositionFeatures>).sameAssetOffsetShare;
+    const result = computeVerdict({ positions: p, orders: orders({}), hedge: hedge({}) });
+    expect(result.verdict).toBe('unknown');
+    expect(result.reasons).toEqual(['offset_not_measured']);
   });
 
   it('calls it a bet for one concentrated leveraged position with no hedge and no quotes', () => {
@@ -92,7 +113,7 @@ describe('computeVerdict', () => {
     expect(DEFAULT_THRESHOLDS.bet.maxPositions).toBe(5);
   });
 
-  it('calls it a probable hedge when linked wallets cover the short and the account itself does not', () => {
+  it('never calls a short hedged on a funding wallet\x27s holdings alone', () => {
     const result = computeVerdict({
       positions: positions({
         nPositions: 14,
@@ -106,9 +127,11 @@ describe('computeVerdict', () => {
       hedge: hedge({ hedgeRatio: 0 }),
       linkedHedge: { linkedHedgeRatio: 2.25 },
     });
-    expect(result.verdict).toBe('hedged');
-    expect(result.strength).toBe('probable');
-    expect(result.reasons).toEqual(['linked_wallet_hedge']);
+    // A funding transaction shows where the money came from, not who holds
+    // it now. Two of the four cards this rule produced in the gallery were
+    // funded by an exchange, so the "hedge" was that exchange's reserves.
+    expect(result.verdict).toBe('unknown');
+    expect(result.reasons).toEqual(['linked_exposure_unverified']);
   });
 
   it('does not call a concentrated account a bet when linked wallets partly hedge it', () => {
@@ -154,9 +177,14 @@ describe('hedgeCanChangeVerdict', () => {
     expect(hedgeCanChangeVerdict({ positions: many, orders: orders({}) })).toBe(false);
   });
 
-  it('is false for a balanced book', () => {
-    const balanced = positions({ ...concentratedShort, nPositions: 6, netToGross: 0.2, headlineShare: 0.3 });
+  it('is false for a book whose legs already cancel within their own assets', () => {
+    const balanced = positions({ ...concentratedShort, nPositions: 6, netToGross: 0.2, headlineShare: 0.3, sameAssetOffsetShare: 0.9 });
     expect(hedgeCanChangeVerdict({ positions: balanced, orders: orders({}) })).toBe(false);
+  });
+
+  it('is true when the dollars net out across different assets: spot could still offset the short', () => {
+    const mixed = positions({ ...concentratedShort, nPositions: 6, netToGross: 0.2, headlineShare: 0.3, sameAssetOffsetShare: 0 });
+    expect(hedgeCanChangeVerdict({ positions: mixed, orders: orders({}) })).toBe(true);
   });
 
   it('is false with no positions', () => {

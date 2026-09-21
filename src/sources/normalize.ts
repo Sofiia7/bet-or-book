@@ -1,4 +1,4 @@
-import type { Position, RestingOrder, SpotHolding, Trade, LinkedWallet, PnlSummary } from '../types';
+import type { Position, RestingOrder, SpotHolding, Trade, LinkedWallet, PnlSummary, ServiceStatus } from '../types';
 import type {
   HlClearinghouseState,
   HlOpenOrder,
@@ -109,6 +109,32 @@ export function normalizeNansenBalances(rows: NansenBalance[]): SpotHolding[] {
 const SHARED_SERVICE_LABEL =
   /binance|coinbase|okx|bybit|kraken|bitfinex|kucoin|gate\.io|htx|huobi|mexc|bitget|crypto\.com|exchange|hot wallet|deposit|bridge|cex/i;
 
+/**
+ * Addresses confirmed to be shared services by a public block explorer, for
+ * the case Nansen answers with no label at all - which is most of the time.
+ * This list is a backstop for addresses seen funding several accounts, not
+ * the mechanism: an address missing from it is `unverified`, never proven
+ * private. Sources are public explorer labels, recorded with each entry.
+ */
+const KNOWN_SERVICE_ADDRESSES: Record<string, string> = {
+  // Etherscan: "Binance 15". First Funder of 0x28bbaaa5… and 0x8cc94dc8…,
+  // whose ~$55.8M of ETH the 18.09 gallery read as those accounts' hedge.
+  '0x21a31ee1afc51d94c2efccaa2092ad1028285549': 'Binance 15',
+  // Etherscan: "Gate Deposit". First Funder of 0xdf954bbe… and 0xe187055f….
+  '0x0d0707963952f2fba59dd06f2b425ace40b492fe': 'Gate Deposit',
+};
+
+/** The explorer's name for a confirmed shared service, or null. */
+export function knownServiceName(address: string): string | null {
+  return KNOWN_SERVICE_ADDRESSES[address.toLowerCase()] ?? null;
+}
+
+function serviceStatusOf(address: string, label: string | null | undefined): ServiceStatus {
+  if (knownServiceName(address)) return 'service';
+  if (label === null || label === undefined || label.trim() === '') return 'unverified';
+  return SHARED_SERVICE_LABEL.test(label) ? 'service' : 'not-service';
+}
+
 export function normalizeRelatedWallets(rows: NansenRelatedWallet[]): LinkedWallet[] {
   return rows.map((r) => ({
     address: r.address.toLowerCase(),
@@ -117,7 +143,7 @@ export function normalizeRelatedWallets(rows: NansenRelatedWallet[]): LinkedWall
     // The label is read here only to decide whether following this link can
     // mean anything, and is dropped: Nansen's rules prohibit showing labels
     // publicly, and nothing downstream of this function ever sees one.
-    isSharedService: r.address_label !== null && SHARED_SERVICE_LABEL.test(r.address_label),
+    serviceStatus: serviceStatusOf(r.address, r.address_label),
   }));
 }
 

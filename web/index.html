@@ -188,7 +188,16 @@ function badgeText(d) {
 }
 function headlineFor(d) {
   if (d.positions.nPositions === 0) return 'Nothing open right now.';
-  if (d.verdict.verdict === 'hedged' && d.verdict.strength === 'probable') return 'Probably not a directional view.';
+  const reasons = d.verdict.reasons || [];
+  if (reasons.indexOf('linked_exposure_unverified') !== -1) {
+    return 'The matching assets sit in a wallet that funded this account, not in this account.';
+  }
+  if (reasons.indexOf('mixed_long_short_book') !== -1) {
+    return 'The dollars net out, but across different assets.';
+  }
+  if (reasons.indexOf('offset_not_measured') !== -1) {
+    return 'The dollars net out; this snapshot cannot say whether the legs offset each other.';
+  }
   return verdictOf(d).headline;
 }
 function positionText(d) {

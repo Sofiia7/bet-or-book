@@ -32,13 +32,17 @@ export interface Trade {
   closedPnlUsd: number;
 }
 
+export type ServiceStatus = 'service' | 'not-service' | 'unverified';
+
 export interface LinkedWallet {
   address: string;
   relation: string;
   chain: string;
-  /** True when the link points at an exchange, bridge or similar shared
-   * service - following it would attribute other people's money. */
-  isSharedService: boolean;
+  /** Whether the link points at an exchange, bridge or similar shared
+   * service - following one would attribute other people's money. Nansen
+   * sends no label for most addresses, and `unverified` keeps that gap
+   * visible instead of reading silence as "a private wallet". */
+  serviceStatus: ServiceStatus;
 }
 
 export interface PnlSummary {

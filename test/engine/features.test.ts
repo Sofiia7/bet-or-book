@@ -7,7 +7,7 @@ import {
   computeTradeFeatures,
   computeLinkedHedge,
 } from '../../src/engine/features';
-import type { Position, RestingOrder, SpotHolding, Trade } from '../../src/types';
+import type { Position, RestingOrder, SpotHolding, Trade, ServiceStatus } from '../../src/types';
 
 describe('computePositionFeatures', () => {
   it('returns zeroed features for an empty account', () => {
@@ -28,6 +28,28 @@ describe('computePositionFeatures', () => {
     expect(result.headlineSide).toBe('short');
     expect(result.grossUsd).toBe(199_050_000);
     expect(result.headlineShare).toBeCloseTo(190_000_000 / 199_050_000, 6);
+  });
+
+  it('separates exposure that cancels within one asset from a dollar-balanced mix', () => {
+    const p = (coin: string, side: 'long' | 'short', sizeUsd: number): Position => ({
+      coin, side, sizeUsd, entryPx: 1, leverage: 1, liquidationPx: null, unrealizedPnlUsd: 0, cumFundingUsd: 0,
+    });
+    // $1M BTC long against $1M TRUMP short nets to zero dollars and hedges
+    // nothing: each asset can still move on its own.
+    const mixed = computePositionFeatures([p('BTC', 'long', 1_000_000), p('TRUMP', 'short', 1_000_000)]);
+    expect(mixed.netToGross).toBe(0);
+    expect(mixed.sameAssetOffsetShare).toBe(0);
+
+    // The same dollars, both legs in BTC, really do cancel.
+    const real = computePositionFeatures([p('BTC', 'long', 1_000_000), p('BTC', 'short', 1_000_000)]);
+    expect(real.netToGross).toBe(0);
+    expect(real.sameAssetOffsetShare).toBe(1);
+
+    // Half of the gross cancels in ETH, the rest is an outright SOL long.
+    const partly = computePositionFeatures([
+      p('ETH', 'long', 1_000_000), p('ETH', 'short', 1_000_000), p('SOL', 'long', 2_000_000),
+    ]);
+    expect(partly.sameAssetOffsetShare).toBeCloseTo(0.5, 6);
   });
 
   it('computes net-to-gross close to zero for a balanced book', () => {
@@ -95,8 +117,8 @@ describe('computeHedgeFeatures', () => {
 });
 
 describe('computeLinkedHedge', () => {
-  const funder = (address: string, holdings: SpotHolding[], isSharedService = false) => ({
-    wallet: { address, relation: 'First Funder', chain: 'ethereum', isSharedService },
+  const funder = (address: string, holdings: SpotHolding[], serviceStatus: ServiceStatus = 'not-service') => ({
+    wallet: { address, relation: 'First Funder', chain: 'ethereum', serviceStatus },
     holdings,
   });
 
@@ -115,7 +137,7 @@ describe('computeLinkedHedge', () => {
 
   it('ignores shared-service wallets and long headlines', () => {
     const holdings = [{ coin: 'WETH', valueUsd: 50_000_000 }];
-    expect(computeLinkedHedge('ETH', 'short', 100_000_000, [funder('0xa', holdings, true)]).linkedHedgeUsd).toBe(0);
+    expect(computeLinkedHedge('ETH', 'short', 100_000_000, [funder('0xa', holdings, 'service')]).linkedHedgeUsd).toBe(0);
     expect(computeLinkedHedge('ETH', 'long', 100_000_000, [funder('0xa', holdings)]).linkedHedgeUsd).toBe(0);
   });
 });

@@ -208,13 +208,25 @@ async function readLinkedHedge(
   }
 
   const firstFunders = links.filter((w) => w.relation === 'First Funder' && w.address !== address.toLowerCase());
-  const skipped = firstFunders.filter((w) => w.isSharedService).length;
+  const skipped = firstFunders.filter((w) => w.serviceStatus === 'service').length;
   if (skipped > 0) coverage.push(`${skipped} funding link(s) lead to an exchange or bridge and were not followed`);
   const candidates = firstFunders
-    .filter((w) => !w.isSharedService)
+    .filter((w) => w.serviceStatus !== 'service')
     .filter((w, i, all) => all.findIndex((x) => x.address === w.address) === i)
     .slice(0, MAX_FUNDERS);
   if (candidates.length === 0) return null;
+
+  // Nansen returns address_label: null for most addresses, so "no label" is
+  // the normal answer, not evidence that a wallet is private. Say so on the
+  // card: an unlabelled funder may well be an exchange deposit address.
+  const unverified = candidates.filter((w) => w.serviceStatus === 'unverified').length;
+  if (unverified > 0) {
+    coverage.push(
+      unverified === 1
+        ? '1 funding wallet carries no Nansen label: whether it is a private wallet or an exchange address is unverified'
+        : `${unverified} funding wallets carry no Nansen label: whether they are private wallets or exchange addresses is unverified`,
+    );
+  }
 
   const balances = await Promise.allSettled(candidates.map((w) => nansen.currentBalance(w.address)));
   const linked = candidates.flatMap((wallet, i) => {

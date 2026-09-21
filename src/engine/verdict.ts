@@ -1,10 +1,10 @@
 import type { PositionFeatures, OrderFeatures, HedgeFeatures } from './features';
 
 export type Verdict = 'book' | 'hedged' | 'looks_like_a_bet' | 'unknown';
-/** `likely`/`strong` grade a book by how many independent signals agree;
- * `probable` marks a hedge that sits in wallets linked by a funding
- * transaction - inferred ownership, not the account's own holdings. */
-export type VerdictStrength = 'likely' | 'strong' | 'probable' | null;
+/** `likely`/`strong` grade a book by how many independent signals agree.
+ * There is no grade for a hedge: either the account holds the offsetting
+ * asset itself or the position is not called hedged at all. */
+export type VerdictStrength = 'likely' | 'strong' | null;
 
 export interface VerdictThresholds {
   book: {
@@ -23,6 +23,7 @@ export interface VerdictThresholds {
     minHedgeRatio: number;
     minPositionsForBalancedBook: number;
     maxPositionsForBalancedBook: number;
+    minSameAssetOffsetShare: number;
   };
   bet: {
     maxPositions: number;
@@ -52,6 +53,10 @@ export const DEFAULT_THRESHOLDS: VerdictThresholds = {
     minHedgeRatio: 0.5,
     minPositionsForBalancedBook: 2,
     maxPositionsForBalancedBook: 19,
+    // Dollars that net out prove nothing on their own; this is the share of
+    // gross that has to cancel inside individual assets before a book counts
+    // as offset rather than as two live bets that happen to be equal in size.
+    minSameAssetOffsetShare: 0.8,
   },
   bet: {
     maxPositions: 5,
@@ -106,13 +111,30 @@ function bookSignals(input: StructureInput, t: VerdictThresholds['book']): strin
   return signals;
 }
 
-function isBalancedBook(input: StructureInput, thresholds: VerdictThresholds): boolean {
+/** A handful of positions whose dollars roughly cancel. Says nothing yet
+ * about which assets they are in. */
+function isDollarBalanced(input: StructureInput, thresholds: VerdictThresholds): boolean {
   const h = thresholds.hedged;
   return (
     input.positions.nPositions >= h.minPositionsForBalancedBook &&
     input.positions.nPositions <= h.maxPositionsForBalancedBook &&
     input.positions.netToGross <= thresholds.book.maxNetToGross
   );
+}
+
+/** Snapshots written before the offset was measured carry no such field, and
+ * "not measured" must not read as "measured zero". */
+function offsetShare(input: StructureInput): number | null {
+  const share = input.positions.sameAssetOffsetShare;
+  return typeof share === 'number' && Number.isFinite(share) ? share : null;
+}
+
+/** A balanced book whose legs really do cancel: a $1M BTC long against a $1M
+ * TRUMP short nets to zero dollars and still leaves both bets running, so
+ * dollar balance alone is not an offset. */
+function isSameAssetBook(input: StructureInput, thresholds: VerdictThresholds): boolean {
+  const share = offsetShare(input);
+  return share !== null && share >= thresholds.hedged.minSameAssetOffsetShare && isDollarBalanced(input, thresholds);
 }
 
 /** A hedge read costs a credit, so it is worth making only when its answer
@@ -127,7 +149,7 @@ export function hedgeCanChangeVerdict(
     input.positions.nPositions > 0 &&
     input.positions.headlineSide === 'short' &&
     bookSignals(input, thresholds.book).length === 0 &&
-    !isBalancedBook(input, thresholds)
+    !isSameAssetBook(input, thresholds)
   );
 }
 
@@ -145,7 +167,7 @@ export function computeVerdict(
   }
 
   const h = thresholds.hedged;
-  const balancedBook = isBalancedBook(input, thresholds);
+  const balancedBook = isSameAssetBook(input, thresholds);
   if (input.hedge.hedgeRatio >= h.minHedgeRatio || balancedBook) {
     return {
       verdict: 'hedged',
@@ -155,10 +177,6 @@ export function computeVerdict(
   }
 
   const linkedRatio = input.linkedHedge?.linkedHedgeRatio ?? 0;
-  if (input.hedge.hedgeRatio + linkedRatio >= h.minHedgeRatio) {
-    return { verdict: 'hedged', strength: 'probable', reasons: ['linked_wallet_hedge'] };
-  }
-
   const b = thresholds.bet;
   const looksLikeABet =
     input.positions.nPositions <= b.maxPositions &&
@@ -168,6 +186,25 @@ export function computeVerdict(
     input.orders.coinsBothSides === 0;
   if (looksLikeABet) {
     return { verdict: 'looks_like_a_bet', strength: null, reasons: ['directional_concentration'] };
+  }
+
+  // Dollars that cancel across unrelated assets are a portfolio, not a
+  // hedge. Naming which of the two it is beats calling both "hedged".
+  if (isDollarBalanced(input, thresholds)) {
+    return {
+      verdict: 'unknown',
+      strength: null,
+      reasons: [offsetShare(input) === null ? 'offset_not_measured' : 'mixed_long_short_book'],
+    };
+  }
+
+  // Matching assets in a wallet that funded this account are not this
+  // account's hedge. A funding transaction says where the money came from,
+  // not who holds it now, and the funder is often an exchange - in the 18.09
+  // gallery two of the four "probable hedge" cards were funded by one. Linked
+  // holdings can therefore only withhold a verdict, never grant one.
+  if (linkedRatio >= b.maxHedgeRatio) {
+    return { verdict: 'unknown', strength: null, reasons: ['linked_exposure_unverified'] };
   }
 
   return {

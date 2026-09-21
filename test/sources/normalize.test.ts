@@ -127,21 +127,36 @@ describe('Nansen normalizers', () => {
     expect(holdings.find((h) => h.coin === 'AETHWETH')?.chain).toBe('ethereum');
   });
 
-  it('flags links to shared services and never returns the label itself', () => {
+  it('never returns the label itself, and grades a link as service, not-service or unverified', () => {
     const fixtureRows = (relatedArbFixture as { data: NansenRelatedWallet[] }).data;
     const [first] = normalizeRelatedWallets(fixtureRows);
     expect(first.relation).toBe('First Funder');
-    expect(first.isSharedService).toBe(false);
     expect(Object.keys(first)).not.toContain('address_label');
+    // Both saved fixtures carry address_label: null, which is the ordinary
+    // case in live data. Reading "no label" as "a private wallet" is what let
+    // a Binance address and a Gate deposit address into four gallery cards as
+    // the checked trader's own hedge.
+    expect(first.serviceStatus).toBe('unverified');
 
     const synthetic = (label: string | null): NansenRelatedWallet => ({
       ...fixtureRows[0],
       address_label: label,
     });
-    expect(normalizeRelatedWallets([synthetic('Binance: Hot Wallet')])[0].isSharedService).toBe(true);
-    expect(normalizeRelatedWallets([synthetic('Arbitrum Bridge')])[0].isSharedService).toBe(true);
-    expect(normalizeRelatedWallets([synthetic('High Activity')])[0].isSharedService).toBe(false);
-    expect(normalizeRelatedWallets([synthetic('Token Millionaire')])[0].isSharedService).toBe(false);
+    expect(normalizeRelatedWallets([synthetic('Binance: Hot Wallet')])[0].serviceStatus).toBe('service');
+    expect(normalizeRelatedWallets([synthetic('Arbitrum Bridge')])[0].serviceStatus).toBe('service');
+    expect(normalizeRelatedWallets([synthetic('High Activity')])[0].serviceStatus).toBe('not-service');
+    expect(normalizeRelatedWallets([synthetic('Token Millionaire')])[0].serviceStatus).toBe('not-service');
+  });
+
+  it('knows the exchange addresses behind the wrong gallery cards, label or no label', () => {
+    const fixtureRows = (relatedArbFixture as { data: NansenRelatedWallet[] }).data;
+    const row = (address: string): NansenRelatedWallet => ({ ...fixtureRows[0], address, address_label: null });
+    // Binance 15 and a Gate deposit address. Between them they funded four of
+    // the accounts the 18.09 gallery called a probable hedge.
+    expect(normalizeRelatedWallets([row('0x21a31ee1afc51d94c2efccaa2092ad1028285549')])[0].serviceStatus).toBe('service');
+    expect(normalizeRelatedWallets([row('0x0d0707963952f2fba59dd06f2b425ace40b492fe')])[0].serviceStatus).toBe('service');
+    // Nansen returns checksummed addresses, the registry is lower case.
+    expect(normalizeRelatedWallets([row('0x21A31Ee1afC51d94C2EFcCAa2092aD1028285549')])[0].serviceStatus).toBe('service');
   });
 
   it('maps the PnL summary', () => {

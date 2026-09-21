@@ -85,12 +85,12 @@
     },
     {
      "label": "Hedge found",
-     "value": "3.7% via 1 funding wallet",
+     "value": "0.0% (all chains)",
      "source": "Nansen"
     },
     {
-     "label": "Realized PnL, 30d",
-     "value": "-$8.4M",
+     "label": "Linked wallets",
+     "value": "$9.9M ETH in 1 wallet, owner unconfirmed",
      "source": "Nansen"
     }
    ],
@@ -101,10 +101,10 @@
   {
    "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
    "verdict": {
-    "verdict": "hedged",
-    "strength": "probable",
+    "verdict": "unknown",
+    "strength": null,
     "reasons": [
-     "linked_wallet_hedge"
+     "linked_exposure_unverified"
     ]
    },
    "positions": {
@@ -156,7 +156,7 @@
    "pnl": null,
    "sizeVsOi": 0.06837326977649834,
    "source": "nansen",
-   "summary": "The $184.0M ETH short is 220% covered by ETH held in 2 wallets that funded this account. Ownership is inferred from the funding link, not confirmed.",
+   "summary": "Less than 1% of the $184.0M ETH short is covered by ETH in this account. 2 wallets that funded it hold $405.3M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
     {
      "label": "Largest position",
@@ -175,13 +175,13 @@
     },
     {
      "label": "Hedge found",
-     "value": "220% via 2 funding wallets",
+     "value": "0.0% (all chains)",
      "source": "Nansen"
     },
     {
-     "label": "Size vs open interest",
-     "value": "6.8%",
-     "source": "Hyperliquid"
+     "label": "Linked wallets",
+     "value": "$405.3M ETH in 2 wallets, owner unconfirmed",
+     "source": "Nansen"
     }
    ],
    "coverage": [
@@ -349,10 +349,10 @@
   {
    "address": "0x92ea19eceb7a8de0f50978a1583a5d8b018050e9",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "balanced_book"
+     "offset_not_measured"
     ]
    },
    "positions": {
@@ -392,7 +392,7 @@
    },
    "sizeVsOi": 0.03400252739720458,
    "source": "nansen",
-   "summary": "2 positions net out to 31% of gross exposure: the longs and shorts offset each other.",
+   "summary": "2 positions net out to 31% of gross exposure, but this snapshot did not record which assets the legs are in, so whether they offset each other was not established.",
    "evidence": [
     {
      "label": "Largest position",
@@ -1379,7 +1379,7 @@
    },
    "sizeVsOi": 0.013408998289459802,
    "source": "nansen",
-   "summary": "72% of the exposure is one $42.3M BTC short, and only 0.0% of it is covered by BTC in this account or the wallets that funded it.",
+   "summary": "72% of the exposure is one $42.3M BTC short, and only 0.0% of it is covered by BTC in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -2073,10 +2073,10 @@
   {
    "address": "0xdf954bbe619273a56e0cfa90dad8382195dc7d72",
    "verdict": {
-    "verdict": "hedged",
-    "strength": "probable",
+    "verdict": "unknown",
+    "strength": null,
     "reasons": [
-     "linked_wallet_hedge"
+     "signals disagree: not enough evidence for book, hedge, or bet"
     ]
    },
    "positions": {
@@ -2101,16 +2101,9 @@
    },
    "hedgeScope": "all-chains",
    "linkedHedge": {
-    "linkedHedgeUsd": 40612625.37239943,
-    "linkedHedgeRatio": 1.1618129135767392,
-    "funders": [
-     {
-      "address": "0x0d0707963952f2fba59dd06f2b425ace40b492fe",
-      "relation": "First Funder",
-      "chain": "arbitrum",
-      "matchingUsd": 40612625.37239943
-     }
-    ]
+    "linkedHedgeUsd": 0,
+    "linkedHedgeRatio": 0,
+    "funders": []
    },
    "trades": {
     "tradesPerDay": 2000,
@@ -2127,7 +2120,7 @@
    },
    "sizeVsOi": 0.012959176929455276,
    "source": "nansen",
-   "summary": "The $35.0M ETH short is 116% covered by ETH held in a wallet that funded this account. Ownership is inferred from the funding link, not confirmed.",
+   "summary": "Not a book, not hedged, and not a clean bet: 166 positions.",
    "evidence": [
     {
      "label": "Largest position",
@@ -2146,7 +2139,7 @@
     },
     {
      "label": "Hedge found",
-     "value": "116% via 1 funding wallet",
+     "value": "0.0% (all chains)",
      "source": "Nansen"
     },
     {
@@ -2155,7 +2148,9 @@
      "source": "Nansen"
     }
    ],
-   "coverage": [],
+   "coverage": [
+    "A wallet that funded this account is Gate Deposit, an exchange address: its balances are not counted here"
+   ],
    "checkedAt": "2026-09-18T14:17:09.883Z",
    "nansenCalls": 6
   },
@@ -2450,7 +2445,7 @@
    },
    "sizeVsOi": 0.011433090466756744,
    "source": "nansen",
-   "summary": "100% of the exposure is one $30.8M ETH short, and only 0.4% of it is covered by ETH in this account or the wallets that funded it.",
+   "summary": "100% of the exposure is one $30.8M ETH short, and only 0.0% of it is covered by ETH in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -3501,10 +3496,10 @@
   {
    "address": "0x519c721de735f7c9e6146d167852e60d60496a47",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "balanced_book"
+     "offset_not_measured"
     ]
    },
    "positions": {
@@ -3544,7 +3539,7 @@
    },
    "sizeVsOi": 0.007588746042513608,
    "source": "nansen",
-   "summary": "6 positions net out to 18% of gross exposure: the longs and shorts offset each other.",
+   "summary": "6 positions net out to 18% of gross exposure, but this snapshot did not record which assets the legs are in, so whether they offset each other was not established.",
    "evidence": [
     {
      "label": "Largest position",
@@ -4179,7 +4174,7 @@
    },
    "sizeVsOi": 0.011219402301481576,
    "source": "nansen",
-   "summary": "100% of the exposure is one $22.2M HYPE short, and only 0.2% of it is covered by HYPE in this account or the wallets that funded it.",
+   "summary": "100% of the exposure is one $22.2M HYPE short, and only 0.0% of it is covered by HYPE in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -4214,10 +4209,10 @@
   {
    "address": "0x77375a8c9d13bf79afb2a87f1b0ac1dfd5f5bf66",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "balanced_book"
+     "offset_not_measured"
     ]
    },
    "positions": {
@@ -4257,7 +4252,7 @@
    },
    "sizeVsOi": 0.08086420041975445,
    "source": "hyperliquid",
-   "summary": "8 positions net out to 21% of gross exposure: the longs and shorts offset each other.",
+   "summary": "8 positions net out to 21% of gross exposure, but this snapshot did not record which assets the legs are in, so whether they offset each other was not established.",
    "evidence": [
     {
      "label": "Largest position",
@@ -5028,10 +5023,10 @@
   {
    "address": "0xcf5343ba750a6e30afbb1dadda08bc78f8c8ee11",
    "verdict": {
-    "verdict": "hedged",
-    "strength": "probable",
+    "verdict": "unknown",
+    "strength": null,
     "reasons": [
-     "linked_wallet_hedge"
+     "linked_exposure_unverified"
     ]
    },
    "positions": {
@@ -5082,7 +5077,7 @@
    },
    "sizeVsOi": 0.007127582906249539,
    "source": "nansen",
-   "summary": "The $19.5M ETH short is 51% covered by ETH held in a wallet that funded this account. Ownership is inferred from the funding link, not confirmed.",
+   "summary": "Less than 1% of the $19.5M ETH short is covered by ETH in this account. 1 wallet that funded it holds $9.9M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
     {
      "label": "Largest position",
@@ -5101,12 +5096,12 @@
     },
     {
      "label": "Hedge found",
-     "value": "51% via 1 funding wallet",
+     "value": "0.0% (all chains)",
      "source": "Nansen"
     },
     {
-     "label": "Realized PnL, 30d",
-     "value": "-$122K",
+     "label": "Linked wallets",
+     "value": "$9.9M ETH in 1 wallet, owner unconfirmed",
      "source": "Nansen"
     }
    ],
@@ -5120,7 +5115,7 @@
     "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "signals disagree: not enough evidence for book, hedge, or bet"
+     "linked_exposure_unverified"
     ]
    },
    "positions": {
@@ -5177,7 +5172,7 @@
    },
    "sizeVsOi": 0.007077505842488288,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 6 positions, 19% hedged.",
+   "summary": "Less than 1% of the $19.4M ETH short is covered by ETH in this account. 2 wallets that funded it hold $3.6M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
     {
      "label": "Largest position",
@@ -5196,12 +5191,12 @@
     },
     {
      "label": "Hedge found",
-     "value": "19% via 2 funding wallets",
+     "value": "0.0% (all chains)",
      "source": "Nansen"
     },
     {
-     "label": "Realized PnL, 30d",
-     "value": "$657K",
+     "label": "Linked wallets",
+     "value": "$3.6M ETH in 2 wallets, owner unconfirmed",
      "source": "Nansen"
     }
    ],
@@ -5690,7 +5685,7 @@
    },
    "sizeVsOi": 0.019860421567266168,
    "source": "nansen",
-   "summary": "100% of the exposure is one $18.1M ZEC short, and no ZEC was found in this account or the wallets that funded it.",
+   "summary": "100% of the exposure is one $18.1M ZEC short, and no ZEC was found in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -5820,10 +5815,10 @@
   {
    "address": "0xec0b9ebf2a304c99cafe85c548c14dd7783cb078",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "balanced_book"
+     "offset_not_measured"
     ]
    },
    "positions": {
@@ -5863,7 +5858,7 @@
    },
    "sizeVsOi": 0.006581129702577384,
    "source": "nansen",
-   "summary": "12 positions net out to 23% of gross exposure: the longs and shorts offset each other.",
+   "summary": "12 positions net out to 23% of gross exposure, but this snapshot did not record which assets the legs are in, so whether they offset each other was not established.",
    "evidence": [
     {
      "label": "Largest position",
@@ -7153,7 +7148,7 @@
     "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "signals disagree: not enough evidence for book, hedge, or bet"
+     "linked_exposure_unverified"
     ]
    },
    "positions": {
@@ -7204,7 +7199,7 @@
    },
    "sizeVsOi": 0.004682218922472244,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 43% hedged.",
+   "summary": "Less than 1% of the $12.8M ETH short is covered by ETH in this account. 1 wallet that funded it holds $5.5M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
     {
      "label": "Largest position",
@@ -7223,12 +7218,12 @@
     },
     {
      "label": "Hedge found",
-     "value": "43% via 1 funding wallet",
+     "value": "0.0% (all chains)",
      "source": "Nansen"
     },
     {
-     "label": "Realized PnL, 30d",
-     "value": "$3.7M",
+     "label": "Linked wallets",
+     "value": "$5.5M ETH in 1 wallet, owner unconfirmed",
      "source": "Nansen"
     }
    ],
@@ -7377,7 +7372,7 @@
    },
    "sizeVsOi": 0.05884976347632947,
    "source": "nansen",
-   "summary": "92% of the exposure is one $12.4M LIT short, and only 0.0% of it is covered by LIT in this account or the wallets that funded it.",
+   "summary": "92% of the exposure is one $12.4M LIT short, and no LIT was found in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -7919,10 +7914,10 @@
   {
    "address": "0x28bbaaa5b431ed61ea6a9b3394f76616e00cfca6",
    "verdict": {
-    "verdict": "hedged",
-    "strength": "probable",
+    "verdict": "looks_like_a_bet",
+    "strength": null,
     "reasons": [
-     "linked_wallet_hedge"
+     "directional_concentration"
     ]
    },
    "positions": {
@@ -7947,20 +7942,14 @@
    },
    "hedgeScope": "all-chains",
    "linkedHedge": {
-    "linkedHedgeUsd": 55907203.782066524,
-    "linkedHedgeRatio": 5.163221325305752,
+    "linkedHedgeUsd": 85295.90621057288,
+    "linkedHedgeRatio": 0.007877368426874854,
     "funders": [
      {
       "address": "0xe35e9842fceaca96570b734083f4a58e8f7c5f2a",
       "relation": "First Funder",
       "chain": "arbitrum",
       "matchingUsd": 85295.90621057288
-     },
-     {
-      "address": "0x21a31ee1afc51d94c2efccaa2092ad1028285549",
-      "relation": "First Funder",
-      "chain": "ethereum",
-      "matchingUsd": 55821907.87585595
      }
     ]
    },
@@ -7979,7 +7968,7 @@
    },
    "sizeVsOi": 0.0039315795239247995,
    "source": "nansen",
-   "summary": "The $10.8M ETH short is 516% covered by ETH held in a wallet that funded this account. Ownership is inferred from the funding link, not confirmed.",
+   "summary": "100% of the exposure is one $10.8M ETH short, and only 0.0% of it is covered by ETH in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -7998,7 +7987,7 @@
     },
     {
      "label": "Hedge found",
-     "value": "516% via 1 funding wallet",
+     "value": "0.0% (all chains)",
      "source": "Nansen"
     },
     {
@@ -8007,7 +7996,9 @@
      "source": "Nansen"
     }
    ],
-   "coverage": [],
+   "coverage": [
+    "A wallet that funded this account is Binance 15, an exchange address: its balances are not counted here"
+   ],
    "checkedAt": "2026-09-18T14:35:53.064Z",
    "nansenCalls": 7
   },
@@ -8516,10 +8507,10 @@
   {
    "address": "0x8cc94dc843e1ea7a19805e0cca43001123512b6a",
    "verdict": {
-    "verdict": "hedged",
-    "strength": "probable",
+    "verdict": "unknown",
+    "strength": null,
     "reasons": [
-     "linked_wallet_hedge"
+     "linked_exposure_unverified"
     ]
    },
    "positions": {
@@ -8544,20 +8535,14 @@
    },
    "hedgeScope": "all-chains",
    "linkedHedge": {
-    "linkedHedgeUsd": 93901708.93680581,
-    "linkedHedgeRatio": 9.116316738845658,
+    "linkedHedgeUsd": 38086271.1942772,
+    "linkedHedgeRatio": 3.697552638176886,
     "funders": [
      {
       "address": "0xb38e8c17e38363af6ebdcb3dae12e0243582891d",
       "relation": "First Funder",
       "chain": "arbitrum",
       "matchingUsd": 38086271.1942772
-     },
-     {
-      "address": "0x21a31ee1afc51d94c2efccaa2092ad1028285549",
-      "relation": "First Funder",
-      "chain": "ethereum",
-      "matchingUsd": 55815437.74252861
      }
     ]
    },
@@ -8576,7 +8561,7 @@
    },
    "sizeVsOi": 0.0037246128768632517,
    "source": "nansen",
-   "summary": "The $10.3M ETH short is 912% covered by ETH held in 2 wallets that funded this account. Ownership is inferred from the funding link, not confirmed.",
+   "summary": "Less than 1% of the $10.3M ETH short is covered by ETH in this account. 1 wallet that funded it holds $38.1M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
     {
      "label": "Largest position",
@@ -8595,16 +8580,18 @@
     },
     {
      "label": "Hedge found",
-     "value": "912% via 2 funding wallets",
+     "value": "0.0% (all chains)",
      "source": "Nansen"
     },
     {
-     "label": "Realized PnL, 30d",
-     "value": "-$779K",
+     "label": "Linked wallets",
+     "value": "$38.1M ETH in 1 wallet, owner unconfirmed",
      "source": "Nansen"
     }
    ],
-   "coverage": [],
+   "coverage": [
+    "A wallet that funded this account is Binance 15, an exchange address: its balances are not counted here"
+   ],
    "checkedAt": "2026-09-18T14:36:42.119Z",
    "nansenCalls": 7
   },
@@ -8671,7 +8658,7 @@
    },
    "sizeVsOi": 0.0031878962494409344,
    "source": "nansen",
-   "summary": "100% of the exposure is one $10.3M BTC short, and only 0.0% of it is covered by BTC in this account or the wallets that funded it.",
+   "summary": "100% of the exposure is one $10.3M BTC short, and only 0.0% of it is covered by BTC in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -8706,10 +8693,10 @@
   {
    "address": "0x5e9eadc22514f35af45de3ea4c3c9e56d21435ee",
    "verdict": {
-    "verdict": "hedged",
-    "strength": "probable",
+    "verdict": "unknown",
+    "strength": null,
     "reasons": [
-     "linked_wallet_hedge"
+     "linked_exposure_unverified"
     ]
    },
    "positions": {
@@ -8766,7 +8753,7 @@
    },
    "sizeVsOi": 0.0036921649252189045,
    "source": "nansen",
-   "summary": "The $10.2M ETH short is 52% covered by ETH held in a wallet that funded this account. Ownership is inferred from the funding link, not confirmed.",
+   "summary": "Less than 1% of the $10.2M ETH short is covered by ETH in this account. 1 wallet that funded it holds $5.3M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
     {
      "label": "Largest position",
@@ -8785,12 +8772,12 @@
     },
     {
      "label": "Hedge found",
-     "value": "52% via 1 funding wallet",
+     "value": "0.0% (all chains)",
      "source": "Nansen"
     },
     {
-     "label": "Realized PnL, 30d",
-     "value": "-$320K",
+     "label": "Linked wallets",
+     "value": "$5.3M ETH in 1 wallet, owner unconfirmed",
      "source": "Nansen"
     }
    ],
@@ -9095,7 +9082,7 @@
    },
    "sizeVsOi": 0.004554853343403427,
    "source": "nansen",
-   "summary": "100% of the exposure is one $9.0M HYPE short, and only 0.0% of it is covered by HYPE in this account or the wallets that funded it.",
+   "summary": "100% of the exposure is one $9.0M HYPE short, and only 0.0% of it is covered by HYPE in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -9268,7 +9255,7 @@
    },
    "sizeVsOi": 0.0030364677021170404,
    "source": "nansen",
-   "summary": "82% of the exposure is one $9.8M BTC short, and only 0.0% of it is covered by BTC in this account or the wallets that funded it.",
+   "summary": "82% of the exposure is one $9.8M BTC short, and no BTC was found in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -9615,10 +9602,10 @@
   {
    "address": "0x350e33a777d510616fbdb483d1de3b50d1edfcfb",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "balanced_book"
+     "offset_not_measured"
     ]
    },
    "positions": {
@@ -9658,7 +9645,7 @@
    },
    "sizeVsOi": 0.012148515995309122,
    "source": "nansen",
-   "summary": "9 positions net out to 1.8% of gross exposure: the longs and shorts offset each other.",
+   "summary": "9 positions net out to 1.8% of gross exposure, but this snapshot did not record which assets the legs are in, so whether they offset each other was not established.",
    "evidence": [
     {
      "label": "Largest position",
@@ -9987,7 +9974,7 @@
    },
    "sizeVsOi": 0.004671965622796001,
    "source": "nansen",
-   "summary": "83% of the exposure is one $9.3M HYPE short, and only 0.0% of it is covered by HYPE in this account or the wallets that funded it.",
+   "summary": "83% of the exposure is one $9.3M HYPE short, and only 0.0% of it is covered by HYPE in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -10310,7 +10297,7 @@
    },
    "sizeVsOi": 0.0046259698065377435,
    "source": "nansen",
-   "summary": "100% of the exposure is one $9.2M HYPE short, and only 0.0% of it is covered by HYPE in this account or the wallets that funded it.",
+   "summary": "100% of the exposure is one $9.2M HYPE short, and only 0.0% of it is covered by HYPE in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -10717,7 +10704,7 @@
    },
    "sizeVsOi": 0.002740375030108507,
    "source": "nansen",
-   "summary": "100% of the exposure is one $8.9M BTC short, and only 0.0% of it is covered by BTC in this account or the wallets that funded it.",
+   "summary": "100% of the exposure is one $8.9M BTC short, and no BTC was found in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -10752,10 +10739,10 @@
   {
    "address": "0x77ee3604adbdefa66a817b3cf776412a6613a018",
    "verdict": {
-    "verdict": "hedged",
-    "strength": "probable",
+    "verdict": "unknown",
+    "strength": null,
     "reasons": [
-     "linked_wallet_hedge"
+     "linked_exposure_unverified"
     ]
    },
    "positions": {
@@ -10812,7 +10799,7 @@
    },
    "sizeVsOi": 0.0027441139980941146,
    "source": "nansen",
-   "summary": "The $8.9M BTC short is 144% covered by BTC held in a wallet that funded this account. Ownership is inferred from the funding link, not confirmed.",
+   "summary": "No BTC in this account offsets the $8.9M BTC short. 1 wallet that funded it holds $12.8M of BTC, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
     {
      "label": "Largest position",
@@ -10831,12 +10818,12 @@
     },
     {
      "label": "Hedge found",
-     "value": "144% via 1 funding wallet",
+     "value": "0% (all chains)",
      "source": "Nansen"
     },
     {
-     "label": "Realized PnL, 30d",
-     "value": "-$2.1M",
+     "label": "Linked wallets",
+     "value": "$12.8M BTC in 1 wallet, owner unconfirmed",
      "source": "Nansen"
     }
    ],
@@ -11464,7 +11451,7 @@
    },
    "sizeVsOi": 0.004207313656119155,
    "source": "nansen",
-   "summary": "100% of the exposure is one $8.3M HYPE short, and only 0.7% of it is covered by HYPE in this account or the wallets that funded it.",
+   "summary": "100% of the exposure is one $8.3M HYPE short, and only 0.2% of it is covered by HYPE in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -11559,7 +11546,7 @@
    },
    "sizeVsOi": 0.0025468285985399187,
    "source": "nansen",
-   "summary": "100% of the exposure is one $8.3M BTC short, and no BTC was found in this account or the wallets that funded it.",
+   "summary": "100% of the exposure is one $8.3M BTC short, and no BTC was found in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -12122,7 +12109,7 @@
    },
    "sizeVsOi": 0.002898330111561256,
    "source": "nansen",
-   "summary": "69% of the exposure is one $8.0M ETH short, and only 0.6% of it is covered by ETH in this account or the wallets that funded it.",
+   "summary": "69% of the exposure is one $8.0M ETH short, and only 0.6% of it is covered by ETH in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -12330,10 +12317,10 @@
   {
    "address": "0xbe19541903f64af97bcf8436f4d15bf3a56b8bd1",
    "verdict": {
-    "verdict": "hedged",
-    "strength": "probable",
+    "verdict": "unknown",
+    "strength": null,
     "reasons": [
-     "linked_wallet_hedge"
+     "linked_exposure_unverified"
     ]
    },
    "positions": {
@@ -12390,7 +12377,7 @@
    },
    "sizeVsOi": 0.004024807610171402,
    "source": "nansen",
-   "summary": "The $8.0M HYPE short is 95% covered by HYPE held in a wallet that funded this account. Ownership is inferred from the funding link, not confirmed.",
+   "summary": "Less than 1% of the $8.0M HYPE short is covered by HYPE in this account. 1 wallet that funded it holds $7.6M of HYPE, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
     {
      "label": "Largest position",
@@ -12409,12 +12396,12 @@
     },
     {
      "label": "Hedge found",
-     "value": "95% via 1 funding wallet",
+     "value": "0.0% (all chains)",
      "source": "Nansen"
     },
     {
-     "label": "Realized PnL, 30d",
-     "value": "-$1",
+     "label": "Linked wallets",
+     "value": "$7.6M HYPE in 1 wallet, owner unconfirmed",
      "source": "Nansen"
     }
    ],
@@ -12485,7 +12472,7 @@
    },
    "sizeVsOi": null,
    "source": "nansen",
-   "summary": "54% of the exposure is one $8.9M xyz:CBRS short, and no xyz:CBRS was found in this account or the wallets that funded it.",
+   "summary": "54% of the exposure is one $8.9M xyz:CBRS short, and no xyz:CBRS was found in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -12522,10 +12509,10 @@
   {
    "address": "0x77eeda199553e33b246e4b4666849b9ad0972902",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "balanced_book"
+     "offset_not_measured"
     ]
    },
    "positions": {
@@ -12565,7 +12552,7 @@
    },
    "sizeVsOi": 0.02931539135154161,
    "source": "nansen",
-   "summary": "11 positions net out to 25% of gross exposure: the longs and shorts offset each other.",
+   "summary": "11 positions net out to 25% of gross exposure, but this snapshot did not record which assets the legs are in, so whether they offset each other was not established.",
    "evidence": [
     {
      "label": "Largest position",
@@ -12678,10 +12665,10 @@
   {
    "address": "0xe187055ff406f8cdf59fbae53ec20d4ecd9b771d",
    "verdict": {
-    "verdict": "hedged",
-    "strength": "probable",
+    "verdict": "unknown",
+    "strength": null,
     "reasons": [
-     "linked_wallet_hedge"
+     "signals disagree: not enough evidence for book, hedge, or bet"
     ]
    },
    "positions": {
@@ -12706,16 +12693,9 @@
    },
    "hedgeScope": "all-chains",
    "linkedHedge": {
-    "linkedHedgeUsd": 16075255.841251178,
-    "linkedHedgeRatio": 2.160340931380648,
-    "funders": [
-     {
-      "address": "0x0d0707963952f2fba59dd06f2b425ace40b492fe",
-      "relation": "First Funder",
-      "chain": "arbitrum",
-      "matchingUsd": 16075255.841251178
-     }
-    ]
+    "linkedHedgeUsd": 0,
+    "linkedHedgeRatio": 0,
+    "funders": []
    },
    "trades": {
     "tradesPerDay": 2000,
@@ -12732,7 +12712,7 @@
    },
    "sizeVsOi": 0.0037516761115280297,
    "source": "nansen",
-   "summary": "The $7.4M HYPE short is 229% covered by HYPE held in a wallet that funded this account. Ownership is inferred from the funding link, not confirmed.",
+   "summary": "Not a book, not hedged, and not a clean bet: 6 positions, largest position 42% of exposure, 13% hedged.",
    "evidence": [
     {
      "label": "Largest position",
@@ -12751,7 +12731,7 @@
     },
     {
      "label": "Hedge found",
-     "value": "229% via 1 funding wallet",
+     "value": "13% (all chains)",
      "source": "Nansen"
     },
     {
@@ -12760,7 +12740,9 @@
      "source": "Nansen"
     }
    ],
-   "coverage": [],
+   "coverage": [
+    "A wallet that funded this account is Gate Deposit, an exchange address: its balances are not counted here"
+   ],
    "checkedAt": "2026-09-18T14:42:34.062Z",
    "nansenCalls": 6
   },
@@ -12923,10 +12905,10 @@
   {
    "address": "0xb1ec7febea4f841d525785955b7fe0e812d6e86a",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "balanced_book"
+     "offset_not_measured"
     ]
    },
    "positions": {
@@ -12966,7 +12948,7 @@
    },
    "sizeVsOi": 0.0022741949301647822,
    "source": "nansen",
-   "summary": "12 positions net out to 28% of gross exposure: the longs and shorts offset each other.",
+   "summary": "12 positions net out to 28% of gross exposure, but this snapshot did not record which assets the legs are in, so whether they offset each other was not established.",
    "evidence": [
     {
      "label": "Largest position",
@@ -13217,7 +13199,7 @@
    },
    "sizeVsOi": 0.0026238109401477273,
    "source": "nansen",
-   "summary": "100% of the exposure is one $7.3M ETH short, and only 1.4% of it is covered by ETH in this account or the wallets that funded it.",
+   "summary": "100% of the exposure is one $7.3M ETH short, and only 0.0% of it is covered by ETH in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -13236,12 +13218,12 @@
     },
     {
      "label": "Hedge found",
-     "value": "1.4% via 1 funding wallet",
+     "value": "0.0% (all chains)",
      "source": "Nansen"
     },
     {
-     "label": "Realized PnL, 30d",
-     "value": "$2.5M",
+     "label": "Linked wallets",
+     "value": "$99K ETH in 1 wallet, owner unconfirmed",
      "source": "Nansen"
     }
    ],
@@ -13574,7 +13556,7 @@
    },
    "sizeVsOi": 0.0023845821133426635,
    "source": "nansen",
-   "summary": "100% of the exposure is one $6.6M ETH short, and only 0.0% of it is covered by ETH in this account or the wallets that funded it.",
+   "summary": "100% of the exposure is one $6.6M ETH short, and only 0.0% of it is covered by ETH in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -13825,7 +13807,7 @@
    },
    "sizeVsOi": 0.001982305272983428,
    "source": "nansen",
-   "summary": "73% of the exposure is one $6.5M BTC short, and only 0.0% of it is covered by BTC in this account or the wallets that funded it.",
+   "summary": "73% of the exposure is one $6.5M BTC short, and no BTC was found in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -14406,10 +14388,10 @@
   {
    "address": "0x960b6c2c4b1498681b8422eb572a8b3a6aa3f0fc",
    "verdict": {
-    "verdict": "hedged",
-    "strength": "probable",
+    "verdict": "unknown",
+    "strength": null,
     "reasons": [
-     "linked_wallet_hedge"
+     "linked_exposure_unverified"
     ]
    },
    "positions": {
@@ -14466,7 +14448,7 @@
    },
    "sizeVsOi": 0.0025691828825400824,
    "source": "nansen",
-   "summary": "The $7.1M ETH short is 2622% covered by ETH held in a wallet that funded this account. Ownership is inferred from the funding link, not confirmed.",
+   "summary": "Less than 1% of the $7.1M ETH short is covered by ETH in this account. 1 wallet that funded it holds $187.3M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
     {
      "label": "Largest position",
@@ -14485,12 +14467,12 @@
     },
     {
      "label": "Hedge found",
-     "value": "2622% via 1 funding wallet",
+     "value": "0.0% (all chains)",
      "source": "Nansen"
     },
     {
-     "label": "Realized PnL, 30d",
-     "value": "-$701K",
+     "label": "Linked wallets",
+     "value": "$187.3M ETH in 1 wallet, owner unconfirmed",
      "source": "Nansen"
     }
    ],
@@ -15047,10 +15029,10 @@
   {
    "address": "0xe170ed9d77792397271d564c7161351d69fe9300",
    "verdict": {
-    "verdict": "hedged",
-    "strength": "probable",
+    "verdict": "unknown",
+    "strength": null,
     "reasons": [
-     "linked_wallet_hedge"
+     "linked_exposure_unverified"
     ]
    },
    "positions": {
@@ -15107,7 +15089,7 @@
    },
    "sizeVsOi": 0.0020999213466348747,
    "source": "nansen",
-   "summary": "The $5.8M ETH short is 477% covered by ETH held in a wallet that funded this account. Ownership is inferred from the funding link, not confirmed.",
+   "summary": "Less than 1% of the $5.8M ETH short is covered by ETH in this account. 1 wallet that funded it holds $27.9M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
     {
      "label": "Largest position",
@@ -15126,12 +15108,12 @@
     },
     {
      "label": "Hedge found",
-     "value": "477% via 1 funding wallet",
+     "value": "0.0% (all chains)",
      "source": "Nansen"
     },
     {
-     "label": "Realized PnL, 30d",
-     "value": "-$108K",
+     "label": "Linked wallets",
+     "value": "$27.9M ETH in 1 wallet, owner unconfirmed",
      "source": "Nansen"
     }
    ],
@@ -15280,7 +15262,7 @@
    },
    "sizeVsOi": 0.006275161339017596,
    "source": "nansen",
-   "summary": "100% of the exposure is one $5.7M ZEC short, and no ZEC was found in this account or the wallets that funded it.",
+   "summary": "100% of the exposure is one $5.7M ZEC short, and no ZEC was found in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -15369,7 +15351,7 @@
    },
    "sizeVsOi": 0.0017358052442502385,
    "source": "nansen",
-   "summary": "85% of the exposure is one $5.7M BTC short, and no BTC was found in this account or the wallets that funded it.",
+   "summary": "85% of the exposure is one $5.7M BTC short, and no BTC was found in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -15404,10 +15386,10 @@
   {
    "address": "0xda744273f80b22412417f7cfe0503f3d721f987d",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "balanced_book"
+     "offset_not_measured"
     ]
    },
    "positions": {
@@ -15447,7 +15429,7 @@
    },
    "sizeVsOi": 0.0017356331860894374,
    "source": "nansen",
-   "summary": "8 positions net out to 16% of gross exposure: the longs and shorts offset each other.",
+   "summary": "8 positions net out to 16% of gross exposure, but this snapshot did not record which assets the legs are in, so whether they offset each other was not established.",
    "evidence": [
     {
      "label": "Largest position",
@@ -15871,7 +15853,7 @@
    },
    "sizeVsOi": 0.0016393852542112139,
    "source": "nansen",
-   "summary": "100% of the exposure is one $5.3M BTC short, and only 0.0% of it is covered by BTC in this account or the wallets that funded it.",
+   "summary": "100% of the exposure is one $5.3M BTC short, and no BTC was found in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -17165,10 +17147,10 @@
   {
    "address": "0xaf0fdd39e5d92499b0ed9f68693da99c0ec1e92e",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "balanced_book"
+     "offset_not_measured"
     ]
    },
    "positions": {
@@ -17208,7 +17190,7 @@
    },
    "sizeVsOi": 0.0023146639103972942,
    "source": "nansen",
-   "summary": "5 positions net out to 25% of gross exposure: the longs and shorts offset each other.",
+   "summary": "5 positions net out to 25% of gross exposure, but this snapshot did not record which assets the legs are in, so whether they offset each other was not established.",
    "evidence": [
     {
      "label": "Largest position",
@@ -17782,7 +17764,7 @@
    },
    "sizeVsOi": 0.004858315984803587,
    "source": "nansen",
-   "summary": "81% of the exposure is one $4.4M ZEC short, and no ZEC was found in this account or the wallets that funded it.",
+   "summary": "81% of the exposure is one $4.4M ZEC short, and no ZEC was found in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -18197,7 +18179,7 @@
    },
    "sizeVsOi": null,
    "source": "nansen",
-   "summary": "71% of the exposure is one $10.6M xyz:CBRS short, and no xyz:CBRS was found in this account or the wallets that funded it.",
+   "summary": "71% of the exposure is one $10.6M xyz:CBRS short, and no xyz:CBRS was found in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -18288,7 +18270,7 @@
    },
    "sizeVsOi": 0.05974523318992729,
    "source": "nansen",
-   "summary": "100% of the exposure is one $4.3M XMR short, and no XMR was found in this account or the wallets that funded it.",
+   "summary": "100% of the exposure is one $4.3M XMR short, and no XMR was found in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -19105,10 +19087,10 @@
   {
    "address": "0x482b0f4dad512fe086e121882a81e34c374acae4",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "balanced_book"
+     "offset_not_measured"
     ]
    },
    "positions": {
@@ -19148,7 +19130,7 @@
    },
    "sizeVsOi": 0.0020817548355048805,
    "source": "nansen",
-   "summary": "8 positions net out to 26% of gross exposure: the longs and shorts offset each other.",
+   "summary": "8 positions net out to 26% of gross exposure, but this snapshot did not record which assets the legs are in, so whether they offset each other was not established.",
    "evidence": [
     {
      "label": "Largest position",
@@ -19974,10 +19956,10 @@
   {
    "address": "0x837686cfda8a79adfb8465d39240c54166bf9a1e",
    "verdict": {
-    "verdict": "hedged",
-    "strength": "probable",
+    "verdict": "unknown",
+    "strength": null,
     "reasons": [
-     "linked_wallet_hedge"
+     "linked_exposure_unverified"
     ]
    },
    "positions": {
@@ -20034,7 +20016,7 @@
    },
    "sizeVsOi": 0.0012535102695885691,
    "source": "nansen",
-   "summary": "The $3.5M ETH short is 1149% covered by ETH held in a wallet that funded this account. Ownership is inferred from the funding link, not confirmed.",
+   "summary": "ETH in this account covers 3.8% of the $3.5M ETH short. 1 wallet that funded it holds $40.1M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
     {
      "label": "Largest position",
@@ -20053,12 +20035,12 @@
     },
     {
      "label": "Hedge found",
-     "value": "1149% via 1 funding wallet",
+     "value": "3.8% (all chains)",
      "source": "Nansen"
     },
     {
-     "label": "Realized PnL, 30d",
-     "value": "no closed trades",
+     "label": "Linked wallets",
+     "value": "$40.1M ETH in 1 wallet, owner unconfirmed",
      "source": "Nansen"
     }
    ],
@@ -21318,7 +21300,7 @@
    },
    "sizeVsOi": 0.0011009762773508363,
    "source": "nansen",
-   "summary": "100% of the exposure is one $3.6M BTC short, and only 0.0% of it is covered by BTC in this account or the wallets that funded it.",
+   "summary": "100% of the exposure is one $3.6M BTC short, and no BTC was found in this account on any chain.",
    "evidence": [
     {
      "label": "Largest position",
@@ -21682,10 +21664,10 @@
   {
    "address": "0x498216a21f5b028797c1d3d4250e14d09c9959e6",
    "verdict": {
-    "verdict": "hedged",
-    "strength": "probable",
+    "verdict": "unknown",
+    "strength": null,
     "reasons": [
-     "linked_wallet_hedge"
+     "linked_exposure_unverified"
     ]
    },
    "positions": {
@@ -21736,7 +21718,7 @@
    },
    "sizeVsOi": 0.0012624547603420123,
    "source": "nansen",
-   "summary": "The $3.5M ETH short is 282% covered by ETH held in a wallet that funded this account. Ownership is inferred from the funding link, not confirmed.",
+   "summary": "Less than 1% of the $3.5M ETH short is covered by ETH in this account. 1 wallet that funded it holds $9.9M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
     {
      "label": "Largest position",
@@ -21755,12 +21737,12 @@
     },
     {
      "label": "Hedge found",
-     "value": "282% via 1 funding wallet",
+     "value": "0.0% (all chains)",
      "source": "Nansen"
     },
     {
-     "label": "Realized PnL, 30d",
-     "value": "-$7.2M",
+     "label": "Linked wallets",
+     "value": "$9.9M ETH in 1 wallet, owner unconfirmed",
      "source": "Nansen"
     }
    ],
