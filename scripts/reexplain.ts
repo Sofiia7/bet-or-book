@@ -25,6 +25,7 @@ import {
   ASSET_REGISTRY_VERSION,
 } from '../src/engine/observation';
 import { shareCard } from '../src/engine/share';
+import { exposureBreakdown } from '../src/engine/breakdown';
 import { knownServiceName } from '../src/sources/normalize';
 import { snapshotId } from '../src/snapshot';
 import type { Gallery } from '../src/gallery';
@@ -142,7 +143,12 @@ gallery.entries = gallery.entries.map((e) => {
     snapshotId: e.snapshotId ?? snapshotId(e.address, e.checkedAt),
   };
   const { summary, evidence } = explain(next);
-  const judged = { ...next, summary, evidence };
+  const judged = {
+    ...next,
+    summary,
+    evidence,
+    breakdown: exposureBreakdown(next.positions, next.hedge, linked),
+  };
 
   if (JSON.stringify(verdict) !== JSON.stringify(e.verdict)) reverdicted++;
   if (summary !== e.summary || JSON.stringify(evidence) !== JSON.stringify(e.evidence)) reexplained++;

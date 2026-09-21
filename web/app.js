@@ -46,6 +46,13 @@ function fmtUsd(n) {
   if (a >= 999.5) return sign + '$' + Math.round(a / 1e3) + 'K';
   return sign + '$' + Math.round(a);
 }
+/** Mirrors formatPct in src/engine/evidence.ts: below 10% a single decimal,
+ * because "0%" and "0.3%" are different answers about a hedge. */
+function fmtPct(x) {
+  const p = x * 100;
+  if (p === 0) return '0%';
+  return (Math.abs(p) >= 10 ? Math.round(p) : p.toFixed(1)) + '%';
+}
 function fmtTime(iso) {
   return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) + ' UTC';
 }
@@ -100,6 +107,130 @@ function setStatus(text, isError) {
   s.className = 'status' + (isError ? ' error' : '');
 }
 
+// ---- the evidence diagram ----
+//
+// Five identical tiles of numbers made the reader assemble the answer, and
+// the thing they had to assemble - that $464M of matching ETH belongs to
+// wallets which funded this account rather than to this account - is the
+// whole card. So it is drawn: one bar for the position, split into what was
+// found against it, and anything held elsewhere on a dashed connection
+// beside it, never inside the bar.
+//
+// The arithmetic is the server's (src/engine/breakdown.ts); this only draws.
+const SEGMENT_STYLE = {
+  covered: { label: 'covered by this address', fill: 'var(--accent)', opacity: 1 },
+  unverified: { label: 'could not identify', fill: 'var(--accent)', opacity: 0.35 },
+  residual: { label: 'nothing found against it', fill: 'var(--line)', opacity: 1 },
+};
+
+const svgEl = (name, attrs, text) => {
+  const node = document.createElementNS('http://www.w3.org/2000/svg', name);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, String(v));
+  if (text !== undefined) node.textContent = text;
+  return node;
+};
+
+function renderBreakdown(d) {
+  const b = d.breakdown;
+  const box = $('breakdown');
+  if (!b || !b.applies || !b.segments.length) {
+    box.hidden = true;
+    return;
+  }
+  box.hidden = false;
+  box.style.setProperty('--accent', verdictOf(d).accent);
+
+  const W = 640;
+  const barY = 26;
+  const barH = 34;
+  const hasElsewhere = !!b.elsewhere;
+  // The position keeps two thirds of the width whether or not anything is
+  // drawn beside it, so two cards of the same size read as the same size.
+  const barW = hasElsewhere ? W * 0.62 : W;
+  const H = hasElsewhere ? 150 : 120;
+
+  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img' });
+  svg.append(
+    svgEl('title', {}, `${fmtUsd(b.headlineUsd)} ${b.coin} ${b.side}, and what was found against it`),
+  );
+  svg.append(svgEl('text', { x: 0, y: 14, class: 'bar-title' }, `${fmtUsd(b.headlineUsd)} ${b.coin} ${b.side}`));
+
+  let x = 0;
+  b.segments.forEach((seg) => {
+    const style = SEGMENT_STYLE[seg.kind];
+    // A sliver still has to be visible: 0.0003% of a $216M short is $609,
+    // and a band of zero pixels says the wrong thing about it.
+    const w = Math.max(2, seg.share * barW);
+    svg.append(
+      svgEl('rect', {
+        x, y: barY, width: w, height: barH, rx: 3,
+        fill: style.fill, 'fill-opacity': style.opacity,
+        stroke: 'var(--line)', 'stroke-width': 1,
+      }),
+    );
+    x += w;
+  });
+
+  // The legend stacks under the bar rather than sitting beneath each band:
+  // a band two pixels wide has nowhere to put a sentence, and a band at the
+  // right-hand end pushes its label off the edge.
+  b.segments.forEach((seg, i) => {
+    const style = SEGMENT_STYLE[seg.kind];
+    const ly = barY + barH + 18 + i * 19;
+    svg.append(
+      svgEl('rect', {
+        x: 0, y: ly - 9, width: 10, height: 10, rx: 2,
+        fill: style.fill, 'fill-opacity': style.opacity, stroke: 'var(--line)', 'stroke-width': 1,
+      }),
+    );
+    svg.append(
+      svgEl('text', { x: 18, y: ly, class: 'seg-label' },
+        `${fmtUsd(seg.usd)} (${fmtPct(seg.share)}) ${style.label}`),
+    );
+  });
+
+  if (b.excessUsd > 0) {
+    const ly = barY + barH + 18 + b.segments.length * 19;
+    svg.append(
+      svgEl('text', { x: 0, y: ly, class: 'seg-label' },
+        `and ${fmtUsd(b.excessUsd)} more of it held beyond the position: net long, not neutral`),
+    );
+  }
+
+  if (hasElsewhere) {
+    const ex = barW + 46;
+    const ew = W - ex;
+    svg.append(
+      svgEl('path', {
+        d: `M ${barW + 4} ${barY + barH / 2} L ${ex - 6} ${barY + barH / 2}`,
+        stroke: 'var(--faint)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4', fill: 'none',
+      }),
+    );
+    svg.append(
+      svgEl('rect', {
+        x: ex, y: barY, width: ew, height: barH, rx: 3,
+        fill: 'none', stroke: 'var(--faint)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4',
+      }),
+    );
+    svg.append(svgEl('text', { x: ex, y: 14, class: 'seg-label' }, 'held elsewhere'));
+    svg.append(
+      svgEl('text', { x: ex + 8, y: barY + barH / 2 + 5, class: 'seg-value' }, fmtUsd(b.elsewhere.usd)),
+    );
+    svg.append(
+      svgEl('text', { x: ex, y: barY + barH + 20, class: 'seg-label' },
+        `in ${plural(b.elsewhere.wallets, 'wallet')} that funded this account`),
+    );
+    svg.append(
+      svgEl('text', { x: ex, y: barY + barH + 38, class: 'seg-label' }, 'ownership unverified, not counted'),
+    );
+  }
+
+  $('breakdown-svg').replaceChildren(svg);
+  $('breakdown-caption').textContent = hasElsewhere
+    ? `What stands against the ${b.coin} ${b.side} - and what only looks like it does`
+    : `What stands against the ${b.coin} ${b.side}`;
+}
+
 /** What this rendering is: a live check, a saved reading or a gallery card. */
 function kindOf(opts) {
   return (opts && opts.kind) || 'live';
@@ -121,6 +252,8 @@ function renderResult(d, opts) {
     box.append(el('div', 'stat-label', item.label), el('div', 'stat-value', item.value), el('div', 'stat-source', item.source));
     return box;
   }));
+
+  renderBreakdown(d);
 
   const funders = d.linkedHedge && Array.isArray(d.linkedHedge.funders) ? d.linkedHedge.funders : [];
   $('funders').hidden = funders.length === 0;
@@ -525,6 +658,120 @@ function cardShare(d, kind) {
   };
 }
 
+/**
+ * The same shape the page draws, on the image that actually travels.
+ *
+ * It replaces the four evidence columns rather than joining them: for a
+ * short, the bar says everything those columns said about coverage and says
+ * the one thing they could not - that the matching assets are somebody
+ * else's - so printing both would be printing it twice in a smaller font.
+ */
+function drawBreakdown(ctx, b, v, W) {
+  const font = (weight, size) => weight + ' ' + size + 'px -apple-system, system-ui, "Segoe UI", sans-serif';
+  const hasElsewhere = !!b.elsewhere;
+  const left = 56;
+  const barY = 386;
+  const barH = 34;
+  const barW = (hasElsewhere ? 0.58 : 1) * (W - 112);
+
+  ctx.fillStyle = '#111111';
+  ctx.font = font(700, 20);
+  ctx.fillText(fmtUsd(b.headlineUsd) + ' ' + b.coin + ' ' + b.side, left, barY - 14);
+
+  const fills = {
+    covered: { fill: v.accent, alpha: 1 },
+    unverified: { fill: v.accent, alpha: 0.35 },
+    residual: { fill: '#e6e6e2', alpha: 1 },
+  };
+  const labels = {
+    covered: 'covered by this address',
+    unverified: 'could not identify',
+    residual: 'nothing found against it',
+  };
+
+  let x = left;
+  for (const seg of b.segments) {
+    const w = Math.max(2, seg.share * barW);
+    ctx.globalAlpha = fills[seg.kind].alpha;
+    ctx.fillStyle = fills[seg.kind].fill;
+    ctx.fillRect(x, barY, w, barH);
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = '#d9d9d6';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 0.5, barY + 0.5, w - 1, barH - 1);
+    x += w;
+  }
+
+  b.segments.forEach((seg, i) => {
+    const ly = barY + barH + 26 + i * 24;
+    ctx.globalAlpha = fills[seg.kind].alpha;
+    ctx.fillStyle = fills[seg.kind].fill;
+    ctx.fillRect(left, ly - 11, 12, 12);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#555555';
+    ctx.font = font(400, 18);
+    ctx.fillText(fmtUsd(seg.usd) + ' (' + fmtPct(seg.share) + ') ' + labels[seg.kind], left + 22, ly);
+  });
+
+  if (b.excessUsd > 0) {
+    ctx.fillStyle = '#555555';
+    ctx.font = font(400, 18);
+    ctx.fillText(
+      'and ' + fmtUsd(b.excessUsd) + ' more held beyond the position: net long, not neutral',
+      left,
+      barY + barH + 26 + b.segments.length * 24,
+    );
+  }
+
+  if (hasElsewhere) {
+    const ex = left + barW + 40;
+    const ew = W - 56 - ex;
+    ctx.strokeStyle = '#8f8f8f';
+    ctx.setLineDash([5, 5]);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(left + barW + 4, barY + barH / 2);
+    ctx.lineTo(ex - 6, barY + barH / 2);
+    ctx.stroke();
+    ctx.strokeRect(ex, barY, ew, barH);
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#767676';
+    ctx.font = font(400, 16);
+    ctx.fillText('held elsewhere', ex, barY - 14);
+    ctx.fillStyle = '#111111';
+    ctx.font = font(700, 20);
+    ctx.fillText(clipText(ctx, fmtUsd(b.elsewhere.usd), ew - 16), ex + 8, barY + barH / 2 + 7);
+    ctx.fillStyle = '#555555';
+    ctx.font = font(400, 16);
+    ctx.fillText(
+      clipText(ctx, 'in ' + plural(b.elsewhere.wallets, 'wallet') + ' that funded this account', ew),
+      ex,
+      barY + barH + 26,
+    );
+    ctx.fillText(clipText(ctx, 'ownership unverified, not counted', ew), ex, barY + barH + 48);
+  }
+}
+
+/** The older layout, for a card with no bar to draw: a long, a book, an
+ * account with nothing open. */
+function drawEvidenceColumns(ctx, items, W, font) {
+  const colW = (W - 112) / 4;
+  items.forEach((item, i) => {
+    const x = 56 + i * colW;
+    const room = colW - 16;
+    ctx.fillStyle = '#888888';
+    ctx.font = font(400, 18);
+    ctx.fillText(clipText(ctx, item.label, room), x, 432);
+    ctx.fillStyle = '#111111';
+    ctx.font = font(700, item.value.length > 14 ? 24 : 30);
+    ctx.fillText(clipText(ctx, item.value, room), x, 470);
+    ctx.fillStyle = '#aaaaaa';
+    ctx.font = font(400, 15);
+    ctx.fillText(clipText(ctx, item.source, room), x, 496);
+  });
+}
+
 function drawCard() {
   const canvas = $('card-canvas');
   const ctx = canvas.getContext('2d');
@@ -546,29 +793,18 @@ function drawCard() {
   ctx.font = font(700, 44);
   wrapText(ctx, headlineFor(d), 56, 146, W - 112, 52, 2);
 
+  const share = cardShare(d, (d && d.__kind) || 'live');
+  const b = d.breakdown && d.breakdown.applies && d.breakdown.segments.length ? d.breakdown : null;
+
   ctx.fillStyle = '#444444';
   ctx.font = font(400, 26);
-  wrapText(ctx, d.summary || '', 56, 250, W - 112, 36, 4);
+  wrapText(ctx, d.summary || '', 56, 250, W - 112, 36, b ? 3 : 4);
 
-  const share = cardShare(d, (d && d.__kind) || 'live');
-  // The row the verdict turned on goes on the card, wherever it sits in the
-  // list. Taking the first four left the Abraxas funders row off the image
-  // that was the whole point of that card (audit U01).
-  const items = share.evidence;
-  const colW = (W - 112) / 4;
-  items.forEach((item, i) => {
-    const x = 56 + i * colW;
-    const room = colW - 16;
-    ctx.fillStyle = '#888888';
-    ctx.font = font(400, 18);
-    ctx.fillText(clipText(ctx, item.label, room), x, 432);
-    ctx.fillStyle = '#111111';
-    ctx.font = font(700, item.value.length > 14 ? 24 : 30);
-    ctx.fillText(clipText(ctx, item.value, room), x, 470);
-    ctx.fillStyle = '#aaaaaa';
-    ctx.font = font(400, 15);
-    ctx.fillText(clipText(ctx, item.source, room), x, 496);
-  });
+  if (b) {
+    drawBreakdown(ctx, b, v, W);
+  } else {
+    drawEvidenceColumns(ctx, share.evidence, W, font);
+  }
 
   // A badge alone reads as a verdict with nothing behind it. What the check
   // could not read belongs on the picture, not only on the page it came from.

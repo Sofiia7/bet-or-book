@@ -91,7 +91,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:14:26.586Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -127,6 +127,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 125909572.12776,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -217,7 +226,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:14:33.599Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -253,6 +262,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 115455171.76753,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -344,7 +362,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T07:11:58.006Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -380,6 +398,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 108703727.32296,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -470,7 +497,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:14:47.624Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -506,6 +533,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 80259000,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -596,7 +632,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:14:54.633Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -632,6 +668,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 80299000,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -722,7 +767,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:15:01.643Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -758,6 +803,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 77583517.767,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -848,7 +902,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:15:08.657Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -884,6 +938,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 76884000,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -974,7 +1037,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:15:15.663Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -1010,6 +1073,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "SOL",
+    "side": "long",
+    "headlineUsd": 60036570.4866,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -1237,7 +1309,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:15:29.675Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -1273,6 +1345,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 56502417.5859,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -1363,7 +1444,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:15:36.688Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -1399,6 +1480,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 51288000,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -1489,7 +1579,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:15:43.698Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -1525,6 +1615,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "XRP",
+    "side": "long",
+    "headlineUsd": 47940511.955,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -1752,7 +1851,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:15:57.721Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -1788,6 +1887,26 @@
       "source": "Hyperliquid"
      }
     ]
+   },
+   "breakdown": {
+    "applies": true,
+    "coin": "ETH",
+    "side": "short",
+    "headlineUsd": 45554322.74754,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 4905.663636458699,
+      "share": 0.00010768821355649751
+     },
+     {
+      "kind": "residual",
+      "usd": 45549417.083903536,
+      "share": 0.9998923117864434
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -2152,7 +2271,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:16:18.736Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -2188,6 +2307,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 41084100,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -2278,7 +2406,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:16:25.748Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -2314,6 +2442,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 40253000,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -2541,7 +2678,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:16:48.857Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -2577,6 +2714,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 38357067.366956,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -2667,7 +2813,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:16:55.860Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -2703,6 +2849,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 36225000,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -2920,7 +3075,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:17:16.886Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -2956,6 +3111,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 32192800,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -3046,7 +3210,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:17:23.896Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -3082,6 +3246,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 32178400,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -3426,7 +3599,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:17:44.926Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -3462,6 +3635,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "SOL",
+    "side": "long",
+    "headlineUsd": 30786168.0121,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -3552,7 +3734,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:17:51.928Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -3588,6 +3770,21 @@
       "source": "Hyperliquid"
      }
     ]
+   },
+   "breakdown": {
+    "applies": true,
+    "coin": "HYPE",
+    "side": "short",
+    "headlineUsd": 30753215.47776,
+    "segments": [
+     {
+      "kind": "residual",
+      "usd": 30753215.47776,
+      "share": 1
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -3678,7 +3875,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:17:58.935Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -3714,6 +3911,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 28175400,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -3804,7 +4010,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:18:05.945Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -3840,6 +4046,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 28189700,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -3930,7 +4145,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:18:12.950Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -3966,6 +4181,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 28204000,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -4056,7 +4280,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:18:19.962Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -4092,6 +4316,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 28212800,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -4182,7 +4415,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:18:26.962Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -4218,6 +4451,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 26224163.96391,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -4308,7 +4550,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:18:33.971Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -4344,6 +4586,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 25701298.38816,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -4434,7 +4685,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:18:40.980Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -4470,6 +4721,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 25670818.66843,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -4560,7 +4820,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:18:47.987Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -4596,6 +4856,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 25644000,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -4807,7 +5076,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:29:14.615Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -4843,6 +5112,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "LIT",
+    "side": "long",
+    "headlineUsd": 24762730.047453,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -4933,7 +5211,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:29:21.625Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -4969,6 +5247,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 24567480.6822,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -5059,7 +5346,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:29:28.640Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -5095,6 +5382,21 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": true,
+    "coin": "BTC",
+    "side": "short",
+    "headlineUsd": 24232200,
+    "segments": [
+     {
+      "kind": "residual",
+      "usd": 24232200,
+      "share": 1
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -5185,7 +5487,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:29:35.648Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -5221,6 +5523,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 24236340,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -5311,7 +5622,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:29:42.663Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -5347,6 +5658,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 24225300,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -5437,7 +5757,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:29:49.665Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -5473,6 +5793,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 24225900,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -5563,7 +5892,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:29:56.669Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -5599,6 +5928,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 24213900,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -5689,7 +6027,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:30:03.676Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -5725,6 +6063,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 23004415.4366,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -5815,7 +6162,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:30:10.692Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -5851,6 +6198,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 22906595,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -6201,7 +6557,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T11:53:18.125Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -6237,6 +6593,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "NEAR",
+    "side": "long",
+    "headlineUsd": 24484107.15321,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -6327,7 +6692,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:30:45.730Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -6363,6 +6728,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 21098130,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -6455,7 +6829,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:30:52.738Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -6492,6 +6866,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 20784653.97364,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -6582,7 +6965,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:30:59.740Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -6618,6 +7001,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 20952471.95,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -6708,7 +7100,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:31:06.746Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -6744,6 +7136,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "SOL",
+    "side": "long",
+    "headlineUsd": 20732080.95,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -6965,7 +7366,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:31:24.177Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -7001,6 +7402,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 20755417.153097,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -7091,7 +7501,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:31:31.188Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -7127,6 +7537,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 20471555.05977,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -7753,7 +8172,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:32:06.828Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -7789,6 +8208,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 19006452.67,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -8017,7 +8445,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:32:20.858Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -8053,6 +8481,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "NEAR",
+    "side": "long",
+    "headlineUsd": 18463529.88322,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -8143,7 +8580,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:32:27.864Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -8179,6 +8616,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 18449421.04,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -8551,7 +8997,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T11:05:32.931Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -8587,6 +9033,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 19060512.22811,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -8797,7 +9252,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:33:09.909Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -8833,6 +9288,21 @@
       "source": "Hyperliquid"
      }
     ]
+   },
+   "breakdown": {
+    "applies": true,
+    "coin": "ETH",
+    "side": "short",
+    "headlineUsd": 17270232.34524,
+    "segments": [
+     {
+      "kind": "residual",
+      "usd": 17270232.34524,
+      "share": 1
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -8908,7 +9378,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:33:16.925Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -8934,6 +9404,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": null,
+    "side": null,
+    "headlineUsd": 0,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -9161,7 +9640,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:33:32.908Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -9197,6 +9676,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 16103263.82808,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -9287,7 +9775,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:33:39.920Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -9323,6 +9811,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 15880676,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -9413,7 +9910,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:33:46.923Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -9449,6 +9946,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 15712257.19,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -9539,7 +10045,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:33:53.928Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -9575,6 +10081,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 15592570,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -9665,7 +10180,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:34:00.928Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -9701,6 +10216,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 15434400,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -9911,7 +10435,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:34:14.946Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -9947,6 +10471,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 12101850,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -10155,7 +10688,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:34:28.965Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -10191,6 +10724,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 13290054.36575,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -10281,7 +10823,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:34:35.966Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -10317,6 +10859,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "SOL",
+    "side": "long",
+    "headlineUsd": 13138104,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -10407,7 +10958,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:34:42.981Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -10443,6 +10994,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 12901580.8968,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -10665,7 +11225,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:34:56.991Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -10701,6 +11261,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 6250880.808,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -10928,7 +11497,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:35:11.018Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -10964,6 +11533,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 12533137.8,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -11191,7 +11769,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:35:25.035Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -11227,6 +11805,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "XRP",
+    "side": "long",
+    "headlineUsd": 12335574.8895,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -11579,7 +12166,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:35:46.054Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -11615,6 +12202,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 15769407.713,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -12112,7 +12708,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:36:14.088Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -12149,6 +12745,21 @@
       "source": "Hyperliquid"
      }
     ]
+   },
+   "breakdown": {
+    "applies": true,
+    "coin": "xyz:XYZ100",
+    "side": "short",
+    "headlineUsd": 12192372.235,
+    "segments": [
+     {
+      "kind": "residual",
+      "usd": 12192372.235,
+      "share": 1
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -12239,7 +12850,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:36:28.106Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -12275,6 +12886,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 10556270,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -12365,7 +12985,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:36:35.115Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -12401,6 +13021,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 10554630,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -12899,7 +13528,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:37:03.138Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -12935,6 +13564,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 10150139.8992,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -13025,7 +13663,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:37:10.152Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -13061,6 +13699,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 10104568.695,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -13408,7 +14055,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:37:31.178Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -13444,6 +14091,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 9779800.60165,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -13672,7 +14328,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:37:45.178Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -13708,6 +14364,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 9709883.73796,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -13798,7 +14463,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:37:52.187Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -13834,6 +14499,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 9783331.69536,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -13924,7 +14598,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:37:59.192Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -13960,6 +14634,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 9681481.16141,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -14050,7 +14733,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:38:06.199Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -14086,6 +14769,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 9533197.38064,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -14184,7 +14876,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T11:05:39.940Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -14220,6 +14912,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 11448047.02385,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -14310,7 +15011,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:38:20.206Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -14346,6 +15047,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 9390386.5251,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -14436,7 +15146,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:38:27.208Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -14472,6 +15182,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 9462685.41378,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -14562,7 +15281,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:38:34.220Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -14598,6 +15317,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "XMR",
+    "side": "long",
+    "headlineUsd": 9144208.7496,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -14825,7 +15553,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:38:48.239Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -14861,6 +15589,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "XRP",
+    "side": "long",
+    "headlineUsd": 9210402.6742,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -14951,7 +15688,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:38:55.247Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -14987,6 +15724,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 12090000,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -15077,7 +15823,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:39:02.257Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -15113,6 +15859,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 9175700,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -15334,7 +16089,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:39:16.277Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -15370,6 +16125,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 9166400,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -15460,7 +16224,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:39:23.282Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -15496,6 +16260,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 8996400,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -15586,7 +16359,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:39:30.296Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -15622,6 +16395,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 9001580,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -15712,7 +16494,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:39:37.311Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -15748,6 +16530,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 8948577.34498,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -16113,7 +16904,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:39:58.342Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -16149,6 +16940,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 8922490.262,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -16370,7 +17170,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:40:12.367Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -16406,6 +17206,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "DOGE",
+    "side": "long",
+    "headlineUsd": 8649690.726384,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -16496,7 +17305,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:40:19.383Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -16532,6 +17341,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "SOL",
+    "side": "long",
+    "headlineUsd": 8565164.4,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -16742,7 +17560,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:40:33.402Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -16778,6 +17596,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "SOL",
+    "side": "long",
+    "headlineUsd": 8392403.857446,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -16868,7 +17695,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:40:41.922Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -16904,6 +17731,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 8312645.01297,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -17508,7 +18344,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:41:16.974Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -17544,6 +18380,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "LIT",
+    "side": "long",
+    "headlineUsd": 8166850.0348,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -17634,7 +18479,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:41:23.982Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -17670,6 +18515,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 8075300,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -17760,7 +18614,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:41:30.982Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -17796,6 +18650,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 8073100,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -17886,7 +18749,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:41:37.987Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -17922,6 +18785,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 8076000,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -18286,7 +19158,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:41:59.025Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -18322,6 +19194,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 7949490.5448,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -18697,7 +19578,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T11:05:47.248Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -18733,6 +19614,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "NEAR",
+    "side": "long",
+    "headlineUsd": 8976953.46525,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -18823,7 +19713,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:42:27.052Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -18859,6 +19749,21 @@
       "source": "Hyperliquid"
      }
     ]
+   },
+   "breakdown": {
+    "applies": true,
+    "coin": "PONS",
+    "side": "short",
+    "headlineUsd": 7646730.58748,
+    "segments": [
+     {
+      "kind": "residual",
+      "usd": 7646730.58748,
+      "share": 1
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -19077,7 +19982,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:42:41.071Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -19113,6 +20018,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 7533330.99348,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -19451,7 +20365,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:43:02.105Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -19487,6 +20401,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 7416000,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -19577,7 +20500,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:43:09.115Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -19613,6 +20536,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 7338160,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -20245,7 +21177,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:43:51.167Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -20281,6 +21213,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "SOL",
+    "side": "long",
+    "headlineUsd": 6594000,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -20371,7 +21312,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:43:58.169Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -20407,6 +21348,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 6457280,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -20634,7 +21584,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:44:12.177Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -20670,6 +21620,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 6460000,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -20760,7 +21719,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:44:19.178Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -20796,6 +21755,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 6459280,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -20886,7 +21854,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:44:26.188Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -20922,6 +21890,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZRO",
+    "side": "long",
+    "headlineUsd": 6383053.863,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -21012,7 +21989,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:44:33.202Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -21048,6 +22025,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 6434190,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -21138,7 +22124,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:44:47.213Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -21174,6 +22160,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 6172528.005,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -21521,7 +22516,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:45:08.230Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -21557,6 +22552,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 6100852.7097,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -21647,7 +22651,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:45:29.244Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -21683,6 +22687,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 5930689.6,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -21893,7 +22906,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:45:43.260Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -21929,6 +22942,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 5895480,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -22672,7 +23694,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T11:06:01.280Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -22708,6 +23730,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 5919480,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -22935,7 +23966,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:46:39.332Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -22971,6 +24002,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 5623532.93853,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -23061,7 +24101,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:46:46.341Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -23097,6 +24137,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "SOL",
+    "side": "long",
+    "headlineUsd": 5537000,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -23324,7 +24373,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:47:09.686Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -23360,6 +24409,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 5416220.26572,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -23450,7 +24508,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:47:16.695Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -23486,6 +24544,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "SOL",
+    "side": "long",
+    "headlineUsd": 5375766.552992,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -23576,7 +24643,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:47:23.697Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -23612,6 +24679,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "SOL",
+    "side": "long",
+    "headlineUsd": 6085274.1288,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -23702,7 +24778,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:47:30.698Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -23738,6 +24814,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 5153204.89554,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -23828,7 +24913,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:47:37.707Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -23864,6 +24949,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 5135097.66149,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -23954,7 +25048,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:47:44.713Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -23990,6 +25084,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 5107842.91332,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -24080,7 +25183,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:47:51.721Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -24116,6 +25219,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 5036883.1968,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -24577,7 +25689,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:48:19.760Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -24613,6 +25725,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 4852920,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -24703,7 +25824,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:48:26.760Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -24739,6 +25860,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 4853940,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -24829,7 +25959,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:48:33.760Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -24865,6 +25995,21 @@
       "source": "Hyperliquid"
      }
     ]
+   },
+   "breakdown": {
+    "applies": true,
+    "coin": "ETH",
+    "side": "short",
+    "headlineUsd": 4803281.35048,
+    "segments": [
+     {
+      "kind": "residual",
+      "usd": 4803281.35048,
+      "share": 1
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -24955,7 +26100,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:48:40.760Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -24991,6 +26136,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 4779198.10668,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -25081,7 +26235,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:48:47.772Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -25117,6 +26271,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 4818432.26682,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -25207,7 +26370,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:48:54.779Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -25243,6 +26406,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 4686743.383693,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -25596,7 +26768,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:49:15.813Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -25632,6 +26804,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 4617103.55778,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -25722,7 +26903,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:49:22.815Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -25758,6 +26939,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 4585168.357,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -25848,7 +27038,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:49:36.826Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -25884,6 +27074,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 4456643.65944,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -26242,7 +27441,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:49:57.846Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -26278,6 +27477,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "LINK",
+    "side": "long",
+    "headlineUsd": 4356360,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -26499,7 +27707,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:50:11.853Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -26535,6 +27743,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "WLD",
+    "side": "long",
+    "headlineUsd": 4321176.866952,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -27134,7 +28351,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:50:46.883Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -27170,6 +28387,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 3189282.3648,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -27503,7 +28729,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:51:07.919Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -27539,6 +28765,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 4216412.60445,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -27629,7 +28864,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:51:14.933Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -27665,6 +28900,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 4202976.51186,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -27755,7 +28999,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:51:21.935Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -27791,6 +29035,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 4195236.45324,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -27881,7 +29134,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:51:28.950Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -27917,6 +29170,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 4201793.11878,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -28007,7 +29269,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:51:35.964Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -28043,6 +29305,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 4206822.858,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -28261,7 +29532,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:52:03.988Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -28297,6 +29568,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 4078336.92725,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -28387,7 +29667,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:52:11.003Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -28423,6 +29703,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 4089597.248,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -28513,7 +29802,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:52:18.014Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -28549,6 +29838,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 4084025,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -28639,7 +29937,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:52:25.020Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -28675,6 +29973,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 4115435.94354,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -28885,7 +30192,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:52:39.030Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -28921,6 +30228,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 4044150,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -29279,7 +30595,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:53:14.052Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -29315,6 +30631,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 4996162,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -29405,7 +30730,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:53:21.057Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -29441,6 +30766,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 3837224.73806,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -29531,7 +30865,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:53:35.079Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -29567,6 +30901,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "XMR",
+    "side": "long",
+    "headlineUsd": 3790594.36795,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -29657,7 +31000,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:53:42.093Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -29693,6 +31036,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 3769998.12,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -29923,7 +31275,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:54:03.108Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -29959,6 +31311,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 3769325,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -30049,7 +31410,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:54:10.116Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -30085,6 +31446,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "NEAR",
+    "side": "long",
+    "headlineUsd": 3799638.06936,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -30175,7 +31545,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:54:17.115Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -30211,6 +31581,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ZEC",
+    "side": "long",
+    "headlineUsd": 3718500,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -30301,7 +31680,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:54:24.115Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -30337,6 +31716,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 3688080.384,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -30427,7 +31815,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:54:31.120Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -30463,6 +31851,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 3672086.65238,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -30553,7 +31950,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:54:38.120Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -30589,6 +31986,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 3688200,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -30679,7 +32085,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:54:45.132Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -30715,6 +32121,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 3647873.714465,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -30805,7 +32220,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:54:52.147Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -30841,6 +32256,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "NEAR",
+    "side": "long",
+    "headlineUsd": 3714882.24272,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -31206,7 +32630,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:55:13.168Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -31242,6 +32666,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 3576017.94387,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -31584,7 +33017,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:55:41.209Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -31620,6 +33053,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 3508019.4591,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -31710,7 +33152,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:55:55.216Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -31746,6 +33188,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 3484958.7564,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -31836,7 +33287,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:56:02.232Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -31872,6 +33323,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "AERO",
+    "side": "long",
+    "headlineUsd": 3518478.6,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -32082,7 +33542,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:56:16.258Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -32118,6 +33578,21 @@
       "source": "Hyperliquid"
      }
     ]
+   },
+   "breakdown": {
+    "applies": true,
+    "coin": "ZEC",
+    "side": "short",
+    "headlineUsd": 3461681.041,
+    "segments": [
+     {
+      "kind": "residual",
+      "usd": 3461681.041,
+      "share": 1
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -32208,7 +33683,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:56:23.272Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -32244,6 +33719,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 3456615.33052,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -32334,7 +33818,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:56:30.274Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -32370,6 +33854,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 3363735.63209,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -32591,7 +34084,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:56:52.454Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -32627,6 +34120,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 3235120,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -32717,7 +34219,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:56:59.840Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -32753,6 +34255,15 @@
       "source": "Nansen"
      }
     ]
+   },
+   "breakdown": {
+    "applies": false,
+    "coin": "BTC",
+    "side": "long",
+    "headlineUsd": 3235640,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
    }
   },
   {
@@ -32828,7 +34339,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:18:29.100Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "2,722 resting orders quote both sides of 120 markets; 2,000+ fills over 0.3 hours, 47% of them buys, 80% as maker.",
    "evidence": [
@@ -32894,7 +34405,27 @@
     ]
    },
    "nansenCalls": 2,
-   "snapshotId": "2b2e7wqput6yt"
+   "snapshotId": "2b2e7wqput6yt",
+   "breakdown": {
+    "applies": true,
+    "coin": "ETH",
+    "side": "short",
+    "headlineUsd": 81535301.11431,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 1695680.9626021038,
+      "share": 0.020796893363094485
+     },
+     {
+      "kind": "residual",
+      "usd": 79839620.15170789,
+      "share": 0.9792031066369055
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0xf02d16a272a842f8bac1d9a9e773aba1933454c6",
@@ -32968,7 +34499,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:18:32.271Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "The $42.7M HYPE short is 97% covered by $41.3M of spot HYPE held by this address on Nansen-supported chains.",
    "evidence": [
@@ -33034,7 +34565,27 @@
     ]
    },
    "nansenCalls": 3,
-   "snapshotId": "1ny4ncx4j6myd"
+   "snapshotId": "1ny4ncx4j6myd",
+   "breakdown": {
+    "applies": true,
+    "coin": "HYPE",
+    "side": "short",
+    "headlineUsd": 42741990.400494,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 41294464.60842303,
+      "share": 0.9661334023402373
+     },
+     {
+      "kind": "residual",
+      "usd": 1447525.79207097,
+      "share": 0.0338665976597627
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0xf517639a8872e756ac98d3c65507d2ebc25cc032",
@@ -33110,7 +34661,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:18:36.807Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "23 open positions net out to 18% of gross exposure; 516 resting orders quote both sides of 5 markets; 1,677 fills over 19.0 hours, 36% of them buys, 79% as maker.",
    "evidence": [
@@ -33176,7 +34727,16 @@
     ]
    },
    "nansenCalls": 2,
-   "snapshotId": "0g3k3s4caru82"
+   "snapshotId": "0g3k3s4caru82",
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 18436188.94431,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0x091159a8106b077c13e89bc09701117e8b5f129a",
@@ -33261,7 +34821,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:18:40.305Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": true,
    "summary": "Not a book, not hedged, and not a clean bet: 24 positions, net 47% of gross, largest position 46% of exposure.",
    "evidence": [
@@ -33341,7 +34901,22 @@
     ]
    },
    "nansenCalls": 6,
-   "snapshotId": "2ui4uw0akafm9"
+   "snapshotId": "2ui4uw0akafm9",
+   "breakdown": {
+    "applies": true,
+    "coin": "xyz:SP500",
+    "side": "short",
+    "headlineUsd": 15954897.672,
+    "segments": [
+     {
+      "kind": "residual",
+      "usd": 15954897.672,
+      "share": 1
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0x6859da14835424957a1e6b397d8026b1d9ff7e1e",
@@ -33426,7 +35001,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:18:46.721Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "Not a book, not hedged, and not a clean bet: 22 positions, largest position 40% of exposure, two-sided quotes in 4 markets.",
    "evidence": [
@@ -33492,7 +35067,32 @@
     ]
    },
    "nansenCalls": 6,
-   "snapshotId": "2mmagjzoauo02"
+   "snapshotId": "2mmagjzoauo02",
+   "breakdown": {
+    "applies": true,
+    "coin": "BTC",
+    "side": "short",
+    "headlineUsd": 7765931.55399,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 521.0341189524,
+      "share": 0.00006709228832756088
+     },
+     {
+      "kind": "unverified",
+      "usd": 86.63207731481295,
+      "share": 0.000011155400573972725
+     },
+     {
+      "kind": "residual",
+      "usd": 7765323.887793733,
+      "share": 0.9999217523110985
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0x023a3d058020fb76cca98f01b3c48c8938a22355",
@@ -33583,7 +35183,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:18:53.540Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "2,000+ fills over 0.5 hours, 57% buys and 73% as maker, 16% of them in ETH. That is a busy account, but nothing here shows the $10.2M ETH short is inventory rather than a position.",
    "evidence": [
@@ -33649,7 +35249,36 @@
     ]
    },
    "nansenCalls": 7,
-   "snapshotId": "3mwdp3gw93zft"
+   "snapshotId": "3mwdp3gw93zft",
+   "breakdown": {
+    "applies": true,
+    "coin": "ETH",
+    "side": "short",
+    "headlineUsd": 10225422.87771,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 180335.42036766722,
+      "share": 0.017635986552768722
+     },
+     {
+      "kind": "unverified",
+      "usd": 3.0492e-14,
+      "share": 2.9819793630704818e-21
+     },
+     {
+      "kind": "residual",
+      "usd": 10045087.457342332,
+      "share": 0.9823640134472312
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": {
+     "usd": 67409848.85375187,
+     "wallets": 1,
+     "ownership": "unverified"
+    }
+   }
   },
   {
    "address": "0xbcd420d13362532756c968f663f96ba95e240dd2",
@@ -33723,7 +35352,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:18:58.813Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "Not a book, not hedged, and not a clean bet: 29 positions, net 37% of gross, largest position 11% of exposure.",
    "evidence": [
@@ -33789,7 +35418,16 @@
     ]
    },
    "nansenCalls": 2,
-   "snapshotId": "0blm2ctu8jtgy"
+   "snapshotId": "0blm2ctu8jtgy",
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 6119090.26208,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0x8c830d21e41ad688dbf1727ae4425573849daf41",
@@ -33863,7 +35501,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:02.475Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "The $5.0M HYPE short is 100% covered by $5.0M of spot HYPE held by this address on Nansen-supported chains.",
    "evidence": [
@@ -33929,7 +35567,27 @@
     ]
    },
    "nansenCalls": 3,
-   "snapshotId": "070mdl1lurxwg"
+   "snapshotId": "070mdl1lurxwg",
+   "breakdown": {
+    "applies": true,
+    "coin": "HYPE",
+    "side": "short",
+    "headlineUsd": 5012266.9825,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 5007642.274555352,
+      "share": 0.9990773221057866
+     },
+     {
+      "kind": "residual",
+      "usd": 4624.70794464834,
+      "share": 0.0009226778942133776
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0x0facac3bd128fe6d799898a059d3634b877c7a0a",
@@ -34014,7 +35672,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:06.656Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": true,
    "summary": "34 open positions net out to 28% of gross exposure, which is the shape of a book - but there is no two-sided quoting behind it, so whether the $4.5M BTC short is inventory or a position of its own is not established.",
    "evidence": [
@@ -34088,7 +35746,27 @@
     ]
    },
    "nansenCalls": 6,
-   "snapshotId": "34vpa2dva8fp4"
+   "snapshotId": "34vpa2dva8fp4",
+   "breakdown": {
+    "applies": true,
+    "coin": "BTC",
+    "side": "short",
+    "headlineUsd": 4532228.33679,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 29.619107041618513,
+      "share": 0.000006535219508070188
+     },
+     {
+      "kind": "residual",
+      "usd": 4532198.717682959,
+      "share": 0.999993464780492
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0x6e25e5d971bda9799f7a5242f4720b5b3f939200",
@@ -34162,7 +35840,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:11.775Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "The $4.4M HYPE short is 100% covered by $4.4M of spot HYPE held by this address on Nansen-supported chains.",
    "evidence": [
@@ -34228,7 +35906,27 @@
     ]
    },
    "nansenCalls": 3,
-   "snapshotId": "1molrnj2us0rh"
+   "snapshotId": "1molrnj2us0rh",
+   "breakdown": {
+    "applies": true,
+    "coin": "HYPE",
+    "side": "short",
+    "headlineUsd": 4382201.2934,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 4377311.007719999,
+      "share": 0.9988840572688056
+     },
+     {
+      "kind": "residual",
+      "usd": 4890.28568000067,
+      "share": 0.0011159427311944552
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0x31dea2516beee92135b96f464eeec3cf292a13f2",
@@ -34303,7 +36001,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:21.188Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "225 resting orders quote both sides of 14 markets; 2,000+ fills over 1.0 hours, 55% of them buys, 61% as maker.",
    "evidence": [
@@ -34369,7 +36067,27 @@
     ]
    },
    "nansenCalls": 2,
-   "snapshotId": "30ruql32gcpsp"
+   "snapshotId": "30ruql32gcpsp",
+   "breakdown": {
+    "applies": true,
+    "coin": "BTC",
+    "side": "short",
+    "headlineUsd": 11605179.29503,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 1227289.4751255244,
+      "share": 0.10575359879628227
+     },
+     {
+      "kind": "residual",
+      "usd": 10377889.819904475,
+      "share": 0.8942464012037177
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0x123dbca6a27005a3c4ce10cb66ee8ece8fc13bff",
@@ -34460,7 +36178,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:24.467Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "90 open positions net out to 17% of gross exposure, which is the shape of a book - but there is no two-sided quoting behind it, so whether the $4.0M NEAR short is inventory or a position of its own is not established.",
    "evidence": [
@@ -34534,7 +36252,22 @@
     ]
    },
    "nansenCalls": 7,
-   "snapshotId": "147farhy3qzkj"
+   "snapshotId": "147farhy3qzkj",
+   "breakdown": {
+    "applies": true,
+    "coin": "NEAR",
+    "side": "short",
+    "headlineUsd": 3972545.12616,
+    "segments": [
+     {
+      "kind": "residual",
+      "usd": 3972545.12616,
+      "share": 1
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0x5a72a5f89b44473a33136a7c3253c519c474eec4",
@@ -34608,7 +36341,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:29.643Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "The $3.1M HYPE short is 100% covered by $3.1M of spot HYPE held by this address on Nansen-supported chains.",
    "evidence": [
@@ -34674,7 +36407,27 @@
     ]
    },
    "nansenCalls": 3,
-   "snapshotId": "0chuev3wze8s3"
+   "snapshotId": "0chuev3wze8s3",
+   "breakdown": {
+    "applies": true,
+    "coin": "HYPE",
+    "side": "short",
+    "headlineUsd": 3135114.2448,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 3131178.8606644054,
+      "share": 0.9987447397994755
+     },
+     {
+      "kind": "residual",
+      "usd": 3935.3841355945915,
+      "share": 0.001255260200524413
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0x89720b1831fd8457ea9026f5ffb476ed6d35e6bd",
@@ -34748,7 +36501,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:33.573Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "The $4.3M HYPE short is 100% covered by $4.3M of spot HYPE held by this address on Nansen-supported chains.",
    "evidence": [
@@ -34814,7 +36567,27 @@
     ]
    },
    "nansenCalls": 3,
-   "snapshotId": "14kc237o8191y"
+   "snapshotId": "14kc237o8191y",
+   "breakdown": {
+    "applies": true,
+    "coin": "HYPE",
+    "side": "short",
+    "headlineUsd": 4318598.46348,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 4313134.228386785,
+      "share": 0.9987347202710732
+     },
+     {
+      "kind": "residual",
+      "usd": 5464.23509321548,
+      "share": 0.0012652797289267562
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0x6891ed9ee6a9d0649ffac2bcee814e6899a0e075",
@@ -34888,7 +36661,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:37.430Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "The $3.9M HYPE short is 100% covered by $3.9M of spot HYPE held by this address on Nansen-supported chains.",
    "evidence": [
@@ -34954,7 +36727,32 @@
     ]
    },
    "nansenCalls": 3,
-   "snapshotId": "3dhiext0bsn12"
+   "snapshotId": "3dhiext0bsn12",
+   "breakdown": {
+    "applies": true,
+    "coin": "HYPE",
+    "side": "short",
+    "headlineUsd": 3893730.25,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 3889081.9004918355,
+      "share": 0.998806196318257
+     },
+     {
+      "kind": "unverified",
+      "usd": 93.12698516108519,
+      "share": 0.00002391716405138368
+     },
+     {
+      "kind": "residual",
+      "usd": 4555.2225230033655,
+      "share": 0.0011698865176917085
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0x28cee4465f95720cb8464d56faea656751119040",
@@ -35028,7 +36826,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:41.212Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "The $3.8M HYPE short is 100% covered by $3.8M of spot HYPE held by this address on Nansen-supported chains.",
    "evidence": [
@@ -35094,7 +36892,32 @@
     ]
    },
    "nansenCalls": 3,
-   "snapshotId": "2882iljqywqt7"
+   "snapshotId": "2882iljqywqt7",
+   "breakdown": {
+    "applies": true,
+    "coin": "HYPE",
+    "side": "short",
+    "headlineUsd": 3814515.562,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 3810520.5118357637,
+      "share": 0.9989526716828646
+     },
+     {
+      "kind": "unverified",
+      "usd": 0.5405912012031847,
+      "share": 1.4171949030396556e-7
+     },
+     {
+      "kind": "residual",
+      "usd": 3994.509573035018,
+      "share": 0.0010471865976450874
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0x5f94a51948d2376ad34a6fadfa2544e651b74b96",
@@ -35168,7 +36991,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:46.217Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "16 positions net out to 13% of gross exposure, but the long and short legs are in different assets: a dollar balance across different assets is a portfolio, not a hedge.",
    "evidence": [
@@ -35234,7 +37057,16 @@
     ]
    },
    "nansenCalls": 2,
-   "snapshotId": "1bvh2dnenrhv5"
+   "snapshotId": "1bvh2dnenrhv5",
+   "breakdown": {
+    "applies": false,
+    "coin": "LIT",
+    "side": "long",
+    "headlineUsd": 3430880.4633,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0xac26cf5f3c46b5e102048c65b977d2551b72a9c7",
@@ -35308,7 +37140,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:50.093Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "38 open positions net out to 21% of gross exposure, which is the shape of a book - but there is no two-sided quoting behind it, so whether the $3.6M HYPE long is inventory or a position of its own is not established.",
    "evidence": [
@@ -35374,7 +37206,16 @@
     ]
    },
    "nansenCalls": 2,
-   "snapshotId": "1i22airob01v2"
+   "snapshotId": "1i22airob01v2",
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 3552481.13374,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0x51f63885534cb494f4592a0311551f369bff2b39",
@@ -35443,7 +37284,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:53.875Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "Not a book, not hedged, and not a clean bet: 49 positions, net 40% of gross, largest position 15% of exposure.",
    "evidence": [
@@ -35512,7 +37353,16 @@
     ]
    },
    "nansenCalls": 2,
-   "snapshotId": "36lqep3sbcxk2"
+   "snapshotId": "36lqep3sbcxk2",
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 2266622.14682,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
@@ -35603,7 +37453,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:20:15.648Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "Less than 1% of the $216.7M ETH short is covered by ETH at this address. 2 wallets that funded it hold $464.7M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
@@ -35669,7 +37519,31 @@
     ]
    },
    "nansenCalls": 7,
-   "snapshotId": "07dr4tcn26rwx"
+   "snapshotId": "07dr4tcn26rwx",
+   "breakdown": {
+    "applies": true,
+    "coin": "ETH",
+    "side": "short",
+    "headlineUsd": 216696194.98675,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 609.2177363348687,
+      "share": 0.0000028113910185276657
+     },
+     {
+      "kind": "residual",
+      "usd": 216695585.76901367,
+      "share": 0.9999971886089815
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": {
+     "usd": 464654719.48756886,
+     "wallets": 2,
+     "ownership": "unverified"
+    }
+   }
   },
   {
    "address": "0xbf732ea04197942783e34730ed6e0f6099575d58",
@@ -35743,7 +37617,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:20:22.944Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "87% of the exposure is one $34.9M ETH long. Spot cannot offset a long, and debts or other derivatives are not read here.",
    "evidence": [
@@ -35809,7 +37683,16 @@
     ]
    },
    "nansenCalls": 2,
-   "snapshotId": "19a064q5jkl4a"
+   "snapshotId": "19a064q5jkl4a",
+   "breakdown": {
+    "applies": false,
+    "coin": "ETH",
+    "side": "long",
+    "headlineUsd": 34922125,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null
+   }
   },
   {
    "address": "0x5b5d51203a0f9079f8aeb098a6523a13f298c060",
@@ -35900,7 +37783,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:20:26.302Z",
-   "interpretedAt": "2026-09-21T20:20:45.958Z",
+   "interpretedAt": "2026-09-21T20:23:39.750Z",
    "degraded": false,
    "summary": "Not a book, not hedged, and not a clean bet: 15 positions, largest position 38% of exposure.",
    "evidence": [
@@ -35974,7 +37857,31 @@
     ]
    },
    "nansenCalls": 7,
-   "snapshotId": "0y4xhntgcjxhf"
+   "snapshotId": "0y4xhntgcjxhf",
+   "breakdown": {
+    "applies": true,
+    "coin": "ETH",
+    "side": "short",
+    "headlineUsd": 289592502.7798,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 3280.2499949539947,
+      "share": 0.00001132712333180886
+     },
+     {
+      "kind": "residual",
+      "usd": 289589222.52980506,
+      "share": 0.9999886728766683
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": {
+     "usd": 5799261.485137547,
+     "wallets": 1,
+     "ownership": "unverified"
+    }
+   }
   }
  ]
 }

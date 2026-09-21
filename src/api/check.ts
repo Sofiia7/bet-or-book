@@ -44,6 +44,7 @@ import {
 } from '../engine/verdict';
 import { explain, formatUsd, type EvidenceItem } from '../engine/evidence';
 import { shareCard, type ShareCard } from '../engine/share';
+import { exposureBreakdown, type ExposureBreakdown } from '../engine/breakdown';
 import { OBSERVATION_SCHEMA_VERSION, ASSET_REGISTRY_VERSION } from '../engine/observation';
 import type { Position, SpotHolding, LinkedWallet, PnlSummary } from '../types';
 
@@ -129,6 +130,9 @@ export interface CheckResult {
   /** What this card says once it leaves the page as a picture. Built
    * server-side so the page, the image and the API cannot drift apart. */
   share?: ShareCard;
+  /** The position split into what stands against it, for the diagram. The
+   * arithmetic is done here so the drawing has nothing to decide. */
+  breakdown?: ExposureBreakdown;
   /** Plain-language notes on anything that could not be read. */
   coverage: string[];
   /** The same notes, each saying whether it cost the answer something. A
@@ -427,6 +431,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     ...measured,
     summary,
     evidence,
+    breakdown: exposureBreakdown(positionFeatures, hedgeFeatures, linkedHedge),
     coverage,
     coverageNotes,
     checkedAt: new Date(now).toISOString(),

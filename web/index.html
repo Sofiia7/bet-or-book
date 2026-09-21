@@ -65,6 +65,16 @@
   /* Five equal tiles made the number that decided the verdict compete with
      Net/Gross for attention, and on a wide screen the fifth became a narrow
      column of wrapped text. The decisive one is given its own row. */
+  /* The one distinction the whole card turns on - what this address holds
+     against the position, versus what a wallet that merely funded it holds -
+     is a shape, not a row of percentages. Solid is counted; dashed is
+     somebody else's. */
+  .breakdown { margin: 16px 0 4px; padding: 0; }
+  .breakdown figcaption { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .breakdown svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .breakdown .seg-label { font-size: 12px; fill: var(--muted); }
+  .breakdown .seg-value { font-size: 13px; font-weight: 600; fill: var(--fg); }
+  .breakdown .bar-title { font-size: 13px; font-weight: 600; fill: var(--fg); }
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 14px 0; }
   .stat.decisive { grid-column: 1 / -1; background: var(--panel); border-left: 3px solid var(--fg); }
   .stat.decisive .stat-value { font-size: 22px; }
@@ -118,6 +128,10 @@
   <p style="margin: 10px 0 0;"><span class="badge" id="badge"></span></p>
   <p class="headline" id="headline"></p>
   <p class="summary" id="summary"></p>
+  <figure class="breakdown" id="breakdown" hidden>
+    <figcaption id="breakdown-caption"></figcaption>
+    <div id="breakdown-svg"></div>
+  </figure>
   <div class="stats" id="stats"></div>
   <div class="box" id="funders" hidden>
     <p><strong>Wallets that funded this account</strong> - they hold the matching asset, which is not the same as this account holding it</p>
