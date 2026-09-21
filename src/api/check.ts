@@ -40,8 +40,10 @@ import {
   DEFAULT_THRESHOLDS,
   CLASSIFIER_VERSION,
   type VerdictResult,
+  type SourceCoverage,
 } from '../engine/verdict';
 import { explain, formatUsd, type EvidenceItem } from '../engine/evidence';
+import { OBSERVATION_SCHEMA_VERSION, ASSET_REGISTRY_VERSION } from '../engine/observation';
 import type { Position, SpotHolding, LinkedWallet, PnlSummary } from '../types';
 
 const TRADES_WINDOW_HOURS = 24;
@@ -76,6 +78,12 @@ export interface CheckResult {
   /** How completely the hedge was looked for, so that a gap in the reading
    * is never served as a finding about the account. */
   hedgeCoverage: HedgeCoverage;
+  /** How completely the resting orders were read. `partial` when a HIP-3
+   * dex would not answer: the account may be quoting where nobody looked. */
+  ordersCoverage: SourceCoverage;
+  /** How completely the positions were read. Hyperliquid's own clearinghouse
+   * answers for the main perp dex, so a fallback reading is `partial`. */
+  positionsCoverage: SourceCoverage;
   linkedHedge: LinkedHedgeFeatures | null;
   trades: TradeFeatures;
   pnl: PnlSummary | null;
@@ -86,6 +94,23 @@ export interface CheckResult {
   positionsAsOf: string | null;
   /** The rules that read all of this. See CLASSIFIER_VERSION. */
   classifierVersion: string;
+  /** The shape of the observation itself, as opposed to the reading of it.
+   * A stored entry from an older schema is missing inputs the current rules
+   * need, and re-running those rules over it would be a claim, not a check.
+   * See src/engine/observation.ts. */
+  observationSchemaVersion: number;
+  /** The contract allowlist that decided which holdings counted. */
+  assetRegistryVersion: number;
+  /** When the sources say the numbers were measured, and when the rules were
+   * run over them. A re-explain moves the second and never the first. */
+  observedAt: string;
+  interpretedAt: string;
+  /** Set on an entry kept from an older scan whose observation does not
+   * carry what the current rules read. Its verdict is the one those older
+   * rules gave it, and is shown as history rather than as a current answer. */
+  historical?: { reason: string; missing: string[] };
+  /** The reading this one replaced, where a re-explain replaced one. */
+  previousInterpretation?: { verdict: string; classifierVersion: string; interpretedAt: string };
   /** True when a source that feeds a rule was missing or cut short, so the
    * answer is worth less and should not be cached for as long. */
   degraded: boolean;
@@ -188,12 +213,20 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     }
   } else {
     const why = opts.nansenOffReason ? ` (${opts.nansenOffReason})` : '';
-    coverage.push(`Nansen not used${why}: main-dex positions only, no other chains, no linked wallets`);
+    // A cheaper check is still a check with sources missing from it, and the
+    // answer it produces is not worth the ten-minute cache of a whole one.
+    note(`Nansen not used${why}: main-dex positions only, no other chains, no linked wallets`, true);
   }
+  // Nansen reports every HIP-3 dex; Hyperliquid's own clearinghouse answers
+  // for the main perp dex only. A fallback reading is therefore part of the
+  // portfolio, not the portfolio, and no rule may treat it as the whole.
+  let positionsCoverage: SourceCoverage = 'complete';
   if (positions === null) {
     const state = await getClearinghouseState(address);
     positions = normalizePositions(state);
     measuredAt = Number.isFinite(state.time) && state.time > 0 ? state.time : null;
+    positionsCoverage = 'partial';
+    coverage.push('Positions read from Hyperliquid alone: a position on a HIP-3 dex would not appear here');
   }
 
   // A timestamp from the source is the time the numbers describe; checkedAt
@@ -201,7 +234,10 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
   // hour-old reading gets served as the current state of an account.
   if (measuredAt !== null && now - measuredAt >= STALE_DATA_MS) {
     const minutes = Math.round((now - measuredAt) / 60_000);
-    coverage.push(`Positions were measured ${minutes} minutes before this check, not at the moment of it`);
+    // Not a caveat but a defect in the reading: a verdict about where an
+    // account stands now, computed from where it stood an hour ago, is worth
+    // less and must not be cached for as long as a current one.
+    note(`Positions were measured ${minutes} minutes before this check, not at the moment of it`, true);
   }
 
   // Mark prices, so distance to liquidation is measured from where the price
@@ -221,15 +257,23 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
   // account quoting both sides of a HIP-3 market reads as quoting nothing -
   // which is one of the conditions for calling a position a clean bet.
   const resting = normalizeOrders(rawOrders);
+  let ordersCoverage: SourceCoverage = 'complete';
   const hip3Dexes = [...new Set(positions.map((p) => dexOf(p.coin)).filter((d): d is string => d !== null))];
   if (hip3Dexes.length > 0) {
     const perDex = await Promise.allSettled(hip3Dexes.map((dex) => getOpenOrders(address, dex)));
     perDex.forEach((r, i) => {
-      if (r.status === 'fulfilled') resting.push(...normalizeOrders(r.value));
-      else note(`Resting orders on the ${hip3Dexes[i]} dex could not be read`, true);
+      if (r.status === 'fulfilled') {
+        resting.push(...normalizeOrders(r.value));
+      } else {
+        // "It quotes nothing" is one of the conditions for calling a
+        // position a clean bet, and a dex that would not answer has not
+        // been shown to be quiet.
+        ordersCoverage = 'partial';
+        note(`Resting orders on the ${hip3Dexes[i]} dex could not be read`, true);
+      }
     });
   }
-  const orderFeatures = computeOrderFeatures(resting);
+  const orderFeatures = computeOrderFeatures(resting, positionFeatures.headlineCoin);
   const tradeFeatures = computeTradeFeatures(normalizeTrades(rawFills), TRADES_WINDOW_HOURS, positionFeatures.headlineCoin);
   const tradeSignal = {
     tradesPerDay: tradeFeatures.tradesPerDay,
@@ -315,6 +359,8 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     trades: tradeSignal,
     linkedHedge: linkedHedge ? { linkedHedgeRatio: linkedHedge.linkedHedgeRatio } : undefined,
     hedgeCoverage,
+    ordersCoverage,
+    positionsCoverage,
   });
 
   const measured = {
@@ -324,6 +370,8 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     hedge: hedgeFeatures,
     hedgeScope,
     hedgeCoverage,
+    ordersCoverage,
+    positionsCoverage,
     linkedHedge,
     trades: tradeFeatures,
     pnl,
@@ -331,6 +379,10 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     source,
     positionsAsOf: measuredAt === null ? null : new Date(measuredAt).toISOString(),
     classifierVersion: CLASSIFIER_VERSION,
+    observationSchemaVersion: OBSERVATION_SCHEMA_VERSION,
+    assetRegistryVersion: ASSET_REGISTRY_VERSION,
+    observedAt: measuredAt === null ? new Date(now).toISOString() : new Date(measuredAt).toISOString(),
+    interpretedAt: new Date(now).toISOString(),
     degraded,
   };
   const { summary, evidence } = explain(measured);

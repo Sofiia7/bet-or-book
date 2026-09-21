@@ -1,6 +1,7 @@
 // Decides whether a spot holding counts as the same underlying asset as a
 // Hyperliquid perp position. See docs/specs/2026-09-17-bet-or-book-design.md
 // section 3.
+import type { HoldingSource } from '../types';
 
 const SPOT_ALIASES: Record<string, string[]> = {
   BTC: ['UBTC', 'WBTC', 'CBBTC', 'TBTC', 'BTCB', 'LBTC', 'AETHWBTC', 'AARBWBTC'],
@@ -37,8 +38,15 @@ interface KnownToken {
   lending?: true;
 }
 
+/** The placeholder Nansen puts where a chain's own coin has no contract. It
+ * is the same string on every chain, and leaving it off one of them was not
+ * a missing wrapper but a missing ETH: a $1M short against $1M of Ethereum
+ * ETH came out as an uncovered bet (audit A01, 21.09). */
+const NATIVE_PLACEHOLDER = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+
 const KNOWN_CONTRACTS: Record<string, Record<string, KnownToken>> = {
   ethereum: {
+    [NATIVE_PLACEHOLDER]: { underlying: 'ETH' },
     // observed, Abraxas funder, 18.09: Aave v3 aEthWETH, $117.5M of the
     // $405M that used to be reported as that account's ETH hedge.
     '0x4d5f47fa6a74757f35c14fd3a6ef8e3c9bc514e8': { underlying: 'ETH', lending: true },
@@ -55,7 +63,7 @@ const KNOWN_CONTRACTS: Record<string, Record<string, KnownToken>> = {
   arbitrum: {
     // observed, Abraxas funder, 18.09: the native-asset placeholder Nansen
     // uses for ETH itself.
-    '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee': { underlying: 'ETH' },
+    [NATIVE_PLACEHOLDER]: { underlying: 'ETH' },
     '0x82af49447d8a07e3bd95bd0d56f35241523fbab1': { underlying: 'ETH' }, // WETH
     '0x5979d7b546e38e414f7e9822514be443a4800529': { underlying: 'ETH' }, // wstETH
     '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f': { underlying: 'BTC' }, // WBTC
@@ -73,42 +81,77 @@ export function isLendingReceipt(chain: string | undefined, tokenAddress: string
   return known(chain, tokenAddress)?.lending === true;
 }
 
+/** True when a ticker is one this tool would read as `perpCoin`. A name is
+ * only ever evidence inside a namespace nobody else can mint into. */
+function nameMatches(spotCoin: string, perp: string): boolean {
+  const spot = spotCoin.toUpperCase();
+  const aliases = SPOT_ALIASES[perp];
+  return aliases ? spot === perp || aliases.includes(spot) : spot === perp;
+}
+
+/** True when the registry knows this chain at all. `chain: all` asks Nansen
+ * for every chain, and the registry covers two of them, so "no match here"
+ * is often a gap in this list rather than a fact about the account. */
+const chainCovered = (chain: string | undefined): boolean =>
+  chain !== undefined && KNOWN_CONTRACTS[chain.toLowerCase()] !== undefined;
+
+/** Where a holding stands relative to the perp position being asked about.
+ *
+ * `match` is the only state that may be added up as coverage. The three
+ * that follow it are gaps of different shapes, and naming which one it is
+ * beats folding them all into a zero: the reader can tell a token this tool
+ * refuses to trust from a chain it never learned and from a balance nobody
+ * could put a price on. */
+export type AssetMatch = 'match' | 'unknown-contract' | 'unsupported-chain' | 'unpriced' | 'unrelated';
+
+export interface HoldingLike {
+  coin: string;
+  source: HoldingSource;
+  priced?: boolean;
+  chain?: string;
+  tokenAddress?: string;
+}
+
+export function classifyHolding(holding: HoldingLike, perpCoin: string): AssetMatch {
+  const perp = perpCoin.toUpperCase();
+  if (!nameMatches(holding.coin, perp) && !spotHedgesPerp(holding.coin, perp, holding)) return 'unrelated';
+  if (spotHedgesPerp(holding.coin, perp, holding)) {
+    return holding.priced === false ? 'unpriced' : 'match';
+  }
+  if (holding.source === 'hyperliquid-spot') return holding.priced === false ? 'unpriced' : 'unrelated';
+  return chainCovered(holding.chain) ? 'unknown-contract' : 'unsupported-chain';
+}
+
 /**
  * True when a spot balance in `spotCoin` should count toward the hedge leg
  * of a perp position in `perpCoin`.
  *
- * A holding that carries a contract address is judged by that address: it
- * has to be one of the contracts above, on the chain it claims. A holding
- * with no address is a Hyperliquid spot balance, whose ticker comes from
- * Hyperliquid's own universe and is not something a stranger can mint, so
- * there the alias list still decides.
+ * An on-chain holding is judged by its contract address: it has to be one of
+ * the contracts above, on the chain it claims, and a row that arrives without
+ * an address is simply not identified. A Hyperliquid spot balance carries no
+ * address by design - its ticker comes from Hyperliquid's own universe, which
+ * is not something a stranger can mint into - so there the alias list decides.
+ *
+ * `source` is what tells the two apart. It used to be inferred from whether
+ * an address was present, which meant a malformed on-chain row was read as a
+ * Hyperliquid ticker and counted by name.
  */
 export function spotHedgesPerp(
   spotCoin: string,
   perpCoin: string,
-  on?: { chain?: string; tokenAddress?: string },
+  on?: { source?: HoldingSource; chain?: string; tokenAddress?: string },
 ): boolean {
   const perp = perpCoin.toUpperCase();
-  if (on?.tokenAddress !== undefined) {
-    return known(on.chain, on.tokenAddress)?.underlying === perp;
+  const onchain = on?.source === 'onchain' || (on?.source === undefined && on?.tokenAddress !== undefined);
+  if (onchain) {
+    return known(on!.chain, on!.tokenAddress)?.underlying === perp;
   }
-
-  const spot = spotCoin.toUpperCase();
-  const aliases = SPOT_ALIASES[perp];
-  if (aliases) {
-    return spot === perp || aliases.includes(spot);
-  }
-  return spot === perp;
+  return nameMatches(spotCoin, perp);
 }
 
-/** True when a holding claims to be the perp's asset by name but its
- * contract is not one this tool knows, so it was left out of the hedge. */
-export function looksLikeButUnverified(
-  spotCoin: string,
-  perpCoin: string,
-  on?: { chain?: string; tokenAddress?: string },
-): boolean {
-  if (on?.tokenAddress === undefined) return false;
-  if (spotHedgesPerp(spotCoin, perpCoin, on)) return false;
-  return spotHedgesPerp(spotCoin, perpCoin);
+/** True when a holding claims to be the perp's asset by name but this tool
+ * could not establish that it is, so it was left out of the hedge. */
+export function looksLikeButUnverified(holding: HoldingLike, perpCoin: string): boolean {
+  const state = classifyHolding(holding, perpCoin);
+  return state === 'unknown-contract' || state === 'unsupported-chain';
 }

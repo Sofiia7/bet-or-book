@@ -17,9 +17,28 @@ export interface RestingOrder {
   sizeUsd: number;
 }
 
+/** Which namespace a holding's ticker belongs to. Read from the endpoint
+ * that produced the row rather than guessed from whether a contract address
+ * happens to be present: a malformed on-chain row with no address used to
+ * fall through to "this must be Hyperliquid spot" and be counted by name. */
+export type HoldingSource = 'hyperliquid-spot' | 'onchain';
+
 export interface SpotHolding {
   coin: string;
+  /** USD value, or 0 when no price was found - see `priced`. */
   valueUsd: number;
+  source: HoldingSource;
+  /** False when the balance is real but no USD price could be put on it.
+   * That is an unmeasured holding, not an empty one, and the two must not
+   * both come out as zero. Absent means a price was established. */
+  priced?: boolean;
+  /** Units held, where the source reports them. Kept because an unpriced
+   * balance still has a size, and "how much" is the first thing anyone asks
+   * about one. */
+  amount?: number;
+  /** Hyperliquid's own token index. Spot names are not unique there, so the
+   * index, not the name, is what a price belongs to. */
+  tokenIndex?: number;
   /** Chain the holding lives on; absent for Hyperliquid's own spot balances. */
   chain?: string;
   /** Contract address, for on-chain balances. A ticker is a label anyone can

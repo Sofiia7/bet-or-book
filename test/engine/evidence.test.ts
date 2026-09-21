@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { explain, formatUsd, formatPct, type EvidenceInput } from '../../src/engine/evidence';
-import type { PositionFeatures } from '../../src/engine/features';
+import { EMPTY_HEDGE, EMPTY_ORDERS, type PositionFeatures } from '../../src/engine/features';
 
 function positions(overrides: Partial<PositionFeatures>): PositionFeatures {
   return {
@@ -23,8 +23,8 @@ function input(overrides: Partial<EvidenceInput>): EvidenceInput {
   return {
     verdict: { verdict: 'unknown', strength: null, reasons: [] },
     positions: positions({}),
-    orders: { restingOrders: 0, bidShare: 0.5, coinsBothSides: 0 },
-    hedge: { hedgeUsd: 0, hedgeRatio: 0, unverifiedUsd: 0, lendingUsd: 0 },
+    orders: { ...EMPTY_ORDERS, restingOrders: 0, bidShare: 0.5, coinsBothSides: 0 },
+    hedge: { ...EMPTY_HEDGE, hedgeUsd: 0, hedgeRatio: 0, unverifiedUsd: 0, lendingUsd: 0 },
     hedgeScope: 'all-chains',
     hedgeCoverage: 'complete',
     linkedHedge: null,
@@ -69,7 +69,7 @@ describe('explain', () => {
       input({
         verdict: { verdict: 'book', strength: 'strong', reasons: ['orders', 'trades'] },
         positions: positions({ nPositions: 134, netToGross: 0.8, headlineShare: 0.3 }),
-        orders: { restingOrders: 212, bidShare: 0.5, coinsBothSides: 31 },
+        orders: { ...EMPTY_ORDERS, restingOrders: 212, bidShare: 0.5, coinsBothSides: 31 },
         trades: {
           tradesPerDay: 2000, crossedShare: 0.24, buyShare: 0.53, sampleSize: 2000, cappedByApiLimit: true,
           notionalUsd: 180_000_000, spanHours: 23.6, headlineFills: 410, headlineShareOfFills: 0.205,
@@ -104,11 +104,11 @@ describe('explain', () => {
     const e = explain(
       input({
         verdict: { verdict: 'hedged', strength: null, reasons: ['hedge_leg'] },
-        hedge: { hedgeUsd: 60_000_000, hedgeRatio: 0.6, unverifiedUsd: 0, lendingUsd: 0 },
+        hedge: { ...EMPTY_HEDGE, hedgeUsd: 60_000_000, hedgeRatio: 0.6, unverifiedUsd: 0, lendingUsd: 0 },
       }),
     );
-    expect(e.summary).toBe('The $100.0M ETH short is 60% covered by spot ETH held by the same account across chains.');
-    expect(e.evidence).toContainEqual({ label: 'Hedge found', value: '60% (all chains)', source: 'Nansen' });
+    expect(e.summary).toBe('The $100.0M ETH short is 60% covered by $60.0M of spot ETH held by this address on Nansen-supported chains.');
+    expect(e.evidence).toContainEqual({ label: 'Hedge found', value: '60% (Nansen-supported chains)', source: 'Nansen' });
   });
 
   it('calls busy maker flow what it is, without deciding the position', () => {
@@ -144,11 +144,11 @@ describe('explain', () => {
       input({
         verdict: { verdict: 'unknown', strength: null, reasons: ['partial_offset'] },
         positions: positions({ headlineCoin: 'HYPE', headlineNotionalUsd: 7_200_000 }),
-        hedge: { hedgeUsd: 4_270_000, hedgeRatio: 0.593, unverifiedUsd: 0, lendingUsd: 0 },
+        hedge: { ...EMPTY_HEDGE, hedgeUsd: 4_270_000, hedgeRatio: 0.593, unverifiedUsd: 0, lendingUsd: 0 },
       }),
     );
     expect(e.summary).toBe(
-      'The $7.2M HYPE short is 59% covered by spot HYPE held by the same account across chains, ' +
+      'The $7.2M HYPE short is 59% covered by spot HYPE held by this address on Nansen-supported chains, ' +
         'which leaves $2.9M of it short.',
     );
   });
@@ -158,11 +158,11 @@ describe('explain', () => {
       input({
         verdict: { verdict: 'unknown', strength: null, reasons: ['over_covered'] },
         positions: positions({ headlineNotionalUsd: 15_400_000 }),
-        hedge: { hedgeUsd: 30_000_000, hedgeRatio: 1.948, unverifiedUsd: 0, lendingUsd: 0 },
+        hedge: { ...EMPTY_HEDGE, hedgeUsd: 30_000_000, hedgeRatio: 1.948, unverifiedUsd: 0, lendingUsd: 0 },
       }),
     );
     expect(e.summary).toBe(
-      'The $15.4M ETH short is more than covered: $30.0M of spot ETH held by the same account across chains ' +
+      'The $15.4M ETH short is more than covered: $30.0M of spot ETH held by this address on Nansen-supported chains ' +
         'leaves it net long $14.6M of ETH.',
     );
     expect(e.summary).not.toContain('neutral');
@@ -222,11 +222,11 @@ describe('explain', () => {
       }),
     );
     expect(e.summary).toBe(
-      'No ETH in this account offsets the $179.4M ETH short. 2 wallets that funded it hold $399.0M of ETH, ' +
+      'No ETH at this address offsets the $179.4M ETH short. 2 wallets that funded it hold $399.0M of ETH, ' +
         'but funding does not establish ownership, so it is not counted as a hedge.',
     );
     expect(e.evidence).toContainEqual({ label: 'Linked wallets', value: '$399.0M ETH in 2 wallets, owner unconfirmed', source: 'Nansen' });
-    expect(e.evidence).toContainEqual({ label: 'Hedge found', value: '0% (all chains)', source: 'Nansen' });
+    expect(e.evidence).toContainEqual({ label: 'Hedge found', value: '0% (Nansen-supported chains)', source: 'Nansen' });
   });
 
   it('explains a long bet', () => {
@@ -238,7 +238,7 @@ describe('explain', () => {
         pnl: { realizedPnlUsd: 7_700_000, winRate: 0.598, closedTrades: 80, windowDays: 30 },
       }),
     );
-    expect(e.summary).toBe('93% of the exposure is one $42.1M ZEC long, and nothing in this account offsets it.');
+    expect(e.summary).toBe('93% of the exposure is one $42.1M ZEC long. Spot cannot offset a long, and debts or other derivatives are not read here.');
     expect(e.evidence).toContainEqual({ label: 'Realized PnL, 30d', value: '$7.7M', source: 'Nansen' });
     expect(e.evidence.some((i) => i.label === 'Hedge found')).toBe(false);
   });
@@ -251,7 +251,7 @@ describe('explain', () => {
       }),
     );
     expect(e.summary).toBe(
-      '100% of the exposure is one $100.0M ETH short, and no ETH was found in this account on any chain.',
+      '100% of the exposure is one $100.0M ETH short, and no ETH was found at this address on Nansen-supported chains. Debts and other derivatives are not read here.',
     );
   });
 
@@ -259,7 +259,7 @@ describe('explain', () => {
     const e = explain(
       input({
         verdict: { verdict: 'looks_like_a_bet', strength: null, reasons: ['directional_concentration'] },
-        hedge: { hedgeUsd: 0, hedgeRatio: 0, unverifiedUsd: 0, lendingUsd: 0 },
+        hedge: { ...EMPTY_HEDGE, hedgeUsd: 0, hedgeRatio: 0, unverifiedUsd: 0, lendingUsd: 0 },
         linkedHedge: {
           linkedHedgeUsd: 800_000,
           linkedHedgeRatio: 0.008,
@@ -268,7 +268,7 @@ describe('explain', () => {
       }),
     );
     expect(e.summary).toBe(
-      '100% of the exposure is one $100.0M ETH short, and no ETH was found in this account on any chain.',
+      '100% of the exposure is one $100.0M ETH short, and no ETH was found at this address on Nansen-supported chains. Debts and other derivatives are not read here.',
     );
     expect(e.summary).not.toContain('funded');
   });
@@ -278,8 +278,8 @@ describe('explain', () => {
       input({
         verdict: { verdict: 'unknown', strength: null, reasons: ['signals disagree: not enough evidence for book, hedge, or bet'] },
         positions: positions({ nPositions: 8, netToGross: 0.6, headlineShare: 0.4 }),
-        orders: { restingOrders: 4, bidShare: 0.5, coinsBothSides: 2 },
-        hedge: { hedgeUsd: 20_000_000, hedgeRatio: 0.2, unverifiedUsd: 0, lendingUsd: 0 },
+        orders: { ...EMPTY_ORDERS, restingOrders: 4, bidShare: 0.5, coinsBothSides: 2 },
+        hedge: { ...EMPTY_HEDGE, hedgeUsd: 20_000_000, hedgeRatio: 0.2, unverifiedUsd: 0, lendingUsd: 0 },
       }),
     );
     expect(e.summary).toBe(

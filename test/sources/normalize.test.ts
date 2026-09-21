@@ -76,9 +76,8 @@ describe('spot price index and holdings', () => {
     // UBTC, UETH, ...) are quoted against more than one pair in the real
     // fixture - the number of distinct base tokens is therefore smaller
     // than universe.length, and that is the real invariant to check.
-    const tokenNameByIndex = new Map(meta.tokens.map((t) => [t.index, t.name]));
-    const distinctBaseNames = new Set(meta.universe.map((pair) => tokenNameByIndex.get(pair.tokens[0])));
-    expect(prices.size).toBe(distinctBaseNames.size);
+    const distinctBaseTokens = new Set(meta.universe.map((pair) => pair.tokens[0]));
+    expect(prices.size).toBe(distinctBaseTokens.size);
   });
 
   it('reads a price only from a pair quoted in dollars', () => {
@@ -101,8 +100,8 @@ describe('spot price index and holdings', () => {
     const prices = buildSpotPriceIndex(meta, ctxs);
     // 0.03 BTC is about $3 000, not $0.03. A price is only a dollar price
     // when the other side of the pair is dollars.
-    expect(prices.get('UETH')).toBeUndefined();
-    expect(prices.get('UBTC')).toBe(100_000);
+    expect(prices.get(2)).toBeUndefined();
+    expect(prices.get(1)).toBe(100_000);
   });
 
   it('prefers the USDC pair when a token trades against several dollar tokens', () => {
@@ -124,7 +123,7 @@ describe('spot price index and holdings', () => {
       { coin: 'HYPE/USDH2', markPx: '42' },
     ] as unknown as HlSpotAssetCtx[];
     // The old loop simply let the last pair win, whichever it happened to be.
-    expect(buildSpotPriceIndex(meta, ctxs).get('HYPE')).toBe(40);
+    expect(buildSpotPriceIndex(meta, ctxs).get(2)).toBe(40);
   });
 
   it('prices the captured spot balances and drops zero-value dust', () => {

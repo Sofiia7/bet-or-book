@@ -94,8 +94,8 @@ describe('computeOrderFeatures', () => {
 describe('computeHedgeFeatures', () => {
   it('sums spot holdings that alias to the headline coin', () => {
     const spot: SpotHolding[] = [
-      { coin: 'UBTC', valueUsd: 40_000_000 },
-      { coin: 'USDC', valueUsd: 5_000_000 },
+      { coin: 'UBTC', valueUsd: 40_000_000, source: 'hyperliquid-spot' },
+      { coin: 'USDC', valueUsd: 5_000_000, source: 'hyperliquid-spot' },
     ];
     const result = computeHedgeFeatures('BTC', 'short', 190_000_000, spot);
     expect(result.hedgeUsd).toBe(40_000_000);
@@ -103,13 +103,13 @@ describe('computeHedgeFeatures', () => {
   });
 
   it('returns zero when there is no headline position', () => {
-    const result = computeHedgeFeatures(null, null, 0, [{ coin: 'UBTC', valueUsd: 1000 }]);
+    const result = computeHedgeFeatures(null, null, 0, [{ coin: 'UBTC', valueUsd: 1000, source: 'hyperliquid-spot' }]);
     expect(result.hedgeUsd).toBe(0);
     expect(result.hedgeRatio).toBe(0);
   });
 
   it('does not treat spot of the same asset as a hedge of a LONG perp', () => {
-    const spot: SpotHolding[] = [{ coin: 'UBTC', valueUsd: 40_000_000 }];
+    const spot: SpotHolding[] = [{ coin: 'UBTC', valueUsd: 40_000_000, source: 'hyperliquid-spot' }];
     const result = computeHedgeFeatures('BTC', 'long', 190_000_000, spot);
     expect(result.hedgeUsd).toBe(0);
     expect(result.hedgeRatio).toBe(0);
@@ -125,10 +125,10 @@ describe('computeLinkedHedge', () => {
   it('sums matching holdings of linked wallets against a short', () => {
     const result = computeLinkedHedge('ETH', 'short', 100_000_000, [
       funder('0xa', [
-        { coin: 'WSTETH', valueUsd: 60_000_000, chain: 'ethereum' },
-        { coin: 'USDC', valueUsd: 9_000_000 },
+        { coin: 'WSTETH', valueUsd: 60_000_000, chain: 'ethereum', tokenAddress: '0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0', source: 'onchain' },
+        { coin: 'USDC', valueUsd: 9_000_000, source: 'hyperliquid-spot' },
       ]),
-      funder('0xb', [{ coin: 'AETHWETH', valueUsd: 20_000_000, chain: 'ethereum' }]),
+      funder('0xb', [{ coin: 'AETHWETH', valueUsd: 20_000_000, chain: 'ethereum', tokenAddress: '0x4d5f47fa6a74757f35c14fd3a6ef8e3c9bc514e8', source: 'onchain' }]),
     ]);
     expect(result.linkedHedgeUsd).toBe(80_000_000);
     expect(result.linkedHedgeRatio).toBeCloseTo(0.8, 6);
@@ -136,7 +136,7 @@ describe('computeLinkedHedge', () => {
   });
 
   it('ignores shared-service wallets and long headlines', () => {
-    const holdings = [{ coin: 'WETH', valueUsd: 50_000_000 }];
+    const holdings: SpotHolding[] = [{ coin: 'WETH', valueUsd: 50_000_000, source: 'hyperliquid-spot' }];
     expect(computeLinkedHedge('ETH', 'short', 100_000_000, [funder('0xa', holdings, 'service')]).linkedHedgeUsd).toBe(0);
     expect(computeLinkedHedge('ETH', 'long', 100_000_000, [funder('0xa', holdings)]).linkedHedgeUsd).toBe(0);
   });
@@ -185,8 +185,8 @@ describe('computeHedgeFeatures, on-chain holdings', () => {
 
   it('leaves out a look-alike contract and says what it left out', () => {
     const result = computeHedgeFeatures('ETH', 'short', 100_000_000, [
-      { coin: 'WSTETH', valueUsd: 40_000_000, chain: 'ethereum', tokenAddress: WSTETH },
-      { coin: 'WETH', valueUsd: 60_000_000, chain: 'ethereum', tokenAddress: '0x' + 'de'.repeat(20) },
+      { coin: 'WSTETH', valueUsd: 40_000_000, chain: 'ethereum', tokenAddress: WSTETH, source: 'onchain' },
+      { coin: 'WETH', valueUsd: 60_000_000, chain: 'ethereum', tokenAddress: '0x' + 'de'.repeat(20), source: 'onchain' },
     ]);
     expect(result.hedgeUsd).toBe(40_000_000);
     expect(result.unverifiedUsd).toBe(60_000_000);
@@ -195,14 +195,14 @@ describe('computeHedgeFeatures, on-chain holdings', () => {
 
   it('counts a lending deposit but records that a loan against it would not show', () => {
     const result = computeHedgeFeatures('ETH', 'short', 100_000_000, [
-      { coin: 'AETHWETH', valueUsd: 30_000_000, chain: 'ethereum', tokenAddress: AETHWETH },
+      { coin: 'AETHWETH', valueUsd: 30_000_000, chain: 'ethereum', tokenAddress: AETHWETH, source: 'onchain' },
     ]);
     expect(result.hedgeUsd).toBe(30_000_000);
     expect(result.lendingUsd).toBe(30_000_000);
   });
 
   it('still takes Hyperliquid spot at its ticker, which carries no contract', () => {
-    const result = computeHedgeFeatures('BTC', 'short', 10_000_000, [{ coin: 'UBTC', valueUsd: 9_000_000 }]);
+    const result = computeHedgeFeatures('BTC', 'short', 10_000_000, [{ coin: 'UBTC', valueUsd: 9_000_000, source: 'hyperliquid-spot' }]);
     expect(result.hedgeUsd).toBe(9_000_000);
     expect(result.unverifiedUsd).toBe(0);
   });

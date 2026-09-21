@@ -73,20 +73,6 @@ export function normalizeOrders(orders: HlOpenOrder[]): RestingOrder[] {
 }
 
 /**
- * Maps a base-token symbol (e.g. "UBTC") to its USD mark price.
- *
- * Contexts are matched to universe entries by pair NAME, not by array
- * index: a live capture on 2026-09-17 showed the context array carrying
- * 845 entries against 328 active universe entries (delisted pairs stay in
- * the context array), so the two are not the same length and must not be
- * zipped positionally.
- *
- * A handful of base tokens are quoted against more than one pair in the
- * same capture (HYPE, UBTC, UETH, ...) - the last pair processed wins for
- * that base token. Fine for a hedge-ratio estimate; if a specific quote
- * pair ever needs to be preferred, this is the place to add that rule.
- */
-/**
  * Quote tokens whose price is a dollar price. Hyperliquid's spot universe
  * quotes 311 pairs in USDC and another 17 in USDT0, USDH and USDE, and it
  * also lists pairs quoted in other assets entirely: a UETH/UBTC mark of 0.03
@@ -98,13 +84,28 @@ const USD_QUOTE_TOKENS = new Set(['USDC', 'USDT0', 'USDH', 'USDE', 'USDT', 'USD'
  * against; any other dollar token will do when there is no USDC pair. */
 const quoteRank = (name: string) => (name === 'USDC' ? 0 : 1);
 
-export function buildSpotPriceIndex(meta: HlSpotMeta, assetCtxs: HlSpotAssetCtx[]): Map<string, number> {
+/**
+ * Maps a base TOKEN INDEX to its USD mark price.
+ *
+ * Keyed by index rather than by name because Hyperliquid spot names are not
+ * unique - its own SDK says so - and the old name-keyed index let one token
+ * be valued at a namesake's price: a balance of 10 000 units of a $1 token
+ * came out as $1M of coverage (audit A01, 21.09).
+ *
+ * Contexts are matched to universe entries by pair NAME, not by array
+ * index: a live capture on 2026-09-17 showed the context array carrying
+ * 845 entries against 328 active universe entries (delisted pairs stay in
+ * the context array), so the two are not the same length and must not be
+ * zipped positionally.
+ *
+ * A token quoted against several dollar pairs takes its USDC price where
+ * there is one, per `quoteRank`.
+ */
+export function buildSpotPriceIndex(meta: HlSpotMeta, assetCtxs: HlSpotAssetCtx[]): Map<number, number> {
   const tokenNameByIndex = new Map(meta.tokens.map((t) => [t.index, t.name]));
   const ctxByPairName = new Map(assetCtxs.map((ctx) => [ctx.coin, ctx]));
-  const priceByCoin = new Map<string, number>();
-  // A base token can trade in several pairs, and the old loop let whichever
-  // came last decide its price.
-  const rankUsed = new Map<string, number>();
+  const priceByTokenIndex = new Map<number, number>();
+  const rankUsed = new Map<number, number>();
 
   for (const pair of meta.universe) {
     const [baseTokenIndex, quoteTokenIndex] = pair.tokens;
@@ -118,23 +119,45 @@ export function buildSpotPriceIndex(meta: HlSpotMeta, assetCtxs: HlSpotAssetCtx[
     if (!Number.isFinite(markPx) || markPx <= 0) continue;
 
     const rank = quoteRank(quoteName);
-    const used = rankUsed.get(baseName);
+    const used = rankUsed.get(baseTokenIndex);
     if (used === undefined || rank < used) {
-      rankUsed.set(baseName, rank);
-      priceByCoin.set(baseName, markPx);
+      rankUsed.set(baseTokenIndex, rank);
+      priceByTokenIndex.set(baseTokenIndex, markPx);
     }
   }
-  return priceByCoin;
+  return priceByTokenIndex;
 }
 
+/**
+ * Hyperliquid spot balances, priced by token index.
+ *
+ * A balance nobody could put a price on is kept and marked `priced: false`.
+ * It used to be multiplied by a zero price and then dropped for being
+ * worthless, which is the one thing that is certainly not known about it.
+ */
 export function normalizeSpotHoldings(
   balances: HlSpotBalance[],
-  priceByCoin: Map<string, number>,
+  priceByTokenIndex: Map<number, number>,
 ): SpotHolding[] {
-  return balances
+  return (arrayOf(balances, 'spot balances') as HlSpotBalance[])
     .filter((b) => b.coin !== 'USDC')
-    .map((b) => ({ coin: b.coin, valueUsd: Number(b.total) * (priceByCoin.get(b.coin) ?? 0) }))
-    .filter((h) => h.valueUsd > 0);
+    .map((b) => {
+      const amount = Number(b.total);
+      const price = priceByTokenIndex.get(b.token);
+      const priced = price !== undefined && Number.isFinite(amount);
+      return {
+        coin: b.coin,
+        valueUsd: priced ? amount * price! : 0,
+        priced,
+        amount: Number.isFinite(amount) ? amount : 0,
+        source: 'hyperliquid-spot' as const,
+        tokenIndex: b.token,
+      };
+    })
+    // An empty balance is dropped whether or not it had a price; an unpriced
+    // one that holds something is kept, because its size is unknown rather
+    // than zero.
+    .filter((h) => h.amount > 0 && (!h.priced || h.valueUsd > 0));
 }
 
 export function normalizeTrades(fills: HlFill[]): Trade[] {
@@ -165,14 +188,26 @@ export function normalizeNansenPositions(data: NansenPerpPositions): Position[] 
   });
 }
 
+/**
+ * On-chain balances from Nansen.
+ *
+ * Every row is tagged `onchain` whether or not it carries a contract, so a
+ * row that arrives without one is an unidentified on-chain token rather than
+ * a Hyperliquid ticker. The old code inferred the namespace from whether an
+ * address was present, and a malformed row calling itself WETH was accepted
+ * by name alone (audit A01, 21.09).
+ */
 export function normalizeNansenBalances(rows: NansenBalance[]): SpotHolding[] {
   return (arrayOf(rows, 'balances') as NansenBalance[])
     .filter((r) => Number.isFinite(r?.value_usd) && r.value_usd > 0)
     .map((r) => ({
-      coin: r.token_symbol,
+      coin: typeof r.token_symbol === 'string' ? r.token_symbol : '',
       valueUsd: r.value_usd,
-      chain: r.chain,
-      tokenAddress: r.token_address,
+      priced: true,
+      source: 'onchain' as const,
+      amount: Number.isFinite(r.token_amount) ? r.token_amount : undefined,
+      chain: typeof r.chain === 'string' ? r.chain : undefined,
+      tokenAddress: typeof r.token_address === 'string' ? r.token_address : undefined,
     }));
 }
 

@@ -174,9 +174,9 @@ describe('checkAddress (offline, real fixtures)', () => {
       expect.stringMatching(/^Positions were measured \d+ minutes before this check, not at the moment of it$/),
       '2 funding wallets carry no Nansen label: whether they are private wallets or exchange addresses is unverified',
     ]);
-    expect(result.summary).toMatch(/^Less than 1% of the \$[\d.]+M ETH short is covered by ETH in this account\./);
+    expect(result.summary).toMatch(/^Less than 1% of the \$[\d.]+M ETH short is covered by ETH at this address\./);
     expect(result.summary).toContain('funding does not establish ownership');
-    expect(result.evidence.find((e) => e.label === 'Hedge found')?.value).toBe('0.0% (all chains)');
+    expect(result.evidence.find((e) => e.label === 'Hedge found')?.value).toBe('0.0% (Nansen-supported chains)');
     expect(result.evidence.find((e) => e.label === 'Linked wallets')?.value).toMatch(/owner unconfirmed$/);
   });
 
@@ -188,11 +188,11 @@ describe('checkAddress (offline, real fixtures)', () => {
     expect(result.coverage.some((c) => c.includes('main dex'))).toBe(true);
   });
 
-  it('reads nothing past positions and PnL for a book', async () => {
+  it('describes a wide position spread without calling it a book (audit A03)', async () => {
     route();
-    // Thirty offsetting positions fire book rule (а) on positions alone. Not
-    // Wintermute's real set: its Nansen net/gross is 0.80, and what makes it a
-    // book live is its orders and fills, which these Abraxas fixtures lack.
+    // Thirty offsetting positions in thirty different assets. That is a
+    // portfolio shape, not evidence that the largest of them is inventory:
+    // nothing here says the account quotes either side of any market.
     const offsetting = Array.from({ length: 30 }, (_, i) => ({
       coin: `C${i}`,
       size: i % 2 === 0 ? 10 : -10,
@@ -200,9 +200,12 @@ describe('checkAddress (offline, real fixtures)', () => {
     }));
     const nansen = fakeNansen({ positions: syntheticPositions(offsetting) });
     const result = await checkAddress(ABRAXAS, { nansen });
-    expect(result.verdict.verdict).toBe('book');
+    expect(result.verdict.verdict).toBe('unknown');
+    expect(result.verdict.reasons).toContain('diversified_book_no_quotes');
     expect(nansen.perpPositions).toHaveBeenCalledTimes(1);
     expect(nansen.perpPnlSummary).toHaveBeenCalledTimes(1);
+    // The headline here is a long, which spot cannot offset, so the paid
+    // holdings read is still skipped.
     expect(nansen.currentBalance).not.toHaveBeenCalled();
     expect(nansen.relatedWallets).not.toHaveBeenCalled();
   });
@@ -403,7 +406,7 @@ describe('checkAddress (offline, real fixtures)', () => {
     expect(result.hedgeCoverage).toBe('missing');
     expect(result.verdict.verdict).toBe('unknown');
     expect(result.verdict.reasons).toEqual(['hedge_not_checked']);
-    expect(result.summary).toContain('could not be checked');
+    expect(result.summary).toContain('could not be established');
   });
 
   it('does not call a short a bet when only the first page of holdings was read', async () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeVerdict, hedgeCanChangeVerdict, DEFAULT_THRESHOLDS } from '../../src/engine/verdict';
-import type { PositionFeatures, OrderFeatures, HedgeFeatures } from '../../src/engine/features';
+import { EMPTY_HEDGE, EMPTY_ORDERS, type PositionFeatures, type OrderFeatures, type HedgeFeatures } from '../../src/engine/features';
 
 function positions(overrides: Partial<PositionFeatures>): PositionFeatures {
   return {
@@ -19,10 +19,10 @@ function positions(overrides: Partial<PositionFeatures>): PositionFeatures {
   };
 }
 function orders(overrides: Partial<OrderFeatures>): OrderFeatures {
-  return { restingOrders: 0, bidShare: 0.5, coinsBothSides: 0, ...overrides };
+  return { ...EMPTY_ORDERS, ...overrides };
 }
 function hedge(overrides: Partial<HedgeFeatures>): HedgeFeatures {
-  return { hedgeUsd: 0, hedgeRatio: 0, unverifiedUsd: 0, lendingUsd: 0, ...overrides };
+  return { ...EMPTY_HEDGE, ...overrides };
 }
 
 describe('computeVerdict', () => {
@@ -31,20 +31,23 @@ describe('computeVerdict', () => {
     expect(result.verdict).toBe('unknown');
   });
 
-  it('calls it a book from position spread alone (Wintermute-shaped account)', () => {
+  // Audit A03, 21.09: a spread of positions describes the account, it does
+  // not establish that the position in front of the reader is inventory. It
+  // is reported as what it is and the verdict waits for quoting.
+  it('describes a Wintermute-shaped spread rather than calling it a book unquoted', () => {
     const result = computeVerdict({
       positions: positions({ nPositions: 76, netToGross: 0.04, headlineShare: 0.2, headlineCoin: 'BTC', headlineNotionalUsd: 40_000_000 }),
       orders: orders({}),
       hedge: hedge({}),
     });
-    expect(result.verdict).toBe('book');
-    expect(result.strength).toBe('likely');
+    expect(result.verdict).toBe('unknown');
+    expect(result.reasons).toContain('diversified_book_no_quotes');
   });
 
   it('calls it a strong book when both position spread and order-book signals agree', () => {
     const result = computeVerdict({
       positions: positions({ nPositions: 76, netToGross: 0.04, headlineShare: 0.2, headlineCoin: 'BTC', headlineNotionalUsd: 40_000_000 }),
-      orders: orders({ restingOrders: 1732, bidShare: 0.51, coinsBothSides: 40 }),
+      orders: orders({ restingOrders: 1732, bidShare: 0.51, coinsBothSides: 40, twoSidedNotionalUsd: 12_000_000 }),
       hedge: hedge({}),
     });
     expect(result.verdict).toBe('book');
@@ -209,9 +212,13 @@ describe('hedgeCanChangeVerdict', () => {
     ).toBe(false);
   });
 
-  it('is false when a book signal already fired', () => {
+  it('is false when material two-sided quoting already settled the account', () => {
     const many = positions({ ...concentratedShort, nPositions: 40, netToGross: 0.1, headlineShare: 0.1 });
-    expect(hedgeCanChangeVerdict({ positions: many, orders: orders({}) })).toBe(false);
+    const quoting = orders({ restingOrders: 200, bidShare: 0.5, coinsBothSides: 12, twoSidedNotionalUsd: 20_000_000 });
+    expect(hedgeCanChangeVerdict({ positions: many, orders: quoting })).toBe(false);
+    // A spread of positions on its own no longer decides, so the holdings
+    // read is still worth its credit.
+    expect(hedgeCanChangeVerdict({ positions: many, orders: orders({}) })).toBe(true);
   });
 
   it('is false for a book whose legs already cancel within their own assets', () => {
@@ -254,7 +261,20 @@ describe('book rule (c): fills', () => {
     expect(result.reasons).toEqual(['maker_flow_only']);
   });
 
-  it('still calls it a book when the positions or the order book agree', () => {
+  it('still calls it a book when the order book agrees, and counts the rest toward strength', () => {
+    const spread = positions({ nPositions: 76, netToGross: 0.04, headlineShare: 0.2, headlineCoin: 'BTC', headlineNotionalUsd: 40_000_000 });
+    const result = computeVerdict({
+      positions: spread,
+      orders: orders({ restingOrders: 1732, bidShare: 0.51, coinsBothSides: 40, twoSidedNotionalUsd: 12_000_000 }),
+      hedge: hedge({}),
+      trades: { tradesPerDay: 2000, crossedShare: 0.2, buyShare: 0.53 },
+    });
+    expect(result.verdict).toBe('book');
+    expect(result.reasons).toEqual(['positions', 'orders', 'trades']);
+    expect(result.strength).toBe('strong');
+  });
+
+  it('does not reach a book on fills and a position count with nothing quoted', () => {
     const spread = positions({ nPositions: 76, netToGross: 0.04, headlineShare: 0.2, headlineCoin: 'BTC' });
     const result = computeVerdict({
       positions: spread,
@@ -262,9 +282,8 @@ describe('book rule (c): fills', () => {
       hedge: hedge({}),
       trades: { tradesPerDay: 2000, crossedShare: 0.2, buyShare: 0.53 },
     });
-    expect(result.verdict).toBe('book');
-    expect(result.reasons).toEqual(['positions', 'trades']);
-    expect(result.strength).toBe('strong');
+    expect(result.verdict).toBe('unknown');
+    expect(result.reasons).toContain('maker_flow_only');
   });
 
   it('does not call one-sided maker flow a book - that is a position being built', () => {

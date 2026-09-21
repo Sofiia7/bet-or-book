@@ -1,5 +1,5 @@
 import type { Position, PositionSide, RestingOrder, SpotHolding, Trade, LinkedWallet } from '../types';
-import { spotHedgesPerp, looksLikeButUnverified, isLendingReceipt } from './assets';
+import { classifyHolding, isLendingReceipt, type AssetMatch } from './assets';
 
 export interface PositionFeatures {
   nPositions: number;
@@ -95,32 +95,75 @@ export interface OrderFeatures {
   restingOrders: number;
   bidShare: number;
   coinsBothSides: number;
+  /** Dollars resting on the book, and the part of that sitting in markets
+   * quoted on both sides. A count of orders says how many there are, not
+   * whether they amount to anything: fifty $1 orders and fifty $20K orders
+   * are the same number and two different accounts. */
+  notionalUsd: number;
+  twoSidedNotionalUsd: number;
+  /** Whether the market of the position being asked about is itself quoted
+   * on both sides, and how much rests there. Quoting somewhere else is an
+   * activity of the account, not an explanation of this position. */
+  headlineTwoSided: boolean;
+  headlineQuoteNotionalUsd: number;
 }
 
-export function computeOrderFeatures(orders: RestingOrder[]): OrderFeatures {
-  if (orders.length === 0) {
-    return { restingOrders: 0, bidShare: 0.5, coinsBothSides: 0 };
-  }
+export const EMPTY_ORDERS: OrderFeatures = {
+  restingOrders: 0,
+  bidShare: 0.5,
+  coinsBothSides: 0,
+  notionalUsd: 0,
+  twoSidedNotionalUsd: 0,
+  headlineTwoSided: false,
+  headlineQuoteNotionalUsd: 0,
+};
+
+export function computeOrderFeatures(orders: RestingOrder[], headlineCoin: string | null = null): OrderFeatures {
+  if (orders.length === 0) return { ...EMPTY_ORDERS };
   const bids = orders.filter((o) => o.side === 'bid').length;
   const bidShare = bids / orders.length;
 
-  const sidesByCoin = new Map<string, Set<'bid' | 'ask'>>();
+  const byCoin = new Map<string, { sides: Set<'bid' | 'ask'>; notionalUsd: number }>();
   for (const order of orders) {
-    const set = sidesByCoin.get(order.coin) ?? new Set<'bid' | 'ask'>();
-    set.add(order.side);
-    sidesByCoin.set(order.coin, set);
+    const e = byCoin.get(order.coin) ?? { sides: new Set<'bid' | 'ask'>(), notionalUsd: 0 };
+    e.sides.add(order.side);
+    e.notionalUsd += Number.isFinite(order.sizeUsd) ? order.sizeUsd : 0;
+    byCoin.set(order.coin, e);
   }
-  const coinsBothSides = [...sidesByCoin.values()].filter((set) => set.size === 2).length;
+  const twoSided = [...byCoin.entries()].filter(([, e]) => e.sides.size === 2);
+  const headline = headlineCoin === null ? undefined : byCoin.get(headlineCoin);
 
-  return { restingOrders: orders.length, bidShare, coinsBothSides };
+  return {
+    restingOrders: orders.length,
+    bidShare,
+    coinsBothSides: twoSided.length,
+    notionalUsd: [...byCoin.values()].reduce((sum, e) => sum + e.notionalUsd, 0),
+    twoSidedNotionalUsd: twoSided.reduce((sum, [, e]) => sum + e.notionalUsd, 0),
+    headlineTwoSided: headline !== undefined && headline.sides.size === 2,
+    headlineQuoteNotionalUsd: headline?.notionalUsd ?? 0,
+  };
 }
 
 export interface HedgeFeatures {
   hedgeUsd: number;
   hedgeRatio: number;
-  /** Holdings that carry the right ticker but a contract this tool does not
-   * recognise, so they were left out. Stated rather than silently dropped. */
+  /** Holdings that carry the right ticker but whose asset this tool could
+   * not establish, so they were left out. Stated rather than silently
+   * dropped: a material amount of these means the coverage number is a lower
+   * bound and "nothing offsets this position" is not something to say. */
   unverifiedUsd: number;
+  /** The part of `unverifiedUsd` that sits on a chain the contract registry
+   * does not cover at all, as opposed to an unrecognised token on a chain it
+   * does. The first is a gap in this tool, the second a judgement about the
+   * token. */
+  unverifiedOnUnsupportedChainUsd: number;
+  /** Matching holdings that no price could be put on. Their size is unknown,
+   * so they are counted, not valued. */
+  unpricedMatches: number;
+  /** Which endpoint each counted dollar came from. The card used to sign the
+   * whole figure "Nansen" whenever Nansen had been asked, including the part
+   * that came from Hyperliquid's own spot balances. */
+  hedgeUsdBySource: { hyperliquidSpot: number; onchain: number };
   /** Of what was counted, how much is a lending-market deposit. Real, but a
    * loan taken against it is not visible from any endpoint read here. */
   lendingUsd: number;
@@ -138,6 +181,18 @@ export type HedgeScope = 'none' | 'hyperliquid' | 'all-chains';
  * low one says nothing. */
 export type HedgeCoverage = 'complete' | 'partial' | 'missing' | 'not-applicable';
 
+/** No hedge, measured. Every field zero, which is what a position spot
+ * cannot offset at all is entitled to. */
+export const EMPTY_HEDGE: HedgeFeatures = {
+  hedgeUsd: 0,
+  hedgeRatio: 0,
+  unverifiedUsd: 0,
+  unverifiedOnUnsupportedChainUsd: 0,
+  unpricedMatches: 0,
+  hedgeUsdBySource: { hyperliquidSpot: 0, onchain: 0 },
+  lendingUsd: 0,
+};
+
 /** Spot can offset only a short: holding the asset while also long the perp
  * is more of the same bet, not a hedge. */
 export function computeHedgeFeatures(
@@ -147,19 +202,26 @@ export function computeHedgeFeatures(
   holdings: SpotHolding[],
 ): HedgeFeatures {
   if (headlineCoin === null || headlineSide !== 'short' || headlineNotionalUsd === 0) {
-    return { hedgeUsd: 0, hedgeRatio: 0, unverifiedUsd: 0, lendingUsd: 0 };
+    return { ...EMPTY_HEDGE };
   }
-  const counted = holdings.filter((h) => spotHedgesPerp(h.coin, headlineCoin, h));
-  const hedgeUsd = counted.reduce((sum, h) => sum + h.valueUsd, 0);
+  const by = (state: AssetMatch) => holdings.filter((h) => classifyHolding(h, headlineCoin) === state);
+  const sum = (hs: SpotHolding[]) => hs.reduce((total, h) => total + h.valueUsd, 0);
+
+  const counted = by('match');
+  const hedgeUsd = sum(counted);
+  const unknownContract = by('unknown-contract');
+  const unsupportedChain = by('unsupported-chain');
   return {
     hedgeUsd,
     hedgeRatio: hedgeUsd / headlineNotionalUsd,
-    unverifiedUsd: holdings
-      .filter((h) => looksLikeButUnverified(h.coin, headlineCoin, h))
-      .reduce((sum, h) => sum + h.valueUsd, 0),
-    lendingUsd: counted
-      .filter((h) => isLendingReceipt(h.chain, h.tokenAddress))
-      .reduce((sum, h) => sum + h.valueUsd, 0),
+    unverifiedUsd: sum(unknownContract) + sum(unsupportedChain),
+    unverifiedOnUnsupportedChainUsd: sum(unsupportedChain),
+    unpricedMatches: by('unpriced').length,
+    hedgeUsdBySource: {
+      hyperliquidSpot: sum(counted.filter((h) => h.source === 'hyperliquid-spot')),
+      onchain: sum(counted.filter((h) => h.source === 'onchain')),
+    },
+    lendingUsd: sum(counted.filter((h) => isLendingReceipt(h.chain, h.tokenAddress))),
   };
 }
 
@@ -186,7 +248,9 @@ export function computeLinkedHedge(
     matchingUsd:
       headlineCoin === null || headlineSide !== 'short'
         ? 0
-        : l.holdings.filter((h) => spotHedgesPerp(h.coin, headlineCoin, h)).reduce((s, h) => s + h.valueUsd, 0),
+        : l.holdings
+            .filter((h) => classifyHolding(h, headlineCoin) === 'match')
+            .reduce((s, h) => s + h.valueUsd, 0),
   }));
   const linkedHedgeUsd = funders.reduce((s, f) => s + f.matchingUsd, 0);
   return {

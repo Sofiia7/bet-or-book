@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import galleryData from '../data/gallery.json';
 import { computeVerdict, CLASSIFIER_VERSION } from '../src/engine/verdict';
 import { explain } from '../src/engine/evidence';
+import { missingForCurrentRules } from '../src/engine/observation';
 import type { Gallery } from '../src/gallery';
 
 /**
@@ -16,12 +17,23 @@ import type { Gallery } from '../src/gallery';
  * a threshold cannot quietly move a hundred cards and a change to the
  * wording cannot quietly contradict what is on the page.
  *
+ * Since the 21.09 audit the sample is in two parts. Entries whose stored
+ * observation carries what the current rules read are re-judged by them and
+ * have to reproduce exactly. Entries from an older schema keep the verdict
+ * the older rules gave them and are marked historical: re-running v3 over an
+ * aggregate that never recorded order notional or what the hedge sum left
+ * out would be an assertion, not a check. Only a fresh read of the account
+ * can move one of those, which costs credits and is a decision, not a
+ * script.
+ *
  * When a rule changes on purpose, run `scripts/reexplain.ts` and the numbers
  * below move with it. That is the point: the blast radius is visible in the
  * diff rather than discovered on the deployed page.
  */
 const gallery = galleryData as unknown as Gallery;
 const open = gallery.entries.filter((e) => e.positions.nPositions > 0);
+const current = gallery.entries.filter((e) => !e.historical);
+const historical = gallery.entries.filter((e) => e.historical);
 
 const rejudge = (e: Gallery['entries'][number]) =>
   computeVerdict({
@@ -31,6 +43,8 @@ const rejudge = (e: Gallery['entries'][number]) =>
     trades: { tradesPerDay: e.trades.tradesPerDay, crossedShare: e.trades.crossedShare, buyShare: e.trades.buyShare },
     linkedHedge: e.linkedHedge ? { linkedHedgeRatio: e.linkedHedge.linkedHedgeRatio } : undefined,
     hedgeCoverage: e.hedgeCoverage,
+    ordersCoverage: e.ordersCoverage,
+    positionsCoverage: e.positionsCoverage,
   });
 
 describe('the saved gallery against the current rules', () => {
@@ -39,36 +53,54 @@ describe('the saved gallery against the current rules', () => {
     expect(gallery.entries.length).toBe(278);
   });
 
-  it('reproduces every stored verdict, so the file and the rules agree', () => {
-    const drifted = gallery.entries
+  it('reproduces every stored verdict it claims to have judged', () => {
+    const drifted = current
       .map((e) => ({ address: e.address, stored: e.verdict, fresh: rejudge(e) }))
       .filter((r) => JSON.stringify(r.stored) !== JSON.stringify(r.fresh));
     expect(drifted).toEqual([]);
   });
 
   it('reproduces every stored sentence, so the page cannot contradict the rules', () => {
-    const drifted = gallery.entries.filter((e) => explain(e).summary !== e.summary).map((e) => e.address);
+    const drifted = current.filter((e) => explain(e).summary !== e.summary).map((e) => e.address);
     expect(drifted).toEqual([]);
   });
 
-  it('stamps every card with the rules that read it', () => {
-    expect(new Set(gallery.entries.map((e) => e.classifierVersion))).toEqual(new Set([CLASSIFIER_VERSION]));
+  it('stamps every judged card with the rules that read it', () => {
+    expect(new Set(current.map((e) => e.classifierVersion))).toEqual(new Set([CLASSIFIER_VERSION]));
+  });
+
+  it('never stamps a historical card with rules that never read it', () => {
+    // This is the whole of finding A06: the old file said v2 on 269 cards
+    // whose observations v2 could not have been run over.
+    for (const e of historical) {
+      expect(e.classifierVersion).not.toBe(CLASSIFIER_VERSION);
+      expect(e.historical!.missing.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('marks as historical exactly those entries the rules cannot read', () => {
+    const wrong = gallery.entries.filter((e) => (missingForCurrentRules(e).length > 0) !== Boolean(e.historical));
+    expect(wrong.map((e) => e.address)).toEqual([]);
+  });
+
+  it('holds the split the README quotes', () => {
+    const count = (list: typeof open, verdict: string) =>
+      list.filter((e) => e.verdict.verdict === verdict).length;
+    const openCurrent = open.filter((e) => !e.historical);
+    expect({
+      judged: openCurrent.length,
+      looks_like_a_bet: count(openCurrent, 'looks_like_a_bet'),
+      unknown: count(openCurrent, 'unknown'),
+      book: count(openCurrent, 'book'),
+      hedged: count(openCurrent, 'hedged'),
+      history: open.length - openCurrent.length,
+    }).toEqual({ judged: 168, looks_like_a_bet: 106, unknown: 62, book: 0, hedged: 0, history: 109 });
   });
 
   it('gives every card its own share id', () => {
     const ids = gallery.entries.map((e) => e.snapshotId);
     expect(ids.every((id) => typeof id === 'string' && id.length > 0)).toBe(true);
     expect(new Set(ids).size).toBe(gallery.entries.length);
-  });
-
-  it('holds the distribution the README quotes', () => {
-    const count = (verdict: string) => open.filter((e) => e.verdict.verdict === verdict).length;
-    expect({
-      looks_like_a_bet: count('looks_like_a_bet'),
-      unknown: count('unknown'),
-      book: count('book'),
-      hedged: count('hedged'),
-    }).toEqual({ looks_like_a_bet: 137, unknown: 121, book: 12, hedged: 7 });
   });
 
   it('never calls a funding wallet a hedge, however much it holds', () => {
@@ -86,10 +118,10 @@ describe('the saved gallery against the current rules', () => {
     expect(wrong).toEqual([]);
   });
 
-  it('never calls a position a book on fills alone', () => {
-    const wrong = open
+  it('never calls a position a book without two-sided quoting behind it', () => {
+    const wrong = current
       .filter((e) => e.verdict.verdict === 'book')
-      .filter((e) => e.verdict.reasons.every((r) => r === 'trades'))
+      .filter((e) => !e.verdict.reasons.includes('orders'))
       .map((e) => e.address);
     expect(wrong).toEqual([]);
   });
@@ -100,13 +132,17 @@ describe('the saved gallery against the current rules', () => {
       'mixed_long_short_book',
       'offset_not_measured',
       'hedge_not_checked',
+      'unrecognised_assets',
+      'diversified_book_no_quotes',
+      'quotes_not_checked',
+      'positions_not_complete',
       'partial_offset',
       'over_covered',
       'maker_flow_only',
       'signals disagree: not enough evidence for book, hedge, or bet',
       'no open positions found',
     ]);
-    const unnamed = gallery.entries
+    const unnamed = current
       .filter((e) => e.verdict.verdict === 'unknown')
       .filter((e) => !e.verdict.reasons.every((r) => named.has(r)))
       .map((e) => e.verdict.reasons);

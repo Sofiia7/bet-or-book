@@ -10,7 +10,7 @@ import type {
 import { DEFAULT_THRESHOLDS, type VerdictResult } from './verdict';
 import type { PnlSummary } from '../types';
 
-export type EvidenceSource = 'Nansen' | 'Hyperliquid';
+export type EvidenceSource = 'Nansen' | 'Hyperliquid' | 'Nansen + Hyperliquid';
 
 /** One number on the card, with the source that produced it. */
 export interface EvidenceItem {
@@ -140,13 +140,29 @@ function hedgedSummary(input: EvidenceInput): string {
   }
   return (
     `The ${formatUsd(p.headlineNotionalUsd)} ${p.headlineCoin} short is ${formatPct(h.hedgeRatio)} covered by ` +
-    `spot ${p.headlineCoin} held by the same account ${holdingsScope(input)}.`
+    `${formatUsd(h.hedgeUsd)} of spot ${p.headlineCoin} held by this address ${holdingsScope(input)}.` +
+    lendingCaveat(input)
   );
 }
 
-/** Where the account's own holdings were looked for. */
+/** Where the account's own holdings were looked for. "All chains" is what
+ * was asked for, not what can be read back: the contract registry covers two
+ * of them, so the honest phrase names the source rather than the universe. */
 function holdingsScope(input: EvidenceInput): string {
-  return input.hedgeScope === 'all-chains' ? 'across chains' : 'on Hyperliquid';
+  return input.hedgeScope === 'all-chains' ? 'on Nansen-supported chains' : 'on Hyperliquid';
+}
+
+/** What a lending deposit inside the counted leg forces the sentence to add.
+ * A deposit receipt is a real balance and a possible loan at the same time,
+ * and no endpoint read here shows the debt. */
+function lendingCaveat(input: EvidenceInput, share = 0.1): string {
+  const h = input.hedge;
+  const lending = h.lendingUsd ?? 0;
+  if (h.hedgeUsd <= 0 || lending < share * h.hedgeUsd) return '';
+  return (
+    ` ${formatUsd(lending)} of that sits in a lending market, and anything borrowed against it is ` +
+    'not read here, so this is visible coverage rather than a net position.'
+  );
 }
 
 /** Coverage short of a hedge: what is left over is still a position. 59% of
@@ -155,7 +171,7 @@ function partialOffsetSummary(input: EvidenceInput): string {
   const { positions: p, hedge: h } = input;
   return (
     `The ${formatUsd(p.headlineNotionalUsd)} ${p.headlineCoin} short is ${formatPct(h.hedgeRatio)} covered by ` +
-    `spot ${p.headlineCoin} held by the same account ${holdingsScope(input)}, ` +
+    `spot ${p.headlineCoin} held by this address ${holdingsScope(input)}, ` +
     `which leaves ${formatUsd(p.headlineNotionalUsd - h.hedgeUsd)} of it short.`
   );
 }
@@ -166,7 +182,7 @@ function overCoveredSummary(input: EvidenceInput): string {
   const { positions: p, hedge: h } = input;
   return (
     `The ${formatUsd(p.headlineNotionalUsd)} ${p.headlineCoin} short is more than covered: ` +
-    `${formatUsd(h.hedgeUsd)} of spot ${p.headlineCoin} held by the same account ${holdingsScope(input)} ` +
+    `${formatUsd(h.hedgeUsd)} of spot ${p.headlineCoin} held by this address ${holdingsScope(input)} ` +
     `leaves it net long ${formatUsd(h.hedgeUsd - p.headlineNotionalUsd)} of ${p.headlineCoin}.`
   );
 }
@@ -204,10 +220,10 @@ function linkedSummary(input: EvidenceInput): string {
   // a measurement rather than as "next to nothing".
   const own =
     h.hedgeRatio >= MIN_FUNDER_SHARE
-      ? `${p.headlineCoin} in this account covers ${formatPct(h.hedgeRatio)} of the ${headlineText(p)}.`
+      ? `${p.headlineCoin} at this address covers ${formatPct(h.hedgeRatio)} of the ${headlineText(p)}.`
       : h.hedgeRatio > 0
-        ? `Less than 1% of the ${headlineText(p)} is covered by ${p.headlineCoin} in this account.`
-        : `No ${p.headlineCoin} in this account offsets the ${headlineText(p)}.`;
+        ? `Less than 1% of the ${headlineText(p)} is covered by ${p.headlineCoin} at this address.`
+        : `No ${p.headlineCoin} at this address offsets the ${headlineText(p)}.`;
   return (
     `${own} ${holders} ${formatUsd(linkedHedge?.linkedHedgeUsd ?? 0)} of ${p.headlineCoin}, ` +
     'but funding does not establish ownership, so it is not counted as a hedge.'
@@ -217,14 +233,20 @@ function linkedSummary(input: EvidenceInput): string {
 function betSummary(input: EvidenceInput): string {
   const { positions: p } = input;
   const opening = `${formatPct(p.headlineShare)} of the exposure is one ${formatUsd(p.headlineNotionalUsd)} ${p.headlineCoin} ${p.headlineSide}`;
-  if (p.headlineSide !== 'short') return `${opening}, and nothing in this account offsets it.`;
+  // Only spot holdings of the same asset are read here. Debts, other
+  // derivatives and positions on venues this tool does not see could all
+  // stand against a long, so the sentence says what was looked at.
+  if (p.headlineSide !== 'short')
+    return `${opening}. Spot cannot offset a long, and debts or other derivatives are not read here.`;
   // Only what this account holds. A funding wallet's balance belongs to
   // whoever owns that wallet, and the link does not say who that is; it gets
   // its own row rather than being folded into the account's coverage.
-  const where = input.hedgeScope === 'all-chains' ? 'in this account on any chain' : 'in this account on Hyperliquid';
+  const where =
+    input.hedgeScope === 'all-chains' ? 'at this address on Nansen-supported chains' : 'at this address on Hyperliquid';
   const own = input.hedge.hedgeRatio;
-  if (own === 0) return `${opening}, and no ${p.headlineCoin} was found ${where}.`;
-  return `${opening}, and only ${formatPct(own)} of it is covered by ${p.headlineCoin} ${where}.`;
+  const caveat = ' Debts and other derivatives are not read here.';
+  if (own === 0) return `${opening}, and no ${p.headlineCoin} was found ${where}.${caveat}`;
+  return `${opening}, and only ${formatPct(own)} of it is covered by ${p.headlineCoin} ${where}.${caveat}`;
 }
 
 /** Names each bet condition the account fails, in the order the rule lists them. */
@@ -242,12 +264,34 @@ function undecidedSummary(input: EvidenceInput): string {
   return misses.length > 0 ? `${head}: ${misses.join(', ')}.` : `${head}.`;
 }
 
+/**
+ * Who produced the counted dollars, rather than who was asked.
+ *
+ * Having called Nansen is not the same as Nansen having found this: in all
+ * seven of the 18.09 "hedged" cards the underlying was HYPE, which
+ * Hyperliquid's own spot endpoint reports for free. Entries written before
+ * the split was recorded fall back to the scope, which is what they knew.
+ */
+function hedgeSource(input: EvidenceInput): EvidenceSource {
+  const by = input.hedge.hedgeUsdBySource;
+  // Nothing counted, or an entry from before the split was recorded: the
+  // scope is all that is known about where the search happened.
+  if (!by || (by.onchain <= 0 && by.hyperliquidSpot <= 0)) {
+    return input.hedgeScope === 'all-chains' ? 'Nansen' : 'Hyperliquid';
+  }
+  if (by.onchain > 0 && by.hyperliquidSpot > 0) return 'Nansen + Hyperliquid';
+  if (by.onchain > 0) return 'Nansen';
+  return 'Hyperliquid';
+}
+
 function hedgeItem(input: EvidenceInput): EvidenceItem | null {
   if (input.hedgeScope === 'none') return null;
-  if (input.hedgeScope === 'all-chains') {
-    return { label: 'Hedge found', value: `${formatPct(input.hedge.hedgeRatio)} (all chains)`, source: 'Nansen' };
-  }
-  return { label: 'Hedge found', value: `${formatPct(input.hedge.hedgeRatio)} (Hyperliquid spot)`, source: 'Hyperliquid' };
+  const where = input.hedgeScope === 'all-chains' ? 'Nansen-supported chains' : 'Hyperliquid spot';
+  return {
+    label: 'Hedge found',
+    value: `${formatPct(input.hedge.hedgeRatio)} (${where})`,
+    source: hedgeSource(input),
+  };
 }
 
 function linkedItem(input: EvidenceInput): EvidenceItem | null {
@@ -271,9 +315,64 @@ function hedgeNotCheckedSummary(input: EvidenceInput): string {
       : input.hedgeScope === 'all-chains'
         ? 'only the first page of its holdings could be read'
         : 'only its Hyperliquid balances were read, and a hedge on another chain would not show';
+  const found =
+    input.hedge.hedgeUsd > 0
+      ? ` At least ${formatUsd(input.hedge.hedgeUsd)} of matching spot was found, which is a floor on the ` +
+        'coverage rather than a measurement of it.'
+      : '';
   return (
     `${formatPct(p.headlineShare)} of the exposure is one ${headlineText(p)}, ` +
-    `and whether it is hedged could not be checked: ${why}.`
+    `and whether it is hedged could not be established: ${why}.${found}`
+  );
+}
+
+/** Holdings that were read but could not be tied to an asset. The dollars
+ * are real; what they are is not settled, so neither is the coverage. */
+function unrecognisedAssetsSummary(input: EvidenceInput): string {
+  const { positions: p, hedge: h } = input;
+  const unpriced =
+    (h.unpricedMatches ?? 0) > 0
+      ? ` ${plural(h.unpricedMatches, 'matching balance')} had no price, so their size is unknown.`
+      : '';
+  const named =
+    h.unverifiedUsd > 0
+      ? `${formatUsd(h.unverifiedUsd)} of holdings named like ${p.headlineCoin} are in tokens or on chains ` +
+        'this tool could not identify'
+      : 'Some holdings could not be identified';
+  return (
+    `${named}, so whether the ${headlineText(p)} is offset is not established. ` +
+    `Coverage confirmed so far: ${formatPct(h.hedgeRatio)}.${unpriced}`
+  );
+}
+
+/** A spread wide enough to look like a book, with nothing quoted to say so. */
+function diversifiedNoQuotesSummary(input: EvidenceInput): string {
+  const { positions: p } = input;
+  return (
+    `${plural(p.nPositions, 'open position')} net out to ${formatPct(p.netToGross)} of gross exposure, ` +
+    'which is the shape of a book - but there is no two-sided quoting behind it, so whether the ' +
+    `${headlineText(p)} is inventory or a position of its own is not established.`
+  );
+}
+
+/** The bet rule asserts the account quotes nothing, and one of the venues it
+ * could be quoting on would not answer. */
+function quotesNotCheckedSummary(input: EvidenceInput): string {
+  const { positions: p } = input;
+  return (
+    `${formatPct(p.headlineShare)} of the exposure is one ${headlineText(p)}, but the resting orders ` +
+    'of this account could not be read in full, so whether it quotes both sides of this market is unknown.'
+  );
+}
+
+/** Positions came from the main perp dex alone, so concentration across the
+ * whole portfolio is not something this reading can establish. */
+function positionsNotCompleteSummary(input: EvidenceInput): string {
+  const { positions: p } = input;
+  return (
+    `Of what could be read, ${formatPct(p.headlineShare)} of the exposure is one ${headlineText(p)} - ` +
+    'but only the main perp dex was read, and a HIP-3 position would not appear here, ' +
+    'so this is not the whole portfolio.'
   );
 }
 
@@ -284,6 +383,10 @@ const SUMMARY_BY_REASON: Record<string, ((input: EvidenceInput) => string) | und
   mixed_long_short_book: mixedBookSummary,
   offset_not_measured: unmeasuredOffsetSummary,
   hedge_not_checked: hedgeNotCheckedSummary,
+  unrecognised_assets: unrecognisedAssetsSummary,
+  diversified_book_no_quotes: diversifiedNoQuotesSummary,
+  quotes_not_checked: quotesNotCheckedSummary,
+  positions_not_complete: positionsNotCompleteSummary,
   maker_flow_only: makerFlowSummary,
   partial_offset: partialOffsetSummary,
   over_covered: overCoveredSummary,

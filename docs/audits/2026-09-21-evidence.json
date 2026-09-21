@@ -1,0 +1,224 @@
+{
+  "generatedAt": "2026-09-21T17:51:21.500Z",
+  "networkCalls": 0,
+  "observations": [
+    {
+      "id": "partial_page_still_hedged",
+      "observed": {
+        "verdict": "hedged",
+        "strength": null,
+        "reasons": [
+          "hedge_leg"
+        ]
+      }
+    },
+    {
+      "id": "ethereum_native_not_registered",
+      "observed": {
+        "hedge": {
+          "hedgeUsd": 0,
+          "hedgeRatio": 0,
+          "unverifiedUsd": 1000000,
+          "lendingUsd": 0
+        },
+        "verdict": {
+          "verdict": "looks_like_a_bet",
+          "strength": null,
+          "reasons": [
+            "directional_concentration"
+          ]
+        }
+      }
+    },
+    {
+      "id": "fifty_dollars_unrelated_orders_classify_million_position",
+      "observed": {
+        "verdict": "book",
+        "strength": "likely",
+        "reasons": [
+          "orders"
+        ]
+      }
+    },
+    {
+      "id": "balanced_twenty_asset_portfolio_is_book_without_quotes",
+      "observed": {
+        "verdict": "book",
+        "strength": "likely",
+        "reasons": [
+          "positions"
+        ]
+      }
+    },
+    {
+      "id": "spot_balance_without_price_silently_dropped",
+      "observed": []
+    },
+    {
+      "id": "duplicate_spot_symbol_uses_other_tokens_price",
+      "observed": {
+        "observed": [
+          {
+            "coin": "HYPE",
+            "valueUsd": 1000000
+          }
+        ],
+        "valueUsingToken2Pair": 10000,
+        "hedge": {
+          "hedgeUsd": 1000000,
+          "hedgeRatio": 1,
+          "unverifiedUsd": 0,
+          "lendingUsd": 0
+        }
+      }
+    },
+    {
+      "id": "malformed_onchain_row_bypasses_contract_validation",
+      "observed": {
+        "hedgeUsd": 1000000,
+        "hedgeRatio": 1,
+        "unverifiedUsd": 0,
+        "lendingUsd": 0
+      }
+    },
+    {
+      "id": "empty_pnl_body_not_rejected",
+      "observed": {
+        "windowDays": 30
+      }
+    },
+    {
+      "id": "orphan_hold_reopens_spent_budget",
+      "observed": {
+        "nextAllowed": true,
+        "state": {
+          "day": "2026-09-21",
+          "spent": 0,
+          "reserved": 7,
+          "remaining": null,
+          "holds": {
+            "60304396-8299-42d5-907b-f79fffaa047b": {
+              "amount": 7,
+              "at": 1789992300001
+            }
+          }
+        },
+        "possibleActualSpend": 14,
+        "cap": 7
+      }
+    },
+    {
+      "id": "midnight_discards_known_remaining_balance",
+      "observed": {
+        "nextAllowed": true,
+        "remaining": null
+      }
+    },
+    {
+      "id": "snapshot_id_ignores_most_of_address",
+      "observed": {
+        "idA": "12345678-mub70qo0",
+        "idB": "12345678-mub70qo0"
+      }
+    },
+    {
+      "id": "missing_hip3_orders_still_directional_verdict",
+      "observed": {
+        "verdict": {
+          "verdict": "looks_like_a_bet",
+          "strength": null,
+          "reasons": [
+            "directional_concentration"
+          ]
+        },
+        "coverage": [
+          "Resting orders on the xyz dex could not be read",
+          "Size versus open interest not computed for a HIP-3 dex market"
+        ],
+        "degraded": true
+      }
+    },
+    {
+      "id": "stale_positions_not_degraded",
+      "observed": {
+        "verdict": {
+          "verdict": "looks_like_a_bet",
+          "strength": null,
+          "reasons": [
+            "directional_concentration"
+          ]
+        },
+        "degraded": false,
+        "coverage": [
+          "Positions were measured 60 minutes before this check, not at the moment of it"
+        ]
+      }
+    },
+    {
+      "id": "no_nansen_fallback_not_degraded",
+      "observed": {
+        "verdict": {
+          "verdict": "looks_like_a_bet",
+          "strength": null,
+          "reasons": [
+            "directional_concentration"
+          ]
+        },
+        "degraded": false,
+        "coverage": [
+          "Nansen not used (budget exhausted): main-dex positions only, no other chains, no linked wallets"
+        ]
+      }
+    },
+    {
+      "id": "malformed_optional_funder_fails_whole_check",
+      "observed": "UpstreamShapeError: upstream answer has an unexpected shape: balances is not an array"
+    },
+    {
+      "id": "truncated_funder_not_reported",
+      "observed": {
+        "degraded": false,
+        "coverage": [
+          "1 funding wallet carries no Nansen label: whether it is a private wallet or an exchange address is unverified"
+        ]
+      }
+    }
+  ],
+  "gallery": {
+    "active": 277,
+    "counts": {
+      "unknown": 121,
+      "looks_like_a_bet": 137,
+      "book": 12,
+      "hedged": 7
+    },
+    "reasons": {
+      "signals disagree: not enough evidence for book, hedge, or bet": 76,
+      "linked_exposure_unverified": 12,
+      "directional_concentration": 137,
+      "maker_flow_only": 12,
+      "partial_offset": 8,
+      "orders": 4,
+      "trades": 2,
+      "hedge_leg": 7,
+      "over_covered": 5,
+      "hedge_not_checked": 2,
+      "mixed_long_short_book": 6,
+      "positions": 8
+    },
+    "withoutPositionTimestamp": 269,
+    "withoutAssetRegistryEvidence": 269,
+    "hedgedWithoutAssetRegistryEvidence": [
+      "0xf02d16a272a842f8bac1d9a9e773aba1933454c6",
+      "0x8c830d21e41ad688dbf1727ae4425573849daf41",
+      "0x6e25e5d971bda9799f7a5242f4720b5b3f939200",
+      "0x5a72a5f89b44473a33136a7c3253c519c474eec4",
+      "0x89720b1831fd8457ea9026f5ffb476ed6d35e6bd",
+      "0x6891ed9ee6a9d0649ffac2bcee814e6899a0e075",
+      "0x28cee4465f95720cb8464d56faea656751119040"
+    ],
+    "versions": [
+      "v2"
+    ]
+  }
+}
