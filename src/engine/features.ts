@@ -107,6 +107,12 @@ export interface HedgeFeatures {
  * `hyperliquid` when only its Hyperliquid spot was. */
 export type HedgeScope = 'none' | 'hyperliquid' | 'all-chains';
 
+/** How completely the account's own matching holdings were established.
+ * `partial` and `missing` can only ever hide holdings, never invent them, so
+ * a high ratio measured under either is a lower bound worth trusting while a
+ * low one says nothing. */
+export type HedgeCoverage = 'complete' | 'partial' | 'missing' | 'not-applicable';
+
 /** Spot can offset only a short: holding the asset while also long the perp
  * is more of the same bet, not a hedge. */
 export function computeHedgeFeatures(

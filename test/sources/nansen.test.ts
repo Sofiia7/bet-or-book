@@ -49,6 +49,30 @@ describe('nansen client', () => {
     expect(result.complete).toBe(true);
   });
 
+  it('treats a full page with no pagination block as possibly incomplete', async () => {
+    // Nansen is not documented to always send pagination back. A short page
+    // is proof there is no more; a page filled to the limit is not.
+    const rows = Array.from({ length: 100 }, () => (balancesFixture as { data: unknown[] }).data[0]);
+    mockFetch({ data: rows });
+    const full = await createNansenClient(KEY).currentBalance('0xabc');
+    expect(full.complete).toBe(false);
+
+    mockFetch({ data: rows.slice(0, 99) });
+    const short = await createNansenClient(KEY).currentBalance('0xabc');
+    expect(short.complete).toBe(true);
+  });
+
+  it('reports whether the funding links were the last page', async () => {
+    mockFetch({ data: [], pagination: { is_last_page: false } });
+    const more = await createNansenClient(KEY).relatedWallets('0xabc', 'ethereum');
+    expect(more.complete).toBe(false);
+
+    mockFetch({ data: [], pagination: { is_last_page: true } });
+    const done = await createNansenClient(KEY).relatedWallets('0xabc', 'ethereum');
+    expect(done.complete).toBe(true);
+    expect(done.rows).toEqual([]);
+  });
+
   it('records a failed call and throws without leaking the key', async () => {
     mockFetch({ error: 'unauthorized' }, 401);
     const calls: NansenCallMeta[] = [];

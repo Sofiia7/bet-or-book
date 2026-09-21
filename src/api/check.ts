@@ -29,6 +29,7 @@ import {
   type OrderFeatures,
   type HedgeFeatures,
   type HedgeScope,
+  type HedgeCoverage,
   type LinkedHedgeFeatures,
   type TradeFeatures,
 } from '../engine/features';
@@ -55,6 +56,9 @@ export interface CheckResult {
   orders: OrderFeatures;
   hedge: HedgeFeatures;
   hedgeScope: HedgeScope;
+  /** How completely the hedge was looked for, so that a gap in the reading
+   * is never served as a finding about the account. */
+  hedgeCoverage: HedgeCoverage;
   linkedHedge: LinkedHedgeFeatures | null;
   trades: TradeFeatures;
   pnl: PnlSummary | null;
@@ -128,13 +132,19 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
 
   let ownChain: SpotHolding[] = [];
   let otherChainsRead = false;
+  // Only a short can be offset by spot, so for anything else there is no
+  // hedge to look for. For a short, Hyperliquid balances alone are a partial
+  // answer until Nansen fills in the other chains.
+  let hedgeCoverage: HedgeCoverage = positionFeatures.headlineSide === 'short' ? 'partial' : 'not-applicable';
   if (nansen && hedgeMatters) {
     try {
       const bal = await nansen.currentBalance(address);
       ownChain = normalizeNansenBalances(bal.rows);
       otherChainsRead = true;
+      hedgeCoverage = bal.complete ? 'complete' : 'partial';
       if (!bal.complete) coverage.push('Holdings on other chains: first 100 tokens only');
     } catch {
+      hedgeCoverage = 'missing';
       coverage.push('Holdings on other chains unavailable');
     }
   }
@@ -170,6 +180,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     hedge: hedgeFeatures,
     trades: tradeSignal,
     linkedHedge: linkedHedge ? { linkedHedgeRatio: linkedHedge.linkedHedgeRatio } : undefined,
+    hedgeCoverage,
   });
 
   const measured = {
@@ -178,6 +189,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     orders: orderFeatures,
     hedge: hedgeFeatures,
     hedgeScope,
+    hedgeCoverage,
     linkedHedge,
     trades: tradeFeatures,
     pnl,
@@ -202,10 +214,16 @@ async function readLinkedHedge(
     nansen.relatedWallets(address, 'arbitrum'),
     nansen.relatedWallets(address, 'ethereum'),
   ]);
+  let linksTruncated = false;
   for (const r of related) {
-    if (r.status === 'fulfilled') links.push(...normalizeRelatedWallets(r.value));
-    else coverage.push('Linked wallets unavailable on one chain');
+    if (r.status === 'fulfilled') {
+      links.push(...normalizeRelatedWallets(r.value.rows));
+      if (!r.value.complete) linksTruncated = true;
+    } else {
+      coverage.push('Linked wallets unavailable on one chain');
+    }
   }
+  if (linksTruncated) coverage.push('Funding links: first 100 only, so this is not every wallet that funded the account');
 
   const firstFunders = links.filter((w) => w.relation === 'First Funder' && w.address !== address.toLowerCase());
   const skipped = firstFunders.filter((w) => w.serviceStatus === 'service').length;

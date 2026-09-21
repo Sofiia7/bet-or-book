@@ -1,4 +1,4 @@
-import type { PositionFeatures, OrderFeatures, HedgeFeatures } from './features';
+import type { PositionFeatures, OrderFeatures, HedgeFeatures, HedgeCoverage } from './features';
 
 export type Verdict = 'book' | 'hedged' | 'looks_like_a_bet' | 'unknown';
 /** `likely`/`strong` grade a book by how many independent signals agree.
@@ -89,6 +89,9 @@ export interface VerdictInput {
   trades?: { tradesPerDay: number; crossedShare: number; buyShare: number };
   /** Hedge held by wallets linked through a funding transaction. */
   linkedHedge?: { linkedHedgeRatio: number };
+  /** How completely the hedge was looked for. Absent means complete, which
+   * is what every caller inside this repo passes explicitly. */
+  hedgeCoverage?: HedgeCoverage;
 }
 
 export interface VerdictResult {
@@ -192,6 +195,15 @@ export function computeVerdict(
   if (ratio > h.maxHedgeRatio) {
     return { verdict: 'unknown', strength: null, reasons: ['over_covered'] };
   }
+  // Everything below this point reads a low ratio as a fact about the
+  // account. That only holds if the holdings were actually read: a failed or
+  // truncated read can hide a hedge, and "we did not look" must not come out
+  // as "there is nothing there".
+  const hedgeCoverage = input.hedgeCoverage ?? 'complete';
+  if (hedgeCoverage === 'missing' || hedgeCoverage === 'partial') {
+    return { verdict: 'unknown', strength: null, reasons: ['hedge_not_checked'] };
+  }
+
   if (ratio >= thresholds.bet.maxHedgeRatio) {
     return { verdict: 'unknown', strength: null, reasons: ['partial_offset'] };
   }

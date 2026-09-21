@@ -82,7 +82,7 @@ export interface NansenClient {
   perpPnlSummary(address: string, fromDate: string, toDate: string): Promise<NansenPnlSummary>;
   /** `complete` is false when a full page came back and more holdings may exist. */
   currentBalance(address: string): Promise<{ rows: NansenBalance[]; complete: boolean }>;
-  relatedWallets(address: string, chain: string): Promise<NansenRelatedWallet[]>;
+  relatedWallets(address: string, chain: string): Promise<{ rows: NansenRelatedWallet[]; complete: boolean }>;
 }
 
 interface Envelope<T> {
@@ -93,6 +93,15 @@ interface Envelope<T> {
 function headerNumber(res: Response, name: string): number | null {
   const v = res.headers.get(name);
   return v === null ? null : Number(v);
+}
+
+const PAGE_SIZE = 100;
+
+/** Nansen is not documented to always answer with a pagination block, and
+ * "no pagination" is not the same statement as "that was everything". A page
+ * short of the limit proves there is no more; a full one proves nothing. */
+function isLastPage(pagination: { is_last_page: boolean } | undefined, rows: number): boolean {
+  return pagination?.is_last_page ?? rows < PAGE_SIZE;
 }
 
 export function createNansenClient(apiKey: string, record: NansenCallRecorder = () => {}): NansenClient {
@@ -125,17 +134,17 @@ export function createNansenClient(apiKey: string, record: NansenCallRecorder = 
         address,
         chain: 'all',
         hide_spam_token: true,
-        pagination: { page: 1, per_page: 100 },
+        pagination: { page: 1, per_page: PAGE_SIZE },
       });
-      return { rows: r.data, complete: r.pagination?.is_last_page ?? true };
+      return { rows: r.data, complete: isLastPage(r.pagination, r.data.length) };
     },
-    relatedWallets: async (address, chain) =>
-      (
-        await post<NansenRelatedWallet[]>('profiler/address/related-wallets', {
-          address,
-          chain,
-          pagination: { page: 1, per_page: 100 },
-        })
-      ).data,
+    relatedWallets: async (address, chain) => {
+      const r = await post<NansenRelatedWallet[]>('profiler/address/related-wallets', {
+        address,
+        chain,
+        pagination: { page: 1, per_page: PAGE_SIZE },
+      });
+      return { rows: r.data, complete: isLastPage(r.pagination, r.data.length) };
+    },
   };
 }

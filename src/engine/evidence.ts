@@ -3,6 +3,7 @@ import type {
   OrderFeatures,
   HedgeFeatures,
   HedgeScope,
+  HedgeCoverage,
   LinkedHedgeFeatures,
   TradeFeatures,
 } from './features';
@@ -24,6 +25,7 @@ export interface EvidenceInput {
   orders: OrderFeatures;
   hedge: HedgeFeatures;
   hedgeScope: HedgeScope;
+  hedgeCoverage: HedgeCoverage;
   linkedHedge: LinkedHedgeFeatures | null;
   trades: TradeFeatures;
   pnl: PnlSummary | null;
@@ -232,12 +234,29 @@ function linkedItem(input: EvidenceInput): EvidenceItem | null {
   };
 }
 
+/** A gap in the reading, stated as one. Which gap it was matters: a failed
+ * request and a deliberately cheaper check are not the same thing. */
+function hedgeNotCheckedSummary(input: EvidenceInput): string {
+  const { positions: p } = input;
+  const why =
+    input.hedgeCoverage === 'missing'
+      ? 'the read of its holdings on other chains failed'
+      : input.hedgeScope === 'all-chains'
+        ? 'only the first page of its holdings could be read'
+        : 'only its Hyperliquid balances were read, and a hedge on another chain would not show';
+  return (
+    `${formatPct(p.headlineShare)} of the exposure is one ${headlineText(p)}, ` +
+    `and whether it is hedged could not be checked: ${why}.`
+  );
+}
+
 /** Each reason a verdict can be withheld for says something specific; the
  * generic "not enough evidence" sentence is the fallback, not the rule. */
 const SUMMARY_BY_REASON: Record<string, ((input: EvidenceInput) => string) | undefined> = {
   linked_exposure_unverified: linkedSummary,
   mixed_long_short_book: mixedBookSummary,
   offset_not_measured: unmeasuredOffsetSummary,
+  hedge_not_checked: hedgeNotCheckedSummary,
   partial_offset: partialOffsetSummary,
   over_covered: overCoveredSummary,
 };

@@ -68,12 +68,20 @@ function route(failNansen: string[] = []) {
 
 /** A client that answers from memory and counts calls per method - for
  * asserting which reads a check skips, not what Nansen returns. */
-function fakeNansen(opts: { positions: NansenPerpPositions; balances?: NansenBalance[] }) {
+function fakeNansen(opts: {
+  positions: NansenPerpPositions;
+  balances?: NansenBalance[];
+  balancesComplete?: boolean;
+  balancesFail?: boolean;
+}) {
   return {
     perpPositions: vi.fn(async () => opts.positions),
     perpPnlSummary: vi.fn(async () => abxPnl.data as unknown as NansenPnlSummary),
-    currentBalance: vi.fn(async () => ({ rows: opts.balances ?? [], complete: true })),
-    relatedWallets: vi.fn(async () => [] as NansenRelatedWallet[]),
+    currentBalance: vi.fn(async () => {
+      if (opts.balancesFail) throw new Error('current-balance unavailable');
+      return { rows: opts.balances ?? [], complete: opts.balancesComplete ?? true };
+    }),
+    relatedWallets: vi.fn(async () => ({ rows: [] as NansenRelatedWallet[], complete: true })),
   } satisfies NansenClient;
 }
 
@@ -213,6 +221,53 @@ describe('checkAddress (offline, real fixtures)', () => {
     // The account's own holdings already explain more than half of it, so
     // the wallets that funded it are not worth a credit.
     expect(nansen.relatedWallets).not.toHaveBeenCalled();
+  });
+
+  it('still calls a short a bet when the hedge was checked in full and found nothing', async () => {
+    route();
+    const nansen = fakeNansen({
+      positions: syntheticPositions([{ coin: 'ETH', size: -25_000, valueUsd: 100_000_000 }]),
+      balances: [],
+    });
+    const result = await checkAddress(ABRAXAS, { nansen });
+    expect(result.hedgeCoverage).toBe('complete');
+    expect(result.verdict.verdict).toBe('looks_like_a_bet');
+  });
+
+  it('does not call a short a bet when the hedge read failed', async () => {
+    route();
+    const nansen = fakeNansen({
+      positions: syntheticPositions([{ coin: 'ETH', size: -25_000, valueUsd: 100_000_000 }]),
+      balancesFail: true,
+    });
+    const result = await checkAddress(ABRAXAS, { nansen });
+    expect(result.hedgeCoverage).toBe('missing');
+    expect(result.verdict.verdict).toBe('unknown');
+    expect(result.verdict.reasons).toEqual(['hedge_not_checked']);
+    expect(result.summary).toContain('could not be checked');
+  });
+
+  it('does not call a short a bet when only the first page of holdings was read', async () => {
+    route();
+    const nansen = fakeNansen({
+      positions: syntheticPositions([{ coin: 'ETH', size: -25_000, valueUsd: 100_000_000 }]),
+      balances: [],
+      balancesComplete: false,
+    });
+    const result = await checkAddress(ABRAXAS, { nansen });
+    expect(result.hedgeCoverage).toBe('partial');
+    expect(result.verdict.verdict).toBe('unknown');
+    expect(result.verdict.reasons).toEqual(['hedge_not_checked']);
+  });
+
+  it('does not call a short a bet from Hyperliquid spot alone', async () => {
+    route();
+    const result = await checkAddress(ABRAXAS, { nansen: null });
+    // Abraxas is short ETH and holds no ETH on Hyperliquid; without the other
+    // chains that is a gap in the reading, not an absence of a hedge.
+    expect(result.positions.headlineSide).toBe('short');
+    expect(result.hedgeCoverage).toBe('partial');
+    expect(result.verdict.verdict).not.toBe('looks_like_a_bet');
   });
 
   it('runs Hyperliquid-only when no Nansen client is given', async () => {

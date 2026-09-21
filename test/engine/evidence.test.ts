@@ -25,6 +25,7 @@ function input(overrides: Partial<EvidenceInput>): EvidenceInput {
     orders: { restingOrders: 0, bidShare: 0.5, coinsBothSides: 0 },
     hedge: { hedgeUsd: 0, hedgeRatio: 0 },
     hedgeScope: 'all-chains',
+    hedgeCoverage: 'complete',
     linkedHedge: null,
     trades: { tradesPerDay: 0, crossedShare: 0, buyShare: 0, sampleSize: 0, cappedByApiLimit: false },
     pnl: { realizedPnlUsd: -15_512_000, winRate: 0.41, closedTrades: 120, windowDays: 30 },

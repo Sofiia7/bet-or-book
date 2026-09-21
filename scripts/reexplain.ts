@@ -9,7 +9,7 @@ import { computeVerdict } from '../src/engine/verdict';
 import { explain } from '../src/engine/evidence';
 import { knownServiceName } from '../src/sources/normalize';
 import type { Gallery } from '../src/gallery';
-import type { LinkedHedgeFeatures } from '../src/engine/features';
+import type { LinkedHedgeFeatures, HedgeCoverage } from '../src/engine/features';
 
 const path = process.argv[2] ?? 'data/gallery.json';
 const gallery = JSON.parse(readFileSync(path, 'utf-8')) as Gallery;
@@ -36,6 +36,17 @@ function withoutServices(
   };
 }
 
+/** Entries scanned before hedgeCoverage existed still recorded what happened,
+ * in hedgeScope and in the coverage notes. Read it back rather than assume
+ * the reading was complete. */
+function legacyHedgeCoverage(e: Gallery['entries'][number]): HedgeCoverage {
+  if (e.hedgeCoverage) return e.hedgeCoverage;
+  if (e.hedgeScope === 'none') return 'not-applicable';
+  if (e.coverage.some((c) => c.includes('Holdings on other chains unavailable'))) return 'missing';
+  if (e.coverage.some((c) => c.includes('first 100 tokens only'))) return 'partial';
+  return e.hedgeScope === 'all-chains' ? 'complete' : 'partial';
+}
+
 let reverdicted = 0;
 let reexplained = 0;
 let serviceFunders = 0;
@@ -48,14 +59,16 @@ gallery.entries = gallery.entries.map((e) => {
   }
   if (dropped.length > 0) serviceFunders += dropped.length;
 
+  const hedgeCoverage = legacyHedgeCoverage(e);
   const verdict = computeVerdict({
     positions: e.positions,
     orders: e.orders,
     hedge: e.hedge,
     trades: { tradesPerDay: e.trades.tradesPerDay, crossedShare: e.trades.crossedShare, buyShare: e.trades.buyShare },
     linkedHedge: linked ? { linkedHedgeRatio: linked.linkedHedgeRatio } : undefined,
+    hedgeCoverage,
   });
-  const next = { ...e, verdict, linkedHedge: linked, coverage };
+  const next = { ...e, verdict, linkedHedge: linked, coverage, hedgeCoverage };
   const { summary, evidence } = explain(next);
 
   if (JSON.stringify(verdict) !== JSON.stringify(e.verdict)) reverdicted++;

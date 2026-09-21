@@ -204,6 +204,9 @@ function headlineFor(d) {
   if (reasons.indexOf('over_covered') !== -1) {
     return 'More than covered: on the asset itself, this account is net long.';
   }
+  if (reasons.indexOf('hedge_not_checked') !== -1) {
+    return 'Directional exposure is visible. Whether it is hedged could not be checked.';
+  }
   return verdictOf(d).headline;
 }
 function positionText(d) {
