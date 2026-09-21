@@ -44,6 +44,8 @@ const MAX_FUNDERS = 2;
 /** Share of the headline position below which a caveat is not worth the
  * reader's attention. */
 const MATERIAL_SHARE = 0.01;
+/** How long one check may keep spending before it answers with what it has. */
+const CHECK_DEADLINE_MS = 45_000;
 
 export interface CheckOptions {
   /** null runs Hyperliquid-only: no key, credit cap reached, or a test. */
@@ -51,6 +53,8 @@ export interface CheckOptions {
   /** Why `nansen` is null, in words for the card. */
   nansenOffReason?: string;
   now?: () => number;
+  /** Absolute time past which no further paid stage is started. */
+  deadline?: number;
 }
 
 export interface CheckResult {
@@ -87,19 +91,33 @@ export type CheckResponse = CheckResult & { nansenCalls: number };
  * wallets only when those balances leave it open. */
 export async function checkAddress(address: string, opts: CheckOptions): Promise<CheckResult> {
   const now = (opts.now ?? Date.now)();
+  // Four paid stages at the 20 s Nansen timeout, plus the free reads, can
+  // outlast any reader's patience and hold a budget reservation the whole
+  // time. Past the deadline the remaining paid stages are skipped and said
+  // to be skipped, which is a partial answer rather than a slow wrong one.
+  const deadline = opts.deadline ?? now + CHECK_DEADLINE_MS;
+  const outOfTime = () => Date.now() > deadline;
   const day = (daysAgo: number) => new Date(now - daysAgo * 86_400_000).toISOString().slice(0, 10);
   const coverage: string[] = [];
   const nansen = opts.nansen;
 
   // The free reads go first: if Hyperliquid is down, the check fails before a
   // single credit is spent.
-  const [rawOrders, spotBalances, spotMetaPair, perpMetaPair, rawFills] = await Promise.all([
+  // These four decide things, so losing one has to fail the check rather
+  // than quietly answer from less. Open interest is the exception: it
+  // decorates the card and decides nothing, so it is read separately and
+  // allowed to be missing.
+  const [rawOrders, spotBalances, spotMetaPair, rawFills, perpMetaRes] = await Promise.all([
     getOpenOrders(address),
     getSpotBalances(address),
     getSpotMeta(),
-    getPerpMetaAndAssetCtxs(),
     getUserFillsByTime(address, now - TRADES_WINDOW_HOURS * 3_600_000, now),
+    getPerpMetaAndAssetCtxs().then(
+      (v) => ({ ok: true as const, v }),
+      () => ({ ok: false as const, v: null }),
+    ),
   ]);
+  if (!perpMetaRes.ok) coverage.push('Open interest unavailable, so size versus open interest is not shown');
 
   let source: CheckResult['source'] = 'hyperliquid';
   let positions: Position[] | null = null;
@@ -171,7 +189,9 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
   // hedge to look for. For a short, Hyperliquid balances alone are a partial
   // answer until Nansen fills in the other chains.
   let hedgeCoverage: HedgeCoverage = positionFeatures.headlineSide === 'short' ? 'partial' : 'not-applicable';
-  if (nansen && hedgeMatters) {
+  if (nansen && hedgeMatters && outOfTime()) {
+    coverage.push('This check ran out of time before it could read holdings on other chains');
+  } else if (nansen && hedgeMatters) {
     try {
       const bal = await nansen.currentBalance(address);
       ownChain = normalizeNansenBalances(bal.rows);
@@ -211,19 +231,26 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
   const hedgeScope: HedgeScope =
     positionFeatures.headlineSide !== 'short' ? 'none' : otherChainsRead ? 'all-chains' : 'hyperliquid';
 
-  const linkedHedge =
-    nansen && hedgeMatters && hedgeFeatures.hedgeRatio < DEFAULT_THRESHOLDS.hedged.linkedLookupBelowRatio
-      ? await readLinkedHedge(nansen, address, positionFeatures, coverage)
-      : null;
+  const funderLookupWorthIt =
+    nansen !== null && hedgeMatters && hedgeFeatures.hedgeRatio < DEFAULT_THRESHOLDS.hedged.linkedLookupBelowRatio;
+  let linkedHedge: LinkedHedgeFeatures | null = null;
+  if (funderLookupWorthIt && outOfTime()) {
+    coverage.push('This check ran out of time before it could look at the wallets that funded the account');
+  } else if (funderLookupWorthIt) {
+    linkedHedge = await readLinkedHedge(nansen!, address, positionFeatures, coverage);
+  }
 
-  const [perpMeta, perpAssetCtxs] = perpMetaPair;
-  const headlineIndex = perpMeta.universe.findIndex((a) => a.name === positionFeatures.headlineCoin);
-  const openInterestUsd =
-    headlineIndex >= 0
-      ? Number(perpAssetCtxs[headlineIndex].openInterest) * Number(perpAssetCtxs[headlineIndex].markPx)
-      : 0;
-  if (headlineIndex < 0 && positionFeatures.headlineCoin?.includes(':')) {
-    coverage.push('Size versus open interest not computed for a HIP-3 dex market');
+  let openInterestUsd = 0;
+  if (perpMetaRes.ok) {
+    const [perpMeta, perpAssetCtxs] = perpMetaRes.v;
+    const headlineIndex = perpMeta.universe.findIndex((a) => a.name === positionFeatures.headlineCoin);
+    openInterestUsd =
+      headlineIndex >= 0
+        ? Number(perpAssetCtxs[headlineIndex].openInterest) * Number(perpAssetCtxs[headlineIndex].markPx)
+        : 0;
+    if (headlineIndex < 0 && positionFeatures.headlineCoin?.includes(':')) {
+      coverage.push('Size versus open interest not computed for a HIP-3 dex market');
+    }
   }
 
   const verdict = computeVerdict({

@@ -226,6 +226,39 @@ describe('checkAddress (offline, real fixtures)', () => {
     expect(nansen.relatedWallets).not.toHaveBeenCalled();
   });
 
+  it('still answers when open interest cannot be read', async () => {
+    const realFetch = global.fetch;
+    route();
+    const routed = global.fetch;
+    global.fetch = vi.fn(async (url: string | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body ?? '{}'));
+      if (body.type === 'metaAndAssetCtxs') return new Response('down', { status: 503 });
+      return (routed as unknown as typeof fetch)(url, init);
+    }) as unknown as typeof fetch;
+    const result = await checkAddress(ABRAXAS, { nansen: null });
+    global.fetch = realFetch;
+
+    // Open interest decorates the card; it decides nothing, so losing it
+    // must not lose the whole check.
+    expect(result.positions.nPositions).toBe(14);
+    expect(result.sizeVsOi).toBeNull();
+    expect(result.coverage).toContain('Open interest unavailable, so size versus open interest is not shown');
+  });
+
+  it('stops spending once a check has run past its deadline', async () => {
+    route();
+    const nansen = fakeNansen({
+      positions: syntheticPositions([{ coin: 'ETH', size: -25_000, valueUsd: 100_000_000 }]),
+      balances: [balanceRow('WETH', 95_000_000)],
+    });
+    const result = await checkAddress(ABRAXAS, { nansen, deadline: Date.now() - 1 });
+    // Four paid stages at a 20 s timeout each can outlast any reader's
+    // patience and hold a budget reservation the whole time.
+    expect(nansen.currentBalance).not.toHaveBeenCalled();
+    expect(result.coverage).toContain('This check ran out of time before it could read holdings on other chains');
+    expect(result.verdict.verdict).not.toBe('looks_like_a_bet');
+  });
+
   it('falls back to Hyperliquid when Nansen answers 200 with the wrong shape', async () => {
     route();
     const nansen = {

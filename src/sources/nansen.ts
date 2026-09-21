@@ -104,14 +104,38 @@ function isLastPage(pagination: { is_last_page: boolean } | undefined, rows: num
   return pagination?.is_last_page ?? rows < PAGE_SIZE;
 }
 
+/** Status recorded for a call that was sent but never answered: a timeout or
+ * a dropped connection. Nansen may have served and charged it, so it counts
+ * as spent rather than as nothing having happened. */
+export const NO_ANSWER = 0;
+
+/** Statuses that mean the account cannot pay for more. What Nansen returns
+ * when credits run out is not documented, so any of them stops the check. */
+const REFUSED = new Set([401, 402, 403]);
+
 export function createNansenClient(apiKey: string, record: NansenCallRecorder = () => {}): NansenClient {
+  // One client serves one check, so a refusal here stops that check rather
+  // than only the calls after the next budget read. The audit watched five
+  // more requests go out against the same 402.
+  let refused = false;
+
   async function post<T>(path: string, body: Record<string, unknown>): Promise<Envelope<T>> {
-    const res = await fetch(`${BASE_URL}/${path}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', apikey: apiKey },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
+    if (refused) throw new Error('nansen refused an earlier call in this check');
+
+    let res: Response;
+    try {
+      res = await fetch(`${BASE_URL}/${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: apiKey },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+    } catch (err) {
+      await record({ path, status: NO_ANSWER, creditsCost: null, creditsRemaining: null });
+      throw err;
+    }
+
+    if (REFUSED.has(res.status)) refused = true;
     await record({
       path,
       status: res.status,

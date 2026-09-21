@@ -73,6 +73,33 @@ describe('nansen client', () => {
     expect(done.rows).toEqual([]);
   });
 
+  it('records a call that never came back, because it may still have been charged', async () => {
+    global.fetch = vi.fn(async () => {
+      throw new DOMException('The operation timed out.', 'TimeoutError');
+    }) as unknown as typeof fetch;
+    const calls: NansenCallMeta[] = [];
+    const client = createNansenClient(KEY, (m) => {
+      calls.push(m);
+    });
+    await expect(client.perpPositions('0xabc')).rejects.toThrow();
+    // Status 0 is "attempted, outcome unknown". Nansen may well have served
+    // and charged it; leaving no record was the only certainly wrong answer.
+    expect(calls).toEqual([{ path: 'profiler/perp-positions', status: 0, creditsCost: null, creditsRemaining: null }]);
+  });
+
+  it('stops calling after Nansen refuses, instead of spending five more times', async () => {
+    const fn = mockFetch({ error: 'payment required' }, 402);
+    const calls: NansenCallMeta[] = [];
+    const client = createNansenClient(KEY, (m) => {
+      calls.push(m);
+    });
+    await expect(client.perpPositions('0xabc')).rejects.toThrow();
+    await expect(client.currentBalance('0xabc')).rejects.toThrow('nansen refused an earlier call in this check');
+    await expect(client.relatedWallets('0xabc', 'ethereum')).rejects.toThrow();
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(calls.length).toBe(1);
+  });
+
   it('records a failed call and throws without leaking the key', async () => {
     mockFetch({ error: 'unauthorized' }, 401);
     const calls: NansenCallMeta[] = [];
