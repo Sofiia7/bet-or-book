@@ -8,6 +8,7 @@ import { spendGuard, requestGate } from './coordinator';
 import { createNansenClient, type NansenCallMeta } from './sources/nansen';
 import { CLASSIFIER_VERSION } from './engine/verdict';
 import type { CheckResponse } from './api/check';
+import { snapshotId, snapshotKey, isSnapshotId, SNAPSHOT_TTL_SECONDS } from './snapshot';
 import pageHtml from '../web/index.html';
 import galleryData from '../data/gallery.json';
 import ledgerData from '../data/ledger.json';
@@ -16,6 +17,11 @@ import { liveCallsInWindow, type LedgerSummary } from './ledger';
 import type { KVLike } from './kv';
 
 const gallery = galleryData as unknown as Gallery;
+/** Gallery cards by snapshot id, so a shared link to one opens the card that
+ * was shared and not a fresh check of that account. */
+const galleryById = new Map(
+  gallery.entries.map((e) => [e.snapshotId ?? snapshotId(e.address, e.checkedAt), e] as const),
+);
 const scriptedLedger = ledgerData as unknown as LedgerSummary;
 
 interface Env {
@@ -111,7 +117,17 @@ export default {
               : null;
           try {
             const result = await checkAddress(address, { nansen, nansenOffReason });
-            return { ...result, nansenCalls: calls.length };
+            const saved: CheckResponse = {
+              ...result,
+              nansenCalls: calls.length,
+              snapshotId: snapshotId(address, result.checkedAt),
+            };
+            // Kept so the link can open this reading rather than start a new
+            // one. A failed write costs the share link, not the answer.
+            await kv.put(snapshotKey(saved.snapshotId!), JSON.stringify(saved), {
+              expirationTtl: SNAPSHOT_TTL_SECONDS,
+            });
+            return saved;
           } finally {
             // Settle first: the hold has to come off whatever else fails.
             // A call with no cost header counts as one credit, the
@@ -132,6 +148,24 @@ export default {
         console.error('check failed', err);
         return Response.json({ error: 'could not read this address right now, try again shortly' }, { status: 502 });
       }
+    }
+
+    // A saved reading, by id. Gallery cards ship with the Worker, so they
+    // answer without touching storage; live checks are in KV.
+    if (url.pathname === '/api/snapshot') {
+      const id = url.searchParams.get('id') ?? '';
+      if (!isSnapshotId(id)) return Response.json({ error: 'not a snapshot id' }, { status: 400 });
+      const fromGallery = galleryById.get(id);
+      if (fromGallery) {
+        return Response.json(fromGallery, { headers: { 'cache-control': 'public, max-age=3600' } });
+      }
+      const raw = await kv.get(snapshotKey(id));
+      if (raw === null) {
+        return Response.json({ error: 'that snapshot has expired or never existed' }, { status: 404 });
+      }
+      return new Response(raw, {
+        headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=3600' },
+      });
     }
 
     if (url.pathname === '/api/gallery') {

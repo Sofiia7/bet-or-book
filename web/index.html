@@ -99,7 +99,7 @@
   <p class="summary" id="summary"></p>
   <div class="stats" id="stats"></div>
   <div class="box" id="funders" hidden>
-    <p><strong>Wallets that funded this account</strong> - the hedge was found here</p>
+    <p><strong>Wallets that funded this account</strong> - they hold the matching asset, which is not the same as this account holding it</p>
     <ul id="funders-list"></ul>
     <p class="attribution">Linked wallets: Powered by Nansen API. Ownership is inferred from the funding link, not confirmed.</p>
   </div>
@@ -280,39 +280,92 @@ function renderResult(d, opts) {
   }
   meta.append(hs);
 
-  $('snapshot').hidden = !opts.snapshot;
-  if (opts.snapshot) $('snapshot-text').textContent = 'Snapshot from the gallery scan, ' + fmtTime(d.checkedAt) + '.';
+  // Whatever is on screen, the address field says which account it is about.
+  $('address').value = d.address;
+
+  const kind = opts.kind || 'live';
+  $('snapshot').hidden = kind === 'live';
+  if (kind === 'gallery') {
+    $('snapshot-text').textContent = 'Snapshot from the gallery scan, ' + fmtTime(d.checkedAt) + '.';
+  } else if (kind === 'saved') {
+    $('snapshot-text').textContent =
+      'Saved reading from ' + fmtTime(d.checkedAt) + '. Checking again makes a new one.';
+  }
 
   $('card-canvas').hidden = true;
   $('copy-card').textContent = 'Copy card';
   $('card').hidden = false;
 }
 
-async function runCheck() {
+// Every request gets a number. Enter, the Check button and "Check live" can
+// all fire while one is in the air, and without this the slower answer wins
+// and the card shows the previous address.
+let requestSeq = 0;
+let busy = false;
+
+function setBusy(on) {
+  busy = on;
+  $('check').disabled = on;
+  $('check').textContent = on ? 'Checking...' : 'Check';
+  $('check-live').disabled = on;
+}
+
+async function load(url, onData, failureText) {
+  const seq = ++requestSeq;
+  setBusy(true);
+  setStatus('Reading positions from Nansen and orders from Hyperliquid...', false);
+  try {
+    const res = await fetch(url);
+    const data = await res.json().catch(() => ({}));
+    if (seq !== requestSeq) return;
+    if (!res.ok) {
+      // The previous card is still on screen and is still about whatever it
+      // was about. Say so rather than let it pass for the answer just asked
+      // for.
+      setStatus((data.error || failureText) + (current ? ' The card below is the previous reading.' : ''), true);
+      return;
+    }
+    setStatus('', false);
+    onData(data);
+  } catch (e) {
+    if (seq === requestSeq) {
+      setStatus(
+        'Could not reach the server. Try again shortly.' + (current ? ' The card below is the previous reading.' : ''),
+        true,
+      );
+    }
+  } finally {
+    if (seq === requestSeq) setBusy(false);
+  }
+}
+
+function runCheck() {
+  if (busy) return;
   const addr = extractAddress($('address').value);
   if (!addr) {
     setStatus('Enter a Hyperliquid address (or a link containing one) first.', true);
     return;
   }
-  const btn = $('check');
-  btn.disabled = true;
-  btn.textContent = 'Checking...';
-  setStatus('Reading positions from Nansen and orders from Hyperliquid...', false);
-  try {
-    const res = await fetch('/api/check?address=' + encodeURIComponent(addr));
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setStatus(data.error || 'Something went wrong. Try again shortly.', true);
-      return;
-    }
-    setStatus('', false);
-    renderResult(data, { snapshot: false });
-  } catch (e) {
-    setStatus('Could not reach the server. Try again shortly.', true);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Check';
-  }
+  return load(
+    '/api/check?address=' + encodeURIComponent(addr),
+    (data) => {
+      renderResult(data, { kind: 'live' });
+      // A live reading is worth linking to, so the address in the bar
+      // becomes the link to this reading rather than to the account.
+      if (data.snapshotId) {
+        window.history.replaceState(null, '', '/?s=' + encodeURIComponent(data.snapshotId));
+      }
+    },
+    'Something went wrong. Try again shortly.',
+  );
+}
+
+function openSnapshot(id) {
+  return load(
+    '/api/snapshot?id=' + encodeURIComponent(id),
+    (data) => renderResult(data, { kind: 'saved' }),
+    'That link points at a reading that is no longer saved. Check the address again to make a new one.',
+  );
 }
 
 $('check').addEventListener('click', runCheck);
@@ -372,7 +425,7 @@ function renderGallery() {
       el('span', 'row-meta', pnl + plural(e.positions.nPositions, 'open position') + ' · ' + shortAddr(e.address)),
     );
     b.addEventListener('click', () => {
-      renderResult(e, { snapshot: true });
+      renderResult(e, { kind: 'gallery' });
       setStatus('', false);
       $('card').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
@@ -513,7 +566,12 @@ $('copy-card').addEventListener('click', () => {
 
 $('copy-link').addEventListener('click', async () => {
   if (!current) return;
-  const link = window.location.origin + '/?address=' + current.address;
+  // The link opens this reading, not a new check of this account. Without a
+  // snapshot id there is nothing saved to point at, so it falls back to the
+  // address and the button says which one it gave.
+  const link = current.snapshotId
+    ? window.location.origin + '/?s=' + current.snapshotId
+    : window.location.origin + '/?address=' + current.address;
   const btn = $('copy-link');
   try {
     await navigator.clipboard.writeText(link);
@@ -545,8 +603,14 @@ async function loadLedger() {
 
 loadGallery();
 loadLedger();
-const preset =new URLSearchParams(window.location.search).get('address');
-if (preset) {
+const params = new URLSearchParams(window.location.search);
+const saved = params.get('s');
+const preset = params.get('address');
+if (saved) {
+  // A saved reading opens as itself. No check runs, so nothing is spent and
+  // nothing can have changed between the link being written and read.
+  openSnapshot(saved);
+} else if (preset) {
   $('address').value = preset;
   runCheck();
 }

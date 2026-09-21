@@ -100,7 +100,11 @@ export interface CheckResult {
 
 /** What /api/check and the gallery serve: the result plus how many Nansen
  * calls producing it took, counted by the caller's recorder. */
-export type CheckResponse = CheckResult & { nansenCalls: number };
+export type CheckResponse = CheckResult & {
+  nansenCalls: number;
+  /** Where this exact reading can be opened again. See src/snapshot.ts. */
+  snapshotId?: string;
+};
 
 /** Reads in stages so that every Nansen credit is spent only where its answer
  * can still change the verdict: positions and PnL always; the account's own

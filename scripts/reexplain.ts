@@ -8,6 +8,7 @@ import { readFileSync, writeFileSync, renameSync } from 'node:fs';
 import { computeVerdict, CLASSIFIER_VERSION } from '../src/engine/verdict';
 import { explain } from '../src/engine/evidence';
 import { knownServiceName } from '../src/sources/normalize';
+import { snapshotId } from '../src/snapshot';
 import type { Gallery } from '../src/gallery';
 import type { LinkedHedgeFeatures, HedgeCoverage } from '../src/engine/features';
 
@@ -81,6 +82,7 @@ gallery.entries = gallery.entries.map((e) => {
     positionsAsOf,
     degraded,
     classifierVersion: CLASSIFIER_VERSION,
+    snapshotId: snapshotId(e.address, e.checkedAt),
   };
   const { summary, evidence } = explain(next);
 
