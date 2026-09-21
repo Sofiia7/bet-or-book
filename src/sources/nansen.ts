@@ -134,7 +134,14 @@ function meansOutOfCredits(status: number, creditsRemaining: number | null): boo
 
 export { meansOutOfCredits };
 
-export function createNansenClient(apiKey: string, record: NansenCallRecorder = () => {}): NansenClient {
+export function createNansenClient(
+  apiKey: string,
+  record: NansenCallRecorder = () => {},
+  /** The deadline of the check this client serves. Its own 20 s timeout
+   * bounds one call; this bounds the reader's wait, which a stage already in
+   * flight used to run straight past (audit R04). */
+  checkSignal?: AbortSignal,
+): NansenClient {
   // One client serves one check, so a refusal here stops that check rather
   // than only the calls after the next budget read. The audit watched five
   // more requests go out against the same 402.
@@ -149,7 +156,10 @@ export function createNansenClient(apiKey: string, record: NansenCallRecorder = 
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: apiKey },
         body: JSON.stringify(body),
-        signal: AbortSignal.timeout(TIMEOUT_MS),
+        signal:
+          checkSignal === undefined
+            ? AbortSignal.timeout(TIMEOUT_MS)
+            : AbortSignal.any([AbortSignal.timeout(TIMEOUT_MS), checkSignal]),
       });
     } catch (err) {
       await record({ path, status: NO_ANSWER, creditsCost: null, creditsRemaining: null, at: Date.now() });

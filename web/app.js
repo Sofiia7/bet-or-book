@@ -100,6 +100,11 @@ function setStatus(text, isError) {
   s.className = 'status' + (isError ? ' error' : '');
 }
 
+/** What this rendering is: a live check, a saved reading or a gallery card. */
+function kindOf(opts) {
+  return (opts && opts.kind) || 'live';
+}
+
 function renderResult(d, opts) {
   current = d;
   const v = verdictOf(d);
@@ -140,7 +145,12 @@ function renderResult(d, opts) {
       ? ' · positions as of ' + fmtTime(d.positionsAsOf)
       : '';
   const rules = d.classifierVersion ? ' · rules ' + d.classifierVersion : '';
-  meta.append('Checked ' + fmtTime(d.checkedAt) + measured + calls + ' · ' + src + rules + ' · ');
+  // "Check live" can be answered from the ten-minute cache, and a card that
+  // looks new when it is nine minutes old is the wrong thing to hand a
+  // reader watching a position move.
+  const ageMin = Math.floor((Date.now() - new Date(d.checkedAt).getTime()) / 60000);
+  const age = kindOf(opts) === 'live' && ageMin >= 1 ? ' · cached, ' + plural(ageMin, 'minute') + ' old' : '';
+  meta.append('Checked ' + fmtTime(d.checkedAt) + measured + age + calls + ' · ' + src + rules + ' · ');
   const hs = el('a', null, 'view on Hypurrscan');
   if (ADDRESS_RE.test(d.address)) {
     hs.href = 'https://hypurrscan.io/address/' + d.address;
@@ -152,10 +162,20 @@ function renderResult(d, opts) {
   // Whatever is on screen, the address field says which account it is about.
   $('address').value = d.address;
 
-  const kind = opts.kind || 'live';
+  const kind = kindOf(opts);
   $('snapshot').hidden = kind === 'live';
   if (kind === 'gallery') {
-    $('snapshot-text').textContent = 'Snapshot from the gallery scan, ' + fmtTime(d.checkedAt) + '.';
+    // An entry whose observation predates the current rules keeps the
+    // verdict the older rules gave it. Saying which rules read a card is
+    // the difference between history and a current answer (audit A06).
+    $('snapshot-text').textContent = d.historical
+      ? 'Snapshot from the gallery scan, ' +
+        fmtTime(d.checkedAt) +
+        ', read by the rules of the time (' +
+        (d.classifierVersion || 'earlier') +
+        '). ' +
+        d.historical.reason
+      : 'Snapshot from the gallery scan, ' + fmtTime(d.checkedAt) + '.';
   } else if (kind === 'saved') {
     $('snapshot-text').textContent =
       'Saved reading from ' + fmtTime(d.checkedAt) + '. Checking again makes a new one.';
@@ -169,8 +189,31 @@ function renderResult(d, opts) {
 // Every request gets a number. Enter, the Check button and "Check live" can
 // all fire while one is in the air, and without this the slower answer wins
 // and the card shows the previous address.
+//
+// A gallery click is one of those moves too. It used not to take a number,
+// so a check still running would land on top of the card the reader had just
+// opened (audit R03).
 let requestSeq = 0;
 let busy = false;
+
+/** Abandons whatever is in flight. Nothing is cancelled on the server - the
+ * credits are spent either way and the budget still settles - but its answer
+ * will not be painted over the reading the reader has moved to. */
+function takeOver() {
+  requestSeq++;
+  setBusy(false);
+  return requestSeq;
+}
+
+/** Keeps the address bar pointing at what is on screen. Opening a card used
+ * to leave the previous reading's link in the bar, so copying it shared the
+ * wrong one. */
+function showLink(id) {
+  const next = id ? '/?s=' + encodeURIComponent(id) : '/';
+  if (window.location.pathname + window.location.search !== next) {
+    window.history.replaceState(null, '', next);
+  }
+}
 
 function setBusy(on) {
   busy = on;
@@ -182,10 +225,13 @@ function setBusy(on) {
 // Starting a check spends money, so it is a POST: a GET is something a
 // crawler, a link preview or a browser prefetch can trigger on its own, and
 // used to run the paid branch when they did.
-async function load(url, onData, failureText, method) {
+async function load(url, onData, failureText, method, notice) {
   const seq = ++requestSeq;
   setBusy(true);
-  setStatus('Reading positions from Nansen and orders from Hyperliquid...', false);
+  // A notice about the input - "three addresses here, using the first" - is
+  // about to be replaced by the progress line one statement later, which is
+  // how it became unreadable. It travels with the request instead.
+  setStatus((notice ? notice + ' ' : '') + 'Reading positions from Nansen and orders from Hyperliquid...', false);
   try {
     const res = await fetch(url, { method: method || 'GET' });
     const data = await res.json().catch(() => ({}));
@@ -197,7 +243,7 @@ async function load(url, onData, failureText, method) {
       setStatus((data.error || failureText) + (current ? ' The card below is the previous reading.' : ''), true);
       return;
     }
-    setStatus('', false);
+    setStatus(notice || '', false);
     onData(data);
   } catch (e) {
     if (seq === requestSeq) {
@@ -228,7 +274,7 @@ function runCheck() {
     return;
   }
   const all = [...raw.trim().matchAll(/0x[0-9a-fA-F]{40}(?![0-9a-fA-F])/g)];
-  if (all.length > 1) setStatus('Found ' + all.length + ' addresses. Checking the first one, ' + addr + '.', false);
+  const notice = all.length > 1 ? 'Found ' + all.length + ' addresses; using the first, ' + addr + '.' : '';
   return load(
     '/api/check?address=' + encodeURIComponent(addr),
     (data) => {
@@ -237,18 +283,27 @@ function runCheck() {
       // becomes the link to this reading rather than to the account - but
       // only once the server says it really saved one.
       if (data.snapshotId && data.snapshotSaved !== false) {
-        window.history.replaceState(null, '', '/?s=' + encodeURIComponent(data.snapshotId));
+        showLink(data.snapshotId);
+      } else {
+        // Nothing was saved, so there is nothing to link to. Leaving the
+        // previous reading's id in the bar would be worse than none.
+        showLink(null);
       }
     },
     'Something went wrong. Try again shortly.',
     'POST',
+    notice,
   );
 }
 
 function openSnapshot(id) {
+  takeOver();
   return load(
     '/api/snapshot?id=' + encodeURIComponent(id),
-    (data) => renderResult(data, { kind: 'saved' }),
+    (data) => {
+      renderResult(data, { kind: 'saved' });
+      showLink(id);
+    },
     'That link points at a reading that is no longer saved. Check the address again to make a new one.',
   );
 }
@@ -310,8 +365,13 @@ function renderGallery() {
       el('span', 'row-meta', pnl + plural(e.positions.nPositions, 'open position') + ' · ' + shortAddr(e.address)),
     );
     b.addEventListener('click', () => {
+      // Whatever check is in the air was about a different account. Let it
+      // finish on the server - the credits are spent - and stop it from
+      // landing on the card the reader just chose.
+      takeOver();
       renderResult(e, { kind: 'gallery' });
       setStatus('', false);
+      showLink(e.snapshotId);
       $('card').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     li.append(b);

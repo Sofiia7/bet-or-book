@@ -259,11 +259,13 @@ export function normalizeRelatedWallets(rows: NansenRelatedWallet[]): LinkedWall
   }));
 }
 
+/** A PnL body is three numbers, and an empty object has none of them. It
+ * used to pass straight through and put `$NaN` on the card. */
 export function normalizeNansenPnl(s: NansenPnlSummary, windowDays: number): PnlSummary {
   return {
-    realizedPnlUsd: s.realized_pnl_usd,
-    winRate: s.win_rate,
-    closedTrades: s.closed_trade_count,
+    realizedPnlUsd: finite(s?.realized_pnl_usd, 'realized_pnl_usd'),
+    winRate: finite(s.win_rate, 'win_rate'),
+    closedTrades: finite(s.closed_trade_count, 'closed_trade_count'),
     windowDays,
   };
 }

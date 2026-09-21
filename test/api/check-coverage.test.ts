@@ -115,3 +115,36 @@ describe('a reading that is old, or was never taken, says so', () => {
     expect(result.verdict.reasons).toContain('positions_not_complete');
   });
 });
+
+describe('R04: the deadline covers the whole check, not some of its stages', () => {
+  it('starts no paid stage at all once the time is gone', async () => {
+    route();
+    const nansen = nansenWith('ETH', 'short');
+    const spy = { positions: 0, pnl: 0 };
+    const counted: NansenClient = {
+      perpPositions: async (a) => {
+        spy.positions++;
+        return nansen.perpPositions(a);
+      },
+      perpPnlSummary: async (...args) => {
+        spy.pnl++;
+        return nansen.perpPnlSummary(...args);
+      },
+      currentBalance: nansen.currentBalance,
+      relatedWallets: nansen.relatedWallets,
+    };
+    const result = await checkAddress(ADDRESS, { nansen: counted, deadline: Date.now() - 1 });
+    expect(spy).toEqual({ positions: 0, pnl: 0 });
+    expect(result.coverage.join(' ')).toContain('ran out of time');
+    expect(result.degraded).toBe(true);
+  });
+
+  it('measures the deadline on the clock it was given', async () => {
+    route();
+    // An injected clock and a direct Date.now() used to be mixed, which made
+    // any test of the time budget depend on how long the test itself took.
+    const frozen = Date.parse('2026-09-21T12:00:00Z');
+    const result = await checkAddress(ADDRESS, { nansen: nansenWith('ETH', 'long'), now: () => frozen });
+    expect(result.checkedAt).toBe(new Date(frozen).toISOString());
+  });
+});

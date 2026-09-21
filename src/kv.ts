@@ -4,5 +4,8 @@
 // adapter; tests pass a FakeKV (test/support/fakeKv.ts) instead.
 export interface KVLike {
   get(key: string): Promise<string | null>;
-  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+  /** Most callers ignore the result; `safeKv` narrows it to whether the
+   * write went through, which the check route needs before it offers a
+   * link to a saved reading. */
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<unknown>;
 }

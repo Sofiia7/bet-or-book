@@ -98,12 +98,20 @@ export interface HlFill {
   tid: number;
 }
 
-async function postInfo<T>(body: Record<string, unknown>): Promise<T> {
+/** This call's own timeout, plus whatever deadline the whole check runs
+ * under: a request still in flight when the check runs out of time is one
+ * whose answer the reader will never see. */
+function deadlineFor(signal?: AbortSignal): AbortSignal {
+  const own = AbortSignal.timeout(TIMEOUT_MS);
+  return signal === undefined ? own : AbortSignal.any([own, signal]);
+}
+
+async function postInfo<T>(body: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
   const res = await fetch(BASE_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(TIMEOUT_MS),
+    signal: deadlineFor(signal),
   });
   if (!res.ok) {
     throw new Error(`hyperliquid ${String(body.type)} failed: ${res.status}`);
@@ -111,16 +119,17 @@ async function postInfo<T>(body: Record<string, unknown>): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export async function getClearinghouseState(user: string): Promise<HlClearinghouseState> {
-  return postInfo<HlClearinghouseState>({ type: 'clearinghouseState', user });
+export async function getClearinghouseState(user: string, signal?: AbortSignal): Promise<HlClearinghouseState> {
+  return postInfo<HlClearinghouseState>({ type: 'clearinghouseState', user }, signal);
 }
 
 /** Resting orders. Without `dex` Hyperliquid answers for one perp dex and
  * spot, which is not the whole account once HIP-3 markets are in play: those
  * live on their own dexes and have to be asked for by name. */
-export async function getOpenOrders(user: string, dex?: string): Promise<HlOpenOrder[]> {
+export async function getOpenOrders(user: string, dex?: string, signal?: AbortSignal): Promise<HlOpenOrder[]> {
   return postInfo<HlOpenOrder[]>(
     dex === undefined ? { type: 'frontendOpenOrders', user } : { type: 'frontendOpenOrders', user, dex },
+    signal,
   );
 }
 
@@ -131,18 +140,23 @@ export function dexOf(coin: string): string | null {
   return at > 0 ? coin.slice(0, at) : null;
 }
 
-export async function getSpotBalances(user: string): Promise<{ balances: HlSpotBalance[] }> {
-  return postInfo<{ balances: HlSpotBalance[] }>({ type: 'spotClearinghouseState', user });
+export async function getSpotBalances(user: string, signal?: AbortSignal): Promise<{ balances: HlSpotBalance[] }> {
+  return postInfo<{ balances: HlSpotBalance[] }>({ type: 'spotClearinghouseState', user }, signal);
 }
 
-export async function getSpotMeta(): Promise<[HlSpotMeta, HlSpotAssetCtx[]]> {
-  return postInfo<[HlSpotMeta, HlSpotAssetCtx[]]>({ type: 'spotMetaAndAssetCtxs' });
+export async function getSpotMeta(signal?: AbortSignal): Promise<[HlSpotMeta, HlSpotAssetCtx[]]> {
+  return postInfo<[HlSpotMeta, HlSpotAssetCtx[]]>({ type: 'spotMetaAndAssetCtxs' }, signal);
 }
 
-export async function getPerpMetaAndAssetCtxs(): Promise<[HlPerpMeta, HlPerpAssetCtx[]]> {
-  return postInfo<[HlPerpMeta, HlPerpAssetCtx[]]>({ type: 'metaAndAssetCtxs' });
+export async function getPerpMetaAndAssetCtxs(signal?: AbortSignal): Promise<[HlPerpMeta, HlPerpAssetCtx[]]> {
+  return postInfo<[HlPerpMeta, HlPerpAssetCtx[]]>({ type: 'metaAndAssetCtxs' }, signal);
 }
 
-export async function getUserFillsByTime(user: string, startTime: number, endTime: number): Promise<HlFill[]> {
-  return postInfo<HlFill[]>({ type: 'userFillsByTime', user, startTime, endTime, aggregateByTime: false });
+export async function getUserFillsByTime(
+  user: string,
+  startTime: number,
+  endTime: number,
+  signal?: AbortSignal,
+): Promise<HlFill[]> {
+  return postInfo<HlFill[]>({ type: 'userFillsByTime', user, startTime, endTime, aggregateByTime: false }, signal);
 }

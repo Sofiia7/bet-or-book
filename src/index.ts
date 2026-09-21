@@ -1,5 +1,5 @@
 import { extractAddress, extractIp } from './guard';
-import { checkAddress } from './api/check';
+import { checkAddress, CHECK_DEADLINE_MS } from './api/check';
 import { withCache } from './cache';
 import { safeKv } from './safeKv';
 import { recordCalls } from './credits';
@@ -263,25 +263,36 @@ export default {
             if (reservation.ok) hold = reservation.id;
             else nansenOffReason = reservation.reason;
           }
+          // One deadline for the reader's wait, enforced both as a clock
+          // the stages consult and as a signal on the sockets themselves.
+          const startedAt = Date.now();
+          const timeout = AbortSignal.timeout(CHECK_DEADLINE_MS);
           const nansen =
             nansenOffReason === undefined
-              ? createNansenClient(env.NANSEN_API_KEY!, (m) => {
-                  calls.push(m);
-                })
+              ? createNansenClient(
+                  env.NANSEN_API_KEY!,
+                  (m) => {
+                    calls.push(m);
+                  },
+                  timeout,
+                )
               : null;
           try {
-            const result = await checkAddress(address, { nansen, nansenOffReason });
-            const saved: CheckResponse = {
-              ...result,
-              nansenCalls: calls.length,
-              snapshotId: snapshotId(address, result.checkedAt),
-            };
+            const result = await checkAddress(address, {
+              nansen,
+              nansenOffReason,
+              deadline: startedAt + CHECK_DEADLINE_MS,
+              signal: timeout,
+            });
+            const id = snapshotId(address, result.checkedAt, result.classifierVersion);
+            const saved: CheckResponse = { ...result, nansenCalls: calls.length, snapshotId: id };
             // Kept so the link can open this reading rather than start a new
-            // one. A failed write costs the share link, not the answer.
-            await kv.put(snapshotKey(saved.snapshotId!), JSON.stringify(saved), {
+            // one. A failed write costs the share link, not the answer - but
+            // the page has to be told, or it offers a link to nothing.
+            const stored = await kv.put(snapshotKey(id), JSON.stringify(saved), {
               expirationTtl: SNAPSHOT_TTL_SECONDS,
             });
-            return saved;
+            return stored ? { ...saved, snapshotSaved: true } : { ...result, nansenCalls: calls.length, snapshotSaved: false };
           } finally {
             // Settle first: the hold has to come off whatever else fails.
             // A call with no cost header counts as one credit, the

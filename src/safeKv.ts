@@ -1,8 +1,13 @@
 import type { KVLike } from './kv';
 
-export interface SafeKV extends KVLike {
+export interface SafeKV extends Omit<KVLike, 'put'> {
   /** True once any read or write through this wrapper has failed. */
   readonly degraded: boolean;
+  /** False when the write did not go through. Swallowing the error is right
+   * - a lost cache entry is not a lost answer - but the caller still has to
+   * know, because it used to promise a share link for a reading that was
+   * never stored (audit R02). */
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<boolean>;
 }
 
 /** Wraps KV so a quota or outage error degrades to "not cached" instead of
@@ -31,9 +36,11 @@ export function safeKv(kv: KVLike): SafeKV {
     async put(key, value, options) {
       try {
         await kv.put(key, value, options);
+        return true;
       } catch (err) {
         degraded = true;
         console.error('kv put failed', key, err);
+        return false;
       }
     },
   };

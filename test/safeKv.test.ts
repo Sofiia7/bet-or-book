@@ -22,7 +22,9 @@ describe('safeKv', () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     const kv = safeKv(new BrokenKV());
     await expect(kv.get('k')).resolves.toBeNull();
-    await expect(kv.put('k', 'v')).resolves.toBeUndefined();
+    // The error is swallowed - a lost cache entry is not a lost answer -
+    // but the caller is told, because a share link depends on it.
+    await expect(kv.put('k', 'v')).resolves.toBe(false);
     expect(log).toHaveBeenCalledTimes(2);
     log.mockRestore();
   });

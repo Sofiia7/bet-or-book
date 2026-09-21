@@ -52,8 +52,10 @@ const MAX_FUNDERS = 2;
 /** Share of the headline position below which a caveat is not worth the
  * reader's attention. */
 const MATERIAL_SHARE = 0.01;
-/** How long one check may keep spending before it answers with what it has. */
-const CHECK_DEADLINE_MS = 45_000;
+/** How long one check may keep spending before it answers with what it has.
+ * Exported because the Worker builds the abort signal that enforces it on
+ * the sockets, and two different numbers would be worse than one. */
+export const CHECK_DEADLINE_MS = 45_000;
 /** How far behind the check a source's own timestamp may be before the card
  * says so. Positions move; a reading this old is history, not the present. */
 const STALE_DATA_MS = 15 * 60_000;
@@ -66,6 +68,11 @@ export interface CheckOptions {
   now?: () => number;
   /** Absolute time past which no further paid stage is started. */
   deadline?: number;
+  /** Aborts requests already in flight when that time runs out. The
+   * deadline on its own only stops new stages from starting: a pair of
+   * reads that had already begun could still run for two upstream timeouts
+   * past it (audit R04). */
+  signal?: AbortSignal;
 }
 
 export interface CheckResult {
@@ -127,8 +134,13 @@ export interface CheckResult {
  * calls producing it took, counted by the caller's recorder. */
 export type CheckResponse = CheckResult & {
   nansenCalls: number;
-  /** Where this exact reading can be opened again. See src/snapshot.ts. */
+  /** Where this exact reading can be opened again. See src/snapshot.ts.
+   * Absent when the write that would have made it openable failed. */
   snapshotId?: string;
+  /** Whether that write went through. The card used to be handed an id
+   * whatever KV did with it, so "Copy link" could produce a link that has
+   * never pointed at anything (audit R02). */
+  snapshotSaved?: boolean;
 };
 
 /** Reads in stages so that every Nansen credit is spent only where its answer
@@ -136,13 +148,17 @@ export type CheckResponse = CheckResult & {
  * balances on other chains only when a hedge could move the answer; linked
  * wallets only when those balances leave it open. */
 export async function checkAddress(address: string, opts: CheckOptions): Promise<CheckResult> {
-  const now = (opts.now ?? Date.now)();
+  const clock = opts.now ?? Date.now;
+  const now = clock();
   // Four paid stages at the 20 s Nansen timeout, plus the free reads, can
   // outlast any reader's patience and hold a budget reservation the whole
   // time. Past the deadline the remaining paid stages are skipped and said
   // to be skipped, which is a partial answer rather than a slow wrong one.
+  //
+  // One clock, the caller's: mixing an injected `now` with a direct
+  // Date.now() made the time budget untestable and the two could disagree.
   const deadline = opts.deadline ?? now + CHECK_DEADLINE_MS;
-  const outOfTime = () => Date.now() > deadline;
+  const outOfTime = () => clock() > deadline;
   const day = (daysAgo: number) => new Date(now - daysAgo * 86_400_000).toISOString().slice(0, 10);
   const coverage: string[] = [];
   const nansen = opts.nansen;
@@ -153,12 +169,13 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
   // than quietly answer from less. Open interest is the exception: it
   // decorates the card and decides nothing, so it is read separately and
   // allowed to be missing.
+  const signal = opts.signal;
   const [rawOrders, spotBalances, spotMetaPair, rawFills, perpMetaRes] = await Promise.all([
-    getOpenOrders(address),
-    getSpotBalances(address),
-    getSpotMeta(),
-    getUserFillsByTime(address, now - TRADES_WINDOW_HOURS * 3_600_000, now),
-    getPerpMetaAndAssetCtxs().then(
+    getOpenOrders(address, undefined, signal),
+    getSpotBalances(address, signal),
+    getSpotMeta(signal),
+    getUserFillsByTime(address, now - TRADES_WINDOW_HOURS * 3_600_000, now, signal),
+    getPerpMetaAndAssetCtxs(signal).then(
       (v) => ({ ok: true as const, v }),
       () => ({ ok: false as const, v: null }),
     ),
@@ -178,7 +195,11 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     if (failure) degraded = true;
   };
 
-  if (nansen) {
+  if (nansen && outOfTime()) {
+    // The free reads alone can use up the budget when Hyperliquid is slow,
+    // and the first paid stage used to start regardless.
+    note('This check ran out of time before it could read positions from Nansen', true);
+  } else if (nansen) {
     const [pos, pnlRes] = await Promise.allSettled([
       nansen.perpPositions(address),
       nansen.perpPnlSummary(address, day(PNL_WINDOW_DAYS), day(0)),
@@ -211,7 +232,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     } else {
       coverage.push('Realized PnL unavailable');
     }
-  } else {
+  } else if (nansen === null) {
     const why = opts.nansenOffReason ? ` (${opts.nansenOffReason})` : '';
     // A cheaper check is still a check with sources missing from it, and the
     // answer it produces is not worth the ten-minute cache of a whole one.
@@ -222,7 +243,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
   // portfolio, not the portfolio, and no rule may treat it as the whole.
   let positionsCoverage: SourceCoverage = 'complete';
   if (positions === null) {
-    const state = await getClearinghouseState(address);
+    const state = await getClearinghouseState(address, signal);
     positions = normalizePositions(state);
     measuredAt = Number.isFinite(state.time) && state.time > 0 ? state.time : null;
     positionsCoverage = 'partial';
@@ -260,7 +281,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
   let ordersCoverage: SourceCoverage = 'complete';
   const hip3Dexes = [...new Set(positions.map((p) => dexOf(p.coin)).filter((d): d is string => d !== null))];
   if (hip3Dexes.length > 0) {
-    const perDex = await Promise.allSettled(hip3Dexes.map((dex) => getOpenOrders(address, dex)));
+    const perDex = await Promise.allSettled(hip3Dexes.map((dex) => getOpenOrders(address, dex, signal)));
     perDex.forEach((r, i) => {
       if (r.status === 'fulfilled') {
         resting.push(...normalizeOrders(r.value));
@@ -441,12 +462,29 @@ async function readLinkedHedge(
   }
 
   const balances = await Promise.allSettled(candidates.map((w) => nansen.currentBalance(w.address)));
+  let truncatedFunder = false;
   const linked = candidates.flatMap((wallet, i) => {
     const b = balances[i];
-    if (b.status === 'fulfilled') return [{ wallet, holdings: normalizeNansenBalances(b.value.rows) }];
-    note('One linked wallet could not be read', true);
-    return [];
+    if (b.status !== 'fulfilled') {
+      note('One linked wallet could not be read', true);
+      return [];
+    }
+    // The main data is already in hand at this point. A funder balance is
+    // extra context, and an extra source answering with the wrong shape
+    // used to throw here, outside any guard, and lose the whole check.
+    try {
+      const holdings = normalizeNansenBalances(b.value.rows);
+      if (!b.value.complete) truncatedFunder = true;
+      return [{ wallet, holdings }];
+    } catch (err) {
+      console.error('nansen funder balances', err);
+      note('One funding wallet came back in an unexpected shape and was left out', true);
+      return [];
+    }
   });
+  if (truncatedFunder) {
+    note('A funding wallet was read to its first 100 tokens only, so its holdings may be understated', true);
+  }
   return computeLinkedHedge(
     positionFeatures.headlineCoin,
     positionFeatures.headlineSide,

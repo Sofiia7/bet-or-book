@@ -21,8 +21,19 @@ describe('snapshotId', () => {
     expect(snapshotId('0x' + 'ab'.repeat(20), at)).not.toBe(snapshotId(ADDRESS, at));
   });
 
-  it('carries enough of the address to be recognisable', () => {
-    expect(snapshotId(ADDRESS, '2026-09-21T09:00:00.000Z')).toMatch(/^b83de012-/);
+  it('hashes the whole address, so a shared prefix is not a shared id', () => {
+    // The id used to be the first eight hex characters of the address plus
+    // the millisecond, and two addresses with the same prefix checked in the
+    // same millisecond got one id (audit R02).
+    const at = '2026-09-21T09:00:00.000Z';
+    const twin = '0xb83de012' + 'f'.repeat(32);
+    expect(snapshotId(ADDRESS, at)).not.toBe(snapshotId(twin, at));
+    expect(snapshotId(ADDRESS, at)).toBe(snapshotId(ADDRESS, at));
+  });
+
+  it('gives a reading under different rules a different id', () => {
+    const at = '2026-09-21T09:00:00.000Z';
+    expect(snapshotId(ADDRESS, at, 'v2')).not.toBe(snapshotId(ADDRESS, at, 'v3'));
   });
 
   it('refuses to make an id without a real time', () => {
