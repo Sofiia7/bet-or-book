@@ -9,24 +9,61 @@ import type {
 } from './hyperliquid';
 import type { NansenPerpPositions, NansenBalance, NansenRelatedWallet, NansenPnlSummary } from './nansen';
 
+/**
+ * An HTTP 200 is not a contract. An upstream can answer with a body of the
+ * wrong shape, and reading it as if it were right is how a working fallback
+ * gets skipped: `{}.asset_positions.map` threw a TypeError outside the
+ * branch that handles a failed source, so the Hyperliquid fallback never
+ * ran. Shape is checked here and the source is re-chosen in api/check.ts.
+ */
+export class UpstreamShapeError extends Error {
+  constructor(what: string) {
+    super(`upstream answer has an unexpected shape: ${what}`);
+    this.name = 'UpstreamShapeError';
+  }
+}
+
+function arrayOf(value: unknown, field: string): unknown[] {
+  if (!Array.isArray(value)) throw new UpstreamShapeError(`${field} is not an array`);
+  return value;
+}
+
+function text(value: unknown, field: string): string {
+  if (typeof value !== 'string' || value === '') throw new UpstreamShapeError(`${field} is not a name`);
+  return value;
+}
+
+/** Number() reads "", null and [] as 0 and "abc" as NaN without complaining,
+ * and either one would travel on into the arithmetic as a real figure. */
+function finite(value: unknown, field: string): number {
+  if (typeof value === 'string' && value.trim() === '') throw new UpstreamShapeError(`${field} is empty`);
+  if (typeof value !== 'number' && typeof value !== 'string') {
+    throw new UpstreamShapeError(`${field} is ${value === null ? 'null' : typeof value}`);
+  }
+  const n = Number(value);
+  if (!Number.isFinite(n)) throw new UpstreamShapeError(`${field} is not a finite number`);
+  return n;
+}
+
 export function normalizePositions(state: HlClearinghouseState): Position[] {
-  return state.assetPositions.map(({ position }) => {
-    const szi = Number(position.szi);
+  return arrayOf(state?.assetPositions, 'assetPositions').map((entry) => {
+    const { position } = entry as { position: HlClearinghouseState['assetPositions'][number]['position'] };
+    const szi = finite(position?.szi, 'szi');
     return {
-      coin: position.coin,
+      coin: text(position.coin, 'coin'),
       side: szi >= 0 ? 'long' : 'short',
-      sizeUsd: Math.abs(Number(position.positionValue)),
-      entryPx: Number(position.entryPx ?? 0),
-      leverage: position.leverage.value,
-      liquidationPx: position.liquidationPx === null ? null : Number(position.liquidationPx),
-      unrealizedPnlUsd: Number(position.unrealizedPnl),
-      cumFundingUsd: Number(position.cumFunding.sinceOpen),
+      sizeUsd: Math.abs(finite(position.positionValue, 'positionValue')),
+      entryPx: finite(position.entryPx ?? 0, 'entryPx'),
+      leverage: finite(position.leverage?.value, 'leverage.value'),
+      liquidationPx: position.liquidationPx === null ? null : finite(position.liquidationPx, 'liquidationPx'),
+      unrealizedPnlUsd: finite(position.unrealizedPnl, 'unrealizedPnl'),
+      cumFundingUsd: finite(position.cumFunding?.sinceOpen, 'cumFunding.sinceOpen'),
     };
   });
 }
 
 export function normalizeOrders(orders: HlOpenOrder[]): RestingOrder[] {
-  return orders
+  return (arrayOf(orders, 'openOrders') as HlOpenOrder[])
     .filter((o) => !o.isTrigger)
     .map((o) => ({
       coin: o.coin,
@@ -86,24 +123,25 @@ export function normalizeTrades(fills: HlFill[]): Trade[] {
 }
 
 export function normalizeNansenPositions(data: NansenPerpPositions): Position[] {
-  return data.asset_positions.map(({ position: p }) => {
-    const size = Number(p.size);
+  return arrayOf(data?.asset_positions, 'asset_positions').map((entry) => {
+    const { position: p } = entry as NansenPerpPositions['asset_positions'][number];
+    const size = finite(p?.size, 'size');
     return {
-      coin: p.token_symbol,
+      coin: text(p.token_symbol, 'token_symbol'),
       side: size >= 0 ? 'long' : 'short',
-      sizeUsd: Math.abs(Number(p.position_value_usd)),
-      entryPx: Number(p.entry_price_usd),
-      leverage: p.leverage_value,
-      liquidationPx: p.liquidation_price_usd === null ? null : Number(p.liquidation_price_usd),
-      unrealizedPnlUsd: Number(p.unrealized_pnl_usd),
-      cumFundingUsd: Number(p.cumulative_funding_since_open_usd),
+      sizeUsd: Math.abs(finite(p.position_value_usd, 'position_value_usd')),
+      entryPx: finite(p.entry_price_usd, 'entry_price_usd'),
+      leverage: finite(p.leverage_value, 'leverage_value'),
+      liquidationPx: p.liquidation_price_usd === null ? null : finite(p.liquidation_price_usd, 'liquidation_price_usd'),
+      unrealizedPnlUsd: finite(p.unrealized_pnl_usd, 'unrealized_pnl_usd'),
+      cumFundingUsd: finite(p.cumulative_funding_since_open_usd, 'cumulative_funding_since_open_usd'),
     };
   });
 }
 
 export function normalizeNansenBalances(rows: NansenBalance[]): SpotHolding[] {
-  return rows
-    .filter((r) => r.value_usd > 0)
+  return (arrayOf(rows, 'balances') as NansenBalance[])
+    .filter((r) => Number.isFinite(r?.value_usd) && r.value_usd > 0)
     .map((r) => ({
       coin: r.token_symbol,
       valueUsd: r.value_usd,
@@ -142,7 +180,7 @@ function serviceStatusOf(address: string, label: string | null | undefined): Ser
 }
 
 export function normalizeRelatedWallets(rows: NansenRelatedWallet[]): LinkedWallet[] {
-  return rows.map((r) => ({
+  return (arrayOf(rows, 'relatedWallets') as NansenRelatedWallet[]).map((r) => ({
     address: r.address.toLowerCase(),
     relation: r.relation,
     chain: r.chain,

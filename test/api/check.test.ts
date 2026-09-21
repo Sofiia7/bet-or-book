@@ -226,6 +226,30 @@ describe('checkAddress (offline, real fixtures)', () => {
     expect(nansen.relatedWallets).not.toHaveBeenCalled();
   });
 
+  it('falls back to Hyperliquid when Nansen answers 200 with the wrong shape', async () => {
+    route();
+    const nansen = {
+      ...fakeNansen({ positions: syntheticPositions([]) }),
+      // A 200 is not a contract. This used to throw a TypeError on .map
+      // outside the rejected branch, so the fallback never ran.
+      perpPositions: vi.fn(async () => ({}) as unknown as NansenPerpPositions),
+    };
+    const result = await checkAddress(ABRAXAS, { nansen });
+    expect(result.source).toBe('hyperliquid');
+    expect(result.positions.nPositions).toBe(14);
+    expect(result.coverage.some((c) => c.includes('unexpected shape'))).toBe(true);
+  });
+
+  it('falls back when a number in the Nansen answer is not a number', async () => {
+    route();
+    const broken = syntheticPositions([{ coin: 'ETH', size: -25_000, valueUsd: 100_000_000 }]);
+    broken.asset_positions[0].position.position_value_usd = 'not a number';
+    const nansen = { ...fakeNansen({ positions: syntheticPositions([]) }), perpPositions: vi.fn(async () => broken) };
+    const result = await checkAddress(ABRAXAS, { nansen });
+    expect(result.source).toBe('hyperliquid');
+    expect(result.coverage.some((c) => c.includes('unexpected shape'))).toBe(true);
+  });
+
   it('reads resting orders on every dex the account has a position on', async () => {
     route();
     const nansen = fakeNansen({

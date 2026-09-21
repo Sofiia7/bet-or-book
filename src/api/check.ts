@@ -110,14 +110,31 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
       nansen.perpPositions(address),
       nansen.perpPnlSummary(address, day(PNL_WINDOW_DAYS), day(0)),
     ]);
+    // A 200 with the wrong body has to end up in the same place as a failed
+    // request, not in a TypeError that skips the fallback entirely.
     if (pos.status === 'fulfilled') {
-      positions = normalizeNansenPositions(pos.value);
-      source = 'nansen';
+      try {
+        positions = normalizeNansenPositions(pos.value);
+        source = 'nansen';
+      } catch (err) {
+        console.error('nansen positions', err);
+        coverage.push(
+          'Nansen positions came back in an unexpected shape: positions read from Hyperliquid, main dex only',
+        );
+      }
     } else {
       coverage.push('Nansen positions unavailable: positions read from Hyperliquid, main dex only');
     }
-    if (pnlRes.status === 'fulfilled') pnl = normalizeNansenPnl(pnlRes.value, PNL_WINDOW_DAYS);
-    else coverage.push('Realized PnL unavailable');
+    if (pnlRes.status === 'fulfilled') {
+      try {
+        pnl = normalizeNansenPnl(pnlRes.value, PNL_WINDOW_DAYS);
+      } catch (err) {
+        console.error('nansen pnl', err);
+        coverage.push('Realized PnL came back in an unexpected shape');
+      }
+    } else {
+      coverage.push('Realized PnL unavailable');
+    }
   } else {
     const why = opts.nansenOffReason ? ` (${opts.nansenOffReason})` : '';
     coverage.push(`Nansen not used${why}: main-dex positions only, no other chains, no linked wallets`);
@@ -252,8 +269,13 @@ async function readLinkedHedge(
   let linksTruncated = false;
   for (const r of related) {
     if (r.status === 'fulfilled') {
-      links.push(...normalizeRelatedWallets(r.value.rows));
-      if (!r.value.complete) linksTruncated = true;
+      try {
+        links.push(...normalizeRelatedWallets(r.value.rows));
+        if (!r.value.complete) linksTruncated = true;
+      } catch (err) {
+        console.error('nansen related wallets', err);
+        coverage.push('Linked wallets came back in an unexpected shape on one chain');
+      }
     } else {
       coverage.push('Linked wallets unavailable on one chain');
     }
