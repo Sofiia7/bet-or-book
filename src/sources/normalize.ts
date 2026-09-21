@@ -86,16 +86,42 @@ export function normalizeOrders(orders: HlOpenOrder[]): RestingOrder[] {
  * that base token. Fine for a hedge-ratio estimate; if a specific quote
  * pair ever needs to be preferred, this is the place to add that rule.
  */
+/**
+ * Quote tokens whose price is a dollar price. Hyperliquid's spot universe
+ * quotes 311 pairs in USDC and another 17 in USDT0, USDH and USDE, and it
+ * also lists pairs quoted in other assets entirely: a UETH/UBTC mark of 0.03
+ * is about $3 000, and reading it as $0.03 is not a rounding error.
+ */
+const USD_QUOTE_TOKENS = new Set(['USDC', 'USDT0', 'USDH', 'USDE', 'USDT', 'USD']);
+
+/** USDC first, because it is the deepest and the one the rest are pegged
+ * against; any other dollar token will do when there is no USDC pair. */
+const quoteRank = (name: string) => (name === 'USDC' ? 0 : 1);
+
 export function buildSpotPriceIndex(meta: HlSpotMeta, assetCtxs: HlSpotAssetCtx[]): Map<string, number> {
   const tokenNameByIndex = new Map(meta.tokens.map((t) => [t.index, t.name]));
   const ctxByPairName = new Map(assetCtxs.map((ctx) => [ctx.coin, ctx]));
   const priceByCoin = new Map<string, number>();
+  // A base token can trade in several pairs, and the old loop let whichever
+  // came last decide its price.
+  const rankUsed = new Map<string, number>();
+
   for (const pair of meta.universe) {
-    const [baseTokenIndex] = pair.tokens;
+    const [baseTokenIndex, quoteTokenIndex] = pair.tokens;
     const baseName = tokenNameByIndex.get(baseTokenIndex);
+    const quoteName = tokenNameByIndex.get(quoteTokenIndex)?.toUpperCase();
     const ctx = ctxByPairName.get(pair.name);
-    if (baseName && ctx) {
-      priceByCoin.set(baseName, Number(ctx.markPx));
+    if (!baseName || !quoteName || !ctx) continue;
+    if (!USD_QUOTE_TOKENS.has(quoteName)) continue;
+
+    const markPx = Number(ctx.markPx);
+    if (!Number.isFinite(markPx) || markPx <= 0) continue;
+
+    const rank = quoteRank(quoteName);
+    const used = rankUsed.get(baseName);
+    if (used === undefined || rank < used) {
+      rankUsed.set(baseName, rank);
+      priceByCoin.set(baseName, markPx);
     }
   }
   return priceByCoin;

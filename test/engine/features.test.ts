@@ -152,6 +152,33 @@ describe('computeSizeVsOi', () => {
   });
 });
 
+describe('computePositionFeatures, distance to liquidation', () => {
+  const pos = (liquidationPx: number, entryPx: number): Position[] => [
+    { coin: 'BTC', side: 'long', sizeUsd: 1_000_000, entryPx, leverage: 5, liquidationPx, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
+  ];
+
+  it('measures the distance from where the price is now', () => {
+    // entry 100, mark 150, liquidation 90: the position is 40% away from
+    // being liquidated, not 10%. Measuring from entry describes a risk the
+    // holder stopped having as soon as the price moved.
+    const r = computePositionFeatures(pos(90, 100), new Map([['BTC', 150]]));
+    expect(r.headlineLiqDistancePct).toBeCloseTo(0.4, 6);
+    expect(r.headlineLiqDistanceBasis).toBe('mark');
+  });
+
+  it('falls back to the entry price and says that is what it used', () => {
+    const r = computePositionFeatures(pos(90, 100));
+    expect(r.headlineLiqDistancePct).toBeCloseTo(0.1, 6);
+    expect(r.headlineLiqDistanceBasis).toBe('entry');
+  });
+
+  it('has no distance to report when there is no liquidation price', () => {
+    const r = computePositionFeatures(pos(0, 100).map((p) => ({ ...p, liquidationPx: null })));
+    expect(r.headlineLiqDistancePct).toBeNull();
+    expect(r.headlineLiqDistanceBasis).toBeNull();
+  });
+});
+
 describe('computeHedgeFeatures, on-chain holdings', () => {
   const AETHWETH = '0x4d5f47fa6a74757f35c14fd3a6ef8e3c9bc514e8';
   const WSTETH = '0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0';

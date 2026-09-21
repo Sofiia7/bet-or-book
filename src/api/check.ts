@@ -204,7 +204,17 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     coverage.push(`Positions were measured ${minutes} minutes before this check, not at the moment of it`);
   }
 
-  const positionFeatures = computePositionFeatures(positions);
+  // Mark prices, so distance to liquidation is measured from where the price
+  // is rather than from where the position was opened.
+  const markPxByCoin = new Map<string, number>();
+  if (perpMetaRes.ok) {
+    const [perpMeta, perpAssetCtxs] = perpMetaRes.v;
+    perpMeta.universe.forEach((asset, i) => {
+      const markPx = Number(perpAssetCtxs[i]?.markPx);
+      if (Number.isFinite(markPx) && markPx > 0) markPxByCoin.set(asset.name, markPx);
+    });
+  }
+  const positionFeatures = computePositionFeatures(positions, markPxByCoin);
 
   // frontendOpenOrders answers for one perp dex and spot. Nansen reports
   // positions on every HIP-3 dex as well, so without asking those by name an

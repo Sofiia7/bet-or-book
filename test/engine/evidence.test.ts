@@ -13,6 +13,7 @@ function positions(overrides: Partial<PositionFeatures>): PositionFeatures {
     headlineNotionalUsd: 100_000_000,
     headlineShare: 1,
     headlineLiqDistancePct: null,
+    headlineLiqDistanceBasis: null,
     sameAssetOffsetShare: 0,
     ...overrides,
   };

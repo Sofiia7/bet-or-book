@@ -10,7 +10,11 @@ export interface PositionFeatures {
   headlineSide: PositionSide | null;
   headlineNotionalUsd: number;
   headlineShare: number;
+  /** How far the price has to move from where it is now before the headline
+   * position is liquidated. Measured from the entry price only when no mark
+   * is available, which `headlineLiqDistanceBasis` says. */
   headlineLiqDistancePct: number | null;
+  headlineLiqDistanceBasis: 'mark' | 'entry' | null;
   /** Share of gross exposure that cancels within a single asset: a $1M long
    * and a $1M short in the same coin offset each other, a $1M long in one
    * coin and a $1M short in another do not, however neatly the dollars net
@@ -18,7 +22,11 @@ export interface PositionFeatures {
   sameAssetOffsetShare: number;
 }
 
-export function computePositionFeatures(positions: Position[]): PositionFeatures {
+export function computePositionFeatures(
+  positions: Position[],
+  /** Current mark price per coin, where it is known. */
+  markPxByCoin?: Map<string, number>,
+): PositionFeatures {
   if (positions.length === 0) {
     return {
       nPositions: 0,
@@ -30,6 +38,7 @@ export function computePositionFeatures(positions: Position[]): PositionFeatures
       headlineNotionalUsd: 0,
       headlineShare: 0,
       headlineLiqDistancePct: null,
+      headlineLiqDistanceBasis: null,
       sameAssetOffsetShare: 0,
     };
   }
@@ -42,9 +51,18 @@ export function computePositionFeatures(positions: Position[]): PositionFeatures
   const headline = positions.reduce((max, p) => (p.sizeUsd > max.sizeUsd ? p : max), positions[0]);
   const headlineShare = grossUsd === 0 ? 0 : headline.sizeUsd / grossUsd;
 
+  // Distance to liquidation is a question about now, not about when the
+  // position was opened. With entry 100, mark 150 and liquidation 90, the
+  // entry-based figure says 10% when the holder has 40% of room, which is a
+  // risk they stopped having as soon as the price moved.
+  const markPx = markPxByCoin?.get(headline.coin);
+  const base = markPx !== undefined && Number.isFinite(markPx) && markPx > 0 ? markPx : headline.entryPx;
+  const basis: 'mark' | 'entry' | null = base === markPx ? 'mark' : 'entry';
   let headlineLiqDistancePct: number | null = null;
-  if (headline.liquidationPx !== null && headline.entryPx > 0) {
-    headlineLiqDistancePct = Math.abs(headline.liquidationPx - headline.entryPx) / headline.entryPx;
+  let headlineLiqDistanceBasis: 'mark' | 'entry' | null = null;
+  if (headline.liquidationPx !== null && base > 0) {
+    headlineLiqDistancePct = Math.abs(headline.liquidationPx - base) / base;
+    headlineLiqDistanceBasis = basis;
   }
 
   // Per coin, the smaller side is matched by the larger one, so twice it is
@@ -68,6 +86,7 @@ export function computePositionFeatures(positions: Position[]): PositionFeatures
     headlineNotionalUsd: headline.sizeUsd,
     headlineShare,
     headlineLiqDistancePct,
+    headlineLiqDistanceBasis,
     sameAssetOffsetShare: grossUsd === 0 ? 0 : offsetGrossUsd / grossUsd,
   };
 }

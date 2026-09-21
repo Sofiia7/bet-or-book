@@ -81,6 +81,52 @@ describe('spot price index and holdings', () => {
     expect(prices.size).toBe(distinctBaseNames.size);
   });
 
+  it('reads a price only from a pair quoted in dollars', () => {
+    const meta: HlSpotMeta = {
+      tokens: [
+        { name: 'USDC', index: 0 },
+        { name: 'UBTC', index: 1 },
+        { name: 'UETH', index: 2 },
+      ],
+      universe: [
+        { tokens: [2, 1], name: 'UETH/UBTC', index: 0, isCanonical: false },
+        { tokens: [1, 0], name: 'UBTC/USDC', index: 1, isCanonical: true },
+      ],
+    } as unknown as HlSpotMeta;
+    const ctxs = [
+      { coin: 'UETH/UBTC', markPx: '0.03' },
+      { coin: 'UBTC/USDC', markPx: '100000' },
+    ] as unknown as HlSpotAssetCtx[];
+
+    const prices = buildSpotPriceIndex(meta, ctxs);
+    // 0.03 BTC is about $3 000, not $0.03. A price is only a dollar price
+    // when the other side of the pair is dollars.
+    expect(prices.get('UETH')).toBeUndefined();
+    expect(prices.get('UBTC')).toBe(100_000);
+  });
+
+  it('prefers the USDC pair when a token trades against several dollar tokens', () => {
+    const meta: HlSpotMeta = {
+      tokens: [
+        { name: 'USDC', index: 0 },
+        { name: 'USDH', index: 1 },
+        { name: 'HYPE', index: 2 },
+      ],
+      universe: [
+        { tokens: [2, 1], name: 'HYPE/USDH', index: 0, isCanonical: false },
+        { tokens: [2, 0], name: 'HYPE/USDC', index: 1, isCanonical: true },
+        { tokens: [2, 1], name: 'HYPE/USDH2', index: 2, isCanonical: false },
+      ],
+    } as unknown as HlSpotMeta;
+    const ctxs = [
+      { coin: 'HYPE/USDH', markPx: '41' },
+      { coin: 'HYPE/USDC', markPx: '40' },
+      { coin: 'HYPE/USDH2', markPx: '42' },
+    ] as unknown as HlSpotAssetCtx[];
+    // The old loop simply let the last pair win, whichever it happened to be.
+    expect(buildSpotPriceIndex(meta, ctxs).get('HYPE')).toBe(40);
+  });
+
   it('prices the captured spot balances and drops zero-value dust', () => {
     const [meta, ctxs] = spotMetaFixture as unknown as [HlSpotMeta, HlSpotAssetCtx[]];
     const prices = buildSpotPriceIndex(meta, ctxs);
