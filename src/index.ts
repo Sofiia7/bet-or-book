@@ -59,6 +59,46 @@ const PAGE_HEADERS = {
   'referrer-policy': 'strict-origin-when-cross-origin',
 };
 
+const SOCIAL_BLOCK = /<!--SOCIAL-->[\s\S]*?<!--\/SOCIAL-->/;
+
+const escapeAttr = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+async function readSnapshot(kv: KVLike, id: string): Promise<CheckResponse | null> {
+  const raw = await kv.get(snapshotKey(id));
+  return raw === null ? null : (JSON.parse(raw) as CheckResponse);
+}
+
+/**
+ * Rewrites the page's social tags for one saved reading. A crawler follows a
+ * shared link, does not run JavaScript, and must not be able to make this
+ * site spend a credit; serving it the reading's own words costs neither.
+ */
+function withSocialTags(html: string, card: CheckResponse, url: URL): string {
+  const p = card.positions;
+  const what = p.headlineCoin === null ? 'No open position' : `${p.headlineCoin} ${p.headlineSide}`;
+  const title = `${what}: ${VERDICT_WORDS[card.verdict.verdict] ?? 'checked'}`;
+  return html.replace(
+    SOCIAL_BLOCK,
+    [
+      '<meta property="og:type" content="article">',
+      '<meta property="og:site_name" content="Bet or Book">',
+      `<meta property="og:title" content="${escapeAttr(title)}">`,
+      `<meta property="og:description" content="${escapeAttr(card.summary)}">`,
+      `<meta property="og:url" content="${escapeAttr(url.toString())}">`,
+      '<meta name="twitter:card" content="summary">',
+    ].join('\n'),
+  );
+}
+
+/** What each verdict is called in a shared link's title. */
+const VERDICT_WORDS: Record<string, string> = {
+  book: 'a market maker’s book',
+  hedged: 'hedged in this same account',
+  looks_like_a_bet: 'looks like a real bet',
+  unknown: 'not settled by what could be read',
+};
+
 /** Per-isolate memo of /api/ledger: it costs up to 14 KV reads, and reads
  * are a daily quota too. */
 let ledgerMemo: { at: number; body: unknown } | null = null;
@@ -188,6 +228,11 @@ export default {
     }
 
     if (url.pathname === '/') {
+      const shared = url.searchParams.get('s') ?? '';
+      if (isSnapshotId(shared)) {
+        const card = galleryById.get(shared) ?? (await readSnapshot(kv, shared));
+        if (card) return new Response(withSocialTags(pageHtml, card, url), { headers: PAGE_HEADERS });
+      }
       return new Response(pageHtml, { headers: PAGE_HEADERS });
     }
 

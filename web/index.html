@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bet or Book</title>
 <meta name="description" content="Paste a Hyperliquid address: is that whale position a bet you could follow, a hedge, or a market maker's book?">
+<!-- A link to a saved reading has these replaced by the Worker with that
+     reading's own verdict, so a crawler gets the real text without running
+     the page's JavaScript or spending a Nansen credit on a fresh check. -->
+<!--SOCIAL-->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bet or Book">
+<meta property="og:title" content="Bet or Book">
+<meta property="og:description" content="Paste a Hyperliquid address: is that whale position a bet you could follow, a hedge, or a market maker's book?">
+<meta name="twitter:card" content="summary">
+<!--/SOCIAL-->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230c447c'/%3E%3Ctext x='16' y='22.5' font-size='17' font-weight='700' text-anchor='middle' fill='white' font-family='sans-serif'%3EB%3C/text%3E%3C/svg%3E">
 <style>
   :root {
@@ -113,6 +123,7 @@
   <p class="meta" id="meta"></p>
   <div class="actions">
     <button id="copy-card">Copy card</button>
+    <button id="download-card">Download PNG</button>
     <button id="copy-link">Copy link</button>
   </div>
   <canvas id="card-canvas" width="1200" height="675" hidden></canvas>
@@ -497,6 +508,25 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
   return curY;
 }
 
+/** Cuts a string to fit, with an ellipsis. Four evidence columns sharing a
+ * fixed width meant a long HIP-3 symbol or a long value simply drew over its
+ * neighbour. */
+function clipText(ctx, text, maxWidth) {
+  let s = String(text);
+  if (ctx.measureText(s).width <= maxWidth) return s;
+  while (s.length > 1 && ctx.measureText(s + '...').width > maxWidth) s = s.slice(0, -1);
+  return s + '...';
+}
+
+/** The caveats that have to survive being turned into an image, because a
+ * shared picture travels without the page around it. */
+function cardLimits(d) {
+  const notes = (d.coverage || []).slice();
+  const shown = notes.slice(0, 2).join('; ');
+  const more = notes.length > 2 ? ' (+' + (notes.length - 2) + ' more on the page)' : '';
+  return notes.length === 0 ? 'Everything this tool reads was read in full.' : shown + more;
+}
+
 function drawCard() {
   const canvas = $('card-canvas');
   const ctx = canvas.getContext('2d');
@@ -515,33 +545,51 @@ function drawCard() {
   ctx.fillText(badgeText(d).toUpperCase(), 56, 84);
 
   ctx.fillStyle = '#111111';
-  ctx.font = font(700, 46);
-  ctx.fillText(headlineFor(d), 56, 150);
+  ctx.font = font(700, 44);
+  wrapText(ctx, headlineFor(d), 56, 146, W - 112, 52, 2);
 
   ctx.fillStyle = '#444444';
   ctx.font = font(400, 26);
-  wrapText(ctx, d.summary || '', 56, 208, W - 112, 36, 4);
+  wrapText(ctx, d.summary || '', 56, 250, W - 112, 36, 4);
 
   const items = (d.evidence || []).slice(0, 4);
   const colW = (W - 112) / 4;
   items.forEach((item, i) => {
     const x = 56 + i * colW;
+    const room = colW - 16;
     ctx.fillStyle = '#888888';
     ctx.font = font(400, 18);
-    ctx.fillText(item.label, x, 440);
+    ctx.fillText(clipText(ctx, item.label, room), x, 432);
     ctx.fillStyle = '#111111';
     ctx.font = font(700, item.value.length > 14 ? 24 : 30);
-    ctx.fillText(item.value, x, 478);
+    ctx.fillText(clipText(ctx, item.value, room), x, 470);
     ctx.fillStyle = '#aaaaaa';
     ctx.font = font(400, 15);
-    ctx.fillText(item.source, x, 504);
+    ctx.fillText(clipText(ctx, item.source, room), x, 496);
   });
 
+  // A badge alone reads as a verdict with nothing behind it. What the check
+  // could not read belongs on the picture, not only on the page it came from.
+  ctx.fillStyle = '#767676';
+  ctx.font = font(400, 19);
+  ctx.fillText('What this reading could not cover', 56, 552);
+  ctx.fillStyle = '#555555';
+  ctx.font = font(400, 19);
+  wrapText(ctx, cardLimits(d), 56, 578, W - 112, 26, 2);
+
+  const asOf = d.positionsAsOf && fmtTime(d.positionsAsOf) !== fmtTime(d.checkedAt)
+    ? ' · positions as of ' + fmtTime(d.positionsAsOf)
+    : '';
+  const rules = d.classifierVersion ? ' · rules ' + d.classifierVersion : '';
   ctx.fillStyle = '#999999';
   ctx.font = font(400, 18);
-  ctx.fillText('Bet or Book · ' + shortAddr(d.address) + ' · checked ' + fmtTime(d.checkedAt), 56, H - 48);
+  ctx.fillText(
+    clipText(ctx, 'Bet or Book · ' + shortAddr(d.address) + ' · checked ' + fmtTime(d.checkedAt) + asOf + rules, W - 400),
+    56,
+    H - 40,
+  );
   ctx.textAlign = 'right';
-  ctx.fillText(d.source === 'nansen' ? 'Powered by Nansen API' : 'Data: Hyperliquid API', W - 56, H - 48);
+  ctx.fillText(d.source === 'nansen' ? 'Powered by Nansen API' : 'Data: Hyperliquid API', W - 56, H - 40);
   ctx.textAlign = 'left';
 }
 
@@ -561,6 +609,24 @@ $('copy-card').addEventListener('click', () => {
       canvas.hidden = false;
       btn.textContent = 'Right-click (or long-press) the image below to save it';
     }
+  }, 'image/png');
+});
+
+// Copying to the clipboard is refused outright by some browsers and silently
+// by others, so saving the file is offered as its own button rather than as
+// a fallback nobody finds.
+$('download-card').addEventListener('click', () => {
+  if (!current) return;
+  drawCard();
+  $('card-canvas').toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'bet-or-book-' + shortAddr(current.address).replace(/\W/g, '') + '.png';
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
   }, 'image/png');
 });
 
