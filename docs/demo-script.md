@@ -8,7 +8,7 @@ The story changed on 21 September, and it is a better one. The old script showed
 
 No rehearsal run to warm the cache. A cached answer replayed as a fresh request is the one thing a demo must not do, and the card carries its own timestamp, so it would show. Check once, for real, on camera.
 
-> **Credits.** On 21 September the Nansen account answered with **8 credits left**. This check costs up to 7. There is room for exactly one live run, so either top the account up first or record the live check first and everything else after. If the budget refuses, the card says "today's Nansen credits are used up" and the run is wasted, not broken.
+> **Credits.** The account answered with **1,077 credits left** on 21 September, so there is room for as many takes as the recording needs. This check costs up to 7. The daily cap in the Worker is 300, which is the thing that would stop a runaway, not the balance.
 
 | Time | Action | What the viewer reads |
 |---|---|---|
@@ -41,5 +41,6 @@ The GitHub link is required by the buildathon FAQ and was missing from the previ
 ## Check these before recording
 
 - Every number above comes from the gallery snapshot of 18 September and one card re-checked on 21 September. The live check will show today's figures, which will differ. Read the card on screen; do not read this file.
-- The gallery counts in the subtitle are computed in the page from the data, so they update themselves. As of 21 September: 137 of 277 look like bets, 12 books, 7 hedged.
+- The gallery counts in the subtitle are computed in the page from the data, so they update themselves. Live as of 21 September: 137 of 277 look like bets, 12 books, 7 hedged, 121 unknown.
+- Nine cards were re-read on 21 September, so the subtitle says the set spans 18 to 21 September. The ten that used to read "balanced book, therefore hedged" have all been measured since, and not one of them was a hedge.
 - `0x8c830d21...` and `0x37b81ab9...` are snapshot cards from 18 September. If either has changed shape since, pick the next row with the same verdict rather than explaining the difference on camera.
