@@ -94,7 +94,7 @@ describe('the saved gallery against the current rules', () => {
       book: count(openCurrent, 'book'),
       hedged: count(openCurrent, 'hedged'),
       history: open.length - openCurrent.length,
-    }).toEqual({ judged: 168, looks_like_a_bet: 106, unknown: 62, book: 0, hedged: 0, history: 109 });
+    }).toEqual({ judged: 183, looks_like_a_bet: 107, unknown: 66, book: 3, hedged: 7, history: 94 });
   });
 
   it('gives every card its own share id', () => {

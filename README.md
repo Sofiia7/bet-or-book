@@ -11,7 +11,7 @@ Built for the [Nansen Meridian Buildathon](https://www.nansen.ai/campaigns/merid
 Every week a post goes viral: "a whale just opened a $190M short". People copy it. Often the position is not what the headline makes of it:
 
 - The account behind one of those posts is a **market-making book**: 134 open positions, 1,403 resting orders quoting both sides of 76 markets, 2,000+ fills a day. That is a business, not a view on price.
-- Another was reported as hundreds of millions in bearish shorts, and the first version of this tool agreed it was hedged. It is not that simple: **under 1% of its $184M ETH short is covered inside the account**, and the $405M of matching ETH sits in two wallets that funded it. A funding transfer is not ownership, one such funder turned out to be an exchange, and $117.5M of that ETH is an Aave deposit with an invisible loan against it.
+- Another was reported as hundreds of millions in bearish shorts, and the first version of this tool agreed it was hedged. It is not that simple: **next to none of its $216.7M ETH short is covered by anything that address holds**, and the matching ETH sits in wallets that funded it. A funding transfer is not ownership, one such funder turned out to be an exchange, and part of that ETH is an Aave deposit with an invisible loan against it.
 - And sometimes it really is a bet: **one $125.9M HYPE long, the account's entire exposure, nothing offsetting it**.
 
 Bet or Book answers one question per address, shows the numbers that decided it, and says what it could not read.
@@ -90,27 +90,27 @@ KV keeps what it is good at: cached results and saved readings. The per-day call
 
 ## The gallery: one dated scan, not the market
 
-On 18 September 2026 the same check ran over a set of large Hyperliquid positions: accounts from the top 3,000 by value on Hyperliquid's public leaderboard, ranked by their largest main-dex position (864 had one open), checked from the top until the credits ran out. That is 278 accounts, led by a $263.8M ETH short; one had closed its position by the time it was checked, which leaves 277. Nine cards were re-checked on 21 September, so the set spans two dates and the page says so.
+On 18 September 2026 the same check ran over a set of large Hyperliquid positions: accounts from the top 3,000 by value on Hyperliquid's public leaderboard, ranked by their largest main-dex position (864 had one open), checked from the top until the credits ran out. That is 278 accounts; one had closed its position by the time it was checked, which leaves 277. Thirty-one cards have since been re-read live - nine on 21 September when the rules first changed, twenty-two after the 21 September audit - so the set spans several dates and each card carries its own.
 
 Each card is re-judged offline against the current rules from the numbers already stored in it, without spending a credit ([`scripts/reexplain.ts`](scripts/reexplain.ts)) - **but only where the stored observation carries what those rules read.** Re-running a classifier over an old aggregate is cheap and useful; it is not a re-check of the account, and the 21 September audit found the two being presented as one. An observation now carries its own schema version, and an entry the current rules cannot read keeps the verdict it was given, keeps the version of the rules that gave it, and is shown as history.
 
-| Verdict | Positions | Share of the 168 judged |
+| Verdict | Positions | Share of the 183 judged |
 |---|---|---|
-| Looks like a bet | 106 | 63% |
-| Unknown | 62 | 37% |
-| Book | 0 | - |
-| Hedged | 0 | - |
-| *Read by earlier rules* | *109* | *not judged by v3* |
+| Looks like a bet | 107 | 58% |
+| Unknown | 66 | 36% |
+| Book | 3 | 2% |
+| Hedged | 7 | 4% |
+| *Read by earlier rules* | *94* | *not judged by v3* |
 
-**Nothing in this scan supports a Book or a Hedged verdict under the current rules, and saying so is the point.** All seven cards that read "hedged" and six of the twelve that read "book" recorded neither the order notional a book now needs nor what the hedge sum left out - so they are history, not present findings. The other six "book" cards were judged and demoted: a spread of positions with nothing quoted behind it is now `diversified_book_no_quotes`. Moving any of them takes a fresh read of the account, which costs credits and is a decision rather than a script.
+Every card that had read Book or Hedged under the older rules was **re-read live on 21 September**, because that is the only way to move one: 22 accounts, 83 Nansen calls. The verdicts that came back are not the ones that went in.
+
+- **Three books survive, and they are unmistakable.** The largest quotes both sides of 120 markets with $226M resting against an $81M headline position. Six of the old twelve had a wide spread of positions and nothing quoted behind them at all, which is now reported as what it is rather than as a book.
+- **Seven hedges hold, all HYPE shorts between 97% and 100% covered** - and the card now says the coverage came from **Hyperliquid's own spot balances, not from Nansen**. Every one of those seven had been signed "Nansen" before, because Nansen had been asked; it had not supplied a dollar of the number.
+- **The two largest positions in the set both read Unknown.** The $289.6M ETH short, and the Abraxas-linked $216.7M ETH short that the first version of this tool called a probable hedge: the matching ETH is in wallets that funded the account, and part of it is an Aave deposit with an invisible loan against it.
 
 The Unknowns are not a shrug. Each says which question it could not close: the dollars net out across different assets, the flow is busy but says nothing about this position, the matching assets are in a wallet that funded the account, the holdings could not be read in full, or the signals simply disagree.
 
-What stands out:
-
-- **Most of the judged positions look like real bets**, and mostly longs.
-- The largest of all, a $263.8M ETH short, stays **Unknown**. So does the $184M ETH short that the first version of this tool called a probable hedge: the $405M of matching ETH is in wallets that funded the account, and $117.5M of that is an Aave deposit.
-- A check cost **3.2 Nansen calls on average**; 190 of the 277 needed only 2.
+The 94 remaining cards from the original scan are history, not present findings: their observations recorded neither the order notional a book now needs nor what the hedge sum left out, so the current rules cannot read them. None of them claims a Book or a Hedged verdict.
 
 **What this table is not.** It is one scan of a set chosen a particular way. Leverage breaks the link between what an account is worth and what it holds, a HIP-3-only account can fall out of the ranking before it is ever checked, and the scan spent its last credits on the cheaper checks. Read it as "of the 277 read", never as "of the market".
 
@@ -187,7 +187,7 @@ npx wrangler deploy
 
 Every scripted call is logged in [`data/nansen-calls.jsonl`](data/nansen-calls.jsonl) and summed in [`data/ledger.json`](data/ledger.json); the deployed page adds its own calls from the budget Durable Object and serves the total at `/api/ledger`. Requests attempted, requests answered, credits the API itself priced and credits assumed for a call it did not price are four separate numbers, because a total that mixes a quoted figure with an assumed one is not a measurement.
 
-Between 14 and 27 September: **1,034 calls, 1,027 of them answered 2xx.** The gallery scan of 18 September accounts for almost all of it; 26 more went to re-checking nine cards on 21 September, after the rules changed.
+Between 14 and 27 September: **1,117 calls, 1,109 of them answered 2xx.** The gallery scan of 18 September accounts for most of it; 26 more went to re-checking nine cards on 21 September after the rules first changed, and 83 to re-reading the 22 cards that had claimed Book or Hedged, once the audit of 21 September showed their stored observations could not support those claims.
 
 Seven of those calls did not return data, and each one taught something:
 
@@ -201,10 +201,10 @@ The ledger counts calls made. It is a record, not the spend cap: what a check is
 
 | Endpoint | Calls |
 |---|---|
-| `profiler/perp-positions` | 319 |
-| `profiler/perp-pnl-summary` | 319 |
-| `profiler/address/current-balance` | 230 |
-| `profiler/address/related-wallets` | 165 |
+| `profiler/perp-positions` | 341 |
+| `profiler/perp-pnl-summary` | 341 |
+| `profiler/address/current-balance` | 255 |
+| `profiler/address/related-wallets` | 179 |
 | `profiler/perp-trades` | 1 |
 
 | Purpose | Calls |
@@ -214,6 +214,7 @@ The ledger counts calls made. It is a record, not the spend cap: what a check is
 | Fixture captures for the tests | 12 |
 | Live smoke test of the three calibration accounts | 11 |
 | Re-checking nine gallery cards after the rules changed (21 September) | 26 |
+| Re-reading the 22 cards that had claimed Book or Hedged, after the 21 September audit | 83 |
 
 `profiler/perp-trades` was tried once and dropped: it aggregates partial fills into one trade, and a thousand records covered sixteen minutes of the busiest account.
 

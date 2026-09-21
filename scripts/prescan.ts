@@ -21,7 +21,7 @@
 //   npx tsx scripts/prescan.ts [--pool=1000] [--reserve=30] [--gap-ms=7000]
 //                              [--limit=N] [--addresses=0x..,0x..]
 //                              [--source=prescan] [--out=data/gallery.json]
-//                              [--resume]
+//                              [--resume] [--refresh]
 import { readFileSync, writeFileSync, appendFileSync, existsSync, renameSync } from 'node:fs';
 import { checkAddress, type CheckResult } from '../src/api/check';
 import { createNansenClient, meansOutOfCredits, type NansenCallMeta } from '../src/sources/nansen';
@@ -55,6 +55,11 @@ interface Args {
   source: string;
   out: string;
   resume: boolean;
+  /** Re-check the named addresses even though the gallery already holds
+   * them, replacing what is there. `--resume` skips anything already
+   * scanned, which is right for finishing an interrupted run and wrong for
+   * reading an account again after the rules changed. */
+  refresh: boolean;
 }
 
 function parseArgs(argv: string[]): Args {
@@ -69,6 +74,7 @@ function parseArgs(argv: string[]): Args {
     source: get('source') ?? 'prescan',
     out: get('out') ?? 'data/gallery.json',
     resume: argv.includes('--resume'),
+    refresh: argv.includes('--refresh'),
   };
 }
 
@@ -185,6 +191,18 @@ async function main(): Promise<void> {
       : { scannedAt: null, finishedAt: null, universe, entries: [] };
   if (!args.addresses) gallery.universe = universe;
   gallery.scannedAt ??= new Date().toISOString();
+
+  // A refresh replaces the named entries rather than skipping them. The old
+  // reading is not merged into the new one: re-reading an account is a new
+  // observation, and mixing the two is what the 21.09 audit found the
+  // re-explain script doing.
+  const refreshing = args.refresh && args.addresses ? new Set(args.addresses) : new Set<string>();
+  if (refreshing.size > 0) {
+    const before = gallery.entries.length;
+    gallery.entries = gallery.entries.filter((e) => !refreshing.has(e.address));
+    console.log(`refresh: ${before - gallery.entries.length} existing entries set aside to be read again`);
+  }
+
   const done = new Set(gallery.entries.map((e) => e.address));
   const todo = addresses.filter((a) => !done.has(a)).slice(0, args.limit);
   console.log(`to scan: ${todo.length} (already in ${args.out}: ${done.size}), reserve ${args.reserve} credits`);

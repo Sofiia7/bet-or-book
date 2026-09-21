@@ -127,11 +127,18 @@ gallery.entries = gallery.entries.map((e) => {
     assetRegistryVersion: ASSET_REGISTRY_VERSION,
     observedAt: e.observedAt ?? positionsAsOf ?? e.checkedAt,
     interpretedAt: now,
-    previousInterpretation: {
-      verdict: e.verdict.verdict,
-      classifierVersion: e.classifierVersion,
-      interpretedAt: e.interpretedAt ?? e.checkedAt,
-    },
+    // Only a real change is worth recording, and the record must survive
+    // this script being run twice: overwriting it on a second, identical
+    // pass replaced the v2 verdict with the v3 one and lost exactly the
+    // history the field exists to keep.
+    previousInterpretation:
+      e.verdict.verdict === verdict.verdict
+        ? e.previousInterpretation
+        : {
+            verdict: e.verdict.verdict,
+            classifierVersion: e.classifierVersion,
+            interpretedAt: e.interpretedAt ?? e.checkedAt,
+          },
     snapshotId: e.snapshotId ?? snapshotId(e.address, e.checkedAt),
   };
   const { summary, evidence } = explain(next);
