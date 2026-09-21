@@ -195,6 +195,8 @@ Seven of those calls did not return data, and each one taught something:
 - Two that never answered at all, a local network drop. They are recorded with status 0, attempted and outcome unknown, and charged as spent, because Nansen may have served them. Silence is the one thing that must not be recorded as nothing having happened.
 - Three 502s and one 500 during the original scan. The 502s cost three cards their Nansen positions, and those cards say they read Hyperliquid's main dex instead; one of the three has since been re-checked, which leaves two. The 500 cost one card its realized PnL.
 
+The live count restarts from the deploy that moved it out of KV (21 September). The Worker's own calls before that - about a dozen, from `wrangler dev` and the smoke tests - are in the scripted ledger already and are not double-counted here; nothing is lost, but the two halves of the total come from different places and the boundary is a deploy, not a date.
+
 The ledger counts calls made. It is a record, not the spend cap: what a check is allowed to spend is decided before it runs (see above), and an answered call's own cost header is what settles it. The local count is this Worker's own arithmetic and is not an independent confirmation; the figure Nansen's account side reports is the one that counts.
 
 | Endpoint | Calls |
