@@ -170,8 +170,12 @@ function el(tag, cls, text) {
   if (text !== undefined) e.textContent = text;
   return e;
 }
+// Must agree with src/guard.ts: the trailing guard stops a 66-character
+// transaction hash yielding its first 42 characters, which is a real and
+// unrelated address.
 function extractAddress(input) {
-  const m = input.trim().match(/0x[0-9a-fA-F]{40}/);
+  if (input.length > 2048) return null;
+  const m = input.trim().match(/0x[0-9a-fA-F]{40}(?![0-9a-fA-F])/);
   return m ? m[0].toLowerCase() : null;
 }
 function shortAddr(a) {
@@ -353,11 +357,22 @@ async function load(url, onData, failureText) {
 
 function runCheck() {
   if (busy) return;
-  const addr = extractAddress($('address').value);
+  const raw = $('address').value;
+  const addr = extractAddress(raw);
   if (!addr) {
-    setStatus('Enter a Hyperliquid address (or a link containing one) first.', true);
+    // A transaction hash is the common case: it is 66 characters of hex and
+    // used to yield its first 42, which is somebody else's address.
+    const hex = raw.trim().match(/0x[0-9a-fA-F]{41,}/);
+    setStatus(
+      hex
+        ? 'That looks like a transaction hash, not an address. Paste the wallet address itself.'
+        : 'Enter a Hyperliquid address (or a link containing one) first.',
+      true,
+    );
     return;
   }
+  const all = [...raw.trim().matchAll(/0x[0-9a-fA-F]{40}(?![0-9a-fA-F])/g)];
+  if (all.length > 1) setStatus('Found ' + all.length + ' addresses. Checking the first one, ' + addr + '.', false);
   return load(
     '/api/check?address=' + encodeURIComponent(addr),
     (data) => {

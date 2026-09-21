@@ -1,12 +1,32 @@
 const BARE_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
-const EMBEDDED_ADDRESS_RE = /0x[0-9a-fA-F]{40}/;
 
-/** Pulls a 20-byte hex address out of arbitrary input (a bare address or a
- * URL containing one). Never used to fetch the input string itself - only
- * the extracted address is ever sent to an upstream API. */
+/**
+ * A 20-byte address, and not the first 20 bytes of something longer. The
+ * trailing guard is the whole point: a 32-byte transaction hash pasted from
+ * a post matched its first 42 characters, which is a real and entirely
+ * unrelated address, and the reader was shown that account's positions with
+ * nothing on the page saying whose they were.
+ *
+ * No leading guard is needed: `x` is not a hex digit, so `0x` cannot occur
+ * inside a run of hex.
+ */
+const EMBEDDED_ADDRESS_RE = /0x[0-9a-fA-F]{40}(?![0-9a-fA-F])/g;
+
+/** Longer than any address, link or sentence anyone pastes on purpose. */
+const MAX_INPUT_LENGTH = 2048;
+
+/** Every address in the input, in the order they appear, so a caller can
+ * tell the reader which one it used and that there were others. */
+export function extractAddresses(input: string): string[] {
+  if (input.length > MAX_INPUT_LENGTH) return [];
+  return [...input.trim().matchAll(EMBEDDED_ADDRESS_RE)].map((m) => m[0].toLowerCase());
+}
+
+/** The first address in arbitrary input (a bare address or a URL containing
+ * one). Never used to fetch the input string itself - only the extracted
+ * address is ever sent to an upstream API. */
 export function extractAddress(input: string): string | null {
-  const match = input.trim().match(EMBEDDED_ADDRESS_RE);
-  return match ? match[0].toLowerCase() : null;
+  return extractAddresses(input)[0] ?? null;
 }
 
 export function isValidAddress(input: string): boolean {

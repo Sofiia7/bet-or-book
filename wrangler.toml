@@ -29,6 +29,11 @@ class_name = "RequestGate"
 tag = "v1"
 new_sqlite_classes = ["NansenBudget", "RequestGate"]
 
+# Structured logs and traces, so a budget refusal or a failing upstream can
+# be seen without adding print statements to a deployed Worker.
+[observability]
+enabled = true
+
 [vars]
 NANSEN_DAILY_CREDIT_CAP = "300"
 NANSEN_CREDIT_FLOOR = "5"

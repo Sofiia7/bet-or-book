@@ -59,6 +59,17 @@ const PAGE_HEADERS = {
   'referrer-policy': 'strict-origin-when-cross-origin',
 };
 
+/** A configured number, or a fallback chosen so that a misconfiguration
+ * costs nothing rather than everything. */
+function numberOr(raw: string | undefined, fallback: number, name: string): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) {
+    console.error(`${name} is not a number: ${JSON.stringify(raw)}; using ${fallback}`);
+    return fallback;
+  }
+  return n;
+}
+
 const SOCIAL_BLOCK = /<!--SOCIAL-->[\s\S]*?<!--\/SOCIAL-->/;
 
 const escapeAttr = (s: string) =>
@@ -106,6 +117,10 @@ let ledgerMemo: { at: number; body: unknown } | null = null;
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    // Nothing here writes, so nothing here needs a method that writes.
+    if (request.method !== 'GET' && request.method !== 'HEAD') {
+      return Response.json({ error: 'only GET is supported' }, { status: 405, headers: { allow: 'GET, HEAD' } });
+    }
     const kv = safeKv(env.KV);
 
     if (url.pathname === '/api/check') {
@@ -121,7 +136,10 @@ export default {
       const limiter = requestGate(env.REQUEST_GATE, RATE_LIMIT_MAX_PER_WINDOW, RATE_LIMIT_WINDOW_SECONDS);
       const ip = extractIp(request);
       if (!(await limiter.allow(ip))) {
-        return Response.json({ error: 'too many checks from this address, try again shortly' }, { status: 429 });
+        return Response.json(
+          { error: 'too many checks from this address, try again shortly' },
+          { status: 429, headers: { 'retry-after': String(RATE_LIMIT_WINDOW_SECONDS) } },
+        );
       }
 
       try {
@@ -137,8 +155,11 @@ export default {
           // starts, not counted after it finishes, so a check that overlaps
           // this one sees them as already gone.
           const budget = spendGuard(env.NANSEN_BUDGET, {
-            cap: Number(env.NANSEN_DAILY_CREDIT_CAP),
-            floor: Number(env.NANSEN_CREDIT_FLOOR),
+            // A cap that is not a number must not read as no cap: every
+            // comparison against NaN is false, which would have meant every
+            // check allowed. A misconfigured cap spends nothing instead.
+            cap: numberOr(env.NANSEN_DAILY_CREDIT_CAP, 0, 'NANSEN_DAILY_CREDIT_CAP'),
+            floor: numberOr(env.NANSEN_CREDIT_FLOOR, Number.MAX_SAFE_INTEGER, 'NANSEN_CREDIT_FLOOR'),
           });
           let nansenOffReason: string | undefined;
           let hold: string | null = null;
@@ -236,6 +257,9 @@ export default {
       return new Response(pageHtml, { headers: PAGE_HEADERS });
     }
 
-    return new Response('not found', { status: 404 });
+    if (url.pathname.startsWith('/api/')) {
+      return Response.json({ error: 'no such endpoint' }, { status: 404 });
+    }
+    return new Response('not found', { status: 404, headers: { 'content-type': 'text/plain;charset=UTF-8' } });
   },
 };
