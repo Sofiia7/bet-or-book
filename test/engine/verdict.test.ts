@@ -238,15 +238,32 @@ describe('book rule (c): fills', () => {
     headlineNotionalUsd: 60_000_000,
   });
 
-  it('calls balanced maker flow a book', () => {
+  it('does not turn one big directional position into a book on maker flow alone', () => {
+    // The signal counts fills across every market the account touches and
+    // carries no notional, so 2 000 small quotes elsewhere used to decide
+    // what a single $60M BTC short was. It is a fact about the account, not
+    // about this position.
     const result = computeVerdict({
       positions: directional,
       orders: orders({}),
       hedge: hedge({}),
       trades: { tradesPerDay: 2000, crossedShare: 0.2, buyShare: 0.53 },
     });
+    expect(result.verdict).toBe('unknown');
+    expect(result.reasons).toEqual(['maker_flow_only']);
+  });
+
+  it('still calls it a book when the positions or the order book agree', () => {
+    const spread = positions({ nPositions: 76, netToGross: 0.04, headlineShare: 0.2, headlineCoin: 'BTC' });
+    const result = computeVerdict({
+      positions: spread,
+      orders: orders({}),
+      hedge: hedge({}),
+      trades: { tradesPerDay: 2000, crossedShare: 0.2, buyShare: 0.53 },
+    });
     expect(result.verdict).toBe('book');
-    expect(result.reasons).toEqual(['trades']);
+    expect(result.reasons).toEqual(['positions', 'trades']);
+    expect(result.strength).toBe('strong');
   });
 
   it('does not call one-sided maker flow a book - that is a position being built', () => {

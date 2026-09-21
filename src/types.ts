@@ -30,6 +30,10 @@ export interface Trade {
   crossed: boolean;
   side: 'buy' | 'sell';
   closedPnlUsd: number;
+  /** Notional of the fill. A count of fills says how often an account acts;
+   * only the size says whether that activity is anywhere near the position
+   * being asked about. */
+  sizeUsd: number;
 }
 
 export type ServiceStatus = 'service' | 'not-service' | 'unverified';

@@ -177,9 +177,19 @@ export function computeVerdict(
     return { verdict: 'unknown', strength: null, reasons: ['no open positions found'] };
   }
 
+  // A book is a claim about the position in front of the user, so it needs
+  // evidence about the account's actual book: how its positions are spread,
+  // or what it is quoting. The fill count is neither. It is taken across
+  // every market the account touches and carries no notional, so hundreds of
+  // small quotes on another coin could settle the character of one large
+  // position elsewhere. It corroborates, it does not decide.
   const book = bookSignals(input, thresholds.book);
-  if (book.length >= 1) {
+  const structural = book.filter((s) => s !== 'trades');
+  if (structural.length >= 1) {
     return { verdict: 'book', strength: book.length >= 2 ? 'strong' : 'likely', reasons: book };
+  }
+  if (book.length >= 1) {
+    return { verdict: 'unknown', strength: null, reasons: ['maker_flow_only'] };
   }
 
   const h = thresholds.hedged;

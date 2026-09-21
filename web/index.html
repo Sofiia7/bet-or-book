@@ -207,6 +207,9 @@ function headlineFor(d) {
   if (reasons.indexOf('hedge_not_checked') !== -1) {
     return 'Directional exposure is visible. Whether it is hedged could not be checked.';
   }
+  if (reasons.indexOf('maker_flow_only') !== -1) {
+    return 'A busy account. That is not the same as this position being a market maker’s inventory.';
+  }
   return verdictOf(d).headline;
 }
 function positionText(d) {

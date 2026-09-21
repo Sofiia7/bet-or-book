@@ -27,7 +27,7 @@ function input(overrides: Partial<EvidenceInput>): EvidenceInput {
     hedgeScope: 'all-chains',
     hedgeCoverage: 'complete',
     linkedHedge: null,
-    trades: { tradesPerDay: 0, crossedShare: 0, buyShare: 0, sampleSize: 0, cappedByApiLimit: false },
+    trades: { tradesPerDay: 0, crossedShare: 0, buyShare: 0, sampleSize: 0, cappedByApiLimit: false, notionalUsd: 0, spanHours: 0, headlineFills: 0, headlineShareOfFills: 0 },
     pnl: { realizedPnlUsd: -15_512_000, winRate: 0.41, closedTrades: 120, windowDays: 30 },
     sizeVsOi: 0.032,
     source: 'nansen',
@@ -69,11 +69,14 @@ describe('explain', () => {
         verdict: { verdict: 'book', strength: 'strong', reasons: ['orders', 'trades'] },
         positions: positions({ nPositions: 134, netToGross: 0.8, headlineShare: 0.3 }),
         orders: { restingOrders: 212, bidShare: 0.5, coinsBothSides: 31 },
-        trades: { tradesPerDay: 2000, crossedShare: 0.24, buyShare: 0.53, sampleSize: 2000, cappedByApiLimit: true },
+        trades: {
+          tradesPerDay: 2000, crossedShare: 0.24, buyShare: 0.53, sampleSize: 2000, cappedByApiLimit: true,
+          notionalUsd: 180_000_000, spanHours: 23.6, headlineFills: 410, headlineShareOfFills: 0.205,
+        },
       }),
     );
     expect(e.summary).toBe(
-      '212 resting orders quote both sides of 31 markets; 2,000+ fills in the last 24 hours, 53% of them buys, 76% as maker. There is nothing to copy.',
+      '212 resting orders quote both sides of 31 markets; 2,000+ fills over 23.6 hours, 53% of them buys, 76% as maker.',
     );
     expect(e.evidence.map((i) => i.label)).toEqual([
       'Open positions',
@@ -93,7 +96,7 @@ describe('explain', () => {
         positions: positions({ nPositions: 40, netToGross: 0.09, headlineShare: 0.1 }),
       }),
     );
-    expect(e.summary).toBe('40 open positions net out to 9.0% of gross exposure. There is nothing to copy.');
+    expect(e.summary).toBe('40 open positions net out to 9.0% of gross exposure.');
   });
 
   it('explains a hedge held by the account itself', () => {
@@ -105,6 +108,22 @@ describe('explain', () => {
     );
     expect(e.summary).toBe('The $100.0M ETH short is 60% covered by spot ETH held by the same account across chains.');
     expect(e.evidence).toContainEqual({ label: 'Hedge found', value: '60% (all chains)', source: 'Nansen' });
+  });
+
+  it('calls busy maker flow what it is, without deciding the position', () => {
+    const e = explain(
+      input({
+        verdict: { verdict: 'unknown', strength: null, reasons: ['maker_flow_only'] },
+        trades: {
+          tradesPerDay: 2000, crossedShare: 0.24, buyShare: 0.53, sampleSize: 2000, cappedByApiLimit: false,
+          notionalUsd: 180_000_000, spanHours: 23.6, headlineFills: 410, headlineShareOfFills: 0.205,
+        },
+      }),
+    );
+    expect(e.summary).toBe(
+      '2,000 fills over 23.6 hours, 53% buys and 76% as maker, 21% of them in ETH. ' +
+        'That is a busy account, but nothing here shows the $100.0M ETH short is inventory rather than a position.',
+    );
   });
 
   it('explains a balanced book and how much of it really cancels', () => {

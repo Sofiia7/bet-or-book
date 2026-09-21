@@ -153,6 +153,41 @@ describe('computeSizeVsOi', () => {
 });
 
 describe('computeTradeFeatures', () => {
+  it('says how much of the flow was in the position being asked about', () => {
+    const hour = 3_600_000;
+    const fill = (coin: string, timestamp: number, sizeUsd: number): Trade => ({
+      coin,
+      timestamp,
+      crossed: false,
+      side: 'buy',
+      closedPnlUsd: 0,
+      sizeUsd,
+    });
+    // Three hundred small quotes on SOL and one big ETH fill: the account is
+    // busy, but almost none of that busyness is this position.
+    const trades = [
+      ...Array.from({ length: 300 }, (_, i) => fill('SOL', i * 1000, 2_000)),
+      fill('ETH', 6 * hour, 40_000_000),
+    ];
+    const result = computeTradeFeatures(trades, 24, 'ETH');
+    expect(result.sampleSize).toBe(301);
+    expect(result.notionalUsd).toBe(40_600_000);
+    expect(result.headlineFills).toBe(1);
+    expect(result.headlineShareOfFills).toBeCloseTo(1 / 301, 6);
+    // The window asked for 24 hours; the fills only cover the first six.
+    expect(result.spanHours).toBeCloseTo(6, 3);
+  });
+
+  it('reports no headline share when there is no headline coin', () => {
+    const result = computeTradeFeatures(
+      [{ coin: 'BTC', timestamp: 0, crossed: false, side: 'buy', closedPnlUsd: 0, sizeUsd: 100 }],
+      24,
+      null,
+    );
+    expect(result.headlineFills).toBe(0);
+    expect(result.headlineShareOfFills).toBe(0);
+  });
+
   it('returns zeroed features for no trades', () => {
     const result = computeTradeFeatures([], 24);
     expect(result.tradesPerDay).toBe(0);
@@ -167,6 +202,7 @@ describe('computeTradeFeatures', () => {
       crossed: i % 2 === 0,
       side: i % 4 === 0 ? 'buy' : 'sell',
       closedPnlUsd: 0,
+      sizeUsd: 1_000,
     }));
     const result = computeTradeFeatures(trades, 12);
     expect(result.tradesPerDay).toBe(200);
@@ -183,6 +219,7 @@ describe('computeTradeFeatures', () => {
       crossed: i % 4 === 0,
       side: 'buy',
       closedPnlUsd: 0,
+      sizeUsd: 1_000,
     }));
     const result = computeTradeFeatures(trades, 24);
     expect(result.cappedByApiLimit).toBe(true);

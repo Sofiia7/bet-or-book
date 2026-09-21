@@ -74,6 +74,31 @@ function fillsText(t: TradeFeatures): string {
   return `${count(t.sampleSize)}${t.cappedByApiLimit ? '+' : ''}`;
 }
 
+/** How long the fills actually cover. Two thousand of them can land inside
+ * a few minutes, so "in the last 24 hours" would be the window that was
+ * asked for, not the window that was seen. Entries written before this was
+ * measured fall back to the window. */
+function spanText(t: TradeFeatures): string {
+  return typeof t.spanHours === 'number' && Number.isFinite(t.spanHours) && t.spanHours > 0
+    ? `over ${t.spanHours.toFixed(1)} hours`
+    : 'in the last 24 hours';
+}
+
+/** Busy is not the same as making a market in the position being asked
+ * about, and the fill count alone cannot tell them apart. */
+function makerFlowSummary(input: EvidenceInput): string {
+  const { positions: p, trades: t } = input;
+  const share =
+    typeof t.headlineShareOfFills === 'number' && Number.isFinite(t.headlineShareOfFills)
+      ? `, ${formatPct(t.headlineShareOfFills)} of them in ${p.headlineCoin}`
+      : '';
+  return (
+    `${fillsText(t)} fills ${spanText(t)}, ${formatPct(t.buyShare)} buys and ` +
+    `${formatPct(1 - t.crossedShare)} as maker${share}. That is a busy account, but nothing here shows ` +
+    `the ${headlineText(p)} is inventory rather than a position.`
+  );
+}
+
 /** A funding wallet counts as holding the hedge from 1% of the headline up:
  * "via 2 funding wallets" should not stand for one wallet and $1 of dust. */
 const MIN_FUNDER_SHARE = 0.01;
@@ -96,10 +121,12 @@ function bookSummary(input: EvidenceInput): string {
   }
   if (input.verdict.reasons.includes('trades')) {
     clauses.push(
-      `${fillsText(t)} fills in the last 24 hours, ${formatPct(t.buyShare)} of them buys, ${formatPct(1 - t.crossedShare)} as maker`,
+      `${fillsText(t)} fills ${spanText(t)}, ${formatPct(t.buyShare)} of them buys, ${formatPct(1 - t.crossedShare)} as maker`,
     );
   }
-  return `${clauses.join('; ')}. There is nothing to copy.`;
+  // No "there is nothing to copy": what this account is doing is described,
+  // and whether to copy it is the reader's call, not a finding.
+  return `${clauses.join('; ')}.`;
 }
 
 function hedgedSummary(input: EvidenceInput): string {
@@ -257,6 +284,7 @@ const SUMMARY_BY_REASON: Record<string, ((input: EvidenceInput) => string) | und
   mixed_long_short_book: mixedBookSummary,
   offset_not_measured: unmeasuredOffsetSummary,
   hedge_not_checked: hedgeNotCheckedSummary,
+  maker_flow_only: makerFlowSummary,
   partial_offset: partialOffsetSummary,
   over_covered: overCoveredSummary,
 };

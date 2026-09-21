@@ -180,21 +180,51 @@ export interface TradeFeatures {
    * tradesPerDay is a lower bound, not an exact count - a full page is a
    * sign there is more history, not that the history ends here. */
   cappedByApiLimit: boolean;
+  /** Notional traded across every market in the sample. */
+  notionalUsd: number;
+  /** Hours actually covered by the fills, which can be far less than the
+   * window asked for: 2 000 fills can all land inside a few minutes. */
+  spanHours: number;
+  /** Fills in the market of the headline position, and their share of the
+   * sample. A busy account whose flow is all somewhere else says nothing
+   * about the position in front of the user. */
+  headlineFills: number;
+  headlineShareOfFills: number;
 }
 
 const HL_FILLS_PAGE_CAP = 2000;
 
-export function computeTradeFeatures(trades: Trade[], windowHours: number): TradeFeatures {
+export function computeTradeFeatures(
+  trades: Trade[],
+  windowHours: number,
+  headlineCoin: string | null = null,
+): TradeFeatures {
   if (trades.length === 0) {
-    return { tradesPerDay: 0, crossedShare: 0, buyShare: 0.5, sampleSize: 0, cappedByApiLimit: false };
+    return {
+      tradesPerDay: 0,
+      crossedShare: 0,
+      buyShare: 0.5,
+      sampleSize: 0,
+      cappedByApiLimit: false,
+      notionalUsd: 0,
+      spanHours: 0,
+      headlineFills: 0,
+      headlineShareOfFills: 0,
+    };
   }
   const crossedCount = trades.filter((t) => t.crossed).length;
   const buyCount = trades.filter((t) => t.side === 'buy').length;
+  const times = trades.map((t) => t.timestamp);
+  const headlineFills = headlineCoin === null ? 0 : trades.filter((t) => t.coin === headlineCoin).length;
   return {
     tradesPerDay: (trades.length / windowHours) * 24,
     crossedShare: crossedCount / trades.length,
     buyShare: buyCount / trades.length,
     sampleSize: trades.length,
     cappedByApiLimit: trades.length >= HL_FILLS_PAGE_CAP,
+    notionalUsd: trades.reduce((sum, t) => sum + (Number.isFinite(t.sizeUsd) ? t.sizeUsd : 0), 0),
+    spanHours: (Math.max(...times) - Math.min(...times)) / 3_600_000,
+    headlineFills,
+    headlineShareOfFills: headlineFills / trades.length,
   };
 }

@@ -122,7 +122,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
 
   const positionFeatures = computePositionFeatures(positions);
   const orderFeatures = computeOrderFeatures(normalizeOrders(rawOrders));
-  const tradeFeatures = computeTradeFeatures(normalizeTrades(rawFills), TRADES_WINDOW_HOURS);
+  const tradeFeatures = computeTradeFeatures(normalizeTrades(rawFills), TRADES_WINDOW_HOURS, positionFeatures.headlineCoin);
   const tradeSignal = {
     tradesPerDay: tradeFeatures.tradesPerDay,
     crossedShare: tradeFeatures.crossedShare,
