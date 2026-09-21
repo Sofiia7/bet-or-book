@@ -1,0 +1,35 @@
+# Every push runs what a reviewer would run by hand, in the order that fails
+# cheapest first. The 21.09 audit found no CI at all: the tests and the
+# typecheck existed and nothing made them a condition of anything.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Tests
+        run: npm test
+      - name: Worker builds
+        run: npx wrangler deploy --dry-run --outdir /tmp/worker-build
+      - name: No secret in the tree
+        # .dev.vars is git-ignored; this fails the build if a key is ever
+        # committed by another route. The pattern is Nansen's key shape, not
+        # a value.
+        run: |
+          if git grep -nE '(NANSEN_API_KEY|apikey)\s*[:=]\s*["'\'']?[A-Za-z0-9]{20,}' -- . ':!*.yml'; then
+            echo "A credential looks committed. Rotate it and remove it from history."
+            exit 1
+          fi

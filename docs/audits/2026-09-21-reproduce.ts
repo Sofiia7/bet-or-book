@@ -1,3 +1,9 @@
+// HISTORICAL. This file pins the defects the 21.09 audit found, as they were
+// on commit c3265b1. Its assertions are of the broken behaviour, so it no
+// longer passes - that is what it is for. Every observation in it now has a
+// regression test in the main suite, and 2026-09-21-verify.ts re-runs the
+// same nineteen scenarios asserting the behaviour that replaced them.
+//
 // Offline audit only. No real fetch, credentials, paid requests or source edits.
 // Run: node --import tsx docs/audits/2026-09-21-reproduce.ts
 import assert from 'node:assert/strict';

@@ -272,9 +272,9 @@ async function main(): Promise<void> {
       break;
     }
     for (const c of calls) {
-      if (c.status >= 400 && !forbidden.has(c.endpoint)) {
-        forbidden.add(c.endpoint);
-        console.log(`  note: ${c.endpoint} answered ${c.status}; continuing without it`);
+      if (c.status >= 400 && !forbidden.has(c.path)) {
+        forbidden.add(c.path);
+        console.log(`  note: ${c.path} answered ${c.status}; continuing without it`);
       }
     }
     if (lostInARow >= 3) {

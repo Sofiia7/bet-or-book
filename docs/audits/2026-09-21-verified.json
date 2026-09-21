@@ -1,0 +1,214 @@
+{
+  "generatedAt": "2026-09-21T20:07:30.665Z",
+  "networkCalls": 0,
+  "observations": [
+    {
+      "id": "ethereum_native_not_registered",
+      "was": "native ETH on Ethereum counted as nothing, verdict looks_like_a_bet",
+      "now": {
+        "hedgeUsd": 1000000,
+        "hedgeRatio": 1,
+        "unverifiedUsd": 0,
+        "unverifiedOnUnsupportedChainUsd": 0,
+        "unpricedMatches": 0,
+        "hedgeUsdBySource": {
+          "hyperliquidSpot": 0,
+          "onchain": 1000000
+        },
+        "lendingUsd": 0
+      }
+    },
+    {
+      "id": "duplicate_spot_symbol_uses_other_tokens_price",
+      "was": "$10K of a $1 token valued at $1M off a namesake",
+      "now": [
+        {
+          "coin": "HYPE",
+          "valueUsd": 10000,
+          "priced": true,
+          "amount": 10000,
+          "source": "hyperliquid-spot",
+          "tokenIndex": 2
+        }
+      ]
+    },
+    {
+      "id": "malformed_onchain_row_bypasses_contract_validation",
+      "was": "a row with no contract accepted by the name WETH",
+      "now": {
+        "hedgeUsd": 0,
+        "hedgeRatio": 0,
+        "unverifiedUsd": 1000000,
+        "unverifiedOnUnsupportedChainUsd": 0,
+        "unpricedMatches": 0,
+        "hedgeUsdBySource": {
+          "hyperliquidSpot": 0,
+          "onchain": 0
+        },
+        "lendingUsd": 0
+      }
+    },
+    {
+      "id": "spot_balance_without_price_silently_dropped",
+      "was": "an unpriced balance multiplied by zero and dropped as dust",
+      "now": [
+        {
+          "coin": "UETH",
+          "valueUsd": 0,
+          "priced": false,
+          "amount": 100,
+          "source": "hyperliquid-spot",
+          "tokenIndex": 1
+        }
+      ]
+    },
+    {
+      "id": "material_unidentified_holdings_withhold_the_answer",
+      "was": "unidentified dollars counted as an absence",
+      "now": {
+        "verdict": "unknown",
+        "strength": null,
+        "reasons": [
+          "unrecognised_assets"
+        ]
+      }
+    },
+    {
+      "id": "partial_page_still_hedged",
+      "was": "100% on the first page of holdings called hedged",
+      "now": {
+        "verdict": "unknown",
+        "strength": null,
+        "reasons": [
+          "hedge_not_checked"
+        ]
+      }
+    },
+    {
+      "id": "fifty_dollars_unrelated_orders_classify_million_position",
+      "was": "$50 of quotes elsewhere classified a $1M position as inventory",
+      "now": {
+        "verdict": "unknown",
+        "strength": null,
+        "reasons": [
+          "signals disagree: not enough evidence for book, hedge, or bet"
+        ]
+      }
+    },
+    {
+      "id": "balanced_twenty_asset_portfolio_is_book_without_quotes",
+      "was": "twenty unrelated positions and no quotes called a book",
+      "now": {
+        "verdict": "unknown",
+        "strength": null,
+        "reasons": [
+          "diversified_book_no_quotes"
+        ]
+      }
+    },
+    {
+      "id": "empty_pnl_body_not_rejected",
+      "was": "an empty PnL body rendered as $NaN",
+      "now": "UpstreamShapeError"
+    },
+    {
+      "id": "orphan_hold_reopens_spent_budget",
+      "was": "an unsettled hold refunded, allowing 14 credits against a cap of 7",
+      "now": {
+        "day": "2026-09-21",
+        "spent": 7,
+        "spentByDay": {
+          "2026-09-21": 7
+        },
+        "uncertainSpent": 7,
+        "reserved": 0,
+        "remaining": null,
+        "remainingAt": 0,
+        "refused": false,
+        "refusedAt": 0,
+        "holds": {},
+        "orphaned": {
+          "cba3cf47-5a5d-427e-853f-5ee25dd446bd": {
+            "amount": 7,
+            "at": 1789992000000,
+            "day": "2026-09-21"
+          }
+        },
+        "receipts": {},
+        "callsByDay": {}
+      }
+    },
+    {
+      "id": "midnight_discards_known_remaining_balance",
+      "was": "the day rolling over forgot the account balance",
+      "now": 5
+    },
+    {
+      "id": "snapshot_id_ignores_most_of_address",
+      "was": "two addresses sharing eight characters shared one id",
+      "now": {
+        "idA": "2xl7aagocnleg",
+        "idB": "1u6h3064csk6w"
+      }
+    },
+    {
+      "id": "png_loses_permanent_limits",
+      "was": "a picture with no coverage notes claimed everything was read in full",
+      "now": "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address."
+    },
+    {
+      "id": "missing_hip3_orders_still_directional_verdict",
+      "was": "a dex answering 503 still supported \"it quotes nothing\"",
+      "now": {
+        "verdict": "unknown",
+        "strength": null,
+        "reasons": [
+          "quotes_not_checked"
+        ]
+      }
+    },
+    {
+      "id": "stale_positions_not_degraded",
+      "was": "an hour-old reading cached for the full ten minutes as if current",
+      "now": {
+        "degraded": true
+      }
+    },
+    {
+      "id": "no_nansen_fallback_not_degraded",
+      "was": "a check with Nansen switched off reported itself complete",
+      "now": {
+        "degraded": true,
+        "positionsCoverage": "partial"
+      }
+    },
+    {
+      "id": "malformed_optional_funder_fails_whole_check",
+      "was": "one bad funder row threw away a check whose main data was in hand",
+      "now": {
+        "verdict": "looks_like_a_bet",
+        "strength": null,
+        "reasons": [
+          "directional_concentration"
+        ]
+      }
+    },
+    {
+      "id": "truncated_funder_not_reported",
+      "was": "a funder read cut off at its first page passed for everything it holds",
+      "now": {
+        "degraded": true
+      }
+    },
+    {
+      "id": "gallery_reinterpretation_presented_as_recheck",
+      "was": "269 of 277 cards stamped with rules their observations could not support",
+      "now": {
+        "judged": 168,
+        "history": 109,
+        "hedgedUnderCurrentRules": 0,
+        "bookUnderCurrentRules": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+# Copy to .dev.vars for local runs with live Nansen reads. Without a key
+# every check runs Hyperliquid-only and says so on the card.
+#
+# .dev.vars is git-ignored. Never commit a real key: put it in the deployed
+# Worker with `npx wrangler secret put NANSEN_API_KEY`.
+NANSEN_API_KEY=
+
+# Optional. Lets one request reach past the public cap into the reserve kept
+# for the demo (see NANSEN_DEMO_RESERVE in wrangler.toml), with ?demo=<key>.
+DEMO_KEY=

@@ -1,5 +1,17 @@
 # Bet or Book - calibration (Phase 1, Hyperliquid-only)
 
+> **Superseded. Kept as a record of what was run on 17 September 2026, not as
+> the tool's current calibration.**
+>
+> Three things in this file no longer hold. The rules it was run against are
+> `v1`; the current set is `v3` and would answer some of these differently.
+> Its reading of the Abraxas address as a delta-neutral carry trade was
+> rejected by the 19 September audit - the matching ETH is in wallets that
+> funded that account, which is not the same as the account holding it. And
+> three addresses checked once are a smoke test that each rule fires and
+> stays silent where it should, never a measurement of how often the answers
+> are right; the README says what would make it one.
+
 Date: 2026-09-17. All three checks run live against `http://127.0.0.1:8787/api/check`
 (`npm run dev`), source `hyperliquid` (no Nansen key in Phase 1). Full raw
 responses are in the run log below the table.
