@@ -5,6 +5,7 @@ import {
   getSpotMeta,
   getPerpMetaAndAssetCtxs,
   getUserFillsByTime,
+  dexOf,
 } from '../sources/hyperliquid';
 import {
   normalizePositions,
@@ -124,7 +125,21 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
   if (positions === null) positions = normalizePositions(await getClearinghouseState(address));
 
   const positionFeatures = computePositionFeatures(positions);
-  const orderFeatures = computeOrderFeatures(normalizeOrders(rawOrders));
+
+  // frontendOpenOrders answers for one perp dex and spot. Nansen reports
+  // positions on every HIP-3 dex as well, so without asking those by name an
+  // account quoting both sides of a HIP-3 market reads as quoting nothing -
+  // which is one of the conditions for calling a position a clean bet.
+  const resting = normalizeOrders(rawOrders);
+  const hip3Dexes = [...new Set(positions.map((p) => dexOf(p.coin)).filter((d): d is string => d !== null))];
+  if (hip3Dexes.length > 0) {
+    const perDex = await Promise.allSettled(hip3Dexes.map((dex) => getOpenOrders(address, dex)));
+    perDex.forEach((r, i) => {
+      if (r.status === 'fulfilled') resting.push(...normalizeOrders(r.value));
+      else coverage.push(`Resting orders on the ${hip3Dexes[i]} dex could not be read`);
+    });
+  }
+  const orderFeatures = computeOrderFeatures(resting);
   const tradeFeatures = computeTradeFeatures(normalizeTrades(rawFills), TRADES_WINDOW_HOURS, positionFeatures.headlineCoin);
   const tradeSignal = {
     tradesPerDay: tradeFeatures.tradesPerDay,

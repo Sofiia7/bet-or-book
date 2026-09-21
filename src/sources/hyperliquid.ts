@@ -115,8 +115,20 @@ export async function getClearinghouseState(user: string): Promise<HlClearinghou
   return postInfo<HlClearinghouseState>({ type: 'clearinghouseState', user });
 }
 
-export async function getOpenOrders(user: string): Promise<HlOpenOrder[]> {
-  return postInfo<HlOpenOrder[]>({ type: 'frontendOpenOrders', user });
+/** Resting orders. Without `dex` Hyperliquid answers for one perp dex and
+ * spot, which is not the whole account once HIP-3 markets are in play: those
+ * live on their own dexes and have to be asked for by name. */
+export async function getOpenOrders(user: string, dex?: string): Promise<HlOpenOrder[]> {
+  return postInfo<HlOpenOrder[]>(
+    dex === undefined ? { type: 'frontendOpenOrders', user } : { type: 'frontendOpenOrders', user, dex },
+  );
+}
+
+/** The dex part of a HIP-3 market name ("xyz:SP500" -> "xyz"), or null for a
+ * market on the main perp dex. */
+export function dexOf(coin: string): string | null {
+  const at = coin.indexOf(':');
+  return at > 0 ? coin.slice(0, at) : null;
 }
 
 export async function getSpotBalances(user: string): Promise<{ balances: HlSpotBalance[] }> {

@@ -36,6 +36,15 @@ const HL_ROUTES: Record<string, unknown> = {
   userFillsByTime: abxFills,
 };
 
+/** Two-sided quotes on the xyz dex, which frontendOpenOrders does not return
+ * unless it is asked for that dex by name. */
+const HIP3_ORDERS: Record<string, unknown[]> = {
+  xyz: [
+    { coin: 'xyz:SP500', side: 'B', sz: '10', limitPx: '5000', isTrigger: false, oid: 1, timestamp: 0 },
+    { coin: 'xyz:SP500', side: 'A', sz: '10', limitPx: '5100', isTrigger: false, oid: 2, timestamp: 0 },
+  ],
+};
+
 const NANSEN_ROUTES: Record<string, unknown> = {
   [`profiler/perp-positions|${ABRAXAS}|`]: abxPositions,
   [`profiler/perp-pnl-summary|${ABRAXAS}|`]: abxPnl,
@@ -54,6 +63,10 @@ function route(failNansen: string[] = []) {
     const u = String(url);
     const body = JSON.parse(String(init?.body ?? '{}'));
     if (u.includes('api.hyperliquid.xyz')) {
+      // Orders on a named HIP-3 dex are a separate request with its own answer.
+      if (body.type === 'frontendOpenOrders' && body.dex) {
+        return new Response(JSON.stringify(HIP3_ORDERS[String(body.dex)] ?? []), { status: 200 });
+      }
       if (!(body.type in HL_ROUTES)) throw new Error(`unrouted Hyperliquid ${body.type}`);
       return new Response(JSON.stringify(HL_ROUTES[body.type]), { status: 200 });
     }
@@ -211,6 +224,33 @@ describe('checkAddress (offline, real fixtures)', () => {
     expect(result.hedgeScope).toBe('all-chains');
     expect(nansen.currentBalance).toHaveBeenCalledTimes(1);
     expect(nansen.relatedWallets).not.toHaveBeenCalled();
+  });
+
+  it('reads resting orders on every dex the account has a position on', async () => {
+    route();
+    const nansen = fakeNansen({
+      positions: syntheticPositions([{ coin: 'xyz:SP500', size: -100, valueUsd: 38_000_000 }]),
+    });
+    const result = await checkAddress(ABRAXAS, { nansen });
+    // Without asking the xyz dex by name, this account looks like it quotes
+    // nothing at all, which is one of the conditions for calling it a bet.
+    expect(result.orders.coinsBothSides).toBe(1);
+    expect(result.coverage.some((c) => c.includes('xyz'))).toBe(false);
+  });
+
+  it('says so when a HIP-3 dex will not answer for its orders', async () => {
+    route();
+    const realFetch = global.fetch;
+    global.fetch = vi.fn(async (url: string | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body ?? '{}'));
+      if (body.type === 'frontendOpenOrders' && body.dex) return new Response('nope', { status: 500 });
+      return (realFetch as unknown as typeof fetch)(url, init);
+    }) as unknown as typeof fetch;
+    const nansen = fakeNansen({
+      positions: syntheticPositions([{ coin: 'xyz:SP500', size: -100, valueUsd: 38_000_000 }]),
+    });
+    const result = await checkAddress(ABRAXAS, { nansen });
+    expect(result.coverage).toContain('Resting orders on the xyz dex could not be read');
   });
 
   it('does not count a token that only calls itself WETH, and says so', async () => {

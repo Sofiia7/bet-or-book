@@ -31,6 +31,23 @@ describe('hyperliquid client', () => {
     expect(spy.mock.calls[0][1]?.signal).toBeInstanceOf(AbortSignal);
   });
 
+  it('asks for a named perp dex when one is given', async () => {
+    const spy = vi.fn(async (_url: string, _init?: RequestInit) => new Response('[]'));
+    global.fetch = spy as unknown as typeof fetch;
+
+    await getOpenOrders('0xtest');
+    expect(JSON.parse(String(spy.mock.calls[0][1]?.body))).toEqual({ type: 'frontendOpenOrders', user: '0xtest' });
+
+    // Without this the request answers for one perp dex only, while Nansen
+    // reports positions across all of them.
+    await getOpenOrders('0xtest', 'xyz');
+    expect(JSON.parse(String(spy.mock.calls[1][1]?.body))).toEqual({
+      type: 'frontendOpenOrders',
+      user: '0xtest',
+      dex: 'xyz',
+    });
+  });
+
   it('parses clearinghouseState from a real captured response', async () => {
     mockFetchOnce(clearinghouseFixture);
     const state = await getClearinghouseState('0xtest');
