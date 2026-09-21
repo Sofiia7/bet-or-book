@@ -103,7 +103,7 @@ What stands out:
 
 **What this table is not.** It is one scan of a set chosen a particular way. Leverage breaks the link between what an account is worth and what it holds, a HIP-3-only account can fall out of the ranking before it is ever checked, and the scan spent its last credits on the cheaper checks. Read it as "of the 277 read", never as "of the market".
 
-Three of the 278 were read while Nansen answered 502, so their positions came from Hyperliquid's main dex; their cards say so. The scan data is in [`data/gallery.json`](data/gallery.json), the candidate ranking in [`data/prescan-candidates.json`](data/prescan-candidates.json).
+Two cards in the set have positions from Hyperliquid's main dex rather than Nansen, because Nansen answered 502 while they were being read; their cards say so. The scan data is in [`data/gallery.json`](data/gallery.json), the candidate ranking in [`data/prescan-candidates.json`](data/prescan-candidates.json).
 
 ## Calibration, and what it is not
 
@@ -173,16 +173,20 @@ npx wrangler deploy
 
 Every call is logged in [`data/nansen-calls.jsonl`](data/nansen-calls.jsonl) and summed in [`data/ledger.json`](data/ledger.json); the deployed page adds its own calls from Workers KV and serves the total at `/api/ledger`.
 
-Between 14 and 27 September: **1,030 calls, 1,025 of them answered 2xx.** The gallery scan of 18 September accounts for almost all of it; 22 more went to re-checking nine cards on 21 September, after the rules changed.
+Between 14 and 27 September: **1,034 calls, 1,027 of them answered 2xx.** The gallery scan of 18 September accounts for almost all of it; 26 more went to re-checking nine cards on 21 September, after the rules changed.
 
-One of those 22 came back 403: the key in use may not read `profiler/perp-pnl-summary`, and it said so while reporting 1,100 credits still available. A refusal that comes with a balance is about one endpoint, not about money, so it costs a field on the card and nothing else. Treating every refusal as an empty account is a mistake this project made once, live, and fixed.
+Seven of those calls did not return data, and each one taught something:
+
+- One 403, on the very first call made with a freshly issued key, while the same response reported 1,100 credits available. Every later call to that endpoint succeeded, so it was the key warming up, not a permission. The scan stopped anyway, because the breaker could not tell a refusal about an endpoint from an empty account. It can now: a refusal counts as exhaustion only when it reports no credits left.
+- Two that never answered at all, a local network drop. They are recorded with status 0, attempted and outcome unknown, and charged as spent, because Nansen may have served them. Silence is the one thing that must not be recorded as nothing having happened.
+- Three 502s and one 500 during the original scan. The 502s cost three cards their Nansen positions, and those cards say they read Hyperliquid's main dex instead; one of the three has since been re-checked, which leaves two. The 500 cost one card its realized PnL.
 
 The ledger counts calls made. It is a record, not the spend cap: what a check is allowed to spend is decided before it runs (see above), and an answered call's own cost header is what settles it.
 
 | Endpoint | Calls |
 |---|---|
-| `profiler/perp-positions` | 317 |
-| `profiler/perp-pnl-summary` | 317 |
+| `profiler/perp-positions` | 319 |
+| `profiler/perp-pnl-summary` | 319 |
 | `profiler/address/current-balance` | 230 |
 | `profiler/address/related-wallets` | 165 |
 | `profiler/perp-trades` | 1 |
@@ -193,7 +197,7 @@ The ledger counts calls made. It is a record, not the spend cap: what a check is
 | Local development checks through `wrangler dev` | 21 |
 | Fixture captures for the tests | 12 |
 | Live smoke test of the three calibration accounts | 11 |
-| Re-checking nine gallery cards after the rules changed (21 September) | 22 |
+| Re-checking nine gallery cards after the rules changed (21 September) | 26 |
 
 `profiler/perp-trades` was tried once and dropped: it aggregates partial fills into one trade, and a thousand records covered sixteen minutes of the busiest account.
 

@@ -1011,3 +1011,7 @@
 {"at":"2026-09-21T11:06:12.985Z","source":"rescan-offset","endpoint":"profiler/address/current-balance","status":200,"creditsCost":1,"creditsRemaining":1083}
 {"at":"2026-09-21T11:06:14.767Z","source":"rescan-offset","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":1082}
 {"at":"2026-09-21T11:06:15.247Z","source":"rescan-offset","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":1081}
+{"at":"2026-09-21T11:52:33.877Z","source":"rescan-offset","endpoint":"profiler/perp-pnl-summary","status":0,"creditsCost":null,"creditsRemaining":null}
+{"at":"2026-09-21T11:52:33.878Z","source":"rescan-offset","endpoint":"profiler/perp-positions","status":0,"creditsCost":null,"creditsRemaining":null}
+{"at":"2026-09-21T11:53:18.301Z","source":"rescan-offset","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":1078}
+{"at":"2026-09-21T11:53:18.604Z","source":"rescan-offset","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":1077}

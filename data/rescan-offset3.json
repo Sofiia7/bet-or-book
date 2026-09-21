@@ -1,0 +1,97 @@
+{
+ "scannedAt": "2026-09-21T11:53:16.165Z",
+ "finishedAt": "2026-09-21T11:53:18.611Z",
+ "universe": "Largest open positions among the top 1,000 Hyperliquid accounts by value",
+ "entries": [
+  {
+   "address": "0x77375a8c9d13bf79afb2a87f1b0ac1dfd5f5bf66",
+   "verdict": {
+    "verdict": "unknown",
+    "strength": null,
+    "reasons": [
+     "mixed_long_short_book"
+    ]
+   },
+   "positions": {
+    "nPositions": 8,
+    "grossUsd": 39534941.422038,
+    "netUsd": 9433272.884382002,
+    "netToGross": 0.23860596588929317,
+    "headlineCoin": "NEAR",
+    "headlineSide": "long",
+    "headlineNotionalUsd": 24484107.15321,
+    "headlineShare": 0.6193029829446466,
+    "headlineLiqDistancePct": 0.6716989587100161,
+    "headlineLiqDistanceBasis": "mark",
+    "sameAssetOffsetShare": 0
+   },
+   "orders": {
+    "restingOrders": 30,
+    "bidShare": 1,
+    "coinsBothSides": 0
+   },
+   "hedge": {
+    "hedgeUsd": 0,
+    "hedgeRatio": 0,
+    "unverifiedUsd": 0,
+    "lendingUsd": 0
+   },
+   "hedgeScope": "none",
+   "hedgeCoverage": "not-applicable",
+   "linkedHedge": null,
+   "trades": {
+    "tradesPerDay": 1,
+    "crossedShare": 1,
+    "buyShare": 0,
+    "sampleSize": 1,
+    "cappedByApiLimit": false,
+    "notionalUsd": 647,
+    "spanHours": 0,
+    "headlineFills": 0,
+    "headlineShareOfFills": 0
+   },
+   "pnl": {
+    "realizedPnlUsd": -2178298.66508593,
+    "winRate": 0.35031382871026523,
+    "closedTrades": 24695,
+    "windowDays": 30
+   },
+   "sizeVsOi": 0.07253946799165782,
+   "source": "nansen",
+   "positionsAsOf": "2026-09-21T11:53:18.125Z",
+   "classifierVersion": "v2",
+   "degraded": false,
+   "summary": "8 positions net out to 24% of gross exposure, but the long and short legs are in different assets: a dollar balance across different assets is a portfolio, not a hedge.",
+   "evidence": [
+    {
+     "label": "Largest position",
+     "value": "$24.5M NEAR long",
+     "source": "Nansen"
+    },
+    {
+     "label": "Share of exposure",
+     "value": "62%",
+     "source": "Nansen"
+    },
+    {
+     "label": "Net / gross exposure",
+     "value": "24%",
+     "source": "Nansen"
+    },
+    {
+     "label": "Realized PnL, 30d",
+     "value": "-$2.2M",
+     "source": "Nansen"
+    },
+    {
+     "label": "Size vs open interest",
+     "value": "7.3%",
+     "source": "Hyperliquid"
+    }
+   ],
+   "coverage": [],
+   "checkedAt": "2026-09-21T11:53:16.167Z",
+   "nansenCalls": 2
+  }
+ ]
+}
