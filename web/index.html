@@ -264,7 +264,14 @@ function renderResult(d, opts) {
   meta.replaceChildren();
   const calls = typeof d.nansenCalls === 'number' ? ' · ' + plural(d.nansenCalls, 'Nansen API call') : '';
   const src = d.source === 'nansen' ? 'positions from Nansen' : 'positions from Hyperliquid (Nansen unavailable)';
-  meta.append('Checked ' + fmtTime(d.checkedAt) + calls + ' · ' + src + ' · ');
+  // When the source says it measured the positions, that is the time the
+  // numbers describe. "Checked" is only when this page asked.
+  const measured =
+    d.positionsAsOf && fmtTime(d.positionsAsOf) !== fmtTime(d.checkedAt)
+      ? ' · positions as of ' + fmtTime(d.positionsAsOf)
+      : '';
+  const rules = d.classifierVersion ? ' · rules ' + d.classifierVersion : '';
+  meta.append('Checked ' + fmtTime(d.checkedAt) + measured + calls + ' · ' + src + rules + ' · ');
   const hs = el('a', null, 'view on Hypurrscan');
   if (ADDRESS_RE.test(d.address)) {
     hs.href = 'https://hypurrscan.io/address/' + d.address;

@@ -29,4 +29,11 @@ export class FakeKV implements KVLike {
   size(): number {
     return this.entries.size;
   }
+
+  /** Seconds this entry was written to live for, or null for no expiry. */
+  ttlOf(key: string): number | null {
+    const entry = this.entries.get(key);
+    if (!entry || entry.expiresAt === null) return null;
+    return Math.round((entry.expiresAt - this.now()) / 1000);
+  }
 }

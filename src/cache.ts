@@ -21,7 +21,10 @@ const inFlight = new Map<string, Promise<unknown>>();
 export async function withCache<T>(
   kv: KVLike,
   key: string,
-  ttlSeconds: number,
+  /** Fixed, or chosen from what was produced: an answer built from sources
+   * that were missing or cut short should not be served for as long as a
+   * complete one. */
+  ttlSeconds: number | ((value: T) => number),
   produce: () => Promise<T>,
 ): Promise<T> {
   const cached = await kv.get(key);
@@ -36,7 +39,8 @@ export async function withCache<T>(
 
   const work = (async () => {
     const value = await produce();
-    await kv.put(key, JSON.stringify(value), { expirationTtl: ttlSeconds });
+    const ttl = typeof ttlSeconds === 'function' ? ttlSeconds(value) : ttlSeconds;
+    await kv.put(key, JSON.stringify(value), { expirationTtl: ttl });
     return value;
   })();
   inFlight.set(key, work);

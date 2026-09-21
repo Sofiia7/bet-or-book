@@ -59,6 +59,15 @@ describe('withCache', () => {
     expect([a, b]).toEqual([{ value: 1 }, { value: 2 }]);
   });
 
+  it('lets the caller pick the lifetime from what was produced', async () => {
+    const kv = new FakeKV();
+    // A degraded answer is worth less and should not be served for as long.
+    await withCache(kv, 'good', (v: { ok: boolean }) => (v.ok ? 600 : 30), async () => ({ ok: true }));
+    await withCache(kv, 'bad', (v: { ok: boolean }) => (v.ok ? 600 : 30), async () => ({ ok: false }));
+    expect(kv.ttlOf('good')).toBe(600);
+    expect(kv.ttlOf('bad')).toBe(30);
+  });
+
   it('calls the producer again once the entry expires', async () => {
     const kv = new FakeKV();
     let calls = 0;

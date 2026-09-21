@@ -6,6 +6,8 @@ import { recordCalls } from './credits';
 import { WORST_CASE_CALLS } from './budget';
 import { spendGuard, requestGate } from './coordinator';
 import { createNansenClient, type NansenCallMeta } from './sources/nansen';
+import { CLASSIFIER_VERSION } from './engine/verdict';
+import type { CheckResponse } from './api/check';
 import pageHtml from '../web/index.html';
 import galleryData from '../data/gallery.json';
 import ledgerData from '../data/ledger.json';
@@ -32,6 +34,9 @@ interface Env {
 export { NansenBudget, RequestGate } from './coordinator';
 
 const CHECK_CACHE_TTL_SECONDS = 600;
+/** An answer assembled from sources that were missing or cut short is worth
+ * less than a whole one, so it is not served for as long. */
+const DEGRADED_CACHE_TTL_SECONDS = 60;
 const RATE_LIMIT_MAX_PER_WINDOW = 20;
 const RATE_LIMIT_WINDOW_SECONDS = 60;
 const LEDGER_MEMO_MS = 60_000;
@@ -74,7 +79,12 @@ export default {
       }
 
       try {
-        const result = await withCache(kv, `check:${address}`, CHECK_CACHE_TTL_SECONDS, async () => {
+        // The rules are part of the key. A verdict cached before a deploy is
+        // an answer from rules that no longer exist, and serving it until the
+        // TTL runs out would quietly mix two vintages on one page.
+        const cacheKey = `check:${CLASSIFIER_VERSION}:${address}`;
+        const ttl = (r: CheckResponse) => (r.degraded ? DEGRADED_CACHE_TTL_SECONDS : CHECK_CACHE_TTL_SECONDS);
+        const result = await withCache(kv, cacheKey, ttl, async () => {
           const day = new Date().toISOString().slice(0, 10);
           const calls: NansenCallMeta[] = [];
           // The credits this check could possibly spend are held before it

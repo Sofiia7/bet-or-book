@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { checkAddress } from '../../src/api/check';
+import { CLASSIFIER_VERSION } from '../../src/engine/verdict';
 import {
   createNansenClient,
   type NansenCallMeta,
@@ -166,7 +167,11 @@ describe('checkAddress (offline, real fixtures)', () => {
     expect(result.linkedHedge?.linkedHedgeRatio).toBeGreaterThan(2);
     expect(result.pnl?.realizedPnlUsd).toBeLessThan(0);
     expect(calls.length).toBe(7);
+    // The captured response was measured on 18 September, so every run of
+    // this test is reading old positions and now says so.
+    expect(result.positionsAsOf).toBe('2026-09-18T13:04:21.479Z');
     expect(result.coverage).toEqual([
+      expect.stringMatching(/^Positions were measured \d+ minutes before this check, not at the moment of it$/),
       '2 funding wallets carry no Nansen label: whether they are private wallets or exchange addresses is unverified',
     ]);
     expect(result.summary).toMatch(/^Less than 1% of the \$[\d.]+M ETH short is covered by ETH in this account\./);
@@ -224,6 +229,31 @@ describe('checkAddress (offline, real fixtures)', () => {
     expect(result.hedgeScope).toBe('all-chains');
     expect(nansen.currentBalance).toHaveBeenCalledTimes(1);
     expect(nansen.relatedWallets).not.toHaveBeenCalled();
+  });
+
+  it('reports when the positions were measured, not just when they were asked for', async () => {
+    route();
+    const at = Date.parse('2026-09-21T09:00:00.000Z');
+    const positions = syntheticPositions([{ coin: 'ETH', size: -25_000, valueUsd: 100_000_000 }]);
+    positions.timestamp = at;
+    const nansen = { ...fakeNansen({ positions: syntheticPositions([]) }), perpPositions: vi.fn(async () => positions) };
+    const result = await checkAddress(ABRAXAS, { nansen, now: () => at + 60_000 });
+    expect(result.positionsAsOf).toBe('2026-09-21T09:00:00.000Z');
+    expect(result.classifierVersion).toBe(CLASSIFIER_VERSION);
+    expect(result.coverage.some((c) => c.includes('measured'))).toBe(false);
+  });
+
+  it('says so when the positions it was given are already old', async () => {
+    route();
+    const at = Date.parse('2026-09-21T09:00:00.000Z');
+    const positions = syntheticPositions([{ coin: 'ETH', size: -25_000, valueUsd: 100_000_000 }]);
+    positions.timestamp = at;
+    const nansen = { ...fakeNansen({ positions: syntheticPositions([]) }), perpPositions: vi.fn(async () => positions) };
+    // An hour between the measurement and the check. The old code stamped it
+    // with the check time and said nothing.
+    const result = await checkAddress(ABRAXAS, { nansen, now: () => at + 3_600_000 });
+    expect(result.positionsAsOf).toBe('2026-09-21T09:00:00.000Z');
+    expect(result.coverage).toContain('Positions were measured 60 minutes before this check, not at the moment of it');
   });
 
   it('still answers when open interest cannot be read', async () => {

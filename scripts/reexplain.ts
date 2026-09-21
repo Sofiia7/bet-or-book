@@ -5,7 +5,7 @@
 // reading has changed.
 // Do not run while scripts/prescan.ts is writing the same file.
 import { readFileSync, writeFileSync, renameSync } from 'node:fs';
-import { computeVerdict } from '../src/engine/verdict';
+import { computeVerdict, CLASSIFIER_VERSION } from '../src/engine/verdict';
 import { explain } from '../src/engine/evidence';
 import { knownServiceName } from '../src/sources/normalize';
 import type { Gallery } from '../src/gallery';
@@ -60,6 +60,10 @@ gallery.entries = gallery.entries.map((e) => {
   if (dropped.length > 0) serviceFunders += dropped.length;
 
   const hedgeCoverage = legacyHedgeCoverage(e);
+  // The scan did not record when its sources measured what they returned, so
+  // these cards can only say that they do not know.
+  const positionsAsOf = e.positionsAsOf ?? null;
+  const degraded = e.degraded ?? (hedgeCoverage === 'missing' || hedgeCoverage === 'partial');
   const verdict = computeVerdict({
     positions: e.positions,
     orders: e.orders,
@@ -68,7 +72,16 @@ gallery.entries = gallery.entries.map((e) => {
     linkedHedge: linked ? { linkedHedgeRatio: linked.linkedHedgeRatio } : undefined,
     hedgeCoverage,
   });
-  const next = { ...e, verdict, linkedHedge: linked, coverage, hedgeCoverage };
+  const next = {
+    ...e,
+    verdict,
+    linkedHedge: linked,
+    coverage,
+    hedgeCoverage,
+    positionsAsOf,
+    degraded,
+    classifierVersion: CLASSIFIER_VERSION,
+  };
   const { summary, evidence } = explain(next);
 
   if (JSON.stringify(verdict) !== JSON.stringify(e.verdict)) reverdicted++;

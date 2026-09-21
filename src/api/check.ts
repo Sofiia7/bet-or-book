@@ -34,7 +34,13 @@ import {
   type LinkedHedgeFeatures,
   type TradeFeatures,
 } from '../engine/features';
-import { computeVerdict, hedgeCanChangeVerdict, DEFAULT_THRESHOLDS, type VerdictResult } from '../engine/verdict';
+import {
+  computeVerdict,
+  hedgeCanChangeVerdict,
+  DEFAULT_THRESHOLDS,
+  CLASSIFIER_VERSION,
+  type VerdictResult,
+} from '../engine/verdict';
 import { explain, formatUsd, type EvidenceItem } from '../engine/evidence';
 import type { Position, SpotHolding, LinkedWallet, PnlSummary } from '../types';
 
@@ -46,6 +52,9 @@ const MAX_FUNDERS = 2;
 const MATERIAL_SHARE = 0.01;
 /** How long one check may keep spending before it answers with what it has. */
 const CHECK_DEADLINE_MS = 45_000;
+/** How far behind the check a source's own timestamp may be before the card
+ * says so. Positions move; a reading this old is history, not the present. */
+const STALE_DATA_MS = 15 * 60_000;
 
 export interface CheckOptions {
   /** null runs Hyperliquid-only: no key, credit cap reached, or a test. */
@@ -72,6 +81,14 @@ export interface CheckResult {
   pnl: PnlSummary | null;
   sizeVsOi: number | null;
   source: 'nansen' | 'hyperliquid';
+  /** When the source says the positions were measured, which is not the same
+   * as when this check asked for them. Null when the source gives no time. */
+  positionsAsOf: string | null;
+  /** The rules that read all of this. See CLASSIFIER_VERSION. */
+  classifierVersion: string;
+  /** True when a source that feeds a rule was missing or cut short, so the
+   * answer is worth less and should not be cached for as long. */
+  degraded: boolean;
   /** One sentence built from the numbers that decided the verdict. */
   summary: string;
   /** Up to five numbers for the card, each with its source. */
@@ -122,6 +139,15 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
   let source: CheckResult['source'] = 'hyperliquid';
   let positions: Position[] | null = null;
   let pnl: PnlSummary | null = null;
+  let measuredAt: number | null = null;
+  // Set wherever a source that feeds a rule could not be read in full.
+  let degraded = false;
+  /** A coverage note. `failure` marks the ones that make the answer worth
+   * less, as opposed to the ones that merely describe what was found. */
+  const note = (text: string, failure = false) => {
+    coverage.push(text);
+    if (failure) degraded = true;
+  };
 
   if (nansen) {
     const [pos, pnlRes] = await Promise.allSettled([
@@ -134,13 +160,16 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
       try {
         positions = normalizeNansenPositions(pos.value);
         source = 'nansen';
+        measuredAt = Number.isFinite(pos.value.timestamp) && pos.value.timestamp > 0 ? pos.value.timestamp : null;
       } catch (err) {
         console.error('nansen positions', err);
+        degraded = true;
         coverage.push(
           'Nansen positions came back in an unexpected shape: positions read from Hyperliquid, main dex only',
         );
       }
     } else {
+      degraded = true;
       coverage.push('Nansen positions unavailable: positions read from Hyperliquid, main dex only');
     }
     if (pnlRes.status === 'fulfilled') {
@@ -157,7 +186,19 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     const why = opts.nansenOffReason ? ` (${opts.nansenOffReason})` : '';
     coverage.push(`Nansen not used${why}: main-dex positions only, no other chains, no linked wallets`);
   }
-  if (positions === null) positions = normalizePositions(await getClearinghouseState(address));
+  if (positions === null) {
+    const state = await getClearinghouseState(address);
+    positions = normalizePositions(state);
+    measuredAt = Number.isFinite(state.time) && state.time > 0 ? state.time : null;
+  }
+
+  // A timestamp from the source is the time the numbers describe; checkedAt
+  // is only when this check asked. Stamping one with the other is how an
+  // hour-old reading gets served as the current state of an account.
+  if (measuredAt !== null && now - measuredAt >= STALE_DATA_MS) {
+    const minutes = Math.round((now - measuredAt) / 60_000);
+    coverage.push(`Positions were measured ${minutes} minutes before this check, not at the moment of it`);
+  }
 
   const positionFeatures = computePositionFeatures(positions);
 
@@ -171,7 +212,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     const perDex = await Promise.allSettled(hip3Dexes.map((dex) => getOpenOrders(address, dex)));
     perDex.forEach((r, i) => {
       if (r.status === 'fulfilled') resting.push(...normalizeOrders(r.value));
-      else coverage.push(`Resting orders on the ${hip3Dexes[i]} dex could not be read`);
+      else note(`Resting orders on the ${hip3Dexes[i]} dex could not be read`, true);
     });
   }
   const orderFeatures = computeOrderFeatures(resting);
@@ -190,17 +231,17 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
   // answer until Nansen fills in the other chains.
   let hedgeCoverage: HedgeCoverage = positionFeatures.headlineSide === 'short' ? 'partial' : 'not-applicable';
   if (nansen && hedgeMatters && outOfTime()) {
-    coverage.push('This check ran out of time before it could read holdings on other chains');
+    note('This check ran out of time before it could read holdings on other chains', true);
   } else if (nansen && hedgeMatters) {
     try {
       const bal = await nansen.currentBalance(address);
       ownChain = normalizeNansenBalances(bal.rows);
       otherChainsRead = true;
       hedgeCoverage = bal.complete ? 'complete' : 'partial';
-      if (!bal.complete) coverage.push('Holdings on other chains: first 100 tokens only');
+      if (!bal.complete) note('Holdings on other chains: first 100 tokens only', true);
     } catch {
       hedgeCoverage = 'missing';
-      coverage.push('Holdings on other chains unavailable');
+      note('Holdings on other chains unavailable', true);
     }
   }
   const [spotMeta, spotAssetCtxs] = spotMetaPair;
@@ -235,9 +276,9 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     nansen !== null && hedgeMatters && hedgeFeatures.hedgeRatio < DEFAULT_THRESHOLDS.hedged.linkedLookupBelowRatio;
   let linkedHedge: LinkedHedgeFeatures | null = null;
   if (funderLookupWorthIt && outOfTime()) {
-    coverage.push('This check ran out of time before it could look at the wallets that funded the account');
+    note('This check ran out of time before it could look at the wallets that funded the account', true);
   } else if (funderLookupWorthIt) {
-    linkedHedge = await readLinkedHedge(nansen!, address, positionFeatures, coverage);
+    linkedHedge = await readLinkedHedge(nansen!, address, positionFeatures, note);
   }
 
   let openInterestUsd = 0;
@@ -274,6 +315,9 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     pnl,
     sizeVsOi: computeSizeVsOi(positionFeatures.headlineNotionalUsd, openInterestUsd),
     source,
+    positionsAsOf: measuredAt === null ? null : new Date(measuredAt).toISOString(),
+    classifierVersion: CLASSIFIER_VERSION,
+    degraded,
   };
   const { summary, evidence } = explain(measured);
   return { address, ...measured, summary, evidence, coverage, checkedAt: new Date(now).toISOString() };
@@ -286,7 +330,7 @@ async function readLinkedHedge(
   nansen: NansenClient,
   address: string,
   positionFeatures: PositionFeatures,
-  coverage: string[],
+  note: (text: string, failure?: boolean) => void,
 ): Promise<LinkedHedgeFeatures | null> {
   const links: LinkedWallet[] = [];
   const related = await Promise.allSettled([
@@ -301,17 +345,17 @@ async function readLinkedHedge(
         if (!r.value.complete) linksTruncated = true;
       } catch (err) {
         console.error('nansen related wallets', err);
-        coverage.push('Linked wallets came back in an unexpected shape on one chain');
+        note('Linked wallets came back in an unexpected shape on one chain', true);
       }
     } else {
-      coverage.push('Linked wallets unavailable on one chain');
+      note('Linked wallets unavailable on one chain', true);
     }
   }
-  if (linksTruncated) coverage.push('Funding links: first 100 only, so this is not every wallet that funded the account');
+  if (linksTruncated) note('Funding links: first 100 only, so this is not every wallet that funded the account', true);
 
   const firstFunders = links.filter((w) => w.relation === 'First Funder' && w.address !== address.toLowerCase());
   const skipped = firstFunders.filter((w) => w.serviceStatus === 'service').length;
-  if (skipped > 0) coverage.push(`${skipped} funding link(s) lead to an exchange or bridge and were not followed`);
+  if (skipped > 0) note(`${skipped} funding link(s) lead to an exchange or bridge and were not followed`);
   const candidates = firstFunders
     .filter((w) => w.serviceStatus !== 'service')
     .filter((w, i, all) => all.findIndex((x) => x.address === w.address) === i)
@@ -323,7 +367,7 @@ async function readLinkedHedge(
   // card: an unlabelled funder may well be an exchange deposit address.
   const unverified = candidates.filter((w) => w.serviceStatus === 'unverified').length;
   if (unverified > 0) {
-    coverage.push(
+    note(
       unverified === 1
         ? '1 funding wallet carries no Nansen label: whether it is a private wallet or an exchange address is unverified'
         : `${unverified} funding wallets carry no Nansen label: whether they are private wallets or exchange addresses is unverified`,
@@ -334,7 +378,7 @@ async function readLinkedHedge(
   const linked = candidates.flatMap((wallet, i) => {
     const b = balances[i];
     if (b.status === 'fulfilled') return [{ wallet, holdings: normalizeNansenBalances(b.value.rows) }];
-    coverage.push('One linked wallet could not be read');
+    note('One linked wallet could not be read', true);
     return [];
   });
   return computeLinkedHedge(

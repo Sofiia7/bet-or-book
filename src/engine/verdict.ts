@@ -39,6 +39,20 @@ export interface VerdictThresholds {
   };
 }
 
+/**
+ * The vintage of the rules below. A verdict is only meaningful together with
+ * the rules that produced it, so it travels with one: cached answers from
+ * before a deploy are not served as if they came from after it, and a saved
+ * card says which rules read it.
+ *
+ * v1 produced the 18 September gallery scan. v2 is this file after the 19.09
+ * audit: funding wallets no longer make a hedge, a balanced book needs its
+ * legs in the same assets, a hedge is a band rather than a floor, an
+ * unchecked hedge is not an absent one, and fills alone no longer make a
+ * book.
+ */
+export const CLASSIFIER_VERSION = 'v2';
+
 export const DEFAULT_THRESHOLDS: VerdictThresholds = {
   book: {
     minPositions: 20,
