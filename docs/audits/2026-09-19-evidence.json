@@ -1,0 +1,248 @@
+{
+  "auditedCommit": "5187ca6",
+  "generatedAt": "2026-09-19T13:03:49.804Z",
+  "network": "fully mocked",
+  "observations": {
+    "creditRace": {
+      "admitted": 20,
+      "cap": 300,
+      "actualTotal": 439,
+      "recorded": {
+        "calls": 306,
+        "credits": 306,
+        "lastRemaining": null
+      }
+    },
+    "rateRace": {
+      "limit": 20,
+      "admitted": 30,
+      "recorded": [
+        "1"
+      ]
+    },
+    "cacheStampede": {
+      "simultaneousIdenticalRequests": 10,
+      "producerCalls": 10
+    },
+    "unrelatedAssets": {
+      "verdict": "hedged",
+      "strength": null,
+      "reasons": [
+        "balanced_book"
+      ]
+    },
+    "partialHedge": {
+      "verdict": "hedged",
+      "strength": null,
+      "reasons": [
+        "hedge_leg"
+      ]
+    },
+    "unrelatedMakerActivity": {
+      "verdict": "book",
+      "strength": "likely",
+      "reasons": [
+        "trades"
+      ],
+      "note": "The trade signal carries no market identity or notional, so unrelated tiny fills can dominate a large headline position."
+    },
+    "tokenIdentity": {
+      "foreignContractAcceptedAsWeth": true
+    },
+    "missingCoverage": {
+      "verdict": {
+        "verdict": "looks_like_a_bet",
+        "strength": null,
+        "reasons": [
+          "directional_concentration"
+        ]
+      },
+      "summary": "100% of the exposure is one $179.4M ETH short, and no ETH was found in this account on Hyperliquid.",
+      "coverage": [
+        "Holdings on other chains unavailable",
+        "Linked wallets unavailable on one chain",
+        "Linked wallets unavailable on one chain"
+      ]
+    },
+    "incompleteCoverage": {
+      "verdict": {
+        "verdict": "looks_like_a_bet",
+        "strength": null,
+        "reasons": [
+          "directional_concentration"
+        ]
+      },
+      "hedgeScope": "all-chains",
+      "summary": "100% of the exposure is one $179.4M ETH short, and no ETH was found in this account on any chain.",
+      "coverage": [
+        "Holdings on other chains: first 100 tokens only"
+      ]
+    },
+    "staleTimestamp": {
+      "upstreamTimestamp": 1,
+      "checkedAt": "2026-09-19T13:03:49.770Z",
+      "coverage": [],
+      "verdict": {
+        "verdict": "looks_like_a_bet",
+        "strength": null,
+        "reasons": [
+          "directional_concentration"
+        ]
+      }
+    },
+    "malformedSuccess": {
+      "fallsBack": false,
+      "error": "TypeError: Cannot read properties of undefined (reading 'map')"
+    },
+    "refusalDoesNotStopCurrentCheck": [
+      "profiler/perp-positions",
+      "profiler/perp-pnl-summary",
+      "profiler/address/current-balance",
+      "profiler/address/related-wallets",
+      "profiler/address/related-wallets"
+    ],
+    "unrecordedTimeout": {
+      "attempts": 1,
+      "recorded": 0
+    },
+    "quoteCurrencyIgnored": {
+      "expectedUsd": 3000,
+      "computedUsd": 0.03
+    },
+    "realFixtureQuoteTokens": [
+      "USDC",
+      "USDT0",
+      "USDH",
+      "USDE"
+    ],
+    "transactionHashTruncatedToAddress": {
+      "inputLength": 66,
+      "result": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "sharedServiceContamination": [
+      {
+        "address": "0xdf954bbe619273a56e0cfa90dad8382195dc7d72",
+        "originalVerdict": {
+          "verdict": "hedged",
+          "strength": "probable",
+          "reasons": [
+            "linked_wallet_hedge"
+          ]
+        },
+        "originalCoverageRatio": 1.1618172451455484,
+        "contaminated": [
+          {
+            "address": "0x0d0707963952f2fba59dd06f2b425ace40b492fe",
+            "relation": "First Funder",
+            "chain": "arbitrum",
+            "matchingUsd": 40612625.37239943
+          }
+        ],
+        "afterRemovingOnlyTheseServices": {
+          "verdict": "unknown",
+          "strength": null,
+          "reasons": [
+            "signals disagree: not enough evidence for book, hedge, or bet"
+          ]
+        }
+      },
+      {
+        "address": "0x28bbaaa5b431ed61ea6a9b3394f76616e00cfca6",
+        "originalVerdict": {
+          "verdict": "hedged",
+          "strength": "probable",
+          "reasons": [
+            "linked_wallet_hedge"
+          ]
+        },
+        "originalCoverageRatio": 5.1632596482774575,
+        "contaminated": [
+          {
+            "address": "0x21a31ee1afc51d94c2efccaa2092ad1028285549",
+            "relation": "First Funder",
+            "chain": "ethereum",
+            "matchingUsd": 55821907.87585595
+          }
+        ],
+        "afterRemovingOnlyTheseServices": {
+          "verdict": "looks_like_a_bet",
+          "strength": null,
+          "reasons": [
+            "directional_concentration"
+          ]
+        }
+      },
+      {
+        "address": "0x8cc94dc843e1ea7a19805e0cca43001123512b6a",
+        "originalVerdict": {
+          "verdict": "hedged",
+          "strength": "probable",
+          "reasons": [
+            "linked_wallet_hedge"
+          ]
+        },
+        "originalCoverageRatio": 9.11657051956752,
+        "contaminated": [
+          {
+            "address": "0x21a31ee1afc51d94c2efccaa2092ad1028285549",
+            "relation": "First Funder",
+            "chain": "ethereum",
+            "matchingUsd": 55815437.74252861
+          }
+        ],
+        "afterRemovingOnlyTheseServices": {
+          "verdict": "hedged",
+          "strength": "probable",
+          "reasons": [
+            "linked_wallet_hedge"
+          ]
+        }
+      },
+      {
+        "address": "0xe187055ff406f8cdf59fbae53ec20d4ecd9b771d",
+        "originalVerdict": {
+          "verdict": "hedged",
+          "strength": "probable",
+          "reasons": [
+            "linked_wallet_hedge"
+          ]
+        },
+        "originalCoverageRatio": 2.2925549769570357,
+        "contaminated": [
+          {
+            "address": "0x0d0707963952f2fba59dd06f2b425ace40b492fe",
+            "relation": "First Funder",
+            "chain": "arbitrum",
+            "matchingUsd": 16075255.841251178
+          }
+        ],
+        "afterRemovingOnlyTheseServices": {
+          "verdict": "unknown",
+          "strength": null,
+          "reasons": [
+            "signals disagree: not enough evidence for book, hedge, or bet"
+          ]
+        }
+      }
+    ],
+    "gallery": {
+      "scannedAt": "2026-09-18T14:13:43.159Z",
+      "finishedAt": "2026-09-18T14:57:03.160Z",
+      "total": 278,
+      "open": 277,
+      "verdicts": {
+        "book": 24,
+        "hedged": 38,
+        "looks_like_a_bet": 135,
+        "unknown": 80
+      },
+      "balancedNotionalOnly": 10,
+      "bookFromTradesOnly": 12,
+      "probableHedge": 13,
+      "hedgeBelow80pct": 5,
+      "anyCoverageWarning": 14,
+      "betCoverageWarning": 4,
+      "entriesWithMissingPnl": 1
+    }
+  }
+}
