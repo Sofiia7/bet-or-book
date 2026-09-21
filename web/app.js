@@ -107,6 +107,7 @@ function kindOf(opts) {
 
 function renderResult(d, opts) {
   current = d;
+  current.__kind = kindOf(opts);
   const v = verdictOf(d);
   $('badge').textContent = badgeText(d);
   $('badge').className = 'badge ' + v.cls;
@@ -114,7 +115,9 @@ function renderResult(d, opts) {
   $('summary').textContent = d.summary || '';
 
   $('stats').replaceChildren(...(d.evidence || []).map((item) => {
-    const box = el('div', 'stat');
+    // The row the verdict turned on leads, rather than sitting fourth in a
+    // line of identical tiles (audit U03).
+    const box = el('div', 'stat' + (item.decisive ? ' decisive' : ''));
     box.append(el('div', 'stat-label', item.label), el('div', 'stat-value', item.value), el('div', 'stat-source', item.source));
     return box;
   }));
@@ -320,9 +323,16 @@ $('check-live').addEventListener('click', () => {
 
 // ---- gallery ----
 
+/** Counts only cards the current rules actually read. A verdict from rules
+ * that no longer exist is history, and adding it to today's tally is how the
+ * page came to advertise seven hedged accounts that the current rules have
+ * never judged (audit A06). */
 function galleryCounts(entries) {
-  const counts = { book: 0, hedged: 0, looks_like_a_bet: 0, unknown: 0 };
-  for (const e of entries) counts[e.verdict.verdict] = (counts[e.verdict.verdict] || 0) + 1;
+  const counts = { book: 0, hedged: 0, looks_like_a_bet: 0, unknown: 0, historical: 0 };
+  for (const e of entries) {
+    if (e.historical) counts.historical++;
+    else counts[e.verdict.verdict] = (counts[e.verdict.verdict] || 0) + 1;
+  }
   return counts;
 }
 
@@ -335,7 +345,11 @@ function renderGallery() {
     ['hedged', 'Hedged ' + counts.hedged],
     ['looks_like_a_bet', 'Looks like a bet ' + counts.looks_like_a_bet],
     ['unknown', 'Unknown ' + counts.unknown],
+    ['historical', 'Earlier rules ' + counts.historical],
   ];
+  // Re-rendering the chips destroys the one the reader is on, and focus with
+  // it, which drops a keyboard user back to the top of the document.
+  const focusedChip = document.activeElement && document.activeElement.closest('#chips') ? galleryFilter : null;
   $('chips').replaceChildren(...filters.map(([key, label]) => {
     const b = el('button', 'chip', label);
     b.setAttribute('aria-pressed', String(galleryFilter === key));
@@ -344,15 +358,27 @@ function renderGallery() {
       galleryShown = PAGE_SIZE;
       renderGallery();
     });
+    if (focusedChip === key) queueMicrotask(() => b.focus());
     return b;
   }));
 
-  const visible = galleryFilter === 'all' ? all : all.filter((e) => e.verdict.verdict === galleryFilter);
+  const visible =
+    galleryFilter === 'all'
+      ? all
+      : galleryFilter === 'historical'
+        ? all.filter((e) => e.historical)
+        : all.filter((e) => !e.historical && e.verdict.verdict === galleryFilter);
   $('gallery-list').replaceChildren(...visible.slice(0, galleryShown).map((e) => {
     const li = el('li');
     const b = el('button');
     const v = verdictOf(e);
     const badge = el('span', 'badge ' + v.cls, badgeText(e));
+    // A verdict from rules that are no longer in force is labelled as one,
+    // in the list as well as on the card.
+    if (e.historical) {
+      badge.classList.add('historical');
+      badge.title = e.historical.reason;
+    }
     const pnl = !e.pnl
       ? ''
       : e.pnl.closedTrades === 0
@@ -362,7 +388,15 @@ function renderGallery() {
       el('span', 'rank', '#' + (all.indexOf(e) + 1)),
       el('span', 'pos', positionText(e)),
       badge,
-      el('span', 'row-meta', pnl + plural(e.positions.nPositions, 'open position') + ' · ' + shortAddr(e.address)),
+      el(
+        'span',
+        'row-meta',
+        pnl +
+          plural(e.positions.nPositions, 'open position') +
+          ' · ' +
+          shortAddr(e.address) +
+          (e.historical ? ' · read by earlier rules (' + (e.classifierVersion || 'v1') + ')' : ''),
+      ),
     );
     b.addEventListener('click', () => {
       // Whatever check is in the air was about a different account. Let it
@@ -460,13 +494,35 @@ function clipText(ctx, text, maxWidth) {
   return s + '...';
 }
 
-/** The caveats that have to survive being turned into an image, because a
- * shared picture travels without the page around it. */
-function cardLimits(d) {
-  const notes = (d.coverage || []).slice();
-  const shown = notes.slice(0, 2).join('; ');
-  const more = notes.length > 2 ? ' (+' + (notes.length - 2) + ' more on the page)' : '';
-  return notes.length === 0 ? 'Everything this tool reads was read in full.' : shown + more;
+/**
+ * What goes on the picture, as the server worked it out (src/engine/share.ts).
+ *
+ * The page used to build this itself and could say "Everything this tool
+ * reads was read in full", which is true of the reading and false about the
+ * account: nothing here can see an exchange balance, an OTC deal or an
+ * unlinked wallet. That standing limit is now first on every card, and the
+ * fallback below is for a saved reading made before the server sent one.
+ */
+function cardShare(d, kind) {
+  if (d.share) {
+    // A bundled gallery card is built without knowing which site serves it,
+    // so the link back is filled in here where the origin is known.
+    return d.share.link || !d.snapshotId
+      ? d.share
+      : { ...d.share, link: window.location.origin + '/?s=' + d.snapshotId };
+  }
+  const notes = (d.coverage || []).slice(0, 2);
+  return {
+    limits: [
+      'Not visible to this tool at all: positions on centralized exchanges, OTC deals, ' +
+        'and wallets with no on-chain link to this address.',
+      ...notes,
+    ],
+    more: Math.max(0, (d.coverage || []).length - notes.length),
+    provenance: 'Positions as of ' + fmtTime(d.positionsAsOf || d.checkedAt) + ' · ' + kind,
+    link: d.snapshotId ? window.location.origin + '/?s=' + d.snapshotId : null,
+    evidence: (d.evidence || []).slice(0, 4),
+  };
 }
 
 function drawCard() {
@@ -494,7 +550,11 @@ function drawCard() {
   ctx.font = font(400, 26);
   wrapText(ctx, d.summary || '', 56, 250, W - 112, 36, 4);
 
-  const items = (d.evidence || []).slice(0, 4);
+  const share = cardShare(d, (d && d.__kind) || 'live');
+  // The row the verdict turned on goes on the card, wherever it sits in the
+  // list. Taking the first four left the Abraxas funders row off the image
+  // that was the whole point of that card (audit U01).
+  const items = share.evidence;
   const colW = (W - 112) / 4;
   items.forEach((item, i) => {
     const x = 56 + i * colW;
@@ -513,25 +573,21 @@ function drawCard() {
   // A badge alone reads as a verdict with nothing behind it. What the check
   // could not read belongs on the picture, not only on the page it came from.
   ctx.fillStyle = '#767676';
-  ctx.font = font(400, 19);
-  ctx.fillText('What this reading could not cover', 56, 552);
-  ctx.fillStyle = '#555555';
-  ctx.font = font(400, 19);
-  wrapText(ctx, cardLimits(d), 56, 578, W - 112, 26, 2);
-
-  const asOf = d.positionsAsOf && fmtTime(d.positionsAsOf) !== fmtTime(d.checkedAt)
-    ? ' · positions as of ' + fmtTime(d.positionsAsOf)
-    : '';
-  const rules = d.classifierVersion ? ' · rules ' + d.classifierVersion : '';
-  ctx.fillStyle = '#999999';
   ctx.font = font(400, 18);
-  ctx.fillText(
-    clipText(ctx, 'Bet or Book · ' + shortAddr(d.address) + ' · checked ' + fmtTime(d.checkedAt) + asOf + rules, W - 400),
-    56,
-    H - 40,
-  );
+  ctx.fillText('What this reading could not cover', 56, 532);
+  ctx.fillStyle = '#555555';
+  ctx.font = font(400, 17);
+  const limitsText = share.limits.join(' ') + (share.more > 0 ? ' (+' + share.more + ' more on the page)' : '');
+  wrapText(ctx, limitsText, 56, 556, W - 112, 23, 3);
+
+  // When and what of, printed on the image rather than left to the post it
+  // is pasted into, plus the link back to this exact reading.
+  ctx.fillStyle = '#999999';
+  ctx.font = font(400, 17);
+  ctx.fillText(clipText(ctx, 'Bet or Book · ' + shortAddr(d.address) + ' · ' + share.provenance, W - 380), 56, H - 46);
+  if (share.link) ctx.fillText(clipText(ctx, share.link, W - 380), 56, H - 22);
   ctx.textAlign = 'right';
-  ctx.fillText(d.source === 'nansen' ? 'Powered by Nansen API' : 'Data: Hyperliquid API', W - 56, H - 40);
+  ctx.fillText(d.source === 'nansen' ? 'Powered by Nansen API' : 'Data: Hyperliquid API', W - 56, H - 46);
   ctx.textAlign = 'left';
 }
 

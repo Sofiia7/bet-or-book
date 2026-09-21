@@ -8,7 +8,8 @@ import { spendGuard, requestGate } from './coordinator';
 import { createNansenClient, meansOutOfCredits, type NansenCallMeta } from './sources/nansen';
 import { CLASSIFIER_VERSION } from './engine/verdict';
 import type { CheckResponse } from './api/check';
-import { snapshotId, snapshotKey, isSnapshotId, SNAPSHOT_TTL_SECONDS } from './snapshot';
+import { snapshotId, snapshotKey, isSnapshotId, SNAPSHOT_TTL_SECONDS, shortHash } from './snapshot';
+import { shareCard } from './engine/share';
 import pageHtml from '../web/index.html';
 import pageScript from '../web/app.js';
 import galleryData from '../data/gallery.json';
@@ -24,6 +25,15 @@ const galleryById = new Map(
   gallery.entries.map((e) => [e.snapshotId ?? snapshotId(e.address, e.checkedAt), e] as const),
 );
 const scriptedLedger = ledgerData as unknown as LedgerSummary;
+
+/**
+ * The page asks for its script by content, so a deploy cannot leave a reader
+ * running the previous one against the current API for the length of a cache
+ * header. The script itself answers to any version, because the only thing
+ * the query does is make the URL change when the file does.
+ */
+const SCRIPT_PATH = `/app.js?v=${shortHash(pageScript)}`;
+const page = pageHtml.replace('src="/app.js"', `src="${SCRIPT_PATH}"`);
 
 interface Env {
   KV: KVLike;
@@ -292,7 +302,14 @@ export default {
             const stored = await kv.put(snapshotKey(id), JSON.stringify(saved), {
               expirationTtl: SNAPSHOT_TTL_SECONDS,
             });
-            return stored ? { ...saved, snapshotSaved: true } : { ...result, nansenCalls: calls.length, snapshotSaved: false };
+            if (!stored) return { ...result, nansenCalls: calls.length, snapshotSaved: false };
+            // The link goes on the picture, so it can only be added once the
+            // reading it points at is really there.
+            return {
+              ...saved,
+              snapshotSaved: true,
+              share: shareCard(saved, { kind: 'live', origin: url.origin, snapshotId: id }),
+            };
           } finally {
             // Settle first: the hold has to come off whatever else fails.
             // A call with no cost header counts as one credit, the
@@ -324,7 +341,10 @@ export default {
       if (!isSnapshotId(id)) return Response.json({ error: 'not a snapshot id' }, { status: 400 });
       const fromGallery = galleryById.get(id);
       if (fromGallery) {
-        return Response.json(fromGallery, { headers: SNAPSHOT_HEADERS });
+        return Response.json(
+          { ...fromGallery, share: shareCard(fromGallery, { kind: 'gallery', origin: url.origin, snapshotId: id }) },
+          { headers: SNAPSHOT_HEADERS },
+        );
       }
       const raw = await kv.get(snapshotKey(id));
       if (raw === null) {
@@ -333,7 +353,14 @@ export default {
           headers: { 'x-robots-tag': 'noindex' },
         });
       }
-      return new Response(raw, { headers: SNAPSHOT_HEADERS });
+      // What was stored called itself live, because it was when it was made.
+      // Opened again by a link, it is a saved reading, and the card has to
+      // say which of the two the reader is looking at.
+      const card = JSON.parse(raw) as CheckResponse;
+      return Response.json(
+        { ...card, share: shareCard(card, { kind: 'saved', origin: url.origin, snapshotId: id }) },
+        { headers: SNAPSHOT_HEADERS },
+      );
     }
 
     if (url.pathname === '/api/gallery') {
@@ -359,9 +386,9 @@ export default {
       const shared = url.searchParams.get('s') ?? '';
       if (isSnapshotId(shared)) {
         const card = galleryById.get(shared) ?? (await readSnapshot(kv, shared));
-        if (card) return new Response(withSocialTags(pageHtml, card, url), { headers: PAGE_HEADERS });
+        if (card) return new Response(withSocialTags(page, card, url), { headers: PAGE_HEADERS });
       }
-      return new Response(pageHtml, { headers: PAGE_HEADERS });
+      return new Response(page, { headers: PAGE_HEADERS });
     }
 
     if (url.pathname.startsWith('/api/')) {

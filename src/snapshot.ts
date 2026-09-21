@@ -65,3 +65,7 @@ export function isSnapshotId(value: string): boolean {
 }
 
 export const snapshotKey = (id: string) => `snapshot:${id}`;
+
+/** A short, stable digest of any text. Used to version the page's script URL
+ * so a deploy changes it. */
+export const shortHash = (text: string): string => fnv1a64(text).toString(36).slice(0, 10);

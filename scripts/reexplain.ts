@@ -24,6 +24,7 @@ import {
   OBSERVATION_SCHEMA_VERSION,
   ASSET_REGISTRY_VERSION,
 } from '../src/engine/observation';
+import { shareCard } from '../src/engine/share';
 import { knownServiceName } from '../src/sources/normalize';
 import { snapshotId } from '../src/snapshot';
 import type { Gallery } from '../src/gallery';
@@ -74,9 +75,12 @@ gallery.entries = gallery.entries.map((e) => {
   const missing = missingForCurrentRules(e);
   if (missing.length > 0) {
     // Kept exactly as it was read, under the rules that read it. Anything
-    // else would be this file asserting an answer it cannot reproduce.
+    // else would be this file asserting an answer it cannot reproduce. The
+    // share card is rebuilt, because that is presentation rather than
+    // judgement and a picture of a historical card has to say so.
     historical++;
-    return { ...e, historical: { reason: historicalReason(missing), missing } };
+    const kept = { ...e, historical: { reason: historicalReason(missing), missing } };
+    return { ...kept, share: shareCard(kept, { kind: 'gallery', snapshotId: kept.snapshotId }) };
   }
 
   const { linked, dropped } = withoutServices(e.linkedHedge, e.positions.headlineNotionalUsd);
@@ -131,10 +135,11 @@ gallery.entries = gallery.entries.map((e) => {
     snapshotId: e.snapshotId ?? snapshotId(e.address, e.checkedAt),
   };
   const { summary, evidence } = explain(next);
+  const judged = { ...next, summary, evidence };
 
   if (JSON.stringify(verdict) !== JSON.stringify(e.verdict)) reverdicted++;
   if (summary !== e.summary || JSON.stringify(evidence) !== JSON.stringify(e.evidence)) reexplained++;
-  return { ...next, summary, evidence };
+  return { ...judged, share: shareCard(judged, { kind: 'gallery', snapshotId: judged.snapshotId }) };
 });
 
 writeFileSync(`${path}.tmp`, JSON.stringify(gallery, null, 1) + '\n');

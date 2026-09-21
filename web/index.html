@@ -62,7 +62,12 @@
   .unknown { background: var(--unknown-bg); color: var(--unknown-fg); }
   .headline { font-size: 20px; font-weight: 600; margin: 10px 0 4px; }
   .summary { margin: 0 0 14px; }
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 14px 0; }
+  /* Five equal tiles made the number that decided the verdict compete with
+     Net/Gross for attention, and on a wide screen the fifth became a narrow
+     column of wrapped text. The decisive one is given its own row. */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 14px 0; }
+  .stat.decisive { grid-column: 1 / -1; background: var(--panel); border-left: 3px solid var(--fg); }
+  .stat.decisive .stat-value { font-size: 22px; }
   .stat { background: var(--panel); border-radius: 8px; padding: 10px 12px; }
   .stat-label { font-size: 12px; color: var(--muted); }
   .stat-value { font-size: 18px; font-weight: 600; overflow-wrap: anywhere; }
@@ -75,10 +80,16 @@
   .meta { font-size: 12px; color: var(--faint); margin-top: 12px; }
   .snapshot { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
   .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  /* A verdict the current rules never produced is shown as what it is:
+     an earlier reading, not a present finding. */
+  .badge.historical { opacity: 0.6; border-style: dashed; }
   #card-canvas { display: block; width: 100%; height: auto; border-radius: 8px; margin-top: 12px; border: 1px solid var(--line); }
   .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0; }
   .chip { padding: 6px 12px; font-size: 13px; border-radius: 999px; }
   .chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  /* Keyboard users need to see where they are. aria attributes alone say
+     nothing about that. */
+  :focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
   .list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
   .list button { width: 100%; display: grid; grid-template-columns: 34px 1fr auto; gap: 4px 12px; align-items: center; text-align: left; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 10px 4px; }
   .rank { color: var(--faint); font-size: 13px; }

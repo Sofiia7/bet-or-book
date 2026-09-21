@@ -43,6 +43,7 @@ import {
   type SourceCoverage,
 } from '../engine/verdict';
 import { explain, formatUsd, type EvidenceItem } from '../engine/evidence';
+import { shareCard, type ShareCard } from '../engine/share';
 import { OBSERVATION_SCHEMA_VERSION, ASSET_REGISTRY_VERSION } from '../engine/observation';
 import type { Position, SpotHolding, LinkedWallet, PnlSummary } from '../types';
 
@@ -125,8 +126,15 @@ export interface CheckResult {
   summary: string;
   /** Up to five numbers for the card, each with its source. */
   evidence: EvidenceItem[];
+  /** What this card says once it leaves the page as a picture. Built
+   * server-side so the page, the image and the API cannot drift apart. */
+  share?: ShareCard;
   /** Plain-language notes on anything that could not be read. */
   coverage: string[];
+  /** The same notes, each saying whether it cost the answer something. A
+   * shared card has room for two or three of these and has to choose the
+   * ones that matter, which a flat list of sentences cannot support. */
+  coverageNotes: Array<{ text: string; failure: boolean }>;
   checkedAt: string;
 }
 
@@ -161,6 +169,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
   const outOfTime = () => clock() > deadline;
   const day = (daysAgo: number) => new Date(now - daysAgo * 86_400_000).toISOString().slice(0, 10);
   const coverage: string[] = [];
+  const coverageNotes: Array<{ text: string; failure: boolean }> = [];
   const nansen = opts.nansen;
 
   // The free reads go first: if Hyperliquid is down, the check fails before a
@@ -192,6 +201,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
    * less, as opposed to the ones that merely describe what was found. */
   const note = (text: string, failure = false) => {
     coverage.push(text);
+    coverageNotes.push({ text, failure });
     if (failure) degraded = true;
   };
 
@@ -407,7 +417,21 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     degraded,
   };
   const { summary, evidence } = explain(measured);
-  return { address, ...measured, summary, evidence, coverage, checkedAt: new Date(now).toISOString() };
+  // Notes pushed straight onto `coverage` before `note` existed describe
+  // what was found rather than what failed, so they default to that.
+  for (const text of coverage) {
+    if (!coverageNotes.some((n) => n.text === text)) coverageNotes.push({ text, failure: false });
+  }
+  const result = {
+    address,
+    ...measured,
+    summary,
+    evidence,
+    coverage,
+    coverageNotes,
+    checkedAt: new Date(now).toISOString(),
+  };
+  return { ...result, share: shareCard(result, { kind: 'live' }) };
 }
 
 /** Two credits for the funding links, then one per funder followed: First

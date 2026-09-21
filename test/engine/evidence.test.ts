@@ -61,7 +61,7 @@ describe('explain', () => {
   it('says there is nothing to classify when there are no positions', () => {
     const e = explain(input({ positions: positions({ nPositions: 0, headlineCoin: null, headlineSide: null, headlineNotionalUsd: 0 }), verdict: { verdict: 'unknown', strength: null, reasons: ['no open positions found'] } }));
     expect(e.summary).toBe('No open positions right now, so there is nothing to classify.');
-    expect(e.evidence[0]).toEqual({ label: 'Open positions', value: '0', source: 'Nansen' });
+    expect(e.evidence[0]).toMatchObject({ label: 'Open positions', value: '0', source: 'Nansen' });
   });
 
   it('names every book signal that fired', () => {
@@ -86,7 +86,7 @@ describe('explain', () => {
       'Fills, last 24h',
       'Realized PnL, 30d',
     ]);
-    expect(e.evidence[2]).toEqual({ label: 'Resting orders', value: '212, two-sided in 31 markets', source: 'Hyperliquid' });
+    expect(e.evidence[2]).toMatchObject({ label: 'Resting orders', value: '212, two-sided in 31 markets', source: 'Hyperliquid' });
     expect(e.evidence[3].value).toBe('2,000+');
   });
 
@@ -108,7 +108,7 @@ describe('explain', () => {
       }),
     );
     expect(e.summary).toBe('The $100.0M ETH short is 60% covered by $60.0M of spot ETH held by this address on Nansen-supported chains.');
-    expect(e.evidence).toContainEqual({ label: 'Hedge found', value: '60% (Nansen-supported chains)', source: 'Nansen' });
+    expect(e.evidence).toContainEqual(expect.objectContaining({ label: 'Hedge found', value: '60% (Nansen-supported chains)', source: 'Nansen' }));
   });
 
   it('calls busy maker flow what it is, without deciding the position', () => {
@@ -225,8 +225,8 @@ describe('explain', () => {
       'No ETH at this address offsets the $179.4M ETH short. 2 wallets that funded it hold $399.0M of ETH, ' +
         'but funding does not establish ownership, so it is not counted as a hedge.',
     );
-    expect(e.evidence).toContainEqual({ label: 'Linked wallets', value: '$399.0M ETH in 2 wallets, owner unconfirmed', source: 'Nansen' });
-    expect(e.evidence).toContainEqual({ label: 'Hedge found', value: '0% (Nansen-supported chains)', source: 'Nansen' });
+    expect(e.evidence).toContainEqual(expect.objectContaining({ label: 'Linked wallets', value: '$399.0M ETH in 2 wallets, owner unconfirmed', source: 'Nansen' }));
+    expect(e.evidence).toContainEqual(expect.objectContaining({ label: 'Hedge found', value: '0% (Nansen-supported chains)', source: 'Nansen' }));
   });
 
   it('explains a long bet', () => {
@@ -239,7 +239,7 @@ describe('explain', () => {
       }),
     );
     expect(e.summary).toBe('93% of the exposure is one $42.1M ZEC long. Spot cannot offset a long, and debts or other derivatives are not read here.');
-    expect(e.evidence).toContainEqual({ label: 'Realized PnL, 30d', value: '$7.7M', source: 'Nansen' });
+    expect(e.evidence).toContainEqual(expect.objectContaining({ label: 'Realized PnL, 30d', value: '$7.7M', source: 'Nansen' }));
     expect(e.evidence.some((i) => i.label === 'Hedge found')).toBe(false);
   });
 
@@ -302,18 +302,18 @@ describe('explain', () => {
         },
       }),
     );
-    expect(e.evidence).toContainEqual({ label: 'Linked wallets', value: '$9.9M ETH in 1 wallet, owner unconfirmed', source: 'Nansen' });
+    expect(e.evidence).toContainEqual(expect.objectContaining({ label: 'Linked wallets', value: '$9.9M ETH in 1 wallet, owner unconfirmed', source: 'Nansen' }));
   });
 
   it('says no trades were closed instead of a zero PnL', () => {
     const e = explain(input({ pnl: { realizedPnlUsd: 0, winRate: 0, closedTrades: 0, windowDays: 30 } }));
-    expect(e.evidence).toContainEqual({ label: 'Realized PnL, 30d', value: 'no closed trades', source: 'Nansen' });
+    expect(e.evidence).toContainEqual(expect.objectContaining({ label: 'Realized PnL, 30d', value: 'no closed trades', source: 'Nansen' }));
   });
 
   it('labels positions read from Hyperliquid when Nansen was not used', () => {
     const e = explain(input({ source: 'hyperliquid', pnl: null, hedgeScope: 'hyperliquid' }));
-    expect(e.evidence[0]).toEqual({ label: 'Largest position', value: '$100.0M ETH short', source: 'Hyperliquid' });
-    expect(e.evidence).toContainEqual({ label: 'Hedge found', value: '0% (Hyperliquid spot)', source: 'Hyperliquid' });
+    expect(e.evidence[0]).toMatchObject({ label: 'Largest position', value: '$100.0M ETH short', source: 'Hyperliquid' });
+    expect(e.evidence).toContainEqual(expect.objectContaining({ label: 'Hedge found', value: '0% (Hyperliquid spot)', source: 'Hyperliquid' }));
     expect(e.evidence.length).toBeLessThanOrEqual(5);
   });
 });

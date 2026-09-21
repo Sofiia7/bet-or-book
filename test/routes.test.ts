@@ -157,3 +157,20 @@ describe('what the reader is told when something upstream breaks', () => {
     expect(body).not.toContain('Traceback');
   });
 });
+
+describe('the page and its script are deployed together', () => {
+  it('points at a script URL that changes when the script does', async () => {
+    const res = await worker.fetch(request('/'), testEnv());
+    const html = await res.text();
+    // Without this the script is cached for five minutes while the page and
+    // the API move on, which is exactly long enough for a reader to run the
+    // previous version against the current one.
+    expect(html).toMatch(/src="\/app\.js\?v=[0-9a-z]+"/);
+  });
+
+  it('serves the script whatever version is asked for', async () => {
+    const res = await worker.fetch(request('/app.js?v=anything'), testEnv());
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('javascript');
+  });
+});

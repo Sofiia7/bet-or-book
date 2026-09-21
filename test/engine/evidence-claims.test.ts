@@ -155,3 +155,41 @@ describe('U02: the source line matches who produced the number', () => {
     expect(e.evidence.find((i) => i.label === 'Hedge found')?.value).toContain('Nansen-supported chains');
   });
 });
+
+describe('the row a verdict turns on is marked as such', () => {
+  const decisiveLabel = (e: { evidence: Array<{ label: string; decisive?: boolean }> }) =>
+    e.evidence.find((i) => i.decisive)?.label;
+
+  it('marks the funding wallets when they are why the answer was withheld', () => {
+    const e = explain(
+      input({
+        verdict: { verdict: 'unknown', strength: null, reasons: ['linked_exposure_unverified'] },
+        linkedHedge: {
+          linkedHedgeUsd: 405_000_000,
+          linkedHedgeRatio: 4.05,
+          funders: [{ address: '0xaaa', relation: 'First Funder', chain: 'ethereum', matchingUsd: 405_000_000 }],
+        },
+      }),
+    );
+    expect(decisiveLabel(e)).toBe('Linked wallets');
+  });
+
+  it('marks the hedge when coverage is what decided it', () => {
+    for (const reason of ['hedge_leg', 'partial_offset', 'over_covered', 'hedge_not_checked', 'unrecognised_assets']) {
+      const e = explain(
+        input({
+          verdict: { verdict: 'unknown', strength: null, reasons: [reason] },
+          hedge: { ...EMPTY_HEDGE, hedgeUsd: 50_000_000, hedgeRatio: 0.5 },
+        }),
+      );
+      expect(decisiveLabel(e)).toBe('Hedge found');
+    }
+  });
+
+  it('marks nothing in particular when the answer rests on the position itself', () => {
+    const e = explain(
+      input({ verdict: { verdict: 'looks_like_a_bet', strength: null, reasons: ['directional_concentration'] } }),
+    );
+    expect(decisiveLabel(e)).toBe('Largest position');
+  });
+});

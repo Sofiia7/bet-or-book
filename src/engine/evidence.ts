@@ -17,6 +17,10 @@ export interface EvidenceItem {
   label: string;
   value: string;
   source: EvidenceSource;
+  /** The row the verdict actually turned on. A shared image has room for
+   * four columns and used to take the first four, which for the Abraxas
+   * card left out the one that decided it (audit U01). */
+  decisive?: boolean;
 }
 
 export interface EvidenceInput {
@@ -398,11 +402,34 @@ function pnlItem(pnl: PnlSummary | null): EvidenceItem | null {
   return { label: `Realized PnL, ${pnl.windowDays}d`, value, source: 'Nansen' };
 }
 
+/**
+ * The label of the row this verdict actually turns on, so a shared image
+ * carries it however far down the list it falls. The reasons map to what was
+ * read: a hedge reason is about the coverage row, an unverified funding link
+ * is about the funders row, and everything else rests on the position.
+ */
+const DECISIVE_LABEL_BY_REASON: Record<string, string> = {
+  hedge_leg: 'Hedge found',
+  partial_offset: 'Hedge found',
+  over_covered: 'Hedge found',
+  hedge_not_checked: 'Hedge found',
+  unrecognised_assets: 'Hedge found',
+  linked_exposure_unverified: 'Linked wallets',
+  orders: 'Resting orders',
+  maker_flow_only: 'Fills, last 24h',
+};
+
+function markDecisive(items: EvidenceItem[], reasons: string[]): EvidenceItem[] {
+  const label = reasons.map((r) => DECISIVE_LABEL_BY_REASON[r]).find((l) => l !== undefined);
+  const chosen = items.find((i) => i.label === label) ?? items[0];
+  return items.map((i) => (i === chosen ? { ...i, decisive: true } : i));
+}
+
 export function explain(input: EvidenceInput): Explanation {
   const { positions: p, orders: o } = input;
   const posSource: EvidenceSource = input.source === 'nansen' ? 'Nansen' : 'Hyperliquid';
   const present = (items: Array<EvidenceItem | null>) =>
-    items.filter((i): i is EvidenceItem => i !== null).slice(0, MAX_EVIDENCE);
+    markDecisive(items.filter((i): i is EvidenceItem => i !== null), input.verdict.reasons).slice(0, MAX_EVIDENCE);
 
   if (p.nPositions === 0) {
     return {
