@@ -140,7 +140,7 @@ const EXPLORERS = {
 };
 const VERDICTS = {
   book: { label: 'Book', cls: 'book', headline: 'This is a market-making book.', accent: '#0c447c' },
-  hedged: { label: 'Hedged', cls: 'hedged', headline: 'This position is not a directional view.', accent: '#27500a' },
+  hedged: { label: 'Hedged', cls: 'hedged', headline: 'The offsetting asset is in this same account.', accent: '#27500a' },
   looks_like_a_bet: { label: 'Looks like a bet', cls: 'bet', headline: 'This looks like a real bet.', accent: '#633806' },
   unknown: { label: 'Unknown', cls: 'unknown', headline: 'Not enough evidence either way.', accent: '#444441' },
 };
@@ -197,6 +197,12 @@ function headlineFor(d) {
   }
   if (reasons.indexOf('offset_not_measured') !== -1) {
     return 'The dollars net out; this snapshot cannot say whether the legs offset each other.';
+  }
+  if (reasons.indexOf('partial_offset') !== -1) {
+    return 'Only part of this position is covered. The rest is still open.';
+  }
+  if (reasons.indexOf('over_covered') !== -1) {
+    return 'More than covered: on the asset itself, this account is net long.';
   }
   return verdictOf(d).headline;
 }

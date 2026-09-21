@@ -118,6 +118,35 @@ describe('explain', () => {
     );
   });
 
+  it('says how much of a partly covered short is still short', () => {
+    const e = explain(
+      input({
+        verdict: { verdict: 'unknown', strength: null, reasons: ['partial_offset'] },
+        positions: positions({ headlineCoin: 'HYPE', headlineNotionalUsd: 7_200_000 }),
+        hedge: { hedgeUsd: 4_270_000, hedgeRatio: 0.593 },
+      }),
+    );
+    expect(e.summary).toBe(
+      'The $7.2M HYPE short is 59% covered by spot HYPE held by the same account across chains, ' +
+        'which leaves $2.9M of it short.',
+    );
+  });
+
+  it('says an over-covered short leaves the account long, not neutral', () => {
+    const e = explain(
+      input({
+        verdict: { verdict: 'unknown', strength: null, reasons: ['over_covered'] },
+        positions: positions({ headlineNotionalUsd: 15_400_000 }),
+        hedge: { hedgeUsd: 30_000_000, hedgeRatio: 1.948 },
+      }),
+    );
+    expect(e.summary).toBe(
+      'The $15.4M ETH short is more than covered: $30.0M of spot ETH held by the same account across chains ' +
+        'leaves it net long $14.6M of ETH.',
+    );
+    expect(e.summary).not.toContain('neutral');
+  });
+
   it('calls a dollar balance across different assets a portfolio, not a hedge', () => {
     const e = explain(
       input({

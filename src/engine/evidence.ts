@@ -109,10 +109,36 @@ function hedgedSummary(input: EvidenceInput): string {
       `and ${formatPct(p.sameAssetOffsetShare)} of it cancels within the same assets.`
     );
   }
-  const where = input.hedgeScope === 'all-chains' ? 'across chains' : 'on Hyperliquid';
   return (
     `The ${formatUsd(p.headlineNotionalUsd)} ${p.headlineCoin} short is ${formatPct(h.hedgeRatio)} covered by ` +
-    `spot ${p.headlineCoin} held by the same account ${where}.`
+    `spot ${p.headlineCoin} held by the same account ${holdingsScope(input)}.`
+  );
+}
+
+/** Where the account's own holdings were looked for. */
+function holdingsScope(input: EvidenceInput): string {
+  return input.hedgeScope === 'all-chains' ? 'across chains' : 'on Hyperliquid';
+}
+
+/** Coverage short of a hedge: what is left over is still a position. 59% of
+ * a $7.2M short leaves $2.9M short. */
+function partialOffsetSummary(input: EvidenceInput): string {
+  const { positions: p, hedge: h } = input;
+  return (
+    `The ${formatUsd(p.headlineNotionalUsd)} ${p.headlineCoin} short is ${formatPct(h.hedgeRatio)} covered by ` +
+    `spot ${p.headlineCoin} held by the same account ${holdingsScope(input)}, ` +
+    `which leaves ${formatUsd(p.headlineNotionalUsd - h.hedgeUsd)} of it short.`
+  );
+}
+
+/** Coverage past parity: the spot leg is the larger one, so the account is
+ * long the asset its headline position is short. */
+function overCoveredSummary(input: EvidenceInput): string {
+  const { positions: p, hedge: h } = input;
+  return (
+    `The ${formatUsd(p.headlineNotionalUsd)} ${p.headlineCoin} short is more than covered: ` +
+    `${formatUsd(h.hedgeUsd)} of spot ${p.headlineCoin} held by the same account ${holdingsScope(input)} ` +
+    `leaves it net long ${formatUsd(h.hedgeUsd - p.headlineNotionalUsd)} of ${p.headlineCoin}.`
   );
 }
 
@@ -206,6 +232,16 @@ function linkedItem(input: EvidenceInput): EvidenceItem | null {
   };
 }
 
+/** Each reason a verdict can be withheld for says something specific; the
+ * generic "not enough evidence" sentence is the fallback, not the rule. */
+const SUMMARY_BY_REASON: Record<string, ((input: EvidenceInput) => string) | undefined> = {
+  linked_exposure_unverified: linkedSummary,
+  mixed_long_short_book: mixedBookSummary,
+  offset_not_measured: unmeasuredOffsetSummary,
+  partial_offset: partialOffsetSummary,
+  over_covered: overCoveredSummary,
+};
+
 function pnlItem(pnl: PnlSummary | null): EvidenceItem | null {
   if (!pnl) return null;
   const value = pnl.closedTrades === 0 ? 'no closed trades' : formatUsd(pnl.realizedPnlUsd);
@@ -242,18 +278,15 @@ export function explain(input: EvidenceInput): Explanation {
     };
   }
 
+  const byReason = input.verdict.reasons.map((r) => SUMMARY_BY_REASON[r]).find((fn) => fn !== undefined);
   const summary =
     input.verdict.verdict === 'hedged'
       ? hedgedSummary(input)
       : input.verdict.verdict === 'looks_like_a_bet'
         ? betSummary(input)
-        : input.verdict.reasons.includes('linked_exposure_unverified')
-          ? linkedSummary(input)
-          : input.verdict.reasons.includes('mixed_long_short_book')
-            ? mixedBookSummary(input)
-            : input.verdict.reasons.includes('offset_not_measured')
-              ? unmeasuredOffsetSummary(input)
-              : undecidedSummary(input);
+        : byReason
+          ? byReason(input)
+          : undecidedSummary(input);
   return {
     summary,
     evidence: present([

@@ -20,7 +20,13 @@ export interface VerdictThresholds {
     maxFillBuyShare: number;
   };
   hedged: {
+    /** A hedge is a band, not a floor: below it the position is only partly
+     * offset, above it the account is net long the asset it is short. */
     minHedgeRatio: number;
+    maxHedgeRatio: number;
+    /** Below this the account's own holdings explain so little that the
+     * wallets which funded it are worth a look. */
+    linkedLookupBelowRatio: number;
     minPositionsForBalancedBook: number;
     maxPositionsForBalancedBook: number;
     minSameAssetOffsetShare: number;
@@ -50,7 +56,14 @@ export const DEFAULT_THRESHOLDS: VerdictThresholds = {
     maxFillBuyShare: 0.75,
   },
   hedged: {
-    minHedgeRatio: 0.5,
+    // A hedge put on at parity drifts as the price moves, so a band rather
+    // than a point. Outside it the residual is the story: 59% coverage of a
+    // $7.2M short leaves $2.9M short, 195% leaves $14.6M long. In the 18.09
+    // gallery seven cards sit between 93% and 100%, three below 70% and five
+    // above 122% - three different situations the old 50% floor merged.
+    minHedgeRatio: 0.85,
+    maxHedgeRatio: 1.15,
+    linkedLookupBelowRatio: 0.5,
     minPositionsForBalancedBook: 2,
     maxPositionsForBalancedBook: 19,
     // Dollars that net out prove nothing on their own; this is the share of
@@ -167,13 +180,20 @@ export function computeVerdict(
   }
 
   const h = thresholds.hedged;
+  const ratio = input.hedge.hedgeRatio;
+  const hedgedByLeg = ratio >= h.minHedgeRatio && ratio <= h.maxHedgeRatio;
   const balancedBook = isSameAssetBook(input, thresholds);
-  if (input.hedge.hedgeRatio >= h.minHedgeRatio || balancedBook) {
-    return {
-      verdict: 'hedged',
-      strength: null,
-      reasons: input.hedge.hedgeRatio >= h.minHedgeRatio ? ['hedge_leg'] : ['balanced_book'],
-    };
+  if (hedgedByLeg || balancedBook) {
+    return { verdict: 'hedged', strength: null, reasons: [hedgedByLeg ? 'hedge_leg' : 'balanced_book'] };
+  }
+
+  // Partly offset is still a position, and over-covered is a position the
+  // other way round. Neither of them is "not a directional view".
+  if (ratio > h.maxHedgeRatio) {
+    return { verdict: 'unknown', strength: null, reasons: ['over_covered'] };
+  }
+  if (ratio >= thresholds.bet.maxHedgeRatio) {
+    return { verdict: 'unknown', strength: null, reasons: ['partial_offset'] };
   }
 
   const linkedRatio = input.linkedHedge?.linkedHedgeRatio ?? 0;

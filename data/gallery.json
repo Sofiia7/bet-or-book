@@ -1417,7 +1417,7 @@
     "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "signals disagree: not enough evidence for book, hedge, or bet"
+     "partial_offset"
     ]
    },
    "positions": {
@@ -1474,7 +1474,7 @@
    },
    "sizeVsOi": 0.013042219246422466,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 48% hedged.",
+   "summary": "The $41.1M BTC short is 48% covered by spot BTC held by the same account across chains, which leaves $21.6M of it short.",
    "evidence": [
     {
      "label": "Largest position",
@@ -3262,10 +3262,10 @@
   {
    "address": "0x37b81ab9e3ab04b9e3738e4891621205aaa31fd5",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "hedge_leg"
+     "over_covered"
     ]
    },
    "positions": {
@@ -3305,7 +3305,7 @@
    },
    "sizeVsOi": 0.012712206757810148,
    "source": "nansen",
-   "summary": "The $25.1M HYPE short is 123% covered by spot HYPE held by the same account across chains.",
+   "summary": "The $25.1M HYPE short is more than covered: $30.9M of spot HYPE held by the same account across chains leaves it net long $5.8M of HYPE.",
    "evidence": [
     {
      "label": "Largest position",
@@ -4042,10 +4042,10 @@
   {
    "address": "0xf02d028ffeddc120a3ec59602a6617303ca55eb3",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "hedge_leg"
+     "over_covered"
     ]
    },
    "positions": {
@@ -4085,7 +4085,7 @@
    },
    "sizeVsOi": 0.011315011433967147,
    "source": "nansen",
-   "summary": "The $22.4M HYPE short is 157% covered by spot HYPE held by the same account across chains.",
+   "summary": "The $22.4M HYPE short is more than covered: $35.2M of spot HYPE held by the same account across chains leaves it net long $12.8M of HYPE.",
    "evidence": [
     {
      "label": "Largest position",
@@ -6675,10 +6675,10 @@
   {
    "address": "0xf929122994e177079c924631ba13fb280f5cd1f9",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "hedge_leg"
+     "over_covered"
     ]
    },
    "positions": {
@@ -6718,7 +6718,7 @@
    },
    "sizeVsOi": 0.005620272894902023,
    "source": "nansen",
-   "summary": "The $15.4M ETH short is 195% covered by spot ETH held by the same account across chains.",
+   "summary": "The $15.4M ETH short is more than covered: $30.1M of spot ETH held by the same account across chains leaves it net long $14.6M of ETH.",
    "evidence": [
     {
      "label": "Largest position",
@@ -7750,7 +7750,7 @@
     "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "signals disagree: not enough evidence for book, hedge, or bet"
+     "partial_offset"
     ]
    },
    "positions": {
@@ -7801,7 +7801,7 @@
    },
    "sizeVsOi": 0.005915894679383985,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 14% hedged.",
+   "summary": "The $11.7M HYPE short is 14% covered by spot HYPE held by the same account across chains, which leaves $10.1M of it short.",
    "evidence": [
     {
      "label": "Largest position",
@@ -10915,7 +10915,7 @@
     "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "signals disagree: not enough evidence for book, hedge, or bet"
+     "partial_offset"
     ]
    },
    "positions": {
@@ -10966,7 +10966,7 @@
    },
    "sizeVsOi": 0.0031547471931613093,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 20% hedged.",
+   "summary": "The $8.7M ETH short is 20% covered by spot ETH held by the same account across chains, which leaves $7.0M of it short.",
    "evidence": [
     {
      "label": "Largest position",
@@ -11581,10 +11581,10 @@
   {
    "address": "0xb829fd12a23c88e0f1eb85238799f8fd400a3a81",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "hedge_leg"
+     "over_covered"
     ]
    },
    "positions": {
@@ -11624,7 +11624,7 @@
    },
    "sizeVsOi": 0.004203101965495672,
    "source": "nansen",
-   "summary": "The $8.3M HYPE short is 130% covered by spot HYPE held by the same account across chains.",
+   "summary": "The $8.3M HYPE short is more than covered: $10.9M of spot HYPE held by the same account across chains leaves it net long $2.5M of HYPE.",
    "evidence": [
     {
      "label": "Largest position",
@@ -12668,7 +12668,7 @@
     "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "signals disagree: not enough evidence for book, hedge, or bet"
+     "partial_offset"
     ]
    },
    "positions": {
@@ -12712,7 +12712,7 @@
    },
    "sizeVsOi": 0.0037516761115280297,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 6 positions, largest position 42% of exposure, 13% hedged.",
+   "summary": "The $7.4M HYPE short is 13% covered by spot HYPE held by the same account across chains, which leaves $6.5M of it short.",
    "evidence": [
     {
      "label": "Largest position",
@@ -12827,10 +12827,10 @@
   {
    "address": "0x66799bc69d7a7daaf50b6aa03cd5c6a2df1a9454",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "hedge_leg"
+     "partial_offset"
     ]
    },
    "positions": {
@@ -12870,7 +12870,7 @@
    },
    "sizeVsOi": 0.0036200920113698964,
    "source": "nansen",
-   "summary": "The $7.2M HYPE short is 59% covered by spot HYPE held by the same account across chains.",
+   "summary": "The $7.2M HYPE short is 59% covered by spot HYPE held by the same account across chains, which leaves $2.9M of it short.",
    "evidence": [
     {
      "label": "Largest position",
@@ -13410,7 +13410,7 @@
     "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "signals disagree: not enough evidence for book, hedge, or bet"
+     "partial_offset"
     ]
    },
    "positions": {
@@ -13467,7 +13467,7 @@
    },
    "sizeVsOi": 0.003469802121987191,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 36% hedged.",
+   "summary": "The $6.9M HYPE short is 36% covered by spot HYPE held by the same account across chains, which leaves $4.4M of it short.",
    "evidence": [
     {
      "label": "Largest position",
@@ -14795,10 +14795,10 @@
   {
    "address": "0x03ef8f736498047c3349bb2c18311d1bb4a79054",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "hedge_leg"
+     "partial_offset"
     ]
    },
    "positions": {
@@ -14838,7 +14838,7 @@
    },
    "sizeVsOi": 0.0030001582842970045,
    "source": "nansen",
-   "summary": "The $6.0M HYPE short is 69% covered by spot HYPE held by the same account across chains.",
+   "summary": "The $6.0M HYPE short is 69% covered by spot HYPE held by the same account across chains, which leaves $1.8M of it short.",
    "evidence": [
     {
      "label": "Largest position",
@@ -17225,10 +17225,10 @@
   {
    "address": "0xceec48581b3145a575508719f45da07dc57fa7ce",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "hedge_leg"
+     "partial_offset"
     ]
    },
    "positions": {
@@ -17268,7 +17268,7 @@
    },
    "sizeVsOi": 0.002313559952749554,
    "source": "nansen",
-   "summary": "The $4.6M HYPE short is 53% covered by spot HYPE held by the same account across chains.",
+   "summary": "The $4.6M HYPE short is 53% covered by spot HYPE held by the same account across chains, which leaves $2.2M of it short.",
    "evidence": [
     {
      "label": "Largest position",
@@ -18305,10 +18305,10 @@
   {
    "address": "0x0514f2f3e0277c47117e3f33d9390efb0acfbdfe",
    "verdict": {
-    "verdict": "hedged",
+    "verdict": "unknown",
     "strength": null,
     "reasons": [
-     "hedge_leg"
+     "over_covered"
     ]
    },
    "positions": {
@@ -18348,7 +18348,7 @@
    },
    "sizeVsOi": 0.0015279378476591636,
    "source": "nansen",
-   "summary": "The $4.3M ETH short is 138% covered by spot ETH held by the same account across chains.",
+   "summary": "The $4.3M ETH short is more than covered: $5.9M of spot ETH held by the same account across chains leaves it net long $1.6M of ETH.",
    "evidence": [
     {
      "label": "Largest position",

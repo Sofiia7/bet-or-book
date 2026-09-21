@@ -191,13 +191,27 @@ describe('checkAddress (offline, real fixtures)', () => {
     route();
     const nansen = fakeNansen({
       positions: syntheticPositions([{ coin: 'ETH', size: -25_000, valueUsd: 100_000_000 }]),
-      balances: [balanceRow('WETH', 60_000_000)],
+      balances: [balanceRow('WETH', 95_000_000)],
     });
     const result = await checkAddress(ABRAXAS, { nansen });
     expect(result.verdict.verdict).toBe('hedged');
     expect(result.verdict.reasons).toEqual(['hedge_leg']);
     expect(result.hedgeScope).toBe('all-chains');
     expect(nansen.currentBalance).toHaveBeenCalledTimes(1);
+    expect(nansen.relatedWallets).not.toHaveBeenCalled();
+  });
+
+  it('calls a 60%-covered short partly offset, and still spends nothing on funders', async () => {
+    route();
+    const nansen = fakeNansen({
+      positions: syntheticPositions([{ coin: 'ETH', size: -25_000, valueUsd: 100_000_000 }]),
+      balances: [balanceRow('WETH', 60_000_000)],
+    });
+    const result = await checkAddress(ABRAXAS, { nansen });
+    expect(result.verdict.verdict).toBe('unknown');
+    expect(result.verdict.reasons).toEqual(['partial_offset']);
+    // The account's own holdings already explain more than half of it, so
+    // the wallets that funded it are not worth a credit.
     expect(nansen.relatedWallets).not.toHaveBeenCalled();
   });
 

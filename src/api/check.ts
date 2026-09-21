@@ -150,7 +150,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     positionFeatures.headlineSide !== 'short' ? 'none' : otherChainsRead ? 'all-chains' : 'hyperliquid';
 
   const linkedHedge =
-    nansen && hedgeMatters && hedgeFeatures.hedgeRatio < DEFAULT_THRESHOLDS.hedged.minHedgeRatio
+    nansen && hedgeMatters && hedgeFeatures.hedgeRatio < DEFAULT_THRESHOLDS.hedged.linkedLookupBelowRatio
       ? await readLinkedHedge(nansen, address, positionFeatures, coverage)
       : null;
 

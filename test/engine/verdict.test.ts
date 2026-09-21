@@ -60,6 +60,42 @@ describe('computeVerdict', () => {
     expect(result.reasons).toContain('hedge_leg');
   });
 
+  it('does not call a half-covered short hedged: half of it is still a short', () => {
+    // Three real gallery cards sit at 52.8%, 59.3% and 69.2% coverage.
+    const result = computeVerdict({
+      positions: positions({ nPositions: 1, netToGross: 1, headlineShare: 1, headlineCoin: 'HYPE', headlineSide: 'short', headlineNotionalUsd: 7_200_000 }),
+      orders: orders({}),
+      hedge: hedge({ hedgeUsd: 4_270_000, hedgeRatio: 0.593 }),
+    });
+    expect(result.verdict).toBe('unknown');
+    expect(result.reasons).toEqual(['partial_offset']);
+  });
+
+  it('does not call an over-covered short hedged: the account is net long', () => {
+    // 194.8% coverage of a $15.4M ETH short leaves $14.6M of ETH long.
+    const result = computeVerdict({
+      positions: positions({ nPositions: 1, netToGross: 1, headlineShare: 1, headlineCoin: 'ETH', headlineSide: 'short', headlineNotionalUsd: 15_400_000 }),
+      orders: orders({}),
+      hedge: hedge({ hedgeUsd: 30_000_000, hedgeRatio: 1.948 }),
+    });
+    expect(result.verdict).toBe('unknown');
+    expect(result.reasons).toEqual(['over_covered']);
+  });
+
+  it('allows a hedge to drift with the price before it stops being one', () => {
+    const at = (ratio: number) =>
+      computeVerdict({
+        positions: positions({ nPositions: 1, netToGross: 1, headlineShare: 1, headlineCoin: 'HYPE', headlineSide: 'short', headlineNotionalUsd: 4_000_000 }),
+        orders: orders({}),
+        hedge: hedge({ hedgeUsd: 4_000_000 * ratio, hedgeRatio: ratio }),
+      }).verdict;
+    expect(at(0.934)).toBe('hedged');
+    expect(at(1)).toBe('hedged');
+    expect(at(1.149)).toBe('hedged');
+    expect(at(0.849)).toBe('unknown');
+    expect(at(1.151)).toBe('unknown');
+  });
+
   it('calls it hedged when the offsetting legs are in the same assets', () => {
     const result = computeVerdict({
       positions: positions({ nPositions: 4, netToGross: 0.1, headlineShare: 0.3, sameAssetOffsetShare: 0.95 }),
