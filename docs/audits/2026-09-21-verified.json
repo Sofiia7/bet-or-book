@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-21T20:09:22.371Z",
+  "generatedAt": "2026-09-21T20:37:44.024Z",
   "networkCalls": 0,
   "observations": [
     {
@@ -128,7 +128,7 @@
         "refusedAt": 0,
         "holds": {},
         "orphaned": {
-          "f6b56409-790b-4fb1-86a9-815396aeadef": {
+          "31352e70-8983-4dca-ac2d-b043fd794b58": {
             "amount": 7,
             "at": 1789992000000,
             "day": "2026-09-21"
@@ -204,10 +204,10 @@
       "id": "gallery_reinterpretation_presented_as_recheck",
       "was": "269 of 277 cards stamped with rules their observations could not support",
       "now": {
-        "judged": 168,
+        "judged": 190,
         "history": 109,
-        "hedgedUnderCurrentRules": 0,
-        "bookUnderCurrentRules": 0
+        "hedgedUnderCurrentRules": 7,
+        "bookUnderCurrentRules": 3
       }
     }
   ]
