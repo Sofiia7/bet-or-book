@@ -991,3 +991,23 @@
 {"at":"2026-09-18T13:54:00.000Z","source":"wrangler-dev","endpoint":"profiler/address/related-wallets","status":200,"count":6,"creditsCost":6,"creditsRemaining":null,"note":"aggregate of calls made through wrangler dev on 2026-09-18, counted by the Worker KV day counter"}
 {"at":"2026-09-21T07:12:00.534Z","source":"rescan-offset","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":9}
 {"at":"2026-09-21T07:12:00.766Z","source":"rescan-offset","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":8}
+{"at":"2026-09-21T11:03:28.972Z","source":"rescan-offset","endpoint":"profiler/perp-pnl-summary","status":403,"creditsCost":1,"creditsRemaining":1100}
+{"at":"2026-09-21T11:03:29.893Z","source":"rescan-offset","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":1099}
+{"at":"2026-09-21T11:05:32.678Z","source":"rescan-offset","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":1098}
+{"at":"2026-09-21T11:05:33.422Z","source":"rescan-offset","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":1097}
+{"at":"2026-09-21T11:05:40.143Z","source":"rescan-offset","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":1096}
+{"at":"2026-09-21T11:05:40.354Z","source":"rescan-offset","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":1095}
+{"at":"2026-09-21T11:05:47.383Z","source":"rescan-offset","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":1094}
+{"at":"2026-09-21T11:05:47.664Z","source":"rescan-offset","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":1093}
+{"at":"2026-09-21T11:05:54.745Z","source":"rescan-offset","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":1092}
+{"at":"2026-09-21T11:05:55.104Z","source":"rescan-offset","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":1091}
+{"at":"2026-09-21T11:06:01.112Z","source":"rescan-offset","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":1090}
+{"at":"2026-09-21T11:06:01.707Z","source":"rescan-offset","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":1089}
+{"at":"2026-09-21T11:06:08.407Z","source":"rescan-offset","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":1088}
+{"at":"2026-09-21T11:06:08.470Z","source":"rescan-offset","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":1087}
+{"at":"2026-09-21T11:06:10.868Z","source":"rescan-offset","endpoint":"profiler/address/current-balance","status":200,"creditsCost":1,"creditsRemaining":1086}
+{"at":"2026-09-21T11:06:11.926Z","source":"rescan-offset","endpoint":"profiler/address/related-wallets","status":200,"creditsCost":1,"creditsRemaining":1085}
+{"at":"2026-09-21T11:06:11.975Z","source":"rescan-offset","endpoint":"profiler/address/related-wallets","status":200,"creditsCost":1,"creditsRemaining":1084}
+{"at":"2026-09-21T11:06:12.985Z","source":"rescan-offset","endpoint":"profiler/address/current-balance","status":200,"creditsCost":1,"creditsRemaining":1083}
+{"at":"2026-09-21T11:06:14.767Z","source":"rescan-offset","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":1082}
+{"at":"2026-09-21T11:06:15.247Z","source":"rescan-offset","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":1081}

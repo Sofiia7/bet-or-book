@@ -109,9 +109,26 @@ function isLastPage(pagination: { is_last_page: boolean } | undefined, rows: num
  * as spent rather than as nothing having happened. */
 export const NO_ANSWER = 0;
 
-/** Statuses that mean the account cannot pay for more. What Nansen returns
- * when credits run out is not documented, so any of them stops the check. */
+/** Statuses Nansen may use when it will not serve a call. What it returns
+ * when credits run out is not documented, so any of these might mean "the
+ * account is empty" - but not all of them do. */
 const REFUSED = new Set([401, 402, 403]);
+
+/**
+ * True when a refusal is about money rather than about this one endpoint.
+ *
+ * Seen live on 21 September: a key holding 1 100 credits answered 403 on
+ * perp-pnl-summary, which is simply not on its plan, and the breaker read
+ * that as an empty account and stopped a scan that had every credit it
+ * needed. A refusal that comes with credits still on the clock is a
+ * permission, not a balance, and only the balance is worth stopping for.
+ */
+function meansOutOfCredits(status: number, creditsRemaining: number | null): boolean {
+  if (!REFUSED.has(status)) return false;
+  return creditsRemaining === null || creditsRemaining <= 0;
+}
+
+export { meansOutOfCredits };
 
 export function createNansenClient(apiKey: string, record: NansenCallRecorder = () => {}): NansenClient {
   // One client serves one check, so a refusal here stops that check rather
@@ -135,12 +152,13 @@ export function createNansenClient(apiKey: string, record: NansenCallRecorder = 
       throw err;
     }
 
-    if (REFUSED.has(res.status)) refused = true;
+    const creditsRemaining = headerNumber(res, 'x-nansen-credits-remaining');
+    if (meansOutOfCredits(res.status, creditsRemaining)) refused = true;
     await record({
       path,
       status: res.status,
       creditsCost: headerNumber(res, 'x-nansen-credits-cost'),
-      creditsRemaining: headerNumber(res, 'x-nansen-credits-remaining'),
+      creditsRemaining,
     });
     if (!res.ok) {
       throw new Error(`nansen ${path} failed: ${res.status}`);

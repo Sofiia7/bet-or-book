@@ -79,7 +79,7 @@ KV keeps what it is good at: cached results, saved readings, and the per-day cal
 
 ## The gallery: one dated scan, not the market
 
-On 18 September 2026 the same check ran over a set of large Hyperliquid positions: accounts from the top 3,000 by value on Hyperliquid's public leaderboard, ranked by their largest main-dex position (864 had one open), checked from the top until the credits ran out. That is 278 accounts, led by a $263.8M ETH short; one had closed its position by the time it was checked, which leaves 277. One card was re-checked on 21 September, so the set spans two dates and the page says so.
+On 18 September 2026 the same check ran over a set of large Hyperliquid positions: accounts from the top 3,000 by value on Hyperliquid's public leaderboard, ranked by their largest main-dex position (864 had one open), checked from the top until the credits ran out. That is 278 accounts, led by a $263.8M ETH short; one had closed its position by the time it was checked, which leaves 277. Nine cards were re-checked on 21 September, so the set spans two dates and the page says so.
 
 Every card was re-judged offline against the current rules, from the numbers already stored in it, without spending a credit ([`scripts/reexplain.ts`](scripts/reexplain.ts)).
 
@@ -90,14 +90,16 @@ Every card was re-judged offline against the current rules, from the numbers alr
 | Book | 12 | 4% |
 | Hedged | 7 | 3% |
 
-The Unknowns are not a shrug. Each says which question it could not close: 12 have their matching assets in a wallet that funded the account, 12 are busy accounts whose flow says nothing about the position in front of you, 8 are partly covered and say by how much, 8 were scanned before the same-asset offset was measured, 5 are over-covered into a net long, 1 could not read the hedge at all, and 75 simply do not fit any rule.
+The Unknowns are not a shrug. Each says which question it could not close: 12 have their matching assets in a wallet that funded the account, 12 are busy accounts whose flow says nothing about the position in front of you, 8 are partly covered and say by how much, 6 net out in dollars across different assets, 5 are over-covered into a net long, 2 could not read the hedge at all, and 76 simply do not fit any rule.
+
+The ten cards that once read "balanced book, therefore hedged" were the reason for re-checking. All eight that could be re-read came back with **nothing cancelling inside a single asset**: their dollars net out across different tokens entirely, which is a portfolio, not a hedge of anything.
 
 What stands out:
 
 - **About half of these positions look like real bets**, mostly longs (110 of 137).
 - **Seven shorts are genuinely hedged inside the account**, between 93% and 100% covered. Five more are covered past 122%, which means those accounts are long the asset their headline position is short.
 - The largest of all, a $263.8M ETH short, stays **Unknown**. So does the $184M ETH short that the first version of this tool called a probable hedge: the $405M of matching ETH is in wallets that funded the account, and $117.5M of that is an Aave deposit.
-- A check cost **3.2 Nansen calls on average**; 191 of the 277 needed only 2.
+- A check cost **3.2 Nansen calls on average**; 190 of the 277 needed only 2.
 
 **What this table is not.** It is one scan of a set chosen a particular way. Leverage breaks the link between what an account is worth and what it holds, a HIP-3-only account can fall out of the ranking before it is ever checked, and the scan spent its last credits on the cheaper checks. Read it as "of the 277 read", never as "of the market".
 
@@ -171,16 +173,18 @@ npx wrangler deploy
 
 Every call is logged in [`data/nansen-calls.jsonl`](data/nansen-calls.jsonl) and summed in [`data/ledger.json`](data/ledger.json); the deployed page adds its own calls from Workers KV and serves the total at `/api/ledger`.
 
-Between 14 and 27 September: **1,010 calls, 1,006 of them answered 2xx.** The gallery scan of 18 September accounts for almost all of it; two more went to re-checking one card on 21 September, which is when the account answered with 8 credits left.
+Between 14 and 27 September: **1,030 calls, 1,025 of them answered 2xx.** The gallery scan of 18 September accounts for almost all of it; 22 more went to re-checking nine cards on 21 September, after the rules changed.
+
+One of those 22 came back 403: the key in use may not read `profiler/perp-pnl-summary`, and it said so while reporting 1,100 credits still available. A refusal that comes with a balance is about one endpoint, not about money, so it costs a field on the card and nothing else. Treating every refusal as an empty account is a mistake this project made once, live, and fixed.
 
 The ledger counts calls made. It is a record, not the spend cap: what a check is allowed to spend is decided before it runs (see above), and an answered call's own cost header is what settles it.
 
 | Endpoint | Calls |
 |---|---|
-| `profiler/perp-positions` | 309 |
-| `profiler/perp-pnl-summary` | 309 |
-| `profiler/address/current-balance` | 228 |
-| `profiler/address/related-wallets` | 163 |
+| `profiler/perp-positions` | 317 |
+| `profiler/perp-pnl-summary` | 317 |
+| `profiler/address/current-balance` | 230 |
+| `profiler/address/related-wallets` | 165 |
 | `profiler/perp-trades` | 1 |
 
 | Purpose | Calls |
@@ -189,7 +193,7 @@ The ledger counts calls made. It is a record, not the spend cap: what a check is
 | Local development checks through `wrangler dev` | 21 |
 | Fixture captures for the tests | 12 |
 | Live smoke test of the three calibration accounts | 11 |
-| Re-checking one gallery card after the rules changed (21 September) | 2 |
+| Re-checking nine gallery cards after the rules changed (21 September) | 22 |
 
 `profiler/perp-trades` was tried once and dropped: it aggregates partial fills into one trade, and a thousand records covered sixteen minutes of the busiest account.
 
@@ -199,4 +203,4 @@ Checked against a twelve-point launch checklist ([`docs/specs/2026-09-17-bet-or-
 
 ## Stack
 
-Cloudflare Workers, Workers KV and two Durable Objects (the spend cap and the rate limiter, which both need an atomic read-modify-write that KV cannot promise), TypeScript, Vitest (192 tests on recorded real responses). No runtime dependencies, no frontend framework: one HTML page with a canvas for the share card.
+Cloudflare Workers, Workers KV and two Durable Objects (the spend cap and the rate limiter, which both need an atomic read-modify-write that KV cannot promise), TypeScript, Vitest (197 tests on recorded real responses). No runtime dependencies, no frontend framework: one HTML page with a canvas for the share card.

@@ -8,7 +8,9 @@
 // - every Nansen call is appended to data/nansen-calls.jsonl as it happens;
 // - the gallery file is rewritten after every check, and --resume skips what
 //   is already in it, so an interrupted run loses nothing;
-// - it stops at the credit reserve, on any 401/402/403, or after three checks
+// - it stops at the credit reserve, on a refusal that reports no credits
+//   left (a 403 that still reports a balance means the key may not read that
+//   one endpoint, which is not a reason to stop), or after three checks
 //   in a row that could not read Nansen positions;
 // - Hyperliquid 429s and 5xx are retried with backoff; Nansen calls never are,
 //   since a retry could be charged twice.
@@ -22,7 +24,7 @@
 //                              [--resume]
 import { readFileSync, writeFileSync, appendFileSync, existsSync, renameSync } from 'node:fs';
 import { checkAddress, type CheckResult } from '../src/api/check';
-import { createNansenClient, type NansenCallMeta } from '../src/sources/nansen';
+import { createNansenClient, meansOutOfCredits, type NansenCallMeta } from '../src/sources/nansen';
 import { getClearinghouseState } from '../src/sources/hyperliquid';
 import type { Gallery } from '../src/gallery';
 
@@ -192,6 +194,8 @@ async function main(): Promise<void> {
   let failedInARow = 0;
   let totalCalls = 0;
   let skippedInEndgame = 0;
+  /** Endpoints this key is not allowed to read, mentioned once each. */
+  const forbidden = new Set<string>();
   let stopReason = 'candidates exhausted';
 
   for (const [i, address] of todo.entries()) {
@@ -260,9 +264,18 @@ async function main(): Promise<void> {
       lostInARow = result.source === 'nansen' ? 0 : lostInARow + 1;
     }
 
-    if (calls.some((c) => c.status === 401 || c.status === 402 || c.status === 403)) {
+    // Only stop for a refusal that is about the balance. A 403 that still
+    // reports credits means the key may not read that one endpoint, which
+    // costs this scan a field on the card, not the rest of its budget.
+    if (calls.some((c) => meansOutOfCredits(c.status, c.creditsRemaining))) {
       stopReason = `Nansen refused a call (${calls.map((c) => c.status).join(',')})`;
       break;
+    }
+    for (const c of calls) {
+      if (c.status >= 400 && !forbidden.has(c.endpoint)) {
+        forbidden.add(c.endpoint);
+        console.log(`  note: ${c.endpoint} answered ${c.status}; continuing without it`);
+      }
     }
     if (lostInARow >= 3) {
       stopReason = 'three checks in a row without Nansen positions';

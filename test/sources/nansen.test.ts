@@ -100,6 +100,23 @@ describe('nansen client', () => {
     expect(calls.length).toBe(1);
   });
 
+  it('keeps going when a refusal is about one endpoint, not about money', async () => {
+    // Seen live on 21.09: a key with 1 100 credits got 403 on
+    // perp-pnl-summary, which is not on its plan. Treating that as "the
+    // account is out" stopped a scan that had every credit it needed.
+    const fn = vi.fn(async (_url: string | URL) => {
+      const path = String(_url);
+      return path.includes('perp-pnl-summary')
+        ? new Response('{}', { status: 403, headers: { 'x-nansen-credits-remaining': '1100' } })
+        : new Response(JSON.stringify({ data: [] }), { status: 200, headers: { 'x-nansen-credits-remaining': '1099' } });
+    });
+    global.fetch = fn as unknown as typeof fetch;
+    const client = createNansenClient(KEY);
+    await expect(client.perpPnlSummary('0xabc', '2026-09-01', '2026-09-21')).rejects.toThrow();
+    await expect(client.relatedWallets('0xabc', 'ethereum')).resolves.toEqual({ rows: [], complete: true });
+    expect(fn).toHaveBeenCalledTimes(2);
+  });
+
   it('records a failed call and throws without leaking the key', async () => {
     mockFetch({ error: 'unauthorized' }, 401);
     const calls: NansenCallMeta[] = [];

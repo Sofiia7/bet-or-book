@@ -5,7 +5,7 @@ import { safeKv } from './safeKv';
 import { recordCalls } from './credits';
 import { WORST_CASE_CALLS } from './budget';
 import { spendGuard, requestGate } from './coordinator';
-import { createNansenClient, type NansenCallMeta } from './sources/nansen';
+import { createNansenClient, meansOutOfCredits, type NansenCallMeta } from './sources/nansen';
 import { CLASSIFIER_VERSION } from './engine/verdict';
 import type { CheckResponse } from './api/check';
 import { snapshotId, snapshotKey, isSnapshotId, SNAPSHOT_TTL_SECONDS } from './snapshot';
@@ -196,7 +196,9 @@ export default {
             if (hold !== null) {
               const spent = calls.reduce((sum, c) => sum + (c.creditsCost ?? 1), 0);
               const lastKnown = [...calls].reverse().find((c) => c.creditsRemaining !== null);
-              const refused = calls.some((c) => c.status === 401 || c.status === 402 || c.status === 403);
+              // A refusal that still reports credits is about one endpoint,
+              // not about the balance, and must not stop tomorrow too.
+              const refused = calls.some((c) => meansOutOfCredits(c.status, c.creditsRemaining));
               await budget.settle(hold, spent, lastKnown?.creditsRemaining ?? null, refused);
             }
             // KV keeps the per-day totals that /api/ledger reports. They are

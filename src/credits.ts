@@ -1,5 +1,5 @@
 import type { KVLike } from './kv';
-import type { NansenCallMeta } from './sources/nansen';
+import { meansOutOfCredits, type NansenCallMeta } from './sources/nansen';
 
 export interface DayStats {
   calls: number;
@@ -26,10 +26,10 @@ export async function recordCalls(kv: KVLike, day: string, calls: NansenCallMeta
   stats.credits += calls.reduce((s, c) => s + (c.creditsCost ?? 1), 0);
   const last = [...calls].reverse().find((c) => c.creditsRemaining !== null);
   if (last) stats.lastRemaining = last.creditsRemaining;
-  // What Nansen answers when credits run out is not documented; a refusal of
-  // any kind stops Nansen reads until tomorrow's day key, which is also when
-  // the free plan's daily top-up lands.
-  if (calls.some((c) => c.status === 401 || c.status === 402 || c.status === 403)) stats.lastRemaining = 0;
+  // A refusal that reports credits still on the clock is about one endpoint
+  // the key may not read, not about the balance; only an empty balance is
+  // worth recording as empty.
+  if (calls.some((c) => meansOutOfCredits(c.status, c.creditsRemaining))) stats.lastRemaining = 0;
   await kv.put(dayKey(day), JSON.stringify(stats), { expirationTtl: 60 * 60 * 24 * 40 });
 }
 
