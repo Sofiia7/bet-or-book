@@ -1,6 +1,6 @@
 {
  "scannedAt": "2026-09-18T14:13:43.159Z",
- "finishedAt": "2026-09-18T14:57:03.160Z",
+ "finishedAt": "2026-09-21T07:11:58.006Z",
  "universe": "Largest open positions among the top 3,000 Hyperliquid accounts by value",
  "entries": [
   {
@@ -353,26 +353,27 @@
   {
    "address": "0x92ea19eceb7a8de0f50978a1583a5d8b018050e9",
    "verdict": {
-    "verdict": "unknown",
+    "verdict": "looks_like_a_bet",
     "strength": null,
     "reasons": [
-     "offset_not_measured"
+     "directional_concentration"
     ]
    },
    "positions": {
-    "nPositions": 2,
-    "grossUsd": 163227186.796498,
-    "netUsd": 50767570.966221996,
-    "netToGross": 0.3110239903204115,
+    "nPositions": 1,
+    "grossUsd": 108703727.32296,
+    "netUsd": 108703727.32296,
+    "netToGross": 1,
     "headlineCoin": "BTC",
     "headlineSide": "long",
-    "headlineNotionalUsd": 106997378.88136,
-    "headlineShare": 0.6555119951602058,
-    "headlineLiqDistancePct": null
+    "headlineNotionalUsd": 108703727.32296,
+    "headlineShare": 1,
+    "headlineLiqDistancePct": null,
+    "sameAssetOffsetShare": 0
    },
    "orders": {
-    "restingOrders": 4,
-    "bidShare": 0.75,
+    "restingOrders": 3,
+    "bidShare": 1,
     "coinsBothSides": 0
    },
    "hedge": {
@@ -383,51 +384,50 @@
    "linkedHedge": null,
    "trades": {
     "tradesPerDay": 2000,
-    "crossedShare": 0,
-    "buyShare": 0,
+    "crossedShare": 1,
+    "buyShare": 1,
     "sampleSize": 2000,
     "cappedByApiLimit": true
    },
    "pnl": {
-    "realizedPnlUsd": -934931.2915029977,
-    "winRate": 0.760864566567027,
-    "closedTrades": 4349,
+    "realizedPnlUsd": -32925435.657215,
+    "winRate": 0.3054555524785378,
+    "closedTrades": 10833,
     "windowDays": 30
    },
-   "sizeVsOi": 0.03400252739720458,
+   "sizeVsOi": 0.030675049946104833,
    "source": "nansen",
-   "summary": "2 positions net out to 31% of gross exposure, but this snapshot did not record which assets the legs are in, so whether they offset each other was not established.",
+   "summary": "100% of the exposure is one $108.7M BTC long, and nothing in this account offsets it.",
    "evidence": [
     {
      "label": "Largest position",
-     "value": "$107.0M BTC long",
+     "value": "$108.7M BTC long",
      "source": "Nansen"
     },
     {
      "label": "Share of exposure",
-     "value": "66%",
+     "value": "100%",
      "source": "Nansen"
     },
     {
      "label": "Net / gross exposure",
-     "value": "31%",
+     "value": "100%",
      "source": "Nansen"
     },
     {
      "label": "Realized PnL, 30d",
-     "value": "-$935K",
+     "value": "-$32.9M",
      "source": "Nansen"
     },
     {
      "label": "Size vs open interest",
-     "value": "3.4%",
+     "value": "3.1%",
      "source": "Hyperliquid"
     }
    ],
    "coverage": [],
-   "checkedAt": "2026-09-18T14:14:40.610Z",
-   "nansenCalls": 2,
-   "hedgeCoverage": "not-applicable"
+   "checkedAt": "2026-09-21T07:11:58.006Z",
+   "nansenCalls": 2
   },
   {
    "address": "0x8ea85cbd59affca28162fc286d5c093dd0f8edbc",

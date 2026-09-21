@@ -389,8 +389,14 @@ async function loadGallery() {
   gallery.sorted = entries;
   const counts = galleryCounts(entries);
   const betShare = Math.round((counts.looks_like_a_bet / entries.length) * 100);
+  // Cards are re-checked one at a time as credits allow, so the set can span
+  // days. Showing one timestamp for all of them would be wrong.
+  const times = entries.map((e) => e.checkedAt).sort();
+  const first = fmtTime(times[0]);
+  const last = fmtTime(times[times.length - 1]);
+  const when = first === last ? 'checked ' + first : 'checked between ' + first + ' and ' + last;
   $('gallery-sub').textContent =
-    gallery.universe + ', checked ' + fmtTime(gallery.scannedAt) + '. ' +
+    gallery.universe + ', ' + when + '. ' +
     counts.looks_like_a_bet + ' of ' + entries.length + ' (' + betShare + '%) look like real bets; ' +
     (counts.book + counts.hedged) + ' are books or hedges. Pick one to see why.';
   $('gallery').hidden = false;

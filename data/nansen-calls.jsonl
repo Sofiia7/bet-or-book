@@ -989,3 +989,5 @@
 {"at":"2026-09-18T13:54:00.000Z","source":"wrangler-dev","endpoint":"profiler/perp-pnl-summary","status":200,"count":4,"creditsCost":4,"creditsRemaining":null,"note":"aggregate of calls made through wrangler dev on 2026-09-18, counted by the Worker KV day counter"}
 {"at":"2026-09-18T13:54:00.000Z","source":"wrangler-dev","endpoint":"profiler/address/current-balance","status":200,"count":7,"creditsCost":7,"creditsRemaining":null,"note":"aggregate of calls made through wrangler dev on 2026-09-18, counted by the Worker KV day counter"}
 {"at":"2026-09-18T13:54:00.000Z","source":"wrangler-dev","endpoint":"profiler/address/related-wallets","status":200,"count":6,"creditsCost":6,"creditsRemaining":null,"note":"aggregate of calls made through wrangler dev on 2026-09-18, counted by the Worker KV day counter"}
+{"at":"2026-09-21T07:12:00.534Z","source":"rescan-offset","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":9}
+{"at":"2026-09-21T07:12:00.766Z","source":"rescan-offset","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":8}
