@@ -31,8 +31,12 @@ class_name = "RequestGate"
 tag = "v1"
 new_sqlite_classes = ["NansenBudget", "RequestGate"]
 
-# Structured logs and traces, so a budget refusal or a failing upstream can
-# be seen without adding print statements to a deployed Worker.
+# Structured logs, so a budget refusal or a failing upstream can be seen
+# without adding print statements to a deployed Worker. This flag is logs;
+# it is not latency, error-rate, fallback, cache-hit or credit measurement,
+# and none of those exist yet (audit C03). Sampled traces are a separate
+# setting and are deliberately not on: there is nothing to correlate them
+# against until those measurements do exist.
 [observability]
 enabled = true
 
