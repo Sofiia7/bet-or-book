@@ -11,6 +11,7 @@ const positions: PositionFeatures = {
   nPositions: 1, grossUsd: 1e8, netUsd: 1e8, netToGross: 1, headlineCoin: 'ETH', headlineSide: 'short',
   headlineNotionalUsd: 1e8, headlineShare: 1, headlineLiqDistancePct: null, headlineLiqDistanceBasis: null,
   sameAssetOffsetShare: 0,
+    candidates: [],
 };
 
 const evidence: EvidenceItem[] = [

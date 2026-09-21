@@ -200,10 +200,22 @@ export default {
           { status: 400 },
         );
       }
-      // The rules are part of the key. A verdict cached before a deploy is
-      // an answer from rules that no longer exist, and serving it until the
-      // TTL runs out would quietly mix two vintages on one page.
-      const cacheKey = `check:${CLASSIFIER_VERSION}:${address}`;
+      // Which position the reader asked about, if any. A coin is a short
+      // ticker and a side is one of two words; anything else is not a
+      // request, it is noise, and is dropped rather than passed on.
+      const rawCoin = url.searchParams.get('coin') ?? '';
+      const rawSide = url.searchParams.get('side') ?? '';
+      const focus =
+        /^[A-Za-z0-9:_-]{1,24}$/.test(rawCoin) && (rawSide === 'long' || rawSide === 'short')
+          ? { coin: rawCoin.toUpperCase(), side: rawSide as 'long' | 'short' }
+          : null;
+
+      // The rules are part of the key, and so is the question: a verdict
+      // cached before a deploy is an answer from rules that no longer
+      // exist, and an answer about the ETH short is not an answer about the
+      // BTC long at the same address.
+      const asked = focus ? `:${focus.coin}:${focus.side}` : '';
+      const cacheKey = `check:${CLASSIFIER_VERSION}:${address}${asked}`;
 
       // Reading an answer that already exists and starting a new one that
       // costs money are two different acts, so they are two different
@@ -290,6 +302,7 @@ export default {
             const result = await checkAddress(address, {
               nansen,
               nansenOffReason,
+              focus,
               deadline: startedAt + CHECK_DEADLINE_MS,
               signal: timeout,
             });

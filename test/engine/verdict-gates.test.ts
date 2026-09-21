@@ -19,6 +19,7 @@ function positions(overrides: Partial<PositionFeatures>): PositionFeatures {
     headlineLiqDistancePct: null,
     headlineLiqDistanceBasis: null,
     sameAssetOffsetShare: 0,
+    candidates: [],
     ...overrides,
   };
 }

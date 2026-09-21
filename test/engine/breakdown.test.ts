@@ -8,7 +8,8 @@ import { EMPTY_HEDGE, type PositionFeatures, type HedgeFeatures, type LinkedHedg
 const positions = (over: Partial<PositionFeatures> = {}): PositionFeatures => ({
   nPositions: 1, grossUsd: 1e8, netUsd: 1e8, netToGross: 1, headlineCoin: 'ETH', headlineSide: 'short',
   headlineNotionalUsd: 1e8, headlineShare: 1, headlineLiqDistancePct: null, headlineLiqDistanceBasis: null,
-  sameAssetOffsetShare: 0, ...over,
+  sameAssetOffsetShare: 0,
+    candidates: [], ...over,
 });
 const hedge = (over: Partial<HedgeFeatures> = {}): HedgeFeatures => ({ ...EMPTY_HEDGE, ...over });
 const funders = (usd: number, n = 2): LinkedHedgeFeatures => ({

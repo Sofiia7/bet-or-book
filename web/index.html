@@ -65,6 +65,14 @@
   /* Five equal tiles made the number that decided the verdict compete with
      Net/Gross for attention, and on a wide screen the fifth became a narrow
      column of wrapped text. The decisive one is given its own row. */
+  /* A post says BTC and the largest position at the address is ETH. Until
+     this existed the answer was always about the ETH, and the reader had no
+     way to say which position they came for. */
+  .picker { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 14px 0 0; font-size: 13px; }
+  .picker-label { color: var(--muted); }
+  .picker-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .picker .chip { padding: 4px 10px; font-size: 12px; }
+
   /* The one distinction the whole card turns on - what this address holds
      against the position, versus what a wallet that merely funded it holds -
      is a shape, not a row of percentages. Solid is counted; dashed is
@@ -128,6 +136,10 @@
   <p style="margin: 10px 0 0;"><span class="badge" id="badge"></span></p>
   <p class="headline" id="headline"></p>
   <p class="summary" id="summary"></p>
+  <div class="picker" id="picker" hidden>
+    <span class="picker-label">This answer is about</span>
+    <span class="picker-chips" id="picker-chips"></span>
+  </div>
   <figure class="breakdown" id="breakdown" hidden>
     <figcaption id="breakdown-caption"></figcaption>
     <div id="breakdown-svg"></div>

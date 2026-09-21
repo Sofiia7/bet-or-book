@@ -174,3 +174,28 @@ describe('the page and its script are deployed together', () => {
     expect(res.headers.get('content-type')).toContain('javascript');
   });
 });
+
+describe('asking about a particular position', () => {
+  it('passes the chosen position through and keys the cache by it', async () => {
+    const seen = routeUpstreams();
+    const env = testEnv();
+    const first = await worker.fetch(request(`/api/check?address=${ADDRESS}&coin=ETH&side=short`, { method: 'POST' }), env);
+    expect(first.status).toBe(200);
+    expect(((await first.json()) as { focus: unknown }).focus).toBeNull(); // no such position in this fixture
+    const before = seen.length;
+    // A different position is a different question, so it is not answered
+    // out of the first one's cache entry.
+    await worker.fetch(request(`/api/check?address=${ADDRESS}&coin=BTC&side=long`, { method: 'POST' }), env);
+    expect(seen.length).toBeGreaterThan(before);
+  });
+
+  it('ignores a position parameter that is not one', async () => {
+    routeUpstreams();
+    const res = await worker.fetch(
+      request(`/api/check?address=${ADDRESS}&coin=${'x'.repeat(40)}&side=sideways`, { method: 'POST' }),
+      testEnv(),
+    );
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { focus: unknown }).focus).toBeNull();
+  });
+});

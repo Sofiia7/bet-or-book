@@ -107,6 +107,37 @@ function setStatus(text, isError) {
   s.className = 'status' + (isError ? ' error' : '');
 }
 
+/**
+ * The positions this address holds, offered as a choice.
+ *
+ * A check answers about one position, and it used to always be the largest
+ * one: the reader who came from a post about BTC got an answer about ETH
+ * with nothing saying so. Choosing another is a different question, so it
+ * is a different check - the chip says as much before it spends anything.
+ */
+function renderPicker(d, kind) {
+  const list = (d.positions && d.positions.candidates) || [];
+  const box = $('picker');
+  // Nothing to choose between, and a saved reading is a reading of one
+  // position: re-asking it is a new live check, started from the address.
+  if (list.length < 2 || kind !== 'live') {
+    box.hidden = true;
+    return;
+  }
+  box.hidden = false;
+  $('picker-chips').replaceChildren(
+    ...list.map((c) => {
+      const active = c.coin === d.positions.headlineCoin && c.side === d.positions.headlineSide;
+      const b = el('button', 'chip', fmtUsd(c.sizeUsd) + ' ' + c.coin + ' ' + c.side);
+      b.setAttribute('aria-pressed', String(active));
+      if (!active) b.title = 'Check this position instead - a new reading of this address';
+      b.disabled = active;
+      b.addEventListener('click', () => checkPosition(d.address, c));
+      return b;
+    }),
+  );
+}
+
 // ---- the evidence diagram ----
 //
 // Five identical tiles of numbers made the reader assemble the answer, and
@@ -253,6 +284,7 @@ function renderResult(d, opts) {
     return box;
   }));
 
+  renderPicker(d, kindOf(opts));
   renderBreakdown(d);
 
   const funders = d.linkedHedge && Array.isArray(d.linkedHedge.funders) ? d.linkedHedge.funders : [];
@@ -299,6 +331,9 @@ function renderResult(d, opts) {
   $('address').value = d.address;
 
   const kind = kindOf(opts);
+  if (d.focus) {
+    $('picker-chips').setAttribute('aria-label', 'asked about ' + d.focus.coin + ' ' + d.focus.side);
+  }
   $('snapshot').hidden = kind === 'live';
   if (kind === 'gallery') {
     // An entry whose observation predates the current rules keeps the
@@ -429,6 +464,24 @@ function runCheck() {
     'Something went wrong. Try again shortly.',
     'POST',
     notice,
+  );
+}
+
+/** Re-checks the same address, asking about one particular position. */
+function checkPosition(address, position) {
+  if (busy) return;
+  const query =
+    '/api/check?address=' + encodeURIComponent(address) +
+    '&coin=' + encodeURIComponent(position.coin) +
+    '&side=' + encodeURIComponent(position.side);
+  return load(
+    query,
+    (data) => {
+      renderResult(data, { kind: 'live' });
+      showLink(data.snapshotId && data.snapshotSaved !== false ? data.snapshotId : null);
+    },
+    'Something went wrong. Try again shortly.',
+    'POST',
   );
 }
 

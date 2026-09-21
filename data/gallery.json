@@ -91,7 +91,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:14:26.586Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -226,7 +226,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:14:33.599Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -362,7 +362,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T07:11:58.006Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -497,7 +497,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:14:47.624Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -632,7 +632,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:14:54.633Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -767,7 +767,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:15:01.643Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -902,7 +902,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:15:08.657Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -1037,7 +1037,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:15:15.663Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -1309,7 +1309,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:15:29.675Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -1444,7 +1444,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:15:36.688Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -1579,7 +1579,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:15:43.698Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -1851,7 +1851,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:15:57.721Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -2271,7 +2271,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:16:18.736Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -2406,7 +2406,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:16:25.748Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -2678,7 +2678,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:16:48.857Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -2813,7 +2813,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:16:55.860Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -3075,7 +3075,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:17:16.886Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -3210,7 +3210,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:17:23.896Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -3599,7 +3599,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:17:44.926Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -3734,7 +3734,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:17:51.928Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -3875,7 +3875,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:17:58.935Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -4010,7 +4010,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:18:05.945Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -4145,7 +4145,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:18:12.950Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -4280,7 +4280,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:18:19.962Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -4415,7 +4415,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:18:26.962Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -4508,7 +4508,7 @@
    },
    "sizeVsOi": 0.009528001895063564,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 7 positions, largest position 35% of exposure.",
+   "summary": "The $25.7M ETH long is not a book, not hedged, and not a clean bet: 7 positions, largest position 35% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -4550,7 +4550,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:18:33.971Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -4643,7 +4643,7 @@
    },
    "sizeVsOi": 0.009515954624365754,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 11 positions, net 69% of gross, largest position 37% of exposure.",
+   "summary": "The $25.7M ETH long is not a book, not hedged, and not a clean bet: 11 positions, net 69% of gross, largest position 37% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -4685,7 +4685,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:18:40.980Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -4820,7 +4820,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:18:47.987Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -5076,7 +5076,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:29:14.615Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -5211,7 +5211,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:29:21.625Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -5346,7 +5346,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:29:28.640Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -5487,7 +5487,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:29:35.648Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -5622,7 +5622,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:29:42.663Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -5757,7 +5757,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:29:49.665Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -5850,7 +5850,7 @@
    },
    "sizeVsOi": 0.007589690888790076,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 15 positions, largest position 37% of exposure.",
+   "summary": "The $24.2M BTC long is not a book, not hedged, and not a clean bet: 15 positions, largest position 37% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -5892,7 +5892,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:29:56.669Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -6027,7 +6027,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:30:03.676Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -6162,7 +6162,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:30:10.692Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -6557,7 +6557,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T11:53:18.125Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -6650,7 +6650,7 @@
    },
    "sizeVsOi": 0.010645363803961137,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 9 positions.",
+   "summary": "The $21.1M HYPE long is not a book, not hedged, and not a clean bet: 9 positions.",
    "evidence": [
     {
      "label": "Largest position",
@@ -6692,7 +6692,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:30:45.730Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -6785,7 +6785,7 @@
    },
    "sizeVsOi": 0.007583692790332226,
    "source": "hyperliquid",
-   "summary": "Not a book, not hedged, and not a clean bet: two-sided quotes in 1 market.",
+   "summary": "The $20.8M ETH long is not a book, not hedged, and not a clean bet: two-sided quotes in 1 market.",
    "evidence": [
     {
      "label": "Largest position",
@@ -6829,7 +6829,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:30:52.738Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -6965,7 +6965,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:30:59.740Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -7100,7 +7100,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:31:06.746Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -7324,7 +7324,7 @@
    },
    "sizeVsOi": 0.010458925992118869,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: two-sided quotes in 1 market.",
+   "summary": "The $20.8M HYPE long is not a book, not hedged, and not a clean bet: two-sided quotes in 1 market.",
    "evidence": [
     {
      "label": "Largest position",
@@ -7366,7 +7366,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:31:24.177Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -7501,7 +7501,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:31:31.188Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -8172,7 +8172,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:32:06.828Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -8445,7 +8445,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:32:20.858Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -8580,7 +8580,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:32:27.864Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -8959,7 +8959,7 @@
    "positionsAsOf": "2026-09-21T11:05:32.931Z",
    "classifierVersion": "v3",
    "degraded": false,
-   "summary": "Not a book, not hedged, and not a clean bet: 11 positions, net 72% of gross.",
+   "summary": "The $19.1M ETH long is not a book, not hedged, and not a clean bet: 11 positions, net 72% of gross.",
    "evidence": [
     {
      "label": "Largest position",
@@ -8997,7 +8997,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T11:05:32.931Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -9252,7 +9252,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:33:09.909Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -9378,7 +9378,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:33:16.925Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -9640,7 +9640,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:33:32.908Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -9775,7 +9775,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:33:39.920Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -9910,7 +9910,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:33:46.923Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -10045,7 +10045,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:33:53.928Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -10180,7 +10180,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:34:00.928Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -10435,7 +10435,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:34:14.946Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -10688,7 +10688,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:34:28.965Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -10781,7 +10781,7 @@
    },
    "sizeVsOi": 0.021545790145619907,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: largest position 37% of exposure.",
+   "summary": "The $13.1M SOL long is not a book, not hedged, and not a clean bet: largest position 37% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -10823,7 +10823,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:34:35.966Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -10958,7 +10958,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:34:42.981Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -11225,7 +11225,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:34:56.991Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -11455,7 +11455,7 @@
    },
    "sizeVsOi": 0.013767498247316486,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 20 positions, largest position 23% of exposure.",
+   "summary": "The $12.5M ZEC long is not a book, not hedged, and not a clean bet: 20 positions, largest position 23% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -11497,7 +11497,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:35:11.018Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -11727,7 +11727,7 @@
    },
    "sizeVsOi": 0.05967943325692906,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: largest position 42% of exposure.",
+   "summary": "The $12.3M XRP long is not a book, not hedged, and not a clean bet: largest position 42% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -11769,7 +11769,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:35:25.035Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -12124,7 +12124,7 @@
    },
    "sizeVsOi": 0.005724960365948893,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 9 positions, net 68% of gross, largest position 18% of exposure.",
+   "summary": "The $15.8M ETH long is not a book, not hedged, and not a clean bet: 9 positions, net 68% of gross, largest position 18% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -12166,7 +12166,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:35:46.054Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -12708,7 +12708,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:36:14.088Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -12850,7 +12850,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:36:28.106Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -12985,7 +12985,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:36:35.115Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -13528,7 +13528,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:37:03.138Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -13621,7 +13621,7 @@
    },
    "sizeVsOi": 0.011058219237548418,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 7 positions, two-sided quotes in 2 markets.",
+   "summary": "The $10.1M ZEC long is not a book, not hedged, and not a clean bet: 7 positions, two-sided quotes in 2 markets.",
    "evidence": [
     {
      "label": "Largest position",
@@ -13663,7 +13663,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:37:10.152Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -14055,7 +14055,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:37:31.178Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -14286,7 +14286,7 @@
    },
    "sizeVsOi": 0.0030021214790893424,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 27 positions, net 72% of gross.",
+   "summary": "The $9.7M BTC long is not a book, not hedged, and not a clean bet: 27 positions, net 72% of gross.",
    "evidence": [
     {
      "label": "Largest position",
@@ -14328,7 +14328,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:37:45.178Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -14463,7 +14463,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:37:52.187Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -14556,7 +14556,7 @@
    },
    "sizeVsOi": 0.002989297302565193,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: largest position 44% of exposure, two-sided quotes in 1 market.",
+   "summary": "The $9.7M BTC long is not a book, not hedged, and not a clean bet: largest position 44% of exposure, two-sided quotes in 1 market.",
    "evidence": [
     {
      "label": "Largest position",
@@ -14598,7 +14598,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:37:59.192Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -14733,7 +14733,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:38:06.199Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -14876,7 +14876,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T11:05:39.940Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -15011,7 +15011,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:38:20.206Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -15104,7 +15104,7 @@
    },
    "sizeVsOi": 0.004771579708102729,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: net 36% of gross.",
+   "summary": "The $9.5M HYPE long is not a book, not hedged, and not a clean bet: net 36% of gross.",
    "evidence": [
     {
      "label": "Largest position",
@@ -15146,7 +15146,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:38:27.208Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -15239,7 +15239,7 @@
    },
    "sizeVsOi": 0.12798359488588412,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 8 positions, largest position 35% of exposure.",
+   "summary": "The $9.1M XMR long is not a book, not hedged, and not a clean bet: 8 positions, largest position 35% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -15281,7 +15281,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:38:34.220Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -15511,7 +15511,7 @@
    },
    "sizeVsOi": 0.044571333242801284,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: largest position 31% of exposure.",
+   "summary": "The $9.2M XRP long is not a book, not hedged, and not a clean bet: largest position 31% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -15553,7 +15553,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:38:48.239Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -15646,7 +15646,7 @@
    },
    "sizeVsOi": 0.0037372716450784606,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: largest position 44% of exposure.",
+   "summary": "The $12.1M BTC long is not a book, not hedged, and not a clean bet: largest position 44% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -15688,7 +15688,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:38:55.247Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -15781,7 +15781,7 @@
    },
    "sizeVsOi": 0.00462659146828961,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 21 positions, two-sided quotes in 3 markets.",
+   "summary": "The $9.2M HYPE long is not a book, not hedged, and not a clean bet: 21 positions, two-sided quotes in 3 markets.",
    "evidence": [
     {
      "label": "Largest position",
@@ -15823,7 +15823,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:39:02.257Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -16089,7 +16089,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:39:16.277Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -16224,7 +16224,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:39:23.282Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -16359,7 +16359,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:39:30.296Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -16494,7 +16494,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:39:37.311Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -16904,7 +16904,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:39:58.342Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -17170,7 +17170,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:40:12.367Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -17305,7 +17305,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:40:19.383Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -17560,7 +17560,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:40:33.402Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -17653,7 +17653,7 @@
    },
    "sizeVsOi": 0.0025678400551895093,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 9 positions.",
+   "summary": "The $8.3M BTC long is not a book, not hedged, and not a clean bet: 9 positions.",
    "evidence": [
     {
      "label": "Largest position",
@@ -17695,7 +17695,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:40:41.922Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -18344,7 +18344,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:41:16.974Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -18437,7 +18437,7 @@
    },
    "sizeVsOi": 0.002479966006292523,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 6 positions.",
+   "summary": "The $8.1M BTC long is not a book, not hedged, and not a clean bet: 6 positions.",
    "evidence": [
     {
      "label": "Largest position",
@@ -18479,7 +18479,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:41:23.982Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -18614,7 +18614,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:41:30.982Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -18707,7 +18707,7 @@
    },
    "sizeVsOi": 0.00247997886895317,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 14 positions, net 50% of gross, largest position 28% of exposure.",
+   "summary": "The $8.1M BTC long is not a book, not hedged, and not a clean bet: 14 positions, net 50% of gross, largest position 28% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -18749,7 +18749,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:41:37.987Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -19158,7 +19158,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:41:59.025Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -19578,7 +19578,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T11:05:47.248Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -19713,7 +19713,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:42:27.052Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -19940,7 +19940,7 @@
    },
    "sizeVsOi": 0.0027145517155356433,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: largest position 42% of exposure.",
+   "summary": "The $7.5M ETH long is not a book, not hedged, and not a clean bet: largest position 42% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -19982,7 +19982,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:42:41.071Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -20323,7 +20323,7 @@
    },
    "sizeVsOi": 0.008170813136445042,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: net 51% of gross.",
+   "summary": "The $7.4M ZEC long is not a book, not hedged, and not a clean bet: net 51% of gross.",
    "evidence": [
     {
      "label": "Largest position",
@@ -20365,7 +20365,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:43:02.105Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -20500,7 +20500,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:43:09.115Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -21177,7 +21177,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:43:51.167Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -21312,7 +21312,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:43:58.169Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -21584,7 +21584,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:44:12.177Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -21719,7 +21719,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:44:19.178Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -21812,7 +21812,7 @@
    },
    "sizeVsOi": 0.1615330210309451,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 10 positions, net 72% of gross, largest position 43% of exposure.",
+   "summary": "The $6.4M ZRO long is not a book, not hedged, and not a clean bet: 10 positions, net 72% of gross, largest position 43% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -21854,7 +21854,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:44:26.188Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -21989,7 +21989,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:44:33.202Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -22124,7 +22124,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:44:47.213Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -22516,7 +22516,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:45:08.230Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -22651,7 +22651,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:45:29.244Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -22906,7 +22906,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:45:43.260Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -23694,7 +23694,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T11:06:01.280Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -23966,7 +23966,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:46:39.332Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -24059,7 +24059,7 @@
    },
    "sizeVsOi": 0.008972312155295883,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: largest position 41% of exposure.",
+   "summary": "The $5.5M SOL long is not a book, not hedged, and not a clean bet: largest position 41% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -24101,7 +24101,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:46:46.341Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -24373,7 +24373,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:47:09.686Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -24466,7 +24466,7 @@
    },
    "sizeVsOi": 0.00871447316296748,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 7 positions, net 47% of gross, largest position 42% of exposure.",
+   "summary": "The $5.4M SOL long is not a book, not hedged, and not a clean bet: 7 positions, net 47% of gross, largest position 42% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -24508,7 +24508,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:47:16.695Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -24601,7 +24601,7 @@
    },
    "sizeVsOi": 0.009868967652204104,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 6 positions, largest position 24% of exposure.",
+   "summary": "The $6.1M SOL long is not a book, not hedged, and not a clean bet: 6 positions, largest position 24% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -24643,7 +24643,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:47:23.697Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -24778,7 +24778,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:47:30.698Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -24871,7 +24871,7 @@
    },
    "sizeVsOi": 0.0018488558018505588,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: largest position 35% of exposure.",
+   "summary": "The $5.1M ETH long is not a book, not hedged, and not a clean bet: largest position 35% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -24913,7 +24913,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:47:37.707Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -25048,7 +25048,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:47:44.713Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -25183,7 +25183,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:47:51.721Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -25689,7 +25689,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:48:19.760Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -25782,7 +25782,7 @@
    },
    "sizeVsOi": 0.0014812322225649338,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: largest position 38% of exposure.",
+   "summary": "The $4.9M BTC long is not a book, not hedged, and not a clean bet: largest position 38% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -25824,7 +25824,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:48:26.760Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -25959,7 +25959,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:48:33.760Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -26058,7 +26058,7 @@
    },
    "sizeVsOi": 0.001458849678414785,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: largest position 49% of exposure.",
+   "summary": "The $4.8M BTC long is not a book, not hedged, and not a clean bet: largest position 49% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -26100,7 +26100,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:48:40.760Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -26235,7 +26235,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:48:47.772Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -26370,7 +26370,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:48:54.779Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -26726,7 +26726,7 @@
    },
    "sizeVsOi": 0.002313743745000469,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: largest position 43% of exposure.",
+   "summary": "The $4.6M HYPE long is not a book, not hedged, and not a clean bet: largest position 43% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -26768,7 +26768,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:49:15.813Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -26903,7 +26903,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:49:22.815Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -26996,7 +26996,7 @@
    },
    "sizeVsOi": 0.0013591785366696264,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: two-sided quotes in 1 market.",
+   "summary": "The $4.5M BTC long is not a book, not hedged, and not a clean bet: two-sided quotes in 1 market.",
    "evidence": [
     {
      "label": "Largest position",
@@ -27038,7 +27038,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:49:36.826Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -27441,7 +27441,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:49:57.846Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -27707,7 +27707,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:50:11.853Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -28309,7 +28309,7 @@
    },
    "sizeVsOi": 0.0009726131743679227,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: largest position 43% of exposure.",
+   "summary": "The $3.2M BTC long is not a book, not hedged, and not a clean bet: largest position 43% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -28351,7 +28351,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:50:46.883Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -28729,7 +28729,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:51:07.919Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -28864,7 +28864,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:51:14.933Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -28999,7 +28999,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:51:21.935Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -29134,7 +29134,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:51:28.950Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -29269,7 +29269,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:51:35.964Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -29532,7 +29532,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:52:03.988Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -29667,7 +29667,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:52:11.003Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -29802,7 +29802,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:52:18.014Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -29937,7 +29937,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:52:25.020Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -30150,7 +30150,7 @@
    },
    "sizeVsOi": 0.0012326845138322714,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: largest position 49% of exposure.",
+   "summary": "The $4.0M BTC long is not a book, not hedged, and not a clean bet: largest position 49% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -30192,7 +30192,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:52:39.030Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -30595,7 +30595,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:53:14.052Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -30730,7 +30730,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:53:21.057Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -30865,7 +30865,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:53:35.079Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -30958,7 +30958,7 @@
    },
    "sizeVsOi": 0.004146671612231822,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: two-sided quotes in 1 market.",
+   "summary": "The $3.8M ZEC long is not a book, not hedged, and not a clean bet: two-sided quotes in 1 market.",
    "evidence": [
     {
      "label": "Largest position",
@@ -31000,7 +31000,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:53:42.093Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -31275,7 +31275,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:54:03.108Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -31368,7 +31368,7 @@
    },
    "sizeVsOi": 0.01403576067854188,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 41 positions, largest position 5.5% of exposure.",
+   "summary": "The $3.8M NEAR long is not a book, not hedged, and not a clean bet: 41 positions, largest position 5.5% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -31410,7 +31410,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:54:10.116Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -31545,7 +31545,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:54:17.115Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -31680,7 +31680,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:54:24.115Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -31773,7 +31773,7 @@
    },
    "sizeVsOi": 0.001315244868932026,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 123 positions.",
+   "summary": "The $3.7M ETH long is not a book, not hedged, and not a clean bet: 123 positions.",
    "evidence": [
     {
      "label": "Largest position",
@@ -31815,7 +31815,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:54:31.120Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -31950,7 +31950,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:54:38.120Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -32085,7 +32085,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:54:45.132Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -32178,7 +32178,7 @@
    },
    "sizeVsOi": 0.013742329440602545,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 10 positions, largest position 30% of exposure.",
+   "summary": "The $3.7M NEAR long is not a book, not hedged, and not a clean bet: 10 positions, largest position 30% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -32220,7 +32220,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:54:52.147Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -32588,7 +32588,7 @@
    },
    "sizeVsOi": 0.0010863738689495925,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: net 71% of gross.",
+   "summary": "The $3.6M BTC long is not a book, not hedged, and not a clean bet: net 71% of gross.",
    "evidence": [
     {
      "label": "Largest position",
@@ -32630,7 +32630,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:55:13.168Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -33017,7 +33017,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:55:41.209Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -33152,7 +33152,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:55:55.216Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -33287,7 +33287,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:56:02.232Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -33542,7 +33542,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:56:16.258Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -33683,7 +33683,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:56:23.272Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -33776,7 +33776,7 @@
    },
    "sizeVsOi": 0.001203850832971389,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 7 positions.",
+   "summary": "The $3.4M ETH long is not a book, not hedged, and not a clean bet: 7 positions.",
    "evidence": [
     {
      "label": "Largest position",
@@ -33818,7 +33818,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:56:30.274Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -34084,7 +34084,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:56:52.454Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "looks_like_a_bet",
     "classifierVersion": "v3",
@@ -34177,7 +34177,7 @@
    },
    "sizeVsOi": 0.000983068038668336,
    "source": "nansen",
-   "summary": "Not a book, not hedged, and not a clean bet: 11 positions, net 77% of gross, largest position 25% of exposure.",
+   "summary": "The $3.2M BTC long is not a book, not hedged, and not a clean bet: 11 positions, net 77% of gross, largest position 25% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -34219,7 +34219,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-18T14:56:59.840Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -34339,7 +34339,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:18:29.100Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
    "summary": "2,722 resting orders quote both sides of 120 markets; 2,000+ fills over 0.3 hours, 47% of them buys, 80% as maker.",
    "evidence": [
@@ -34499,7 +34499,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:18:32.271Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
    "summary": "The $42.7M HYPE short is 97% covered by $41.3M of spot HYPE held by this address on Nansen-supported chains.",
    "evidence": [
@@ -34661,7 +34661,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:18:36.807Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
    "summary": "23 open positions net out to 18% of gross exposure; 516 resting orders quote both sides of 5 markets; 1,677 fills over 19.0 hours, 36% of them buys, 79% as maker.",
    "evidence": [
@@ -34821,9 +34821,9 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:18:40.305Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": true,
-   "summary": "Not a book, not hedged, and not a clean bet: 24 positions, net 47% of gross, largest position 46% of exposure.",
+   "summary": "The $16.0M xyz:SP500 short is not a book, not hedged, and not a clean bet: 24 positions, net 47% of gross, largest position 46% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -35001,9 +35001,9 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:18:46.721Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
-   "summary": "Not a book, not hedged, and not a clean bet: 22 positions, largest position 40% of exposure, two-sided quotes in 4 markets.",
+   "summary": "The $7.8M BTC short is not a book, not hedged, and not a clean bet: 22 positions, largest position 40% of exposure, two-sided quotes in 4 markets.",
    "evidence": [
     {
      "label": "Largest position",
@@ -35183,7 +35183,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:18:53.540Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
    "summary": "2,000+ fills over 0.5 hours, 57% buys and 73% as maker, 16% of them in ETH. That is a busy account, but nothing here shows the $10.2M ETH short is inventory rather than a position.",
    "evidence": [
@@ -35352,9 +35352,9 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:18:58.813Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
-   "summary": "Not a book, not hedged, and not a clean bet: 29 positions, net 37% of gross, largest position 11% of exposure.",
+   "summary": "The $6.1M HYPE long is not a book, not hedged, and not a clean bet: 29 positions, net 37% of gross, largest position 11% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -35501,7 +35501,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:02.475Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
    "summary": "The $5.0M HYPE short is 100% covered by $5.0M of spot HYPE held by this address on Nansen-supported chains.",
    "evidence": [
@@ -35672,7 +35672,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:06.656Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": true,
    "summary": "34 open positions net out to 28% of gross exposure, which is the shape of a book - but there is no two-sided quoting behind it, so whether the $4.5M BTC short is inventory or a position of its own is not established.",
    "evidence": [
@@ -35840,7 +35840,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:11.775Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
    "summary": "The $4.4M HYPE short is 100% covered by $4.4M of spot HYPE held by this address on Nansen-supported chains.",
    "evidence": [
@@ -36001,7 +36001,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:21.188Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
    "summary": "225 resting orders quote both sides of 14 markets; 2,000+ fills over 1.0 hours, 55% of them buys, 61% as maker.",
    "evidence": [
@@ -36178,7 +36178,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:24.467Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
    "summary": "90 open positions net out to 17% of gross exposure, which is the shape of a book - but there is no two-sided quoting behind it, so whether the $4.0M NEAR short is inventory or a position of its own is not established.",
    "evidence": [
@@ -36341,7 +36341,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:29.643Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
    "summary": "The $3.1M HYPE short is 100% covered by $3.1M of spot HYPE held by this address on Nansen-supported chains.",
    "evidence": [
@@ -36501,7 +36501,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:33.573Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
    "summary": "The $4.3M HYPE short is 100% covered by $4.3M of spot HYPE held by this address on Nansen-supported chains.",
    "evidence": [
@@ -36661,7 +36661,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:37.430Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
    "summary": "The $3.9M HYPE short is 100% covered by $3.9M of spot HYPE held by this address on Nansen-supported chains.",
    "evidence": [
@@ -36826,7 +36826,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:41.212Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
    "summary": "The $3.8M HYPE short is 100% covered by $3.8M of spot HYPE held by this address on Nansen-supported chains.",
    "evidence": [
@@ -36991,7 +36991,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:46.217Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
    "summary": "16 positions net out to 13% of gross exposure, but the long and short legs are in different assets: a dollar balance across different assets is a portfolio, not a hedge.",
    "evidence": [
@@ -37140,7 +37140,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:50.093Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
    "summary": "38 open positions net out to 21% of gross exposure, which is the shape of a book - but there is no two-sided quoting behind it, so whether the $3.6M HYPE long is inventory or a position of its own is not established.",
    "evidence": [
@@ -37284,9 +37284,9 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:19:53.875Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
-   "summary": "Not a book, not hedged, and not a clean bet: 49 positions, net 40% of gross, largest position 15% of exposure.",
+   "summary": "The $2.3M HYPE long is not a book, not hedged, and not a clean bet: 49 positions, net 40% of gross, largest position 15% of exposure.",
    "evidence": [
     {
      "label": "Largest position",
@@ -37453,7 +37453,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:20:15.648Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
    "summary": "Less than 1% of the $216.7M ETH short is covered by ETH at this address. 2 wallets that funded it hold $464.7M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
@@ -37617,7 +37617,7 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:20:22.944Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
    "summary": "87% of the exposure is one $34.9M ETH long. Spot cannot offset a long, and debts or other derivatives are not read here.",
    "evidence": [
@@ -37783,9 +37783,9 @@
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-21T20:20:26.302Z",
-   "interpretedAt": "2026-09-21T20:23:39.750Z",
+   "interpretedAt": "2026-09-21T20:30:28.114Z",
    "degraded": false,
-   "summary": "Not a book, not hedged, and not a clean bet: 15 positions, largest position 38% of exposure.",
+   "summary": "The $289.6M ETH short is not a book, not hedged, and not a clean bet: 15 positions, largest position 38% of exposure.",
    "evidence": [
     {
      "label": "Largest position",

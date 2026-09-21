@@ -67,6 +67,8 @@ export interface CheckOptions {
   nansen: NansenClient | null;
   /** Why `nansen` is null, in words for the card. */
   nansenOffReason?: string;
+  /** The position the reader asked about, rather than the largest one. */
+  focus?: { coin: string; side: 'long' | 'short' } | null;
   now?: () => number;
   /** Absolute time past which no further paid stage is started. */
   deadline?: number;
@@ -101,6 +103,10 @@ export interface CheckResult {
   /** When the source says the positions were measured, which is not the same
    * as when this check asked for them. Null when the source gives no time. */
   positionsAsOf: string | null;
+  /** The position this answer is about, when the reader chose one. Null
+   * means the largest, which is what the check picks on its own. Part of
+   * the reading, so it travels into the saved snapshot with it. */
+  focus: { coin: string; side: 'long' | 'short' } | null;
   /** The rules that read all of this. See CLASSIFIER_VERSION. */
   classifierVersion: string;
   /** The shape of the observation itself, as opposed to the reading of it.
@@ -285,7 +291,17 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
       if (Number.isFinite(markPx) && markPx > 0) markPxByCoin.set(asset.name, markPx);
     });
   }
-  const positionFeatures = computePositionFeatures(positions, markPxByCoin);
+  const positionFeatures = computePositionFeatures(positions, markPxByCoin, opts.focus);
+  // Asking about a position that is not open is worth saying out loud: the
+  // answer below is about a different position from the one requested.
+  const askedFor = opts.focus ?? null;
+  const focus =
+    askedFor && positionFeatures.headlineCoin?.toUpperCase() === askedFor.coin.toUpperCase() ? askedFor : null;
+  if (askedFor && focus === null) {
+    coverage.push(
+      `No ${askedFor.coin} ${askedFor.side} is open at this address; this answer is about the largest position instead`,
+    );
+  }
 
   // frontendOpenOrders answers for one perp dex and spot. Nansen reports
   // positions on every HIP-3 dex as well, so without asking those by name an
@@ -412,6 +428,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     pnl,
     sizeVsOi: computeSizeVsOi(positionFeatures.headlineNotionalUsd, openInterestUsd),
     source,
+    focus,
     positionsAsOf: measuredAt === null ? null : new Date(measuredAt).toISOString(),
     classifierVersion: CLASSIFIER_VERSION,
     observationSchemaVersion: OBSERVATION_SCHEMA_VERSION,

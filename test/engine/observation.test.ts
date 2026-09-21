@@ -14,6 +14,7 @@ const base = (over: Partial<CheckResponse> = {}): CheckResponse =>
       nPositions: 1, grossUsd: 1e6, netUsd: 1e6, netToGross: 1, headlineCoin: 'ETH', headlineSide: 'short',
       headlineNotionalUsd: 1e6, headlineShare: 1, headlineLiqDistancePct: null, headlineLiqDistanceBasis: null,
       sameAssetOffsetShare: 0,
+    candidates: [],
     },
     orders: { ...EMPTY_ORDERS },
     hedge: { ...EMPTY_HEDGE },

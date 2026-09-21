@@ -264,7 +264,10 @@ function undecidedSummary(input: EvidenceInput): string {
   if (p.headlineShare < b.minHeadlineShare) misses.push(`largest position ${formatPct(p.headlineShare)} of exposure`);
   if (total >= b.maxHedgeRatio) misses.push(`${formatPct(total)} hedged`);
   if (o.coinsBothSides > 0) misses.push(`two-sided quotes in ${plural(o.coinsBothSides, 'market')}`);
-  const head = 'Not a book, not hedged, and not a clean bet';
+  // Naming the position matters more now that the reader can choose which
+  // one to ask about: "not a clean bet" with no subject is an answer to a
+  // question they may not have asked.
+  const head = `The ${headlineText(p)} is not a book, not hedged, and not a clean bet`;
   return misses.length > 0 ? `${head}: ${misses.join(', ')}.` : `${head}.`;
 }
 

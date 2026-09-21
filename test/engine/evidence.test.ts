@@ -15,6 +15,7 @@ function positions(overrides: Partial<PositionFeatures>): PositionFeatures {
     headlineLiqDistancePct: null,
     headlineLiqDistanceBasis: null,
     sameAssetOffsetShare: 0,
+    candidates: [],
     ...overrides,
   };
 }
@@ -283,7 +284,7 @@ describe('explain', () => {
       }),
     );
     expect(e.summary).toBe(
-      'Not a book, not hedged, and not a clean bet: 8 positions, net 60% of gross, largest position 40% of exposure, 20% hedged, two-sided quotes in 2 markets.',
+      'The $100.0M ETH short is not a book, not hedged, and not a clean bet: 8 positions, net 60% of gross, largest position 40% of exposure, 20% hedged, two-sided quotes in 2 markets.',
     );
   });
 

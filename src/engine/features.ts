@@ -20,12 +20,32 @@ export interface PositionFeatures {
    * coin and a $1M short in another do not, however neatly the dollars net
    * out. Zero when nothing cancels, 1 when every leg has a counterpart. */
   sameAssetOffsetShare: number;
+  /** The positions a reader could ask about instead, largest first. A post
+   * says BTC and the largest position at the address is ETH; until this
+   * existed the answer was always about the ETH. */
+  candidates: PositionRef[];
 }
+
+/** One position, named the way a reader would ask for it. */
+export interface PositionRef {
+  coin: string;
+  side: PositionSide;
+  sizeUsd: number;
+}
+
+/** How many positions are worth offering. More than a handful stops being a
+ * choice and becomes a list to read. */
+const MAX_CANDIDATES = 5;
 
 export function computePositionFeatures(
   positions: Position[],
   /** Current mark price per coin, where it is known. */
   markPxByCoin?: Map<string, number>,
+  /** The position the reader asked about. Everything about the account -
+   * gross, net, how the legs cancel - is unchanged; what moves is which
+   * position the coverage and the verdict are about. Falls back to the
+   * largest when that position is not open. */
+  focus?: PositionRef | { coin: string; side: PositionSide } | null,
 ): PositionFeatures {
   if (positions.length === 0) {
     return {
@@ -40,6 +60,7 @@ export function computePositionFeatures(
       headlineLiqDistancePct: null,
       headlineLiqDistanceBasis: null,
       sameAssetOffsetShare: 0,
+      candidates: [],
     };
   }
 
@@ -48,7 +69,12 @@ export function computePositionFeatures(
   const netUsd = Math.abs(signed.reduce((sum, s) => sum + s, 0));
   const netToGross = grossUsd === 0 ? 0 : netUsd / grossUsd;
 
-  const headline = positions.reduce((max, p) => (p.sizeUsd > max.sizeUsd ? p : max), positions[0]);
+  const largest = positions.reduce((max, p) => (p.sizeUsd > max.sizeUsd ? p : max), positions[0]);
+  const asked =
+    focus == null
+      ? undefined
+      : positions.find((p) => p.coin.toUpperCase() === focus.coin.toUpperCase() && p.side === focus.side);
+  const headline = asked ?? largest;
   const headlineShare = grossUsd === 0 ? 0 : headline.sizeUsd / grossUsd;
 
   // Distance to liquidation is a question about now, not about when the
@@ -88,6 +114,10 @@ export function computePositionFeatures(
     headlineLiqDistancePct,
     headlineLiqDistanceBasis,
     sameAssetOffsetShare: grossUsd === 0 ? 0 : offsetGrossUsd / grossUsd,
+    candidates: [...positions]
+      .sort((a, b) => b.sizeUsd - a.sizeUsd)
+      .slice(0, MAX_CANDIDATES)
+      .map((p) => ({ coin: p.coin, side: p.side, sizeUsd: p.sizeUsd })),
   };
 }
 
