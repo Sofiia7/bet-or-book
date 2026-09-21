@@ -16,7 +16,7 @@ No rehearsal run to warm the cache. A cached answer replayed as a fresh request 
 | 4-7 s | Click the address field, paste, click **Check** | "Checking...", then the card |
 | 7-18 s | Hold still | **Unknown**: "Less than 1% of the $184.0M ETH short is covered by ETH in this account. 2 wallets that funded it hold $405.3M of ETH, but funding does not establish ownership, so it is not counted as a hedge." |
 | 18-24 s | Scroll to the evidence rows, hold | "Hedge found 0.0% (all chains)" next to "Linked wallets $405.3M ETH in 2 wallets, owner unconfirmed", both sourced to Nansen |
-| 24-29 s | Scroll on to the gallery, hold | "Biggest positions right now: bet, hedge or book?" and the counts |
+| 24-29 s | Scroll on to the gallery, hold | "One scan of big Hyperliquid positions: bet, hedge or book?" and the counts |
 | 29-36 s | Click the **Hedged** chip, click the $6.0M HYPE row (`0x8c830d21...`) | **Hedged**: "The $6.0M HYPE short is 100% covered by spot HYPE held by the same account across chains." |
 | 36-45 s | Back to the gallery, open `0x37b81ab9...` ($25.1M HYPE short) | **Unknown**: "more than covered: $30.9M of spot HYPE ... leaves it net long $5.8M of HYPE" |
 | 45-52 s | Click **Copy card** | the button says "Copied" |

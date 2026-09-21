@@ -130,8 +130,9 @@
 </div>
 
 <section id="gallery" hidden>
-  <h2>Biggest positions right now: bet, hedge or book?</h2>
+  <h2>One scan of big Hyperliquid positions: bet, hedge or book?</h2>
   <p class="sub" id="gallery-sub"></p>
+  <p class="sub" id="gallery-method"></p>
   <div class="chips" id="chips"></div>
   <ol class="list" id="gallery-list"></ol>
   <button class="more" id="more" hidden>Show more</button>
@@ -469,10 +470,18 @@ async function loadGallery() {
   const first = fmtTime(times[0]);
   const last = fmtTime(times[times.length - 1]);
   const when = first === last ? 'checked ' + first : 'checked between ' + first + ' and ' + last;
+  // "Of the N read", not "of the market". These are counts from one dated
+  // scan of a set of accounts that was chosen a particular way, and saying
+  // otherwise turns a sample into a statistic it cannot support.
   $('gallery-sub').textContent =
-    gallery.universe + ', ' + when + '. ' +
-    counts.looks_like_a_bet + ' of ' + entries.length + ' (' + betShare + '%) look like real bets; ' +
+    gallery.universe + ', ' + when + '. Of the ' + entries.length + ' read, ' +
+    counts.looks_like_a_bet + ' (' + betShare + '%) look like real bets and ' +
     (counts.book + counts.hedged) + ' are books or hedges. Pick one to see why.';
+  $('gallery-method').textContent =
+    'How these were picked: the top 3,000 accounts by value from the public leaderboard, ranked by the size of ' +
+    'their largest main-dex position. Leverage breaks the link between what an account is worth and what it holds, ' +
+    'a HIP-3-only account can fall out before it is ever checked, and the scan spent its last credits on the ' +
+    'cheaper checks. These cards are saved readings, not live ones: opening one costs nothing and changes nothing.';
   $('gallery').hidden = false;
   renderGallery();
 }
