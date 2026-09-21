@@ -8,6 +8,7 @@ import type {
   HlFill,
 } from './hyperliquid';
 import type { NansenPerpPositions, NansenBalance, NansenRelatedWallet, NansenPnlSummary } from './nansen';
+import { isValidAddress } from '../guard';
 
 /**
  * An HTTP 200 is not a contract. An upstream can answer with a body of the
@@ -241,7 +242,13 @@ function serviceStatusOf(address: string, label: string | null | undefined): Ser
 }
 
 export function normalizeRelatedWallets(rows: NansenRelatedWallet[]): LinkedWallet[] {
-  return (arrayOf(rows, 'relatedWallets') as NansenRelatedWallet[]).map((r) => ({
+  return (arrayOf(rows, 'relatedWallets') as NansenRelatedWallet[])
+    // An address from an upstream becomes a request path and a line on a
+    // card. It is checked on the way in rather than trusted for having
+    // arrived over TLS: anything that is not 20 bytes of hex is not an
+    // address, whatever the row calls it.
+    .filter((r) => typeof r?.address === 'string' && isValidAddress(r.address))
+    .map((r) => ({
     address: r.address.toLowerCase(),
     relation: r.relation,
     chain: r.chain,

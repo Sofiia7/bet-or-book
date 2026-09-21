@@ -10,6 +10,7 @@ import { CLASSIFIER_VERSION } from './engine/verdict';
 import type { CheckResponse } from './api/check';
 import { snapshotId, snapshotKey, isSnapshotId, SNAPSHOT_TTL_SECONDS } from './snapshot';
 import pageHtml from '../web/index.html';
+import pageScript from '../web/app.js';
 import galleryData from '../data/gallery.json';
 import ledgerData from '../data/ledger.json';
 import type { Gallery } from './gallery';
@@ -31,6 +32,12 @@ interface Env {
   NANSEN_API_KEY?: string;
   NANSEN_DAILY_CREDIT_CAP: string;
   NANSEN_CREDIT_FLOOR: string;
+  /** Credits of the daily cap that public checks may not touch, so a demo
+   * still runs after a busy afternoon. Optional; absent means none. */
+  NANSEN_DEMO_RESERVE?: string;
+  /** Lets one request reach past the public cap into that reserve. Set with
+   * `wrangler secret put`; without it the reserve is simply unreachable. */
+  DEMO_KEY?: string;
   /** The spend cap and the request counter. Both need read-modify-write to
    * be atomic, which is the one thing KV cannot promise. */
   NANSEN_BUDGET: DurableObjectNamespace;
@@ -45,19 +52,62 @@ const CHECK_CACHE_TTL_SECONDS = 600;
 const DEGRADED_CACHE_TTL_SECONDS = 60;
 const RATE_LIMIT_MAX_PER_WINDOW = 20;
 const RATE_LIMIT_WINDOW_SECONDS = 60;
+/** A second limit across every client at once. The per-address window
+ * bounds one visitor; it does nothing about a hundred of them, or one
+ * visitor on a hundred addresses, emptying the day's credits in a minute
+ * while everyone else gets the free answer (audit S03). */
+const GLOBAL_BURST_MAX = 10;
+const GLOBAL_BURST_WINDOW_SECONDS = 10;
 const LEDGER_MEMO_MS = 60_000;
 
-/** The page has one inline script and inline styles, so 'unsafe-inline'
- * stays; what the policy buys is no framing (clickjacking), no requests to
- * other origins, and no plugin content. */
+/** The script now lives in its own file, so no inline script is allowed at
+ * all: an injected <script> has nothing to execute under. Inline styles
+ * stay, which is a far smaller surface. The policy also buys no framing
+ * (clickjacking), no requests to other origins and no plugin content. */
 const PAGE_HEADERS = {
   'content-type': 'text/html;charset=UTF-8',
   'content-security-policy':
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; " +
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
     "img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'strict-origin-when-cross-origin',
 };
+
+const SCRIPT_HEADERS = {
+  'content-type': 'text/javascript;charset=UTF-8',
+  'x-content-type-options': 'nosniff',
+  'cache-control': 'public, max-age=300',
+};
+
+/**
+ * A saved reading is not a secret - the wallet is public - but that someone
+ * asked about this address at this moment need not be indexed and kept.
+ */
+const SNAPSHOT_HEADERS = {
+  'content-type': 'application/json',
+  'cache-control': 'public, max-age=3600',
+  'x-robots-tag': 'noindex',
+};
+
+/**
+ * True when this request did not come from another site's page.
+ *
+ * Starting a check spends money, so it is a POST from this origin rather
+ * than a GET anything can trigger. A browser states where a request came
+ * from; a tool such as curl states nothing, and is allowed through on the
+ * strength of the rate limits, because refusing it would only mean refusing
+ * anyone using the API on purpose. What this stops is a page elsewhere
+ * spending this site's credits, and a crawler doing it by accident.
+ */
+function fromThisSite(request: Request, url: URL): boolean {
+  const site = request.headers.get('sec-fetch-site');
+  if (site !== null) return site === 'same-origin' || site === 'none';
+  const origin = request.headers.get('origin');
+  return origin === null || origin === url.origin;
+}
+
+/** A HEAD answer carries the headers of the GET it stands for and no body. */
+const headOf = (res: Response) => new Response(null, { status: res.status, headers: res.headers });
 
 /** A configured number, or a fallback chosen so that a misconfiguration
  * costs nothing rather than everything. */
@@ -117,11 +167,20 @@ let ledgerMemo: { at: number; body: unknown } | null = null;
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    // Nothing here writes, so nothing here needs a method that writes.
-    if (request.method !== 'GET' && request.method !== 'HEAD') {
-      return Response.json({ error: 'only GET is supported' }, { status: 405, headers: { allow: 'GET, HEAD' } });
+    const method = request.method;
+    if (method !== 'GET' && method !== 'HEAD' && method !== 'POST') {
+      return Response.json({ error: 'only GET, HEAD and POST are supported' }, {
+        status: 405,
+        headers: { allow: 'GET, HEAD, POST' },
+      });
     }
     const kv = safeKv(env.KV);
+
+    if (url.pathname === '/app.js') {
+      if (method === 'POST') return Response.json({ error: 'no such endpoint' }, { status: 405 });
+      const res = new Response(pageScript, { headers: SCRIPT_HEADERS });
+      return method === 'HEAD' ? headOf(res) : res;
+    }
 
     if (url.pathname === '/api/check') {
       const raw = url.searchParams.get('address') ?? '';
@@ -132,6 +191,31 @@ export default {
           { status: 400 },
         );
       }
+      // The rules are part of the key. A verdict cached before a deploy is
+      // an answer from rules that no longer exist, and serving it until the
+      // TTL runs out would quietly mix two vintages on one page.
+      const cacheKey = `check:${CLASSIFIER_VERSION}:${address}`;
+
+      // Reading an answer that already exists and starting a new one that
+      // costs money are two different acts, so they are two different
+      // methods. A scanner, a link preview or a browser prefetch can only
+      // ever perform the first: GET and HEAD used to run the paid branch,
+      // and the comment above them said nothing here writes.
+      if (method !== 'POST') {
+        const cached = await kv.get(cacheKey);
+        const res =
+          cached === null
+            ? Response.json(
+                { error: 'no recent reading of this address; POST to /api/check to run one' },
+                { status: 404 },
+              )
+            : new Response(cached, { headers: { 'content-type': 'application/json' } });
+        return method === 'HEAD' ? headOf(res) : res;
+      }
+
+      if (!fromThisSite(request, url)) {
+        return Response.json({ error: 'checks are started from this site' }, { status: 403 });
+      }
 
       const limiter = requestGate(env.REQUEST_GATE, RATE_LIMIT_MAX_PER_WINDOW, RATE_LIMIT_WINDOW_SECONDS);
       const ip = extractIp(request);
@@ -141,12 +225,19 @@ export default {
           { status: 429, headers: { 'retry-after': String(RATE_LIMIT_WINDOW_SECONDS) } },
         );
       }
+      const burst = requestGate(env.REQUEST_GATE, GLOBAL_BURST_MAX, GLOBAL_BURST_WINDOW_SECONDS);
+      if (!(await burst.allow('all-clients'))) {
+        return Response.json(
+          { error: 'this site is busy right now, try again in a few seconds' },
+          { status: 429, headers: { 'retry-after': String(GLOBAL_BURST_WINDOW_SECONDS) } },
+        );
+      }
+
+      // A reserve the public path cannot reach, so an afternoon of visitors
+      // cannot leave the demo with a Hyperliquid-only answer.
+      const demo = env.DEMO_KEY !== undefined && url.searchParams.get('demo') === env.DEMO_KEY;
 
       try {
-        // The rules are part of the key. A verdict cached before a deploy is
-        // an answer from rules that no longer exist, and serving it until the
-        // TTL runs out would quietly mix two vintages on one page.
-        const cacheKey = `check:${CLASSIFIER_VERSION}:${address}`;
         const ttl = (r: CheckResponse) => (r.degraded ? DEGRADED_CACHE_TTL_SECONDS : CHECK_CACHE_TTL_SECONDS);
         const result = await withCache(kv, cacheKey, ttl, async () => {
           const day = new Date().toISOString().slice(0, 10);
@@ -154,11 +245,13 @@ export default {
           // The credits this check could possibly spend are held before it
           // starts, not counted after it finishes, so a check that overlaps
           // this one sees them as already gone.
+          // A cap that is not a number must not read as no cap: every
+          // comparison against NaN is false, which would have meant every
+          // check allowed. A misconfigured cap spends nothing instead.
+          const dailyCap = numberOr(env.NANSEN_DAILY_CREDIT_CAP, 0, 'NANSEN_DAILY_CREDIT_CAP');
+          const reserve = numberOr(env.NANSEN_DEMO_RESERVE, 0, 'NANSEN_DEMO_RESERVE');
           const budget = spendGuard(env.NANSEN_BUDGET, {
-            // A cap that is not a number must not read as no cap: every
-            // comparison against NaN is false, which would have meant every
-            // check allowed. A misconfigured cap spends nothing instead.
-            cap: numberOr(env.NANSEN_DAILY_CREDIT_CAP, 0, 'NANSEN_DAILY_CREDIT_CAP'),
+            cap: demo ? dailyCap : Math.max(0, dailyCap - reserve),
             floor: numberOr(env.NANSEN_CREDIT_FLOOR, Number.MAX_SAFE_INTEGER, 'NANSEN_CREDIT_FLOOR'),
           });
           let nansenOffReason: string | undefined;
@@ -220,15 +313,16 @@ export default {
       if (!isSnapshotId(id)) return Response.json({ error: 'not a snapshot id' }, { status: 400 });
       const fromGallery = galleryById.get(id);
       if (fromGallery) {
-        return Response.json(fromGallery, { headers: { 'cache-control': 'public, max-age=3600' } });
+        return Response.json(fromGallery, { headers: SNAPSHOT_HEADERS });
       }
       const raw = await kv.get(snapshotKey(id));
       if (raw === null) {
-        return Response.json({ error: 'that snapshot has expired or never existed' }, { status: 404 });
+        return Response.json({ error: 'that snapshot has expired or never existed' }, {
+          status: 404,
+          headers: { 'x-robots-tag': 'noindex' },
+        });
       }
-      return new Response(raw, {
-        headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=3600' },
-      });
+      return new Response(raw, { headers: SNAPSHOT_HEADERS });
     }
 
     if (url.pathname === '/api/gallery') {

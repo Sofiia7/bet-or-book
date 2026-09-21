@@ -3,8 +3,10 @@ main = "src/index.ts"
 compatibility_date = "2026-09-17"
 compatibility_flags = ["nodejs_compat"]
 
+# The page and its script are served as text by the Worker. The script is a
+# file of its own so the page's CSP can forbid inline script entirely.
 rules = [
-  { type = "Text", globs = ["**/*.html"], fallthrough = false },
+  { type = "Text", globs = ["**/*.html", "**/web/app.js"], fallthrough = false },
 ]
 
 # Results and the per-day call counts the ledger reports. Not the spend cap:
@@ -37,3 +39,7 @@ enabled = true
 [vars]
 NANSEN_DAILY_CREDIT_CAP = "300"
 NANSEN_CREDIT_FLOOR = "5"
+# Credits of the cap that public checks may not reach, so an afternoon of
+# visitors cannot leave the demo with a Hyperliquid-only answer. Reaching
+# them needs the DEMO_KEY secret, which is not set by default.
+NANSEN_DEMO_RESERVE = "40"

@@ -212,3 +212,18 @@ describe('Nansen normalizers', () => {
     expect(pnl.windowDays).toBe(30);
   });
 });
+
+describe('addresses arriving from an upstream are checked before they are kept', () => {
+  it('drops a related-wallet row whose address is not one', () => {
+    // S04, audit of 21.09: an address from an upstream goes on to become a
+    // request path and a card, so it is validated on the way in rather than
+    // trusted because it arrived over TLS.
+    const rows = [
+      { address: '0x' + 'a'.repeat(40), relation: 'First Funder', chain: 'ethereum', address_label: null },
+      { address: 'not-an-address', relation: 'First Funder', chain: 'ethereum', address_label: null },
+      { address: '0x' + 'b'.repeat(64), relation: 'First Funder', chain: 'ethereum', address_label: null },
+    ] as unknown as NansenRelatedWallet[];
+    const links = normalizeRelatedWallets(rows);
+    expect(links.map((l) => l.address)).toEqual(['0x' + 'a'.repeat(40)]);
+  });
+});
