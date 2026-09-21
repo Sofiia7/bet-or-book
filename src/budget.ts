@@ -56,6 +56,38 @@ const RECEIPT_TTL_MS = 24 * 60 * 60_000;
  * kept. One call an hour is a cheap way to notice a top-up. */
 const REFUSAL_PROBE_MS = 60 * 60_000;
 
+/** A day of Nansen traffic, counted where it cannot be lost. */
+export interface DayCalls {
+  /** Requests sent, whatever came back - including the ones that never
+   * answered, which may still have been served and charged. */
+  attempted: number;
+  /** Requests that answered 2xx. */
+  successful: number;
+  /** Credits the API itself put a number on, in its cost header. */
+  creditsQuoted: number;
+  /** Credits charged to a call the API did not price, at one apiece. An
+   * assumption in the conservative direction, kept apart from the quoted
+   * figure so a submission does not present the two as one number. */
+  creditsAssumed: number;
+  byEndpoint: Record<string, number>;
+}
+
+const emptyDay = (): DayCalls => ({
+  attempted: 0,
+  successful: 0,
+  creditsQuoted: 0,
+  creditsAssumed: 0,
+  byEndpoint: {},
+});
+
+/** What a recorded call has to say about itself. Mirrors NansenCallMeta
+ * without importing it, so the arithmetic here stays free of the client. */
+export interface RecordedCall {
+  path: string;
+  status: number;
+  creditsCost: number | null;
+}
+
 export interface BudgetLimits {
   /** Credits this Worker may spend in a day, whatever the account holds. */
   cap: number;
@@ -102,6 +134,10 @@ export interface BudgetState {
   /** Settled reservations, by id, with what they cost and when, so a
    * redelivered settle is recognised rather than charged again. */
   receipts: Record<string, { cost: number; at: number }>;
+  /** Calls per day. Here rather than in KV because a read-modify-write on
+   * one shared key loses counts whenever two checks finish together, and
+   * this is the number the buildathon submission rests on (audit C01). */
+  callsByDay: Record<string, DayCalls>;
 }
 
 export interface Reservation {
@@ -124,6 +160,7 @@ const emptyState = (day: string): BudgetState => ({
   holds: {},
   orphaned: {},
   receipts: {},
+  callsByDay: {},
 });
 
 /** Reads a state written by an older version of this file, where the daily
@@ -141,6 +178,7 @@ function migrate(state: BudgetState): BudgetState {
   next.remainingAt = state.remainingAt ?? 0;
   next.refused = state.refused ?? false;
   next.refusedAt = state.refusedAt ?? 0;
+  next.callsByDay = state.callsByDay ?? {};
   return next;
 }
 
@@ -241,6 +279,43 @@ export class BudgetLedger {
     this.reportBalance(creditsRemaining, measuredAt, refused);
     this.expireStaleHolds(now);
     this.forgetOldReceipts(now);
+  }
+
+  /**
+   * Adds a check's calls to the day's totals. Separate from `settle`
+   * because what was spent and what was done are two questions: the cap
+   * needs the first, the submission needs the second, and one of them being
+   * approximate used to make both look it.
+   */
+  recordCalls(day: string, calls: RecordedCall[]): void {
+    if (calls.length === 0) return;
+    const entry = this.state.callsByDay[day] ?? emptyDay();
+    for (const c of calls) {
+      entry.attempted++;
+      if (c.status >= 200 && c.status < 300) entry.successful++;
+      if (c.creditsCost === null) entry.creditsAssumed += 1;
+      else entry.creditsQuoted += c.creditsCost;
+      entry.byEndpoint[c.path] = (entry.byEndpoint[c.path] ?? 0) + 1;
+    }
+    this.state.callsByDay[day] = entry;
+  }
+
+  /** The totals over a window of days, for /api/ledger. */
+  callReport(from: string, to: string): { calls: DayCalls; byDay: Record<string, number> } {
+    const calls = emptyDay();
+    const byDay: Record<string, number> = {};
+    for (const [day, entry] of Object.entries(this.state.callsByDay)) {
+      if (day < from || day > to) continue;
+      calls.attempted += entry.attempted;
+      calls.successful += entry.successful;
+      calls.creditsQuoted += entry.creditsQuoted;
+      calls.creditsAssumed += entry.creditsAssumed;
+      for (const [path, n] of Object.entries(entry.byEndpoint)) {
+        calls.byEndpoint[path] = (calls.byEndpoint[path] ?? 0) + n;
+      }
+      byDay[day] = entry.attempted;
+    }
+    return { calls, byDay };
   }
 
   /**

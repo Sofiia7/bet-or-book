@@ -2,7 +2,6 @@ import { extractAddress, extractIp } from './guard';
 import { checkAddress, CHECK_DEADLINE_MS } from './api/check';
 import { withCache } from './cache';
 import { safeKv } from './safeKv';
-import { recordCalls } from './credits';
 import { WORST_CASE_CALLS } from './budget';
 import { spendGuard, requestGate } from './coordinator';
 import { createNansenClient, meansOutOfCredits, type NansenCallMeta } from './sources/nansen';
@@ -15,7 +14,7 @@ import pageScript from '../web/app.js';
 import galleryData from '../data/gallery.json';
 import ledgerData from '../data/ledger.json';
 import type { Gallery } from './gallery';
-import { liveCallsInWindow, type LedgerSummary } from './ledger';
+import { BUILDATHON_WINDOW, type LedgerSummary } from './ledger';
 import type { KVLike } from './kv';
 
 const gallery = galleryData as unknown as Gallery;
@@ -322,9 +321,11 @@ export default {
               const refused = calls.some((c) => meansOutOfCredits(c.status, c.creditsRemaining));
               await budget.settle(hold, spent, lastKnown?.creditsRemaining ?? null, refused, lastKnown?.at);
             }
-            // KV keeps the per-day totals that /api/ledger reports. They are
-            // a record of what happened, not the thing that decides.
-            await recordCalls(kv, day, calls);
+            // What was actually called, counted in the same object as the
+            // money. It used to be a read-modify-write on one KV key, which
+            // loses counts whenever two checks finish together - and this is
+            // the number the buildathon submission rests on.
+            await budget.record(day, calls);
           }
         });
         return Response.json(result);
@@ -373,7 +374,18 @@ export default {
     // that the ledger already lists, so the sum double-counts them there.
     if (url.pathname === '/api/ledger') {
       if (!ledgerMemo || Date.now() - ledgerMemo.at > LEDGER_MEMO_MS) {
-        const live = await liveCallsInWindow(kv, new Date().toISOString().slice(0, 10));
+        const budget = spendGuard(env.NANSEN_BUDGET, { cap: 0, floor: 0 });
+        const report = await budget.report(BUILDATHON_WINDOW.from, BUILDATHON_WINDOW.to);
+        const live = {
+          calls: report.calls.attempted,
+          successful: report.calls.successful,
+          // Credits the API priced, and credits assumed for calls it did
+          // not. Two different kinds of number, reported as two.
+          creditsQuoted: report.calls.creditsQuoted,
+          creditsAssumed: report.calls.creditsAssumed,
+          byEndpoint: report.calls.byEndpoint,
+          byDay: report.byDay,
+        };
         ledgerMemo = {
           at: Date.now(),
           body: { totalCalls: scriptedLedger.calls + live.calls, scripted: scriptedLedger, live },

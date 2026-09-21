@@ -1,26 +1,49 @@
 /**
- * The two things Workers KV cannot be trusted with, moved to Durable
- * Objects: money and a request counter.
+ * The three things Workers KV cannot be trusted with, moved to Durable
+ * Objects: money, a request counter, and the record of what was called.
  *
  * KV is eventually consistent, and read-modify-write through it is not a
- * transaction, so both the spend cap and the rate limit could be walked past
- * by requests that overlapped. KV also accepts at most one write per second
- * per key, and the free plan allows a thousand writes a day, which made an
- * abuse guard that writes on every request a way to take the page down.
+ * transaction, so the spend cap, the rate limit and the call counts could
+ * all be walked past by requests that overlapped. KV also accepts at most
+ * one write per second per key, and the free plan allows a thousand writes a
+ * day, which made an abuse guard that writes on every request a way to take
+ * the page down. KV keeps what it is good at: cached results.
  *
- * A Durable Object handles one request at a time, so read-modify-write
- * inside one is atomic. KV keeps what it is good at: cached results, and the
- * per-day call counts that /api/ledger reports.
+ * "A Durable Object handles one request at a time" is how this used to be
+ * justified, and it is too strong a statement to build on. One object runs
+ * one JavaScript thread, but that thread yields at every await, and two
+ * requests can interleave around I/O; what makes storage safe is the
+ * runtime's input and output gates, not the absence of concurrency. The
+ * lazy load below is written for the weaker guarantee: concurrent callers
+ * wait on one load rather than each starting their own and the last one
+ * winning. An offline test of two overlapping `record` calls loses three of
+ * five counts without it (test/call-ledger.test.ts).
  */
-import { BudgetLedger, type BudgetLimits, type BudgetState, type Reservation } from './budget';
+import {
+  BudgetLedger,
+  type BudgetLimits,
+  type BudgetState,
+  type Reservation,
+  type RecordedCall,
+  type DayCalls,
+} from './budget';
 import { InMemoryRateLimiter } from './guard';
 
 const STATE_KEY = 'budget';
 
 /** What the Worker asks the budget for. Implemented over a Durable Object in
  * production and in memory in tests. */
+export interface CallReport {
+  calls: DayCalls;
+  byDay: Record<string, number>;
+}
+
 export interface SpendGuard {
   reserve(day: string, worstCase: number): Promise<Reservation>;
+  /** What a check actually did, counted where concurrent checks cannot
+   * overwrite each other. */
+  record(day: string, calls: RecordedCall[]): Promise<void>;
+  report(from: string, to: string): Promise<CallReport>;
   settle(
     id: string,
     actualCost: number,
@@ -34,12 +57,13 @@ export interface SpendGuard {
  * fixed name, so every check queues behind the same counter. */
 export class NansenBudget implements DurableObject {
   private ledger: BudgetLedger | null = null;
+  private loading: Promise<BudgetLedger> | null = null;
 
   constructor(private readonly ctx: DurableObjectState) {}
 
   async fetch(request: Request): Promise<Response> {
     const body = (await request.json()) as {
-      action: 'reserve' | 'settle' | 'sync';
+      action: 'reserve' | 'settle' | 'sync' | 'record' | 'report';
       day?: string;
       worstCase?: number;
       limits?: BudgetLimits;
@@ -49,6 +73,9 @@ export class NansenBudget implements DurableObject {
       refused?: boolean;
       measuredAt?: number;
       creditsRemainingAt?: number;
+      calls?: RecordedCall[];
+      from?: string;
+      to?: string;
     };
     const ledger = await this.load();
 
@@ -58,6 +85,18 @@ export class NansenBudget implements DurableObject {
       // a refusal leaves the state as it was.
       if (result.ok) await this.save();
       return Response.json(result);
+    }
+
+    if (body.action === 'record') {
+      ledger.recordCalls(body.day!, body.calls ?? []);
+      await this.save();
+      return Response.json({ ok: true });
+    }
+
+    if (body.action === 'report') {
+      const from = body.from ?? body.day!;
+      const to = body.to ?? body.day!;
+      return Response.json(ledger.callReport(from, to));
     }
 
     if (body.action === 'sync') {
@@ -82,11 +121,16 @@ export class NansenBudget implements DurableObject {
   }
 
   private async load(): Promise<BudgetLedger> {
-    if (this.ledger === null) {
-      const saved = await this.ctx.storage.get<BudgetState>(STATE_KEY);
+    if (this.ledger !== null) return this.ledger;
+    // The promise is memoized, not just its result: two requests arriving
+    // together both see `ledger === null`, and without this they each build
+    // one from storage and the second discards the first one's writes.
+    this.loading ??= this.ctx.storage.get<BudgetState>(STATE_KEY).then((saved) => {
       this.ledger = new BudgetLedger(saved);
-    }
-    return this.ledger;
+      this.loading = null;
+      return this.ledger;
+    });
+    return this.loading;
   }
 
   private async save(): Promise<void> {
@@ -126,6 +170,14 @@ export function spendGuard(ns: DurableObjectNamespace, limits: BudgetLimits): Sp
     },
     async settle(id, actualCost, creditsRemaining, refused, measuredAt) {
       await call(stub(), { action: 'settle', id, actualCost, creditsRemaining, refused, measuredAt });
+    },
+    async record(day, calls) {
+      if (calls.length === 0) return;
+      await call(stub(), { action: 'record', day, calls });
+    },
+    async report(from, to) {
+      const res = await call(stub(), { action: 'report', from, to });
+      return (await res.json()) as CallReport;
     },
   };
 }

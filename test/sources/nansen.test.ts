@@ -137,3 +137,47 @@ describe('nansen client', () => {
     expect(calls[0].status).toBe(401);
   });
 });
+
+describe('the credit headers as a contract, not a guess', () => {
+  it('reads the used-credits header when no cost header is sent', async () => {
+    // C01, audit of 21.09: the current schema distinguishes credits quoted
+    // for a call from credits used by it, and the client only ever read one
+    // of the two. A missing cost header is not a free call.
+    mockFetch(positionsFixture, 200, { 'x-nansen-credits-used': '3', 'x-nansen-credits-remaining': '800' });
+    const calls: NansenCallMeta[] = [];
+    await createNansenClient(KEY, (m) => {
+      calls.push(m);
+    }).perpPositions('0xabc');
+    expect(calls[0].creditsCost).toBe(3);
+  });
+
+  it('prefers the cost header when both arrive', async () => {
+    mockFetch(positionsFixture, 200, { 'x-nansen-credits-cost': '1', 'x-nansen-credits-used': '9' });
+    const calls: NansenCallMeta[] = [];
+    await createNansenClient(KEY, (m) => {
+      calls.push(m);
+    }).perpPositions('0xabc');
+    expect(calls[0].creditsCost).toBe(1);
+  });
+
+  it('keeps the request id, so a failure can be asked about', async () => {
+    mockFetch({}, 500, { 'x-request-id': 'req_abc123' });
+    const calls: NansenCallMeta[] = [];
+    const client = createNansenClient(KEY, (m) => {
+      calls.push(m);
+    });
+    await expect(client.perpPositions('0xabc')).rejects.toThrow();
+    expect(calls[0].requestId).toBe('req_abc123');
+  });
+
+  it('ignores a header that is not a number rather than reading it as zero', async () => {
+    mockFetch(positionsFixture, 200, { 'x-nansen-credits-remaining': 'unlimited' });
+    const calls: NansenCallMeta[] = [];
+    await createNansenClient(KEY, (m) => {
+      calls.push(m);
+    }).perpPositions('0xabc');
+    // Number('unlimited') is NaN, and NaN travelling into the budget as a
+    // balance would make every comparison against it false.
+    expect(calls[0].creditsRemaining).toBeNull();
+  });
+});

@@ -77,6 +77,8 @@ export interface NansenCallMeta {
    * then, and two calls settle in whatever order they finish, so the reading
    * has to carry its own time or a stale one can overwrite a fresh one. */
   at: number;
+  /** Nansen's id for this request, where it sent one. */
+  requestId?: string | null;
 }
 
 export type NansenCallRecorder = (meta: NansenCallMeta) => void | Promise<void>;
@@ -94,10 +96,34 @@ interface Envelope<T> {
   pagination?: { is_last_page: boolean };
 }
 
-function headerNumber(res: Response, name: string): number | null {
-  const v = res.headers.get(name);
-  return v === null ? null : Number(v);
+/**
+ * A header read as a number, or null.
+ *
+ * Number('unlimited') is NaN, and a NaN balance travelling into the budget
+ * would make every comparison against it false - which is the shape of bug
+ * that reads "no cap" as "no limit". A header that is not a number is a
+ * header that said nothing.
+ */
+function headerNumber(res: Response, ...names: string[]): number | null {
+  for (const name of names) {
+    const raw = res.headers.get(name);
+    if (raw === null) continue;
+    const n = Number(raw);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
 }
+
+/** What this call cost. The schema quotes a cost and reports what was used;
+ * the client read only the first, so a response carrying the second alone
+ * counted as a call nobody paid for. */
+const creditsCostOf = (res: Response): number | null =>
+  headerNumber(res, 'x-nansen-credits-cost', 'x-nansen-credits-used');
+
+/** Nansen's own id for the request, kept so a failure can be asked about
+ * with something more than "it did not work". */
+const requestIdOf = (res: Response): string | null =>
+  res.headers.get('x-request-id') ?? res.headers.get('x-nansen-request-id');
 
 const PAGE_SIZE = 100;
 
@@ -162,7 +188,7 @@ export function createNansenClient(
             : AbortSignal.any([AbortSignal.timeout(TIMEOUT_MS), checkSignal]),
       });
     } catch (err) {
-      await record({ path, status: NO_ANSWER, creditsCost: null, creditsRemaining: null, at: Date.now() });
+      await record({ path, status: NO_ANSWER, creditsCost: null, creditsRemaining: null, at: Date.now(), requestId: null });
       throw err;
     }
 
@@ -171,9 +197,10 @@ export function createNansenClient(
     await record({
       path,
       status: res.status,
-      creditsCost: headerNumber(res, 'x-nansen-credits-cost'),
+      creditsCost: creditsCostOf(res),
       creditsRemaining,
       at: Date.now(),
+      requestId: requestIdOf(res),
     });
     if (!res.ok) {
       throw new Error(`nansen ${path} failed: ${res.status}`);
