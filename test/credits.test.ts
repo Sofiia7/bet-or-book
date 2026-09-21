@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FakeKV } from './support/fakeKv';
-import { recordCalls, nansenAllowed } from '../src/credits';
+import { recordCalls } from '../src/credits';
 
 describe('credits', () => {
   it('accumulates one day of calls in a single KV entry', async () => {
@@ -21,21 +21,14 @@ describe('credits', () => {
     expect(day).toEqual({ calls: 1, credits: 1, lastRemaining: null });
   });
 
-  it('refuses Nansen once the daily cap or the remaining-credit floor is reached', async () => {
-    const kv = new FakeKV();
-    expect(await nansenAllowed(kv, '2026-09-18', 300, 5)).toBe(true);
-    await kv.put('nansen:day:2026-09-18', JSON.stringify({ calls: 300, credits: 300, lastRemaining: 600 }));
-    expect(await nansenAllowed(kv, '2026-09-18', 300, 5)).toBe(false);
-    await kv.put('nansen:day:2026-09-18', JSON.stringify({ calls: 10, credits: 10, lastRemaining: 5 }));
-    expect(await nansenAllowed(kv, '2026-09-18', 300, 5)).toBe(false);
-  });
-
-  it('stops Nansen for the rest of the day after an auth or payment refusal', async () => {
+  it('records a refusal as nothing left on the account', async () => {
     const kv = new FakeKV();
     await recordCalls(kv, '2026-09-20', [
       { path: 'profiler/perp-positions', status: 402, creditsCost: null, creditsRemaining: null },
     ]);
-    expect(await nansenAllowed(kv, '2026-09-20', 300, 5)).toBe(false);
-    expect(await nansenAllowed(kv, '2026-09-21', 300, 5)).toBe(true);
+    // Whether a check may run is BudgetLedger's decision, not this file's;
+    // what is stored here is the observation it reads from.
+    expect(JSON.parse((await kv.get('nansen:day:2026-09-20'))!).lastRemaining).toBe(0);
+    expect(await kv.get('nansen:day:2026-09-21')).toBeNull();
   });
 });

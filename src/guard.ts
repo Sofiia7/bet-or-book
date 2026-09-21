@@ -1,5 +1,3 @@
-import type { KVLike } from './kv';
-
 const BARE_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
 const EMBEDDED_ADDRESS_RE = /0x[0-9a-fA-F]{40}/;
 
@@ -19,9 +17,11 @@ export interface RateLimiter {
   allow(key: string): Promise<boolean>;
 }
 
-/** In-memory limiter for tests and local dev. Not shared across Worker
- * isolates - Phase 2 swaps this for a Workers KV-backed implementation
- * behind the same interface before deployment. */
+/** A sliding window over recent hits. On its own it counts only within one
+ * isolate, which is why the deployed Worker runs one of these inside a
+ * per-address Durable Object (src/coordinator.ts): there, one instance sees
+ * every request from that address, and counting in memory costs no KV
+ * writes at all. */
 export class InMemoryRateLimiter implements RateLimiter {
   private hits = new Map<string, number[]>();
 
@@ -39,33 +39,6 @@ export class InMemoryRateLimiter implements RateLimiter {
     }
     recent.push(now);
     this.hits.set(key, recent);
-    return true;
-  }
-}
-
-/**
- * Fixed-window counter backed by Workers KV, for the deployed Worker.
- * Not perfectly atomic under concurrent requests (KV read-then-write is
- * not a transaction) - an abuse guard, not a precise limiter. Risk is
- * bounded by the window size and by the cache in src/cache.ts cutting
- * most repeat traffic before it ever reaches this check.
- */
-export class KVRateLimiter implements RateLimiter {
-  constructor(
-    private readonly kv: KVLike,
-    private readonly maxHits: number,
-    private readonly windowSeconds: number,
-  ) {}
-
-  async allow(key: string): Promise<boolean> {
-    const windowStart = Math.floor(Date.now() / (this.windowSeconds * 1000));
-    const kvKey = `ratelimit:${key}:${windowStart}`;
-    const raw = await this.kv.get(kvKey);
-    const count = raw ? Number(raw) : 0;
-    if (count >= this.maxHits) {
-      return false;
-    }
-    await this.kv.put(kvKey, String(count + 1), { expirationTtl: this.windowSeconds * 2 });
     return true;
   }
 }

@@ -14,10 +14,11 @@ export async function readDay(kv: KVLike, day: string): Promise<DayStats> {
   return raw ? (JSON.parse(raw) as DayStats) : { calls: 0, credits: 0, lastRemaining: null };
 }
 
-/** One read-modify-write per request, not per call: the free KV tier allows
- * 1 000 writes a day. Approximate under concurrency, like the rate limiter.
- * A call without a cost header counts as one credit - the conservative
- * direction for a spend cap. */
+/** Per-day totals for /api/ledger and the buildathon call count. This is
+ * reporting, not control: what a check is allowed to spend is decided by the
+ * budget Durable Object in src/coordinator.ts before the check runs, because
+ * a KV counter written after the fact cannot hold a line. Approximate under
+ * concurrency, which a record of what happened can afford to be. */
 export async function recordCalls(kv: KVLike, day: string, calls: NansenCallMeta[]): Promise<void> {
   if (calls.length === 0) return;
   const stats = await readDay(kv, day);
@@ -32,12 +33,3 @@ export async function recordCalls(kv: KVLike, day: string, calls: NansenCallMeta
   await kv.put(dayKey(day), JSON.stringify(stats), { expirationTtl: 60 * 60 * 24 * 40 });
 }
 
-/** False once today's spend reaches the cap, or once the account's last
- * reported balance is at or below the floor - past that point checks run
- * Hyperliquid-only and say so. */
-export async function nansenAllowed(kv: KVLike, day: string, dailyCap: number, floor: number): Promise<boolean> {
-  const stats = await readDay(kv, day);
-  if (stats.credits >= dailyCap) return false;
-  if (stats.lastRemaining !== null && stats.lastRemaining <= floor) return false;
-  return true;
-}

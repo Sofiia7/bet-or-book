@@ -7,9 +7,27 @@ rules = [
   { type = "Text", globs = ["**/*.html"], fallthrough = false },
 ]
 
+# Results and the per-day call counts the ledger reports. Not the spend cap:
+# KV is eventually consistent and its read-modify-write is not a transaction.
 [[kv_namespaces]]
 binding = "KV"
 id = "864e48a08ae343af924217c67a0669b2"
+
+# One object holds the Nansen spend cap for the whole Worker; one per client
+# address counts requests. A Durable Object serves one request at a time,
+# which is what makes reserve-then-settle and the rate limit actually hold.
+[[durable_objects.bindings]]
+name = "NANSEN_BUDGET"
+class_name = "NansenBudget"
+
+[[durable_objects.bindings]]
+name = "REQUEST_GATE"
+class_name = "RequestGate"
+
+# SQLite-backed classes, which is what the Workers free plan supports.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["NansenBudget", "RequestGate"]
 
 [vars]
 NANSEN_DAILY_CREDIT_CAP = "300"
