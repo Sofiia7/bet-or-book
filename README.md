@@ -19,8 +19,11 @@ Bet or Book answers one question per address, shows the numbers that decided it,
 ## What a check returns
 
 - **A verdict**: Book, Hedged, Looks like a bet, or Unknown, with a strength where it applies (`likely` / `strong` for a book).
-- **One sentence built from the numbers**, e.g. *"The $41.1M BTC short is 48% covered by spot BTC held by the same account across chains, which leaves $21.6M of it short."*
-- **Up to five evidence numbers**, each tagged with the source that produced it (Nansen or Hyperliquid).
+- **One sentence built from the numbers**, e.g. *"The $42.7M HYPE short is 97% covered by $41.3M of spot HYPE held by this address on Nansen-supported chains."*
+- **A picture of what stands against the position**: one bar for the position, split into what this address holds against it, what could not be identified, and what nothing was found against - with anything held by a wallet that merely funded this one drawn beside the bar on a dashed connection, never inside it. That distinction is the whole card, and a row of percentages is a poor way to carry it.
+- **A choice of position.** A post says BTC and the largest position at the address is ETH. The card offers the address's largest few and will answer about the one you came for.
+- **What changed since the last reading**, where there is one - and whether the answer moved because the account did something or because the rules did. Those look identical on a card and are not the same event.
+- **Up to five evidence numbers**, each tagged with the source that produced it (Nansen, Hyperliquid, or both).
 - **The funding wallets**, with explorer links, when they hold the matching asset. They hold it; that is not the same as this account holding it, and the card says so.
 - **What could not be read**, every time: which sources were missing or cut short, how old the numbers are, and which rules read them.
 - **What we cannot see**, always: centralized exchanges, OTC, wallets with no on-chain link. A hedge there is invisible, so a bet is only ever "looks like a bet".
@@ -62,7 +65,7 @@ Thresholds are ordinary numbers chosen against observed data, not a measured acc
 | `profiler/perp-positions` | Every rule. Covers all Hyperliquid perp dexes, HIP-3 included: for the market maker above, 134 positions against 86 visible to Hyperliquid's free main-dex endpoint |
 | `profiler/address/current-balance` (chain `all`) | The account's own hedge on any chain, for a headline short. Each row's contract decides what the asset is, and its completeness decides whether "no hedge found" may be said at all |
 | `profiler/address/related-wallets` (Arbitrum, Ethereum) | The First Funder wallets, then their `current-balance`. This is reported as its own observation, never folded into the account's coverage: it can stop a verdict, not make one |
-| `profiler/perp-pnl-summary` | 30-day realized PnL on the card |
+| `profiler/perp-pnl-summary` | 30-day realized PnL on the card. Context, not a rule: no verdict turns on it |
 
 Hyperliquid's free API supplies resting orders (per dex, including HIP-3 markets the account has positions on), 24-hour fills and open interest.
 
@@ -172,6 +175,17 @@ npx wrangler deploy
 ```
 
 `NANSEN_DAILY_CREDIT_CAP` and `NANSEN_CREDIT_FLOOR` in `wrangler.toml` bound the spend.
+
+## The API
+
+| Route | What it does |
+|---|---|
+| `POST /api/check?address=0x...` | Runs a check. Optional `&coin=ETH&side=short` asks about one position rather than the largest. This is the only route that spends anything, and it is a POST from this site for that reason |
+| `GET /api/check?address=0x...` | An answer that already exists, or 404. Spends nothing, so a crawler or a prefetch cannot |
+| `GET /api/snapshot?id=...` | One saved reading, exactly as it was read |
+| `GET /api/compare?a=...&b=...` | Two readings of one address, side by side: what moved, and whether the answer moved with the data or with the rules. Reads stored readings only |
+| `GET /api/gallery` | The dated scan |
+| `GET /api/ledger` | Nansen calls made, attempted against answered, credits quoted against credits assumed |
 
 ## Scripts
 
