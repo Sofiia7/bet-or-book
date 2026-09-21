@@ -21,7 +21,13 @@ const STATE_KEY = 'budget';
  * production and in memory in tests. */
 export interface SpendGuard {
   reserve(day: string, worstCase: number): Promise<Reservation>;
-  settle(id: string, actualCost: number, creditsRemaining: number | null, refused: boolean): Promise<void>;
+  settle(
+    id: string,
+    actualCost: number,
+    creditsRemaining: number | null,
+    refused: boolean,
+    measuredAt?: number,
+  ): Promise<void>;
 }
 
 /** Holds the spend cap for the whole Worker. One instance, addressed by a
@@ -33,7 +39,7 @@ export class NansenBudget implements DurableObject {
 
   async fetch(request: Request): Promise<Response> {
     const body = (await request.json()) as {
-      action: 'reserve' | 'settle';
+      action: 'reserve' | 'settle' | 'sync';
       day?: string;
       worstCase?: number;
       limits?: BudgetLimits;
@@ -41,6 +47,8 @@ export class NansenBudget implements DurableObject {
       actualCost?: number;
       creditsRemaining?: number | null;
       refused?: boolean;
+      measuredAt?: number;
+      creditsRemainingAt?: number;
     };
     const ledger = await this.load();
 
@@ -52,7 +60,23 @@ export class NansenBudget implements DurableObject {
       return Response.json(result);
     }
 
-    ledger.settle(body.id!, body.actualCost!, body.creditsRemaining ?? null, Date.now(), body.refused ?? false);
+    if (body.action === 'sync') {
+      // An operator or a scheduled poll reporting the account balance
+      // directly. Without it the only way to learn that credits arrived is
+      // to spend one asking.
+      ledger.syncBalance(body.creditsRemaining!, body.creditsRemainingAt ?? Date.now());
+      await this.save();
+      return Response.json({ ok: true });
+    }
+
+    ledger.settle(
+      body.id!,
+      body.actualCost!,
+      body.creditsRemaining ?? null,
+      Date.now(),
+      body.refused ?? false,
+      body.measuredAt,
+    );
     await this.save();
     return Response.json({ ok: true });
   }
@@ -100,8 +124,8 @@ export function spendGuard(ns: DurableObjectNamespace, limits: BudgetLimits): Sp
       const res = await call(stub(), { action: 'reserve', day, worstCase, limits });
       return (await res.json()) as Reservation;
     },
-    async settle(id, actualCost, creditsRemaining, refused) {
-      await call(stub(), { action: 'settle', id, actualCost, creditsRemaining, refused });
+    async settle(id, actualCost, creditsRemaining, refused, measuredAt) {
+      await call(stub(), { action: 'settle', id, actualCost, creditsRemaining, refused, measuredAt });
     },
   };
 }

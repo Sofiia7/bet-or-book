@@ -38,7 +38,12 @@ describe('nansen client', () => {
       calls.push(m);
     });
     await client.perpPositions('0xabc');
-    expect(calls).toEqual([{ path: 'profiler/perp-positions', status: 200, creditsCost: 1, creditsRemaining: 995 }]);
+    expect(calls).toMatchObject([
+      { path: 'profiler/perp-positions', status: 200, creditsCost: 1, creditsRemaining: 995 },
+    ]);
+    // The reading carries the moment it arrived, so a slow answer cannot
+    // overwrite a balance that was read later.
+    expect(calls[0].at).toBeGreaterThan(0);
   });
 
   it('reports whether a balance page was the last one', async () => {
@@ -84,7 +89,9 @@ describe('nansen client', () => {
     await expect(client.perpPositions('0xabc')).rejects.toThrow();
     // Status 0 is "attempted, outcome unknown". Nansen may well have served
     // and charged it; leaving no record was the only certainly wrong answer.
-    expect(calls).toEqual([{ path: 'profiler/perp-positions', status: 0, creditsCost: null, creditsRemaining: null }]);
+    expect(calls).toMatchObject([
+      { path: 'profiler/perp-positions', status: 0, creditsCost: null, creditsRemaining: null },
+    ]);
   });
 
   it('stops calling after Nansen refuses, instead of spending five more times', async () => {

@@ -73,6 +73,10 @@ export interface NansenCallMeta {
   status: number;
   creditsCost: number | null;
   creditsRemaining: number | null;
+  /** When this answer arrived. The credits it reports are the balance as of
+   * then, and two calls settle in whatever order they finish, so the reading
+   * has to carry its own time or a stale one can overwrite a fresh one. */
+  at: number;
 }
 
 export type NansenCallRecorder = (meta: NansenCallMeta) => void | Promise<void>;
@@ -148,7 +152,7 @@ export function createNansenClient(apiKey: string, record: NansenCallRecorder = 
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
     } catch (err) {
-      await record({ path, status: NO_ANSWER, creditsCost: null, creditsRemaining: null });
+      await record({ path, status: NO_ANSWER, creditsCost: null, creditsRemaining: null, at: Date.now() });
       throw err;
     }
 
@@ -159,6 +163,7 @@ export function createNansenClient(apiKey: string, record: NansenCallRecorder = 
       status: res.status,
       creditsCost: headerNumber(res, 'x-nansen-credits-cost'),
       creditsRemaining,
+      at: Date.now(),
     });
     if (!res.ok) {
       throw new Error(`nansen ${path} failed: ${res.status}`);

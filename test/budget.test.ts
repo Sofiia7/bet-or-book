@@ -32,14 +32,18 @@ describe('BudgetLedger', () => {
     expect(ledger.snapshot().spent).toBe(5);
   });
 
-  it('lets a reservation go after a request has had long enough to die', () => {
+  it('charges a reservation whose request never came back, rather than freeing it', () => {
     const ledger = new BudgetLedger();
     expect(ledger.reserve(DAY, 7, limits(10), T0).ok).toBe(true);
     expect(ledger.reserve(DAY, 7, limits(10), T0 + 60_000).ok).toBe(false);
-    // A request that never settled cannot hold credits for the rest of the
-    // day: the worst case is four paid stages of 20 s each plus the free
-    // reads, so anything older than a few minutes is gone, not running.
-    expect(ledger.reserve(DAY, 7, limits(10), T0 + 301_000).ok).toBe(true);
+    // The worst case is four paid stages of 20 s each plus the free reads,
+    // so past that the request is gone - but Nansen may have served and
+    // charged every call it covered, and an unknown outcome is not a zero
+    // one. The hold stops being reserved and starts being spent.
+    expect(ledger.reserve(DAY, 7, limits(10), T0 + 301_000).ok).toBe(false);
+    expect(ledger.snapshot().reserved).toBe(0);
+    expect(ledger.snapshot().spent).toBe(7);
+    expect(ledger.snapshot().uncertainSpent).toBe(7);
   });
 
   it('starts the count again on a new day', () => {
@@ -73,7 +77,16 @@ describe('BudgetLedger', () => {
     const a = ledger.reserve(DAY, 7, limits(10), T0);
     ledger.settle(a.id!, 4, 500, T0);
     const revived = new BudgetLedger(JSON.parse(JSON.stringify(ledger.snapshot())));
-    expect(revived.snapshot()).toEqual({ day: DAY, spent: 4, reserved: 0, remaining: 500, holds: {} });
+    expect(revived.snapshot()).toMatchObject({
+      day: DAY,
+      spent: 4,
+      spentByDay: { [DAY]: 4 },
+      reserved: 0,
+      remaining: 500,
+      uncertainSpent: 0,
+      holds: {},
+      orphaned: {},
+    });
     expect(revived.reserve(DAY, 7, limits(10), T0).ok).toBe(false);
   });
 

@@ -199,7 +199,7 @@ export default {
               // A refusal that still reports credits is about one endpoint,
               // not about the balance, and must not stop tomorrow too.
               const refused = calls.some((c) => meansOutOfCredits(c.status, c.creditsRemaining));
-              await budget.settle(hold, spent, lastKnown?.creditsRemaining ?? null, refused);
+              await budget.settle(hold, spent, lastKnown?.creditsRemaining ?? null, refused, lastKnown?.at);
             }
             // KV keeps the per-day totals that /api/ledger reports. They are
             // a record of what happened, not the thing that decides.
