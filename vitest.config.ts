@@ -27,7 +27,14 @@ const textAssets: Plugin = {
  * integration). Reading and compiling directly from disk gets both the
  * right shape and skips 2.4 MB of a real compile on every test run.
  */
-const WASM_PREFIX = '\0bet-or-book-wasm:';
+// A suffix, not a made-up URL scheme: an id like `C:\...\index_bg.wasm?...`
+// or `/…/index_bg.wasm?...` is still a real path with a query string, the
+// same shape Vite's own `?raw`/`?url` use, so nothing downstream mistakes
+// it for a URL. A colon-based prefix looked the same locally on Windows but
+// broke under a clean install on Linux CI - Node's own ESM loader read
+// everything before the first `:` as the protocol and rejected it outright
+// ("Only URLs with a scheme in: file, data, and node are supported").
+const WASM_SUFFIX = '?bet-or-book-wasm';
 
 const workerAssets: Plugin = {
   name: 'bet-or-book-worker-assets',
@@ -36,16 +43,15 @@ const workerAssets: Plugin = {
   // literal `.wasm` specifier as a wasm-bindgen-style ES module and tries
   // to import the wasm binary's own internal imports as JS packages before
   // any plugin's `load` hook runs (`Cannot find package 'wbg'`). Rewriting
-  // the id to an opaque virtual module keeps Node from ever recognizing it
-  // as a `.wasm` path at all.
+  // the id keeps Node from ever recognizing it as a `.wasm` path at all.
   resolveId(source, importer) {
     if (!/\.wasm$/.test(source)) return null;
     const abs = isAbsolute(source) ? source : resolve(dirname(importer ?? ''), source);
-    return WASM_PREFIX + abs;
+    return abs + WASM_SUFFIX;
   },
   load(id) {
-    if (id.startsWith(WASM_PREFIX)) {
-      const abs = id.slice(WASM_PREFIX.length);
+    if (id.endsWith(WASM_SUFFIX)) {
+      const abs = id.slice(0, -WASM_SUFFIX.length);
       return `
         import { readFileSync } from 'node:fs';
         const bytes = readFileSync(${JSON.stringify(abs)});
@@ -66,5 +72,11 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['test/**/*.test.ts'],
+    // Anything under node_modules is normally handed straight to Node's own
+    // loader rather than through Vite's transform pipeline - a reasonable
+    // default for vendored code, but it means resolveId/load above never
+    // even see this one `.wasm` import, which needs the same rewrite
+    // node_modules or not.
+    server: { deps: { inline: [/@resvg\/resvg-wasm/] } },
   },
 });
