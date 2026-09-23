@@ -30,7 +30,15 @@ async function main() {
 
   const candidates = gallery.entries.filter((e) => e.snapshotId && e.positions.nPositions > 0);
   const seen = new Set<string>();
-  const bulk: Array<{ key: string; value: string; base64: true }> = [];
+  // No `base64: true` here: that flag tells `wrangler kv bulk put` to
+  // *decode* `value` and store the raw bytes, so a later `kv.get()` (which
+  // this Worker's KVLike only ever reads as a string) comes back as a
+  // UTF-8 decoding of a PNG - mangled, and a different length than the
+  // original. `renderOgPng`'s own writes go through the ordinary string
+  // `put()` and were never affected; this bulk path is. The base64 text
+  // itself is the value, read back and decoded by ogPngFor at request time,
+  // exactly like a render this Worker did for itself.
+  const bulk: Array<{ key: string; value: string }> = [];
   let rendered = 0;
   let skipped = 0;
 
@@ -47,7 +55,7 @@ async function main() {
         breakdown: e.breakdown,
       });
       const png = await renderOgPng(data, fonts, wasmModule);
-      bulk.push({ key: `og:${id}`, value: Buffer.from(png).toString('base64'), base64: true });
+      bulk.push({ key: `og:${id}`, value: Buffer.from(png).toString('base64') });
       rendered++;
     } catch (err) {
       console.error(`skipped ${id} (${e.address}):`, err instanceof Error ? err.message : err);
