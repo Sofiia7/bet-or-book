@@ -234,6 +234,28 @@ function linkedSummary(input: EvidenceInput): string {
   );
 }
 
+/** A directional stance spread over several positions rather than sitting
+ * in one. The bet rule's own sentence names "one $X position"; here the
+ * finding is the portfolio's direction, so the spread leads and the largest
+ * leg is named second. */
+function directionalPortfolioSummary(input: EvidenceInput): string {
+  const { positions: p } = input;
+  const head =
+    `${plural(p.nPositions, 'open position')}, all pointing the same way, net out to ` +
+    `${formatPct(p.netToGross)} of gross exposure`;
+  const largest = `the largest is ${headlineText(p)} (${formatPct(p.headlineShare)} of it)`;
+  if (p.headlineSide !== 'short') {
+    return `${head}; ${largest}. No two-sided quoting. Spot cannot offset a long, and debts or other derivatives are not read here.`;
+  }
+  const where = input.hedgeScope === 'all-chains' ? 'at this address on Nansen-supported chains' : 'at this address on Hyperliquid';
+  const own = input.hedge.hedgeRatio;
+  const cov =
+    own === 0
+      ? `no ${p.headlineCoin} was found ${where}`
+      : `only ${formatPct(own)} of it is covered by ${p.headlineCoin} ${where}`;
+  return `${head}; ${largest}. No two-sided quoting, and ${cov}. Debts and other derivatives are not read here.`;
+}
+
 function betSummary(input: EvidenceInput): string {
   const { positions: p } = input;
   const opening = `${formatPct(p.headlineShare)} of the exposure is one ${formatUsd(p.headlineNotionalUsd)} ${p.headlineCoin} ${p.headlineSide}`;
@@ -397,6 +419,7 @@ const SUMMARY_BY_REASON: Record<string, ((input: EvidenceInput) => string) | und
   maker_flow_only: makerFlowSummary,
   partial_offset: partialOffsetSummary,
   over_covered: overCoveredSummary,
+  directional_portfolio: directionalPortfolioSummary,
 };
 
 function pnlItem(pnl: PnlSummary | null): EvidenceItem | null {
@@ -420,6 +443,7 @@ const DECISIVE_LABEL_BY_REASON: Record<string, string> = {
   linked_exposure_unverified: 'Linked wallets',
   orders: 'Resting orders',
   maker_flow_only: 'Fills, last 24h',
+  directional_portfolio: 'Net / gross exposure',
 };
 
 function markDecisive(items: EvidenceItem[], reasons: string[]): EvidenceItem[] {
@@ -463,7 +487,7 @@ export function explain(input: EvidenceInput): Explanation {
     input.verdict.verdict === 'hedged'
       ? hedgedSummary(input)
       : input.verdict.verdict === 'looks_like_a_bet'
-        ? betSummary(input)
+        ? (byReason ?? betSummary)(input)
         : byReason
           ? byReason(input)
           : undecidedSummary(input);

@@ -235,3 +235,58 @@ describe('putting two readings of one address side by side', () => {
     expect(seen).toEqual([]);
   });
 });
+
+describe('a live check remembers the reading it replaces (22.09 audit, J05)', () => {
+  it('supersedes this address\'s own last live reading, not only a gallery card', async () => {
+    routeUpstreams();
+    const env = testEnv();
+    const first = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
+    const firstBody = (await first.json()) as { snapshotId: string; supersedes?: string };
+    expect(firstBody.supersedes).toBeUndefined();
+
+    // The ten-minute cache would otherwise replay the first reading: this
+    // stands in for that window passing, so the second POST runs a real
+    // second check rather than serving the first one back.
+    env.KV.now = () => Date.now() + 700_000;
+
+    const second = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
+    const secondBody = (await second.json()) as { snapshotId: string; supersedes?: string };
+    expect(secondBody.snapshotId).not.toBe(firstBody.snapshotId);
+    expect(secondBody.supersedes).toBe(firstBody.snapshotId);
+
+    const cmp = await worker.fetch(request(`/api/compare?a=${firstBody.snapshotId}&b=${secondBody.snapshotId}`), env);
+    expect(cmp.status).toBe(200);
+  });
+
+  it('does not supersede a reading that failed to save', async () => {
+    routeUpstreams();
+    const env = testEnv();
+    const failingKv = env.KV;
+    const realPut = failingKv.put.bind(failingKv);
+    let calls = 0;
+    failingKv.put = async (key: string, value: string, opts?: { expirationTtl?: number }) => {
+      calls++;
+      if (key.startsWith('snapshot:') && calls === 1) throw new Error('kv put failed');
+      return realPut(key, value, opts);
+    };
+    const first = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
+    const firstBody = (await first.json()) as { snapshotSaved?: boolean; supersedes?: string };
+    expect(firstBody.snapshotSaved).toBe(false);
+
+    env.KV.now = () => Date.now() + 700_000;
+    const second = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
+    const secondBody = (await second.json()) as { supersedes?: string };
+    // Nothing real to point back at: the failed reading was never the
+    // address's "latest", so the pointer never moved off whatever it was.
+    expect(secondBody.supersedes).toBeUndefined();
+  });
+
+  it('does not supersede itself when nothing has moved and the pointer already matches', async () => {
+    routeUpstreams();
+    const env = testEnv();
+    const res = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
+    const body = (await res.json()) as { snapshotId: string; supersedes?: string };
+    expect(body.supersedes).toBeUndefined();
+    expect(body.snapshotId).toBeTruthy();
+  });
+});

@@ -206,29 +206,27 @@ const svgEl = (name, attrs, text) => {
   return node;
 };
 
-function renderBreakdown(d) {
-  const b = d.breakdown;
-  const box = $('breakdown');
-  if (!b || !b.applies || !b.segments.length) {
-    box.hidden = true;
-    return;
-  }
-  box.hidden = false;
-  box.style.setProperty('--accent', verdictOf(d).accent);
+/** Below this real width, the "held elsewhere" block moves under the bar
+ * instead of beside it. A fixed 640-unit viewBox scaled down to a 343px
+ * phone shrank every label with it - 12px text became 6-7 rendered pixels,
+ * the whole reason U01 called it unreadable. Building the SVG at its own
+ * real rendered width instead (see `renderBreakdown`) fixes that on its
+ * own; the stacked layout below is the second half, because 38% of a phone
+ * screen is not enough room for four lines of text whatever their size. */
+const NARROW_BREAKDOWN_WIDTH = 520;
 
-  const W = 640;
+/** The side-by-side layout: the position keeps 62% of the width whether or
+ * not anything is drawn beside it, so two cards of the same size read as
+ * the same size. `W` is the real rendered width, so 1 SVG unit is 1 CSS
+ * pixel and the `.seg-label`/`.seg-value` font sizes render at face value. */
+function drawBreakdownWide(svg, b, W) {
   const barY = 26;
   const barH = 34;
   const hasElsewhere = !!b.elsewhere;
-  // The position keeps two thirds of the width whether or not anything is
-  // drawn beside it, so two cards of the same size read as the same size.
   const barW = hasElsewhere ? W * 0.62 : W;
   const H = hasElsewhere ? 150 : 120;
 
-  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img' });
-  svg.append(
-    svgEl('title', {}, `${fmtUsd(b.headlineUsd)} ${b.coin} ${b.side}, and what was found against it`),
-  );
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   svg.append(svgEl('text', { x: 0, y: 14, class: 'bar-title' }, `${fmtUsd(b.headlineUsd)} ${b.coin} ${b.side}`));
 
   let x = 0;
@@ -300,9 +298,114 @@ function renderBreakdown(d) {
       svgEl('text', { x: ex, y: barY + barH + 38, class: 'seg-label' }, 'ownership unverified, not counted'),
     );
   }
+}
+
+/** The stacked layout for a narrow screen: the bar keeps the full width,
+ * and anything held elsewhere goes underneath it rather than squeezed into
+ * a sliver on the right. Height is not fixed - it grows with however many
+ * legend lines and whether there is an elsewhere block at all - so the
+ * viewBox is sized from where drawing actually stopped. */
+function drawBreakdownNarrow(svg, b, W) {
+  const barY = 26;
+  const barH = 34;
+  let y = barY;
+
+  svg.append(svgEl('text', { x: 0, y: 14, class: 'bar-title' }, `${fmtUsd(b.headlineUsd)} ${b.coin} ${b.side}`));
+
+  let x = 0;
+  b.segments.forEach((seg) => {
+    const style = SEGMENT_STYLE[seg.kind];
+    const w = Math.max(2, seg.share * W);
+    svg.append(
+      svgEl('rect', {
+        x, y: barY, width: w, height: barH, rx: 3,
+        fill: style.fill, 'fill-opacity': style.opacity,
+        stroke: 'var(--line)', 'stroke-width': 1,
+      }),
+    );
+    x += w;
+  });
+
+  y = barY + barH + 18;
+  b.segments.forEach((seg) => {
+    const style = SEGMENT_STYLE[seg.kind];
+    svg.append(
+      svgEl('rect', {
+        x: 0, y: y - 9, width: 10, height: 10, rx: 2,
+        fill: style.fill, 'fill-opacity': style.opacity, stroke: 'var(--line)', 'stroke-width': 1,
+      }),
+    );
+    svg.append(svgEl('text', { x: 18, y, class: 'seg-label' }, `${fmtUsd(seg.usd)} (${fmtPct(seg.share)}) ${style.label}`));
+    y += 19;
+  });
+
+  if (b.excessUsd > 0) {
+    svg.append(
+      svgEl('text', { x: 0, y, class: 'seg-label' },
+        `and ${fmtUsd(b.excessUsd)} more of it held beyond the position: net long, not neutral`),
+    );
+    y += 19;
+  }
+
+  if (b.elsewhere) {
+    const midX = W / 2;
+    svg.append(
+      svgEl('path', {
+        d: `M ${midX} ${y + 4} L ${midX} ${y + 22}`,
+        stroke: 'var(--faint)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4', fill: 'none',
+      }),
+    );
+    y += 34;
+    svg.append(svgEl('text', { x: 0, y, class: 'seg-label' }, 'held elsewhere'));
+    y += 8;
+    const boxY = y;
+    svg.append(
+      svgEl('rect', {
+        x: 0, y: boxY, width: W, height: barH, rx: 3,
+        fill: 'none', stroke: 'var(--faint)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4',
+      }),
+    );
+    svg.append(svgEl('text', { x: 8, y: boxY + barH / 2 + 5, class: 'seg-value' }, fmtUsd(b.elsewhere.usd)));
+    y = boxY + barH + 20;
+    svg.append(
+      svgEl('text', { x: 0, y, class: 'seg-label' }, `in ${plural(b.elsewhere.wallets, 'wallet')} that funded this account`),
+    );
+    y += 18;
+    svg.append(svgEl('text', { x: 0, y, class: 'seg-label' }, 'ownership unverified, not counted'));
+    y += 12;
+  } else {
+    y += 6;
+  }
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${y}`);
+}
+
+function renderBreakdown(d) {
+  const b = d.breakdown;
+  const box = $('breakdown');
+  if (!b || !b.applies || !b.segments.length) {
+    box.hidden = true;
+    return;
+  }
+  box.hidden = false;
+  box.style.setProperty('--accent', verdictOf(d).accent);
+
+  // The SVG is built at its own real rendered width - not a fixed 640 that
+  // then gets scaled down - so 1 SVG unit is 1 real CSS pixel and a 12px
+  // label renders at 12px whatever the screen (audit U01). `clientWidth` is
+  // read after un-hiding the figure, since a hidden element reports 0.
+  const W = box.clientWidth || 640;
+  const svg = svgEl('svg', { viewBox: `0 0 ${W} 120`, role: 'img' });
+  svg.append(svgEl('title', {}, `${fmtUsd(b.headlineUsd)} ${b.coin} ${b.side}, and what was found against it`));
+
+  if (W < NARROW_BREAKDOWN_WIDTH) {
+    drawBreakdownNarrow(svg, b, W);
+  } else {
+    drawBreakdownWide(svg, b, W);
+  }
 
   $('breakdown-svg').replaceChildren(svg);
-  $('breakdown-caption').textContent = hasElsewhere
+  $('breakdown-caption').textContent = b.elsewhere
     ? `What stands against the ${b.coin} ${b.side} - and what only looks like it does`
     : `What stands against the ${b.coin} ${b.side}`;
 }
@@ -321,10 +424,32 @@ function renderResult(d, opts) {
   $('headline').textContent = headlineFor(d);
   $('summary').textContent = d.summary || '';
 
+  // Closed by default, so the plain-English summary above is the whole
+  // answer for a reader who does not ask for more. Opening it names the
+  // exact reason code the rules produced, for the reader who wants to check
+  // the classifier's own work against the README's rule table (audit U/9).
+  const reasons = (d.verdict && d.verdict.reasons) || [];
+  $('decided').hidden = reasons.length === 0;
+  $('decided-reasons').textContent = reasons.join(', ') || 'none';
+  $('decided-version').textContent = d.classifierVersion || '?';
+
   $('stats').replaceChildren(...(d.evidence || []).map((item) => {
     // The row the verdict turned on leads, rather than sitting fourth in a
     // line of identical tiles (audit U03).
     const box = el('div', 'stat' + (item.decisive ? ' decisive' : ''));
+    box.append(el('div', 'stat-label', item.label), el('div', 'stat-value', item.value), el('div', 'stat-source', item.source));
+    return box;
+  }));
+
+  // Leverage, distance to liquidation, unrealized PnL, funding since open:
+  // numbers about the position itself rather than about the verdict, so
+  // they get their own strip instead of competing with the evidence that
+  // decided bet/hedge/book (22.09 audit). Older saved readings and gallery
+  // cards predate this and carry none, so the strip just does not appear.
+  const vitals = d.vitals || [];
+  $('vitals').hidden = vitals.length === 0;
+  $('vitals-stats').replaceChildren(...vitals.map((item) => {
+    const box = el('div', 'stat');
     box.append(el('div', 'stat-label', item.label), el('div', 'stat-value', item.value), el('div', 'stat-source', item.source));
     return box;
   }));
@@ -400,6 +525,16 @@ function renderResult(d, opts) {
 
   $('card-canvas').hidden = true;
   $('copy-card').textContent = 'Copy card';
+  if (d.snapshotId && d.positions.nPositions > 0) {
+    saveRecent({
+      id: d.snapshotId,
+      address: d.address,
+      headline: positionText(d),
+      verdict: d.verdict.verdict,
+      checkedAt: d.checkedAt,
+    });
+    renderRecent();
+  }
   $('card').hidden = false;
 }
 
@@ -551,6 +686,29 @@ $('check-live').addEventListener('click', () => {
   if (!current) return;
   $('address').value = current.address;
   runCheck();
+});
+
+// A visitor with no address in hand had nothing to click above the fold
+// until the gallery lower down the page (audit U02). These three open a
+// real saved reading the same way a shared link does - free, and exactly
+// what the reader would see if they had pasted that address themselves.
+$('examples-chips').addEventListener('click', (e) => {
+  const id = e.target.closest('button')?.dataset.example;
+  if (id) openSnapshot(id);
+});
+
+// The breakdown SVG is now built at its own real rendered width rather than
+// a fixed one CSS scales uniformly (audit U01), so unlike the rest of the
+// page it does not stay correct through a resize on its own: a phone
+// rotated after the card loaded would be left with the wide layout's
+// numbers stretched across the narrow one's box. Re-run the same render a
+// resize settles on, not on every frame of it.
+let breakdownResizeTimer = null;
+window.addEventListener('resize', () => {
+  if (breakdownResizeTimer) clearTimeout(breakdownResizeTimer);
+  breakdownResizeTimer = setTimeout(() => {
+    if (current) renderBreakdown(current);
+  }, 150);
 });
 
 // ---- gallery ----
@@ -981,6 +1139,82 @@ $('copy-link').addEventListener('click', async () => {
   }
 });
 
+/** The card's own summary, plus the link that reopens it, sized for a post
+ * on X: any link counts as 23 characters there whatever its real length, so
+ * the summary is trimmed against what is actually left, not against 280
+ * raw characters. The reader can still edit before posting; this is a
+ * draft, not a submission (audit item 10). */
+function postText(d) {
+  const link = d.snapshotId ? window.location.origin + '/?s=' + d.snapshotId : window.location.origin;
+  const LINK_WEIGHT = 23;
+  const TWEET_LIMIT = 280;
+  const suffix = '\n\nBuilt on @nansen_ai\n' + link;
+  const suffixWeight = suffix.length - link.length + LINK_WEIGHT;
+  const budget = Math.max(0, TWEET_LIMIT - suffixWeight);
+  let body = (d.summary || '').trim();
+  if (body.length > budget) {
+    body = body.slice(0, Math.max(0, budget - 1)).trim() + '…';
+  }
+  return body + suffix;
+}
+
+$('copy-post').addEventListener('click', async () => {
+  if (!current) return;
+  const text = postText(current);
+  const btn = $('copy-post');
+  try {
+    await navigator.clipboard.writeText(text);
+    btn.textContent = 'Copied';
+    setTimeout(() => { btn.textContent = 'Copy post text'; }, 1500);
+  } catch (e) {
+    window.prompt('Copy this text:', text);
+  }
+});
+
+// ---- recent checks, kept in this browser only ----
+//
+// The only reason to come back used to be remembering the address by hand.
+// This is not sync, not an account, and not sent anywhere - a viewer's own
+// browser storage, wrapped in try/catch because a private window or
+// blocked site data can make it throw (see the artifact storage guidance
+// this project itself follows: per-viewer convenience, never load-bearing).
+const RECENT_KEY = 'betOrBook:recent';
+const MAX_RECENT = 8;
+
+function loadRecent() {
+  try {
+    const raw = window.localStorage.getItem(RECENT_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveRecent(entry) {
+  try {
+    const list = loadRecent().filter((r) => r.address !== entry.address);
+    list.unshift(entry);
+    window.localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, MAX_RECENT)));
+  } catch (e) {
+    // Storage blocked or full: the card on screen is unaffected either way.
+  }
+}
+
+function renderRecent() {
+  const list = loadRecent();
+  const box = $('recent');
+  box.hidden = list.length === 0;
+  if (list.length === 0) return;
+  $('recent-chips').replaceChildren(...list.map((r) => {
+    const v = VERDICTS[r.verdict] || VERDICTS.unknown;
+    const b = el('button', 'chip', r.headline + ' · ' + v.label);
+    b.title = 'Checked ' + fmtTime(r.checkedAt);
+    b.addEventListener('click', () => openSnapshot(r.id));
+    return b;
+  }));
+}
+
 async function loadLedger() {
   try {
     const res = await fetch('/api/ledger');
@@ -1013,3 +1247,4 @@ if (saved) {
   $('address').value = preset;
   runCheck();
 }
+renderRecent();

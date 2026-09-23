@@ -178,6 +178,20 @@ describe('checkAddress (offline, real fixtures)', () => {
     expect(result.summary).toContain('funding does not establish ownership');
     expect(result.evidence.find((e) => e.label === 'Hedge found')?.value).toBe('0.0% (Nansen-supported chains)');
     expect(result.evidence.find((e) => e.label === 'Linked wallets')?.value).toMatch(/owner unconfirmed$/);
+    // Leverage, distance to liquidation, unrealized PnL and funding since
+    // open: Nansen already returns all four on the headline position, and
+    // until now the card threw them away.
+    expect(result.vitals).toContainEqual({ label: 'Leverage', value: '5x cross', source: 'Nansen' });
+    expect(result.vitals).toContainEqual({ label: 'Distance to liquidation', value: '38% (from mark)', source: 'Nansen' });
+    expect(result.vitals).toContainEqual({ label: 'Unrealized PnL', value: '-$13.7M', source: 'Nansen' });
+    expect(result.vitals).toContainEqual({ label: 'Funding since open', value: '-$1.4M', source: 'Nansen' });
+    expect(result.vitals.find((v) => v.label === 'Size vs open interest')?.source).toBe('Hyperliquid');
+    // This fixture's 2,000 fills happen to hold none in ETH, the headline
+    // coin - a fact about a busy account with a static headline position,
+    // not a gap: the field says so rather than being left out.
+    expect(result.vitals).toContainEqual(
+      expect.objectContaining({ label: 'Position flow', value: expect.stringMatching(/^no fills \(/) }),
+    );
   });
 
   it('falls back to Hyperliquid positions and says so when Nansen positions fail', async () => {
@@ -186,6 +200,9 @@ describe('checkAddress (offline, real fixtures)', () => {
     expect(result.source).toBe('hyperliquid');
     expect(result.positions.nPositions).toBe(14);
     expect(result.coverage.some((c) => c.includes('main dex'))).toBe(true);
+    // Vitals are attributed to wherever the position record actually came
+    // from, not to Nansen just because a key was given.
+    expect(result.vitals.find((v) => v.label === 'Leverage')?.source).toBe('Hyperliquid');
   });
 
   it('describes a wide position spread without calling it a book (audit A03)', async () => {
@@ -210,14 +227,22 @@ describe('checkAddress (offline, real fixtures)', () => {
     expect(nansen.relatedWallets).not.toHaveBeenCalled();
   });
 
-  it('reads nothing past positions and PnL when the headline is a long', async () => {
+  it('never reads the paid hedge balance for a long: spot cannot offset one', async () => {
     route();
     const nansen = fakeNansen({ positions: syntheticPositions([{ coin: 'BTC', size: 500, valueUsd: 50_000_000 }]) });
     const result = await checkAddress(ABRAXAS, { nansen });
     expect(result.positions.headlineSide).toBe('long');
     expect(result.hedgeScope).toBe('none');
     expect(nansen.currentBalance).not.toHaveBeenCalled();
-    expect(nansen.relatedWallets).not.toHaveBeenCalled();
+  });
+
+  it('still reads funding history for a small long, which a hedge search would never reach (audit L02a)', async () => {
+    route();
+    const nansen = fakeNansen({ positions: syntheticPositions([{ coin: 'BTC', size: 500, valueUsd: 50_000_000 }]) });
+    const result = await checkAddress(ABRAXAS, { nansen });
+    expect(result.positions.headlineSide).toBe('long');
+    expect(result.positions.nPositions).toBeLessThanOrEqual(5);
+    expect(nansen.relatedWallets).toHaveBeenCalledTimes(2);
   });
 
   it('stops after own balances when they already hedge the short', async () => {

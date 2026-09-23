@@ -10,7 +10,7 @@ import type { NansenClient, NansenPerpPositions, NansenBalance, NansenRelatedWal
 const ADDRESS = '0x1111111111111111111111111111111111111111';
 
 const p = (coin: string, side: 'long' | 'short', sizeUsd: number): Position => ({
-  coin, side, sizeUsd, entryPx: 100, leverage: 5, liquidationPx: null, unrealizedPnlUsd: 0, cumFundingUsd: 0,
+  coin, side, sizeUsd, entryPx: 100, leverage: 5, leverageType: 'cross', liquidationPx: null, unrealizedPnlUsd: 0, cumFundingUsd: 0,
 });
 
 describe('which position the features are about', () => {

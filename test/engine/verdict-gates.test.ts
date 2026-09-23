@@ -212,6 +212,77 @@ describe('A04: a rule may not rely on an input that was never read', () => {
   });
 });
 
+describe('L01 (22.09 audit): a directional portfolio is a bet even past the position-count and share bars', () => {
+  const wide = positions({ nPositions: 8, netToGross: 1, headlineShare: 0.3, headlineNotionalUsd: 300_000 });
+  const complete = { hedgeCoverage: 'complete' as const, ordersCoverage: 'complete' as const, positionsCoverage: 'complete' as const };
+
+  it('calls a wide all-short portfolio with no quotes and no hedge a bet', () => {
+    const v = computeVerdict({ positions: wide, orders: orders(), hedge: hedge(), ...complete });
+    expect(v.verdict).toBe('looks_like_a_bet');
+    expect(v.reasons).toContain('directional_portfolio');
+  });
+
+  it('does the same for an all-long portfolio, where a hedge could never apply', () => {
+    const v = computeVerdict({
+      positions: { ...wide, headlineSide: 'long' },
+      orders: orders(),
+      hedge: hedge(),
+      ...complete,
+      hedgeCoverage: 'not-applicable',
+    });
+    expect(v.verdict).toBe('looks_like_a_bet');
+    expect(v.reasons).toContain('directional_portfolio');
+  });
+
+  it('does not fire when the legs do not actually point the same way', () => {
+    const v = computeVerdict({ positions: { ...wide, netToGross: 0.5 }, orders: orders(), hedge: hedge(), ...complete });
+    expect(v.reasons).not.toContain('directional_portfolio');
+  });
+
+  it('does not fire when the account quotes both sides somewhere', () => {
+    const twoSided = computeOrderFeatures(
+      [
+        { coin: 'OTHER', side: 'bid', sizeUsd: 100 },
+        { coin: 'OTHER', side: 'ask', sizeUsd: 100 },
+      ],
+      'ETH',
+    );
+    const v = computeVerdict({ positions: wide, orders: twoSided, hedge: hedge(), ...complete });
+    expect(v.reasons).not.toContain('directional_portfolio');
+  });
+
+  it('withholds it when the resting orders could not be read in full', () => {
+    const v = computeVerdict({ positions: wide, orders: orders(), hedge: hedge(), ...complete, ordersCoverage: 'partial' });
+    expect(v.verdict).toBe('unknown');
+    expect(v.reasons).toContain('quotes_not_checked');
+  });
+
+  it('withholds it when the positions could not be read in full', () => {
+    const v = computeVerdict({ positions: wide, orders: orders(), hedge: hedge(), ...complete, positionsCoverage: 'partial' });
+    expect(v.verdict).toBe('unknown');
+    expect(v.reasons).toContain('positions_not_complete');
+  });
+
+  it('still prefers the funding-link finding when that fires too', () => {
+    const v = computeVerdict({
+      positions: wide,
+      orders: orders(),
+      hedge: hedge(),
+      ...complete,
+      linkedHedge: { linkedHedgeRatio: 0.5 },
+    });
+    expect(v.reasons).toContain('linked_exposure_unverified');
+    expect(v.reasons).not.toContain('directional_portfolio');
+  });
+
+  it('leaves a small concentrated position to the existing bet reason', () => {
+    const narrow = positions({ nPositions: 3, netToGross: 1, headlineShare: 0.8 });
+    const v = computeVerdict({ positions: narrow, orders: orders(), hedge: hedge(), ...complete });
+    expect(v.reasons).toContain('directional_concentration');
+    expect(v.reasons).not.toContain('directional_portfolio');
+  });
+});
+
 describe('the hedge read is only paid for when it can still move the answer', () => {
   it('skips it once material two-sided quoting has settled the account', () => {
     const real: RestingOrder[] = Array.from({ length: 50 }, (_, i) => ({

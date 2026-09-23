@@ -96,6 +96,10 @@ export interface HlFill {
   fee: string;
   oid: number;
   tid: number;
+  /** "Open Long" / "Close Short" / "Buy" and their siblings. Hyperliquid's
+   * own vocabulary, not a closed enum this tool controls, so it is read as
+   * a plain string and only ever matched by an "Open"/"Close" prefix. */
+  dir: string;
 }
 
 /** This call's own timeout, plus whatever deadline the whole check runs

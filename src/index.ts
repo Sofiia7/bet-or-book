@@ -312,7 +312,19 @@ export default {
               signal: timeout,
             });
             const id = snapshotId(address, result.checkedAt, result.classifierVersion);
-            const saved: CheckResponse = { ...result, nansenCalls: calls.length, snapshotId: id };
+            // The "what changed" comparison used to fire only for the 22
+            // gallery cards a script had re-read by hand; a reader who just
+            // checks the same address twice never saw it (audit J05). This
+            // is that mechanism for every address: whatever this address's
+            // last live reading was, before this one claims the title.
+            const latestKey = `latest:${address}`;
+            const previousId = await kv.get(latestKey);
+            const saved: CheckResponse = {
+              ...result,
+              nansenCalls: calls.length,
+              snapshotId: id,
+              ...(previousId !== null && previousId !== id ? { supersedes: previousId } : {}),
+            };
             // Kept so the link can open this reading rather than start a new
             // one. A failed write costs the share link, not the answer - but
             // the page has to be told, or it offers a link to nothing.
@@ -320,6 +332,10 @@ export default {
               expirationTtl: SNAPSHOT_TTL_SECONDS,
             });
             if (!stored) return { ...result, nansenCalls: calls.length, snapshotSaved: false };
+            // The pointer only moves once this reading is durably the
+            // newest one: a save that failed above already returned, so it
+            // can never bump a real reading off the position of "latest".
+            await kv.put(latestKey, id, { expirationTtl: SNAPSHOT_TTL_SECONDS });
             // The link goes on the picture, so it can only be added once the
             // reading it points at is really there.
             return {

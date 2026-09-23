@@ -53,6 +53,14 @@ describe('normalizePositions', () => {
       expect(positions[i].side).toBe(expectedSide);
     });
   });
+
+  it('carries the cross/isolated leverage type, already paid for and previously dropped', () => {
+    const raw = clearinghouseFixture as HlClearinghouseState;
+    const positions = normalizePositions(raw);
+    raw.assetPositions.forEach((entry, i) => {
+      expect(positions[i].leverageType).toBe(entry.position.leverage.type);
+    });
+  });
 });
 
 describe('normalizeOrders', () => {
@@ -153,6 +161,14 @@ describe('normalizeTrades', () => {
     expect(trades.filter((t) => t.side === 'buy').length).toBe(rawBuys);
     expect(trades.every((t) => t.side === 'buy' || t.side === 'sell')).toBe(true);
   });
+
+  it('carries the fill direction, so a check can tell adding a position from reducing it', () => {
+    const raw = fillsFixture as HlFill[];
+    const trades = normalizeTrades(raw);
+    raw.forEach((f, i) => expect(trades[i].dir).toBe(f.dir));
+    expect(trades.some((t) => t.dir.startsWith('Open'))).toBe(true);
+    expect(trades.some((t) => t.dir.startsWith('Close'))).toBe(true);
+  });
 });
 
 describe('Nansen normalizers', () => {
@@ -163,6 +179,16 @@ describe('Nansen normalizers', () => {
     const eth = positions.find((p) => p.coin === 'ETH');
     expect(eth?.side).toBe('short');
     expect(eth?.sizeUsd).toBeGreaterThan(0);
+  });
+
+  it('carries the cross/isolated leverage type onto every Nansen position', () => {
+    const raw = (nansenPositionsFixture as { data: NansenPerpPositions }).data;
+    const positions = normalizeNansenPositions(raw);
+    raw.asset_positions.forEach((entry, i) => {
+      expect(positions[i].leverageType).toBe(entry.position.leverage_type);
+    });
+    expect(positions.some((p) => p.leverageType === 'isolated')).toBe(true);
+    expect(positions.some((p) => p.leverageType === 'cross')).toBe(true);
   });
 
   it('keeps chain on balances and drops zero-value rows', () => {
@@ -191,6 +217,14 @@ describe('Nansen normalizers', () => {
     expect(normalizeRelatedWallets([synthetic('Arbitrum Bridge')])[0].serviceStatus).toBe('service');
     expect(normalizeRelatedWallets([synthetic('High Activity')])[0].serviceStatus).toBe('not-service');
     expect(normalizeRelatedWallets([synthetic('Token Millionaire')])[0].serviceStatus).toBe('not-service');
+  });
+
+  it('carries when the funding happened, as a plain epoch number', () => {
+    const fixtureRows = (relatedArbFixture as { data: NansenRelatedWallet[] }).data;
+    const [first] = normalizeRelatedWallets(fixtureRows);
+    expect(first.fundedAt).toBe(Date.parse(fixtureRows[0].block_timestamp));
+    const bad = normalizeRelatedWallets([{ ...fixtureRows[0], block_timestamp: 'not a date' }]);
+    expect(bad[0].fundedAt).toBeNull();
   });
 
   it('knows the exchange addresses behind the wrong gallery cards, label or no label', () => {

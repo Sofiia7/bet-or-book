@@ -80,7 +80,10 @@ gallery.entries = gallery.entries.map((e) => {
     // share card is rebuilt, because that is presentation rather than
     // judgement and a picture of a historical card has to say so.
     historical++;
-    const kept = { ...e, historical: { reason: historicalReason(missing), missing } };
+    // Older scans never stored the raw per-position leverage, liquidation
+    // price or PnL that vitals need - only the aggregate PositionFeatures
+    // survives in this file - so there is nothing to recompute here.
+    const kept = { ...e, vitals: e.vitals ?? [], historical: { reason: historicalReason(missing), missing } };
     return { ...kept, share: shareCard(kept, { kind: 'gallery', snapshotId: kept.snapshotId }) };
   }
 
@@ -117,6 +120,9 @@ gallery.entries = gallery.entries.map((e) => {
     ...e,
     verdict,
     linkedHedge: linked,
+    // Same limit as the historical branch: the raw position record vitals
+    // need was never stored for this scan, live or re-judged.
+    vitals: e.vitals ?? [],
     coverage,
     hedgeCoverage,
     ordersCoverage: sources.orders,

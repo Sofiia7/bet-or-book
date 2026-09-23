@@ -317,6 +317,14 @@ export interface TradeFeatures {
    * about the position in front of the user. */
   headlineFills: number;
   headlineShareOfFills: number;
+  /** Notional of the headline coin's own fills that opened or added to a
+   * position, and that closed or reduced one. Hyperliquid's `dir` names
+   * this directly; a fill whose `dir` is neither ("Buy"/"Sell" with no
+   * Open/Close prefix, typically a spot trade) counts toward neither. Zero
+   * in both is itself a fact worth showing: a position with no recent
+   * activity in its own market either way. */
+  headlineOpenedUsd: number;
+  headlineClosedUsd: number;
 }
 
 const HL_FILLS_PAGE_CAP = 2000;
@@ -337,12 +345,17 @@ export function computeTradeFeatures(
       spanHours: 0,
       headlineFills: 0,
       headlineShareOfFills: 0,
+      headlineOpenedUsd: 0,
+      headlineClosedUsd: 0,
     };
   }
   const crossedCount = trades.filter((t) => t.crossed).length;
   const buyCount = trades.filter((t) => t.side === 'buy').length;
   const times = trades.map((t) => t.timestamp);
-  const headlineFills = headlineCoin === null ? 0 : trades.filter((t) => t.coin === headlineCoin).length;
+  const headlineTrades = headlineCoin === null ? [] : trades.filter((t) => t.coin === headlineCoin);
+  const headlineFills = headlineTrades.length;
+  const sum = (pred: (t: Trade) => boolean) =>
+    headlineTrades.filter(pred).reduce((s, t) => s + (Number.isFinite(t.sizeUsd) ? t.sizeUsd : 0), 0);
   return {
     tradesPerDay: (trades.length / windowHours) * 24,
     crossedShare: crossedCount / trades.length,
@@ -353,5 +366,7 @@ export function computeTradeFeatures(
     spanHours: (Math.max(...times) - Math.min(...times)) / 3_600_000,
     headlineFills,
     headlineShareOfFills: headlineFills / trades.length,
+    headlineOpenedUsd: sum((t) => t.dir.startsWith('Open')),
+    headlineClosedUsd: sum((t) => t.dir.startsWith('Close')),
   };
 }

@@ -6,6 +6,12 @@ export interface Position {
   sizeUsd: number;
   entryPx: number;
   leverage: number;
+  /** Cross margin shares one pool with every other position; isolated puts
+   * up its own. Both sources already return this, and until now it was
+   * read and thrown away, along with liquidation price and the two PnL
+   * fields below - the numbers a reader deciding whether to copy a
+   * position wants, not the ones a verdict needs. */
+  leverageType: 'cross' | 'isolated';
   liquidationPx: number | null;
   unrealizedPnlUsd: number;
   cumFundingUsd: number;
@@ -57,6 +63,9 @@ export interface Trade {
    * only the size says whether that activity is anywhere near the position
    * being asked about. */
   sizeUsd: number;
+  /** Hyperliquid's own "Open Short" / "Close Long" / "Buy". Read as a plain
+   * string; see HlFill for why. */
+  dir: string;
 }
 
 export type ServiceStatus = 'service' | 'not-service' | 'unverified';
@@ -70,6 +79,11 @@ export interface LinkedWallet {
    * sends no label for most addresses, and `unverified` keeps that gap
    * visible instead of reading silence as "a private wallet". */
   serviceStatus: ServiceStatus;
+  /** When the funding transaction happened, as an epoch number - null when
+   * Nansen's timestamp does not parse. A hedge is never read from this; it
+   * is the one thing a funding link can say about a long, where a hedge
+   * search does not apply at all. */
+  fundedAt: number | null;
 }
 
 export interface PnlSummary {

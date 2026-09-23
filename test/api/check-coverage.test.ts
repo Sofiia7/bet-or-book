@@ -148,3 +148,54 @@ describe('R04: the deadline covers the whole check, not some of its stages', () 
     expect(result.checkedAt).toBe(new Date(frozen).toISOString());
   });
 });
+
+describe('L02a (22.09 audit): a long\'s own funding history is context a hedge search cannot reach', () => {
+  const funderRow = (over: Partial<NansenRelatedWallet> = {}): NansenRelatedWallet => ({
+    address: '0xfffffffffffffffffffffffffffffffffffffff1',
+    address_label: null,
+    relation: 'First Funder',
+    transaction_hash: '0xabc',
+    block_timestamp: '2026-09-13T12:00:00Z', // 8 days before the frozen clock below
+    order: 1,
+    chain: 'ethereum',
+    ...over,
+  });
+  const frozen = Date.parse('2026-09-21T12:00:00Z');
+  const withFunder = (rows: NansenRelatedWallet[]): NansenClient => ({
+    ...nansenWith('HYPE', 'long'),
+    relatedWallets: async (_addr, chain) => ({ rows: chain === 'ethereum' ? rows : [], complete: true }),
+  });
+
+  it('names when a lone long position was first funded, and by what kind of wallet', async () => {
+    route();
+    const result = await checkAddress(ADDRESS, { nansen: withFunder([funderRow()]), now: () => frozen });
+    expect(result.vitals).toContainEqual(
+      expect.objectContaining({ label: 'First funded', source: 'Nansen', value: expect.stringContaining('8 days ago') }),
+    );
+  });
+
+  it('names an exchange or bridge funder as what it is', async () => {
+    route();
+    const result = await checkAddress(ADDRESS, {
+      nansen: withFunder([funderRow({ address_label: 'Binance: Hot Wallet' })]),
+      now: () => frozen,
+    });
+    expect(result.vitals.find((v) => v.label === 'First funded')?.value).toContain('an exchange or bridge');
+  });
+
+  it('does not read funding history for a short: the hedge search already covers that ground', async () => {
+    route();
+    const shortWithFunder: NansenClient = {
+      ...nansenWith('HYPE', 'short'),
+      relatedWallets: async (_addr, chain) => ({ rows: chain === 'ethereum' ? [funderRow()] : [], complete: true }),
+    };
+    const result = await checkAddress(ADDRESS, { nansen: shortWithFunder, now: () => frozen });
+    expect(result.vitals.some((v) => v.label === 'First funded')).toBe(false);
+  });
+
+  it('says nothing when there is no funding link to read', async () => {
+    route();
+    const result = await checkAddress(ADDRESS, { nansen: withFunder([]), now: () => frozen });
+    expect(result.vitals.some((v) => v.label === 'First funded')).toBe(false);
+  });
+});

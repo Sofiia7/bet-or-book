@@ -67,8 +67,19 @@ export interface VerdictThresholds {
  * holdings whose asset could not be established withhold the finding instead
  * of counting as zero; and a rule that asserts an absence - no quotes, no
  * other positions - needs the source it is about to have been read in full.
+ *
+ * v4 follows the 22.09 audit. A "looks like a bet" verdict used to need a
+ * single position at least half of gross exposure, so an account with, say,
+ * eleven positions that are all short - net/gross 100%, nothing quoted, no
+ * hedge - fell to "signals disagree" for failing the position-count and
+ * headline-share bars alone. That is not an absence of a finding: the
+ * finding is the portfolio's direction, not any one position's size. The new
+ * `directional_portfolio` reason names it, under the same absence gates the
+ * single-position rule already needs (orders and positions read in full),
+ * and only once the funding-link finding - which needs the same holdings
+ * read to be this thin - has had first refusal.
  */
-export const CLASSIFIER_VERSION = 'v3';
+export const CLASSIFIER_VERSION = 'v4';
 
 export const DEFAULT_THRESHOLDS: VerdictThresholds = {
   book: {
@@ -349,6 +360,29 @@ export function computeVerdict(
   // holdings can therefore only withhold a verdict, never grant one.
   if (linkedRatio >= b.maxHedgeRatio) {
     return { verdict: 'unknown', strength: null, reasons: ['linked_exposure_unverified'] };
+  }
+
+  // A portfolio that fails the single-position bet rule only on position
+  // count or headline share can still be one directional stance spread over
+  // several positions: what makes a position a bet is that nothing offsets
+  // it and nothing was quoted against it, not that it is the only one open.
+  // Every clause here is an absence - net/gross near total, no two-sided
+  // quotes, no hedge - so it needs the same completeness the single-position
+  // rule already requires, and it is checked last among the "bet"-shaped
+  // rules so a funding link that could still explain the exposure keeps
+  // first refusal.
+  const directional =
+    input.positions.netToGross >= b.minNetToGross &&
+    input.orders.coinsBothSides === 0 &&
+    input.hedge.hedgeRatio + linkedRatio < b.maxHedgeRatio;
+  if (directional) {
+    if ((input.ordersCoverage ?? 'complete') !== 'complete') {
+      return { verdict: 'unknown', strength: null, reasons: ['quotes_not_checked'] };
+    }
+    if ((input.positionsCoverage ?? 'complete') !== 'complete') {
+      return { verdict: 'unknown', strength: null, reasons: ['positions_not_complete'] };
+    }
+    return { verdict: 'looks_like_a_bet', strength: null, reasons: ['directional_portfolio'] };
   }
 
   return {

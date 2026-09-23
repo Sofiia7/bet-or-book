@@ -19,8 +19,8 @@ describe('computePositionFeatures', () => {
 
   it('identifies the headline position and its share of gross exposure', () => {
     const positions: Position[] = [
-      { coin: 'BTC', side: 'short', sizeUsd: 190_000_000, entryPx: 60000, leverage: 3, liquidationPx: 68000, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
-      { coin: 'ETH', side: 'long', sizeUsd: 9_050_000, entryPx: 3000, leverage: 2, liquidationPx: 2400, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
+      { coin: 'BTC', side: 'short', sizeUsd: 190_000_000, entryPx: 60000, leverage: 3, leverageType: 'cross', liquidationPx: 68000, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
+      { coin: 'ETH', side: 'long', sizeUsd: 9_050_000, entryPx: 3000, leverage: 2, leverageType: 'cross', liquidationPx: 2400, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
     ];
     const result = computePositionFeatures(positions);
     expect(result.nPositions).toBe(2);
@@ -32,7 +32,7 @@ describe('computePositionFeatures', () => {
 
   it('separates exposure that cancels within one asset from a dollar-balanced mix', () => {
     const p = (coin: string, side: 'long' | 'short', sizeUsd: number): Position => ({
-      coin, side, sizeUsd, entryPx: 1, leverage: 1, liquidationPx: null, unrealizedPnlUsd: 0, cumFundingUsd: 0,
+      coin, side, sizeUsd, entryPx: 1, leverage: 1, leverageType: 'cross', liquidationPx: null, unrealizedPnlUsd: 0, cumFundingUsd: 0,
     });
     // $1M BTC long against $1M TRUMP short nets to zero dollars and hedges
     // nothing: each asset can still move on its own.
@@ -54,8 +54,8 @@ describe('computePositionFeatures', () => {
 
   it('computes net-to-gross close to zero for a balanced book', () => {
     const positions: Position[] = [
-      { coin: 'BTC', side: 'long', sizeUsd: 100, entryPx: 60000, leverage: 1, liquidationPx: null, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
-      { coin: 'BTC', side: 'short', sizeUsd: 95, entryPx: 60000, leverage: 1, liquidationPx: null, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
+      { coin: 'BTC', side: 'long', sizeUsd: 100, entryPx: 60000, leverage: 1, leverageType: 'cross', liquidationPx: null, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
+      { coin: 'BTC', side: 'short', sizeUsd: 95, entryPx: 60000, leverage: 1, leverageType: 'cross', liquidationPx: null, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
     ];
     const result = computePositionFeatures(positions);
     expect(result.netToGross).toBeCloseTo(5 / 195, 6);
@@ -63,7 +63,7 @@ describe('computePositionFeatures', () => {
 
   it('computes net-to-gross at 1 for a single one-directional position', () => {
     const positions: Position[] = [
-      { coin: 'BTC', side: 'long', sizeUsd: 100, entryPx: 60000, leverage: 5, liquidationPx: 50000, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
+      { coin: 'BTC', side: 'long', sizeUsd: 100, entryPx: 60000, leverage: 5, leverageType: 'cross', liquidationPx: 50000, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
     ];
     const result = computePositionFeatures(positions);
     expect(result.netToGross).toBe(1);
@@ -118,7 +118,7 @@ describe('computeHedgeFeatures', () => {
 
 describe('computeLinkedHedge', () => {
   const funder = (address: string, holdings: SpotHolding[], serviceStatus: ServiceStatus = 'not-service') => ({
-    wallet: { address, relation: 'First Funder', chain: 'ethereum', serviceStatus },
+    wallet: { address, relation: 'First Funder', chain: 'ethereum', serviceStatus, fundedAt: null },
     holdings,
   });
 
@@ -154,7 +154,7 @@ describe('computeSizeVsOi', () => {
 
 describe('computePositionFeatures, distance to liquidation', () => {
   const pos = (liquidationPx: number, entryPx: number): Position[] => [
-    { coin: 'BTC', side: 'long', sizeUsd: 1_000_000, entryPx, leverage: 5, liquidationPx, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
+    { coin: 'BTC', side: 'long', sizeUsd: 1_000_000, entryPx, leverage: 5, leverageType: 'cross', liquidationPx, unrealizedPnlUsd: 0, cumFundingUsd: 0 },
   ];
 
   it('measures the distance from where the price is now', () => {
@@ -218,6 +218,7 @@ describe('computeTradeFeatures', () => {
       side: 'buy',
       closedPnlUsd: 0,
       sizeUsd,
+      dir: 'Buy',
     });
     // Three hundred small quotes on SOL and one big ETH fill: the account is
     // busy, but almost none of that busyness is this position.
@@ -234,9 +235,52 @@ describe('computeTradeFeatures', () => {
     expect(result.spanHours).toBeCloseTo(6, 3);
   });
 
+  it('splits the headline coin\'s flow into opened and closed, ignoring flow elsewhere', () => {
+    const fill = (coin: string, sizeUsd: number, dir: string): Trade => ({
+      coin,
+      timestamp: 0,
+      crossed: false,
+      side: 'buy',
+      closedPnlUsd: 0,
+      sizeUsd,
+      dir,
+    });
+    const trades = [
+      fill('ETH', 1_000_000, 'Open Short'),
+      fill('ETH', 400_000, 'Open Short'),
+      fill('ETH', 300_000, 'Close Short'),
+      fill('BTC', 9_000_000, 'Open Long'), // a different market entirely
+    ];
+    const result = computeTradeFeatures(trades, 24, 'ETH');
+    expect(result.headlineOpenedUsd).toBe(1_400_000);
+    expect(result.headlineClosedUsd).toBe(300_000);
+  });
+
+  it('counts a plain Buy/Sell fill (no Open/Close prefix) as neither opening nor closing', () => {
+    const result = computeTradeFeatures(
+      [{ coin: 'ETH', timestamp: 0, crossed: false, side: 'buy', closedPnlUsd: 0, sizeUsd: 500_000, dir: 'Buy' }],
+      24,
+      'ETH',
+    );
+    expect(result.headlineOpenedUsd).toBe(0);
+    expect(result.headlineClosedUsd).toBe(0);
+  });
+
+  it('zeroes the flow split when there is no headline coin or no trades', () => {
+    const withoutHeadline = computeTradeFeatures(
+      [{ coin: 'ETH', timestamp: 0, crossed: false, side: 'buy', closedPnlUsd: 0, sizeUsd: 500_000, dir: 'Open Long' }],
+      24,
+      null,
+    );
+    expect(withoutHeadline.headlineOpenedUsd).toBe(0);
+    const empty = computeTradeFeatures([], 24, 'ETH');
+    expect(empty.headlineOpenedUsd).toBe(0);
+    expect(empty.headlineClosedUsd).toBe(0);
+  });
+
   it('reports no headline share when there is no headline coin', () => {
     const result = computeTradeFeatures(
-      [{ coin: 'BTC', timestamp: 0, crossed: false, side: 'buy', closedPnlUsd: 0, sizeUsd: 100 }],
+      [{ coin: 'BTC', timestamp: 0, crossed: false, side: 'buy', closedPnlUsd: 0, sizeUsd: 100, dir: 'Buy' }],
       24,
       null,
     );
@@ -259,6 +303,7 @@ describe('computeTradeFeatures', () => {
       side: i % 4 === 0 ? 'buy' : 'sell',
       closedPnlUsd: 0,
       sizeUsd: 1_000,
+      dir: 'Buy',
     }));
     const result = computeTradeFeatures(trades, 12);
     expect(result.tradesPerDay).toBe(200);
@@ -276,6 +321,7 @@ describe('computeTradeFeatures', () => {
       side: 'buy',
       closedPnlUsd: 0,
       sizeUsd: 1_000,
+      dir: 'Buy',
     }));
     const result = computeTradeFeatures(trades, 24);
     expect(result.cappedByApiLimit).toBe(true);

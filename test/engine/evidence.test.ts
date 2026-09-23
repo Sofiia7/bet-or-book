@@ -29,7 +29,7 @@ function input(overrides: Partial<EvidenceInput>): EvidenceInput {
     hedgeScope: 'all-chains',
     hedgeCoverage: 'complete',
     linkedHedge: null,
-    trades: { tradesPerDay: 0, crossedShare: 0, buyShare: 0, sampleSize: 0, cappedByApiLimit: false, notionalUsd: 0, spanHours: 0, headlineFills: 0, headlineShareOfFills: 0 },
+    trades: { tradesPerDay: 0, crossedShare: 0, buyShare: 0, sampleSize: 0, cappedByApiLimit: false, notionalUsd: 0, spanHours: 0, headlineFills: 0, headlineShareOfFills: 0, headlineOpenedUsd: 0, headlineClosedUsd: 0 },
     pnl: { realizedPnlUsd: -15_512_000, winRate: 0.41, closedTrades: 120, windowDays: 30 },
     sizeVsOi: 0.032,
     source: 'nansen',
@@ -73,7 +73,7 @@ describe('explain', () => {
         orders: { ...EMPTY_ORDERS, restingOrders: 212, bidShare: 0.5, coinsBothSides: 31 },
         trades: {
           tradesPerDay: 2000, crossedShare: 0.24, buyShare: 0.53, sampleSize: 2000, cappedByApiLimit: true,
-          notionalUsd: 180_000_000, spanHours: 23.6, headlineFills: 410, headlineShareOfFills: 0.205,
+          notionalUsd: 180_000_000, spanHours: 23.6, headlineFills: 410, headlineShareOfFills: 0.205, headlineOpenedUsd: 0, headlineClosedUsd: 0,
         },
       }),
     );
@@ -118,7 +118,7 @@ describe('explain', () => {
         verdict: { verdict: 'unknown', strength: null, reasons: ['maker_flow_only'] },
         trades: {
           tradesPerDay: 2000, crossedShare: 0.24, buyShare: 0.53, sampleSize: 2000, cappedByApiLimit: false,
-          notionalUsd: 180_000_000, spanHours: 23.6, headlineFills: 410, headlineShareOfFills: 0.205,
+          notionalUsd: 180_000_000, spanHours: 23.6, headlineFills: 410, headlineShareOfFills: 0.205, headlineOpenedUsd: 0, headlineClosedUsd: 0,
         },
       }),
     );
@@ -272,6 +272,58 @@ describe('explain', () => {
       '100% of the exposure is one $100.0M ETH short, and no ETH was found at this address on Nansen-supported chains. Debts and other derivatives are not read here.',
     );
     expect(e.summary).not.toContain('funded');
+  });
+
+  it('explains a directional portfolio (short), naming the spread rather than only the largest leg', () => {
+    const e = explain(
+      input({
+        verdict: { verdict: 'looks_like_a_bet', strength: null, reasons: ['directional_portfolio'] },
+        positions: positions({ nPositions: 8, netToGross: 1, headlineShare: 0.3, headlineNotionalUsd: 30_000_000 }),
+      }),
+    );
+    expect(e.summary).toBe(
+      '8 open positions, all pointing the same way, net out to 100% of gross exposure; the largest is $30.0M ETH ' +
+        'short (30% of it). No two-sided quoting, and no ETH was found at this address on Nansen-supported chains. ' +
+        'Debts and other derivatives are not read here.',
+    );
+    expect(e.evidence).toContainEqual(expect.objectContaining({ label: 'Net / gross exposure', decisive: true }));
+  });
+
+  it('explains a directional portfolio (long), where spot cannot offset it', () => {
+    const e = explain(
+      input({
+        verdict: { verdict: 'looks_like_a_bet', strength: null, reasons: ['directional_portfolio'] },
+        positions: positions({
+          nPositions: 6,
+          netToGross: 1,
+          headlineShare: 0.4,
+          headlineNotionalUsd: 24_000_000,
+          headlineSide: 'long',
+        }),
+        hedgeScope: 'none',
+      }),
+    );
+    expect(e.summary).toBe(
+      '6 open positions, all pointing the same way, net out to 100% of gross exposure; the largest is $24.0M ETH ' +
+        'long (40% of it). No two-sided quoting. Spot cannot offset a long, and debts or other derivatives are not read here.',
+    );
+    expect(e.evidence.some((i) => i.label === 'Hedge found')).toBe(false);
+  });
+
+  it('names a partial coverage on Hyperliquid alone as what it is, in a directional portfolio', () => {
+    const e = explain(
+      input({
+        verdict: { verdict: 'looks_like_a_bet', strength: null, reasons: ['directional_portfolio'] },
+        positions: positions({ nPositions: 5, netToGross: 0.9, headlineShare: 0.5, headlineNotionalUsd: 10_000_000 }),
+        hedge: { ...EMPTY_HEDGE, hedgeRatio: 0.02 },
+        hedgeScope: 'hyperliquid',
+      }),
+    );
+    expect(e.summary).toBe(
+      '5 open positions, all pointing the same way, net out to 90% of gross exposure; the largest is $10.0M ETH ' +
+        'short (50% of it). No two-sided quoting, and only 2.0% of it is covered by ETH at this address on ' +
+        'Hyperliquid. Debts and other derivatives are not read here.',
+    );
   });
 
   it('lists why an undecided account is not a clean bet', () => {

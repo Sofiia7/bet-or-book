@@ -56,6 +56,7 @@ export function normalizePositions(state: HlClearinghouseState): Position[] {
       sizeUsd: Math.abs(finite(position.positionValue, 'positionValue')),
       entryPx: finite(position.entryPx ?? 0, 'entryPx'),
       leverage: finite(position.leverage?.value, 'leverage.value'),
+      leverageType: position.leverage?.type === 'isolated' ? 'isolated' : 'cross',
       liquidationPx: position.liquidationPx === null ? null : finite(position.liquidationPx, 'liquidationPx'),
       unrealizedPnlUsd: finite(position.unrealizedPnl, 'unrealizedPnl'),
       cumFundingUsd: finite(position.cumFunding?.sinceOpen, 'cumFunding.sinceOpen'),
@@ -169,6 +170,7 @@ export function normalizeTrades(fills: HlFill[]): Trade[] {
     side: f.side === 'B' ? 'buy' : 'sell',
     closedPnlUsd: Number(f.closedPnl),
     sizeUsd: Number(f.px) * Number(f.sz),
+    dir: f.dir,
   }));
 }
 
@@ -182,6 +184,7 @@ export function normalizeNansenPositions(data: NansenPerpPositions): Position[] 
       sizeUsd: Math.abs(finite(p.position_value_usd, 'position_value_usd')),
       entryPx: finite(p.entry_price_usd, 'entry_price_usd'),
       leverage: finite(p.leverage_value, 'leverage_value'),
+      leverageType: p.leverage_type === 'isolated' ? 'isolated' : 'cross',
       liquidationPx: p.liquidation_price_usd === null ? null : finite(p.liquidation_price_usd, 'liquidation_price_usd'),
       unrealizedPnlUsd: finite(p.unrealized_pnl_usd, 'unrealized_pnl_usd'),
       cumFundingUsd: finite(p.cumulative_funding_since_open_usd, 'cumulative_funding_since_open_usd'),
@@ -256,6 +259,7 @@ export function normalizeRelatedWallets(rows: NansenRelatedWallet[]): LinkedWall
     // mean anything, and is dropped: Nansen's rules prohibit showing labels
     // publicly, and nothing downstream of this function ever sees one.
     serviceStatus: serviceStatusOf(r.address, r.address_label),
+    fundedAt: Number.isFinite(Date.parse(r.block_timestamp)) ? Date.parse(r.block_timestamp) : null,
   }));
 }
 

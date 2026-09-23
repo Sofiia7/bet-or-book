@@ -34,7 +34,7 @@ function input(overrides: Partial<EvidenceInput> = {}): EvidenceInput {
     linkedHedge: null,
     trades: {
       tradesPerDay: 0, crossedShare: 0, buyShare: 0.5, sampleSize: 0, cappedByApiLimit: false,
-      notionalUsd: 0, spanHours: 0, headlineFills: 0, headlineShareOfFills: 0,
+      notionalUsd: 0, spanHours: 0, headlineFills: 0, headlineShareOfFills: 0, headlineOpenedUsd: 0, headlineClosedUsd: 0,
     },
     pnl: null,
     sizeVsOi: null,

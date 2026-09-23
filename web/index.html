@@ -80,6 +80,15 @@
   .picker-chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .picker .chip { padding: 4px 10px; font-size: 12px; }
 
+  /* A visitor with no address in hand - a judge, someone who followed a
+     link with nothing pasted yet - used to have nothing to click until the
+     gallery lower down the page. These are the same jump a gallery row
+     makes, just first. */
+  .examples { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 0; font-size: 13px; }
+  .examples-label { color: var(--muted); }
+  .examples-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .examples-chips .chip { padding: 4px 10px; font-size: 12px; }
+
   /* The one distinction the whole card turns on - what this address holds
      against the position, versus what a wallet that merely funded it holds -
      is a shape, not a row of percentages. Solid is counted; dashed is
@@ -91,6 +100,11 @@
   .breakdown .seg-value { font-size: 13px; font-weight: 600; fill: var(--fg); }
   .breakdown .bar-title { font-size: 13px; font-weight: 600; fill: var(--fg); }
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 14px 0; }
+  /* Leverage, distance to liquidation, unrealized PnL, funding since open:
+     none of these decide bet/hedge/book, so they sit apart from the
+     evidence that did, under their own caption rather than mixed into it. */
+  .vitals { margin: 20px 0 4px; padding: 0; }
+  .vitals figcaption { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
   .stat.decisive { grid-column: 1 / -1; background: var(--panel); border-left: 3px solid var(--fg); }
   .stat.decisive .stat-value { font-size: 22px; }
   .stat { background: var(--panel); border-radius: 8px; padding: 10px 12px; }
@@ -100,6 +114,13 @@
   .box { background: var(--panel); border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-top: 10px; }
   .box ul { margin: 6px 0 0; padding-left: 18px; }
   .box p { margin: 0; }
+  /* Closed by default - a judge or a skeptical reader opens it, everyone
+     else is not made to read a rule-engine internals sentence they did not
+     ask for (audit item 9). Native <details>, so no JS runs the toggle. */
+  .decided { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+  .decided summary { cursor: pointer; color: var(--link); }
+  .decided p { margin: 6px 0 0; }
+  .decided code { font-family: ui-monospace, Consolas, monospace; background: var(--panel); padding: 1px 5px; border-radius: 4px; }
   .note { background: var(--note-bg); color: var(--note-fg); }
   .attribution { font-size: 12px; color: var(--muted); margin-top: 6px; }
   .meta { font-size: 12px; color: var(--faint); margin-top: 12px; }
@@ -127,13 +148,25 @@
 </head>
 <body>
 <h1>Bet or book</h1>
-<p class="sub">Should you copy this whale? Paste a Hyperliquid address and see whether the position is a bet, a hedge, or a market maker's book.</p>
+<p class="sub">Before you copy the headline, check the position. Is it a bet, a hedge, or a market maker's book - read from Nansen and Hyperliquid data, one address at a time.</p>
 
 <div class="row">
   <input id="address" type="text" placeholder="0x... or a link containing one" autocomplete="off" spellcheck="false" aria-label="Hyperliquid address">
   <button id="check">Check</button>
 </div>
 <p class="status" id="status" role="status"></p>
+<div class="examples">
+  <span class="examples-label">No address handy? See a real one:</span>
+  <span class="examples-chips" id="examples-chips">
+    <button class="chip" data-example="082e843a-mu71i2vu">$125.9M HYPE long &middot; bet</button>
+    <button class="chip" data-example="1ny4ncx4j6myd">$42.7M HYPE short &middot; 97% hedged</button>
+    <button class="chip" data-example="2b2e7wqput6yt">$81.5M ETH short &middot; market maker</button>
+  </span>
+</div>
+<div class="examples" id="recent" hidden>
+  <span class="examples-label">Your recent checks, saved in this browser only:</span>
+  <span class="examples-chips" id="recent-chips"></span>
+</div>
 
 <div class="card" id="card" hidden>
   <div class="box snapshot" id="snapshot" hidden>
@@ -143,6 +176,10 @@
   <p style="margin: 10px 0 0;"><span class="badge" id="badge"></span></p>
   <p class="headline" id="headline"></p>
   <p class="summary" id="summary"></p>
+  <details class="decided" id="decided" hidden>
+    <summary>How this was decided</summary>
+    <p>Reason code: <code id="decided-reasons"></code>. Rules version <code id="decided-version"></code>. <a href="https://github.com/Sofiia7/bet-or-book#how-the-verdict-is-decided" target="_blank" rel="noopener noreferrer">See the full rule table</a>.</p>
+  </details>
   <div class="box changed" id="changed" hidden>
     <p><strong id="changed-title"></strong> <span class="muted" id="changed-because"></span></p>
     <ul id="changed-list"></ul>
@@ -156,6 +193,10 @@
     <div id="breakdown-svg"></div>
   </figure>
   <div class="stats" id="stats"></div>
+  <figure class="vitals" id="vitals" hidden>
+    <figcaption>The position itself, not the verdict</figcaption>
+    <div class="stats" id="vitals-stats"></div>
+  </figure>
   <div class="box" id="funders" hidden>
     <p><strong>Wallets that funded this account</strong> - they hold the matching asset, which is not the same as this account holding it</p>
     <ul id="funders-list"></ul>
@@ -173,6 +214,7 @@
     <button id="copy-card">Copy card</button>
     <button id="download-card">Download PNG</button>
     <button id="copy-link">Copy link</button>
+    <button id="copy-post">Copy post text</button>
   </div>
   <canvas id="card-canvas" width="1200" height="675" hidden></canvas>
 </div>

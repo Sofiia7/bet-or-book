@@ -43,6 +43,7 @@ import {
   type SourceCoverage,
 } from '../engine/verdict';
 import { explain, formatUsd, type EvidenceItem } from '../engine/evidence';
+import { computeVitals, type VitalsItem } from '../engine/vitals';
 import { shareCard, type ShareCard } from '../engine/share';
 import { exposureBreakdown, type ExposureBreakdown } from '../engine/breakdown';
 import { OBSERVATION_SCHEMA_VERSION, ASSET_REGISTRY_VERSION } from '../engine/observation';
@@ -51,6 +52,11 @@ import type { Position, SpotHolding, LinkedWallet, PnlSummary } from '../types';
 const TRADES_WINDOW_HOURS = 24;
 const PNL_WINDOW_DAYS = 30;
 const MAX_FUNDERS = 2;
+/** How small a long's own portfolio has to be before its funding history is
+ * worth two credits: past this, the account is not the shape a single
+ * viral post highlights, and the signal says less about any one position
+ * in it (audit L02a, mirrors the bet rule's own position-count bar). */
+const MAX_POSITIONS_FOR_FUNDING_CONTEXT = 5;
 /** Share of the headline position below which a caveat is not worth the
  * reader's attention. */
 const MATERIAL_SHARE = 0.01;
@@ -139,6 +145,11 @@ export interface CheckResult {
   /** The position split into what stands against it, for the diagram. The
    * arithmetic is done here so the drawing has nothing to decide. */
   breakdown?: ExposureBreakdown;
+  /** Numbers about the headline position itself - leverage, distance to
+   * liquidation, unrealized PnL, funding since open, size vs open interest -
+   * rather than about the verdict. Both sources already return the first
+   * four on every position; nothing here costs an extra credit. */
+  vitals: VitalsItem[];
   /** Plain-language notes on anything that could not be read. */
   coverage: string[];
   /** The same notes, each saying whether it cost the answer something. A
@@ -397,6 +408,22 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     linkedHedge = await readLinkedHedge(nansen!, address, positionFeatures, note);
   }
 
+  // Spot cannot hedge a long, so the funder search above never runs for one
+  // - but a long's own funding history is Nansen context a hedge search can
+  // never reach, and it is cheap to ask for exactly the small, simple
+  // accounts a viral post usually highlights (audit L02a).
+  const fundingContextWorthIt =
+    nansen !== null &&
+    positionFeatures.headlineSide === 'long' &&
+    positionFeatures.nPositions > 0 &&
+    positionFeatures.nPositions <= MAX_POSITIONS_FOR_FUNDING_CONTEXT;
+  let fundingContext: VitalsItem | null = null;
+  if (fundingContextWorthIt && outOfTime()) {
+    note('This check ran out of time before it could look at when the account was first funded', true);
+  } else if (fundingContextWorthIt) {
+    fundingContext = await readFundingContext(nansen!, address, now, note);
+  }
+
   let openInterestUsd = 0;
   if (perpMetaRes.ok) {
     const [perpMeta, perpAssetCtxs] = perpMetaRes.v;
@@ -421,6 +448,28 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     positionsCoverage,
   });
 
+  const sizeVsOi = computeSizeVsOi(positionFeatures.headlineNotionalUsd, openInterestUsd);
+  // The same object computePositionFeatures picked as the headline, found
+  // again by coin and side: a Hyperliquid account nets to one position per
+  // market, so the pair is unique and this recovers it without widening
+  // PositionFeatures (which verdict.ts also reads) with fields no rule uses.
+  const headlinePosition =
+    positionFeatures.headlineCoin === null
+      ? null
+      : (positions.find((p) => p.coin === positionFeatures.headlineCoin && p.side === positionFeatures.headlineSide) ??
+        null);
+  const vitals = computeVitals({
+    headline: headlinePosition,
+    headlineLiqDistancePct: positionFeatures.headlineLiqDistancePct,
+    headlineLiqDistanceBasis: positionFeatures.headlineLiqDistanceBasis,
+    positionsSource: source === 'nansen' ? 'Nansen' : 'Hyperliquid',
+    sizeVsOi,
+    headlineOpenedUsd: tradeFeatures.headlineOpenedUsd,
+    headlineClosedUsd: tradeFeatures.headlineClosedUsd,
+    tradesSpanHours: tradeFeatures.spanHours,
+  });
+  if (fundingContext) vitals.push(fundingContext);
+
   const measured = {
     verdict,
     positions: positionFeatures,
@@ -433,7 +482,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     linkedHedge,
     trades: tradeFeatures,
     pnl,
-    sizeVsOi: computeSizeVsOi(positionFeatures.headlineNotionalUsd, openInterestUsd),
+    sizeVsOi,
     source,
     focus,
     positionsAsOf: measuredAt === null ? null : new Date(measuredAt).toISOString(),
@@ -456,6 +505,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     summary,
     evidence,
     breakdown: exposureBreakdown(positionFeatures, hedgeFeatures, linkedHedge),
+    vitals,
     coverage,
     coverageNotes,
     checkedAt: new Date(now).toISOString(),
@@ -544,4 +594,50 @@ async function readLinkedHedge(
     positionFeatures.headlineNotionalUsd,
     linked,
   );
+}
+
+/** When a long's own wallet was first funded, and by what kind of address -
+ * two calls, only for a small account. Never a hedge: a hedge search does
+ * not apply to a long at all, so this is the one piece of Nansen context a
+ * lone long can still carry. Named "First funded" rather than folded into
+ * the hedge-focused "Linked wallets" evidence, because it answers a
+ * different question and is never gated on hedge coverage. */
+async function readFundingContext(
+  nansen: NansenClient,
+  address: string,
+  now: number,
+  note: (text: string, failure?: boolean) => void,
+): Promise<VitalsItem | null> {
+  const related = await Promise.allSettled([
+    nansen.relatedWallets(address, 'arbitrum'),
+    nansen.relatedWallets(address, 'ethereum'),
+  ]);
+  const links: LinkedWallet[] = [];
+  for (const r of related) {
+    if (r.status === 'fulfilled') {
+      try {
+        links.push(...normalizeRelatedWallets(r.value.rows));
+      } catch (err) {
+        console.error('nansen related wallets (funding context)', err);
+        note('Funding history came back in an unexpected shape on one chain');
+      }
+    } else {
+      note('Funding history unavailable on one chain');
+    }
+  }
+  // The earliest First Funder across both chains is when the account
+  // actually started, whichever chain it started on.
+  const first = links
+    .filter((w) => w.relation === 'First Funder' && w.address !== address.toLowerCase() && w.fundedAt !== null)
+    .sort((a, b) => (a.fundedAt as number) - (b.fundedAt as number))[0];
+  if (!first) return null;
+  const days = Math.max(0, Math.round((now - (first.fundedAt as number)) / 86_400_000));
+  const when = days === 0 ? 'today' : days === 1 ? '1 day ago' : `${days} days ago`;
+  const who =
+    first.serviceStatus === 'service'
+      ? 'an exchange or bridge'
+      : first.serviceStatus === 'unverified'
+        ? 'an unlabelled wallet'
+        : 'another wallet';
+  return { label: 'First funded', value: `${when}, by ${who}`, source: 'Nansen' };
 }
