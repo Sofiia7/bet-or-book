@@ -1,0 +1,29 @@
+# The gallery: one dated scan, not the market
+
+The [README](../README.md) has the headline table. This is the full account of how the set was built, what moved when the rules changed, and what it does not claim to show.
+
+On 18 September 2026 the same check ran over a set of large Hyperliquid positions: accounts from the top 3,000 by value on Hyperliquid's public leaderboard, ranked by their largest main-dex position (864 had one open), checked from the top until the credits ran out. That is 278 accounts; one had closed its position by the time it was checked, which leaves 277. Thirty-one cards have since been re-read live - nine on 21 September when the rules first changed, twenty-two after the 21 September audit - so the set spans several dates and each card carries its own.
+
+Each card is re-judged offline against the current rules from the numbers already stored in it, without spending a credit ([`scripts/reexplain.ts`](../scripts/reexplain.ts)) - **but only where the stored observation carries what those rules read.** Re-running a classifier over an old aggregate is cheap and useful; it is not a re-check of the account, and the 21 September audit found the two being presented as one. An observation now carries its own schema version, and an entry the current rules cannot read keeps the verdict it was given, keeps the version of the rules that gave it, and is shown as history.
+
+| Verdict | Positions | Share of the 183 judged |
+|---|---|---|
+| Looks like a bet | 132 | 72% |
+| Unknown | 41 | 22% |
+| Book | 3 | 2% |
+| Hedged | 7 | 4% |
+| *Read by earlier rules* | *94* | *not judged by v4* |
+
+Every card that had read Book or Hedged under the older rules was **re-read live on 21 September**, because that is the only way to move one: 22 accounts, 83 Nansen calls. The verdicts that came back are not the ones that went in.
+
+- **Three books survive, and they are unmistakable.** The largest quotes both sides of 120 markets with $226M resting against an $81M headline position. Six of the old twelve had a wide spread of positions and nothing quoted behind them at all, which is now reported as what it is rather than as a book.
+- **Seven hedges hold, all HYPE shorts between 97% and 100% covered** - and the card now says the coverage came from **Hyperliquid's own spot balances, not from Nansen**. Every one of those seven had been signed "Nansen" before, because Nansen had been asked; it had not supplied a dollar of the number.
+- **The largest position in the set used to read Unknown for the wrong reason.** Fifteen positions, all short, net 100% of gross, nothing quoted, nothing hedging any of it - $289.6M of ETH short across them - fell to "signals disagree" for having more than five positions and no single one over half of gross. The 22 September audit added a second path to "Looks like a bet": the same net-of-gross and no-quotes test, applied to the whole portfolio rather than to one position. The second-largest, the Abraxas-linked $216.7M ETH short, still reads Unknown, and correctly: the matching ETH is in wallets that funded the account, and part of it is an Aave deposit with an invisible loan against it. A wide directional book and a funded short are different situations, and now read as different situations.
+
+The Unknowns are not a shrug. Each says which question it could not close: the dollars net out across different assets, the flow is busy but says nothing about this position, the matching assets are in a wallet that funded the account, the holdings could not be read in full, or the signals simply disagree.
+
+The 94 remaining cards from the original scan are history, not present findings: their observations recorded neither the order notional a book now needs nor what the hedge sum left out, so the current rules cannot read them. None of them claims a Book or a Hedged verdict.
+
+**What this table is not.** It is one scan of a set chosen a particular way. Leverage breaks the link between what an account is worth and what it holds, a HIP-3-only account can fall out of the ranking before it is ever checked, and the scan spent its last credits on the cheaper checks. Read it as "of the 277 read", never as "of the market".
+
+Two cards in the set have positions from Hyperliquid's main dex rather than Nansen, because Nansen answered 502 while they were being read; their cards say so. The scan data is in [`data/gallery.json`](../data/gallery.json), the candidate ranking in [`data/prescan-candidates.json`](../data/prescan-candidates.json).

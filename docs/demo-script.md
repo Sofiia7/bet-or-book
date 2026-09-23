@@ -40,7 +40,7 @@ Post text (262 of 280 characters - X counts each link as 23 whatever its length)
 ## Check these before recording
 
 - Every number above comes from the readings of 21 September. The live check will show today's figures, which will differ. Read the card on screen; do not read this file.
-- The gallery counts in the chips are computed in the page from the data, so they update themselves. As of 21 September: 183 cards judged by the current rules - 107 look like bets, 66 unknown, 3 books, 7 hedged - and 94 more kept as history because their observations predate those rules.
+- The gallery counts in the chips are computed in the page from the data, so they update themselves. As of 22 September: 183 cards judged by the current rules - 132 look like bets, 41 unknown, 3 books, 7 hedged - and 94 more kept as history because their observations predate those rules.
 - The 22 cards that had claimed Book or Hedged were re-read live on 21 September. Each of those carries a **What changed** block against the reading it replaced; the other 256 do not, and that is why the demo opens on one that does.
 - `0xf02d16a2...` and `0xecb63caa...` were read on 21 September. If either has changed shape since, pick the next row with the same verdict rather than explaining the difference on camera.
 - The diagram only appears for a **short**: spot cannot offset a long, so there is nothing to draw. Every card in the script above is a short.
