@@ -2,7 +2,7 @@
 // Worker's own entry point, exercised through real Requests.
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import worker from '../src/index';
-import { testEnv, request } from './support/worker';
+import { testEnv, request, ORIGIN } from './support/worker';
 
 const ADDRESS = '0x1111111111111111111111111111111111111111';
 
@@ -288,5 +288,76 @@ describe('a live check remembers the reading it replaces (22.09 audit, J05)', ()
     const body = (await res.json()) as { snapshotId: string; supersedes?: string };
     expect(body.supersedes).toBeUndefined();
     expect(body.snapshotId).toBeTruthy();
+  });
+});
+
+const PNG_MAGIC = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+
+describe('a reading\'s own social-preview picture (22.09 audit, item 7)', () => {
+  it('renders a real PNG for a gallery card, real satori and resvg, no mocks', async () => {
+    const env = testEnv();
+    const list = (await (await worker.fetch(request('/api/gallery'), env)).json()) as {
+      entries: Array<{ snapshotId: string }>;
+    };
+    const id = list.entries[0].snapshotId;
+    const res = await worker.fetch(request(`/api/og?id=${id}`), env);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toBe('image/png');
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    expect(Array.from(bytes.slice(0, 8))).toEqual(PNG_MAGIC);
+  }, 15_000);
+
+  it('renders a real PNG for a freshly live-checked address too, not only a gallery card', async () => {
+    routeUpstreams();
+    const env = testEnv();
+    const check = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
+    const { snapshotId } = (await check.json()) as { snapshotId: string };
+    const res = await worker.fetch(request(`/api/og?id=${snapshotId}`), env);
+    expect(res.status).toBe(200);
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    expect(Array.from(bytes.slice(0, 8))).toEqual(PNG_MAGIC);
+  }, 15_000);
+
+  it('serves the standing fallback picture for an id that is not a snapshot id at all', async () => {
+    const res = await worker.fetch(request('/api/og?id=not-a-real-id-at-all'), testEnv());
+    expect(res.status).toBe(200);
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    expect(Array.from(bytes.slice(0, 8))).toEqual(PNG_MAGIC);
+  });
+
+  it('serves the standing fallback picture for a snapshot id that does not exist', async () => {
+    const res = await worker.fetch(request('/api/og?id=0000000000'), testEnv());
+    expect(res.status).toBe(200);
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    expect(Array.from(bytes.slice(0, 8))).toEqual(PNG_MAGIC);
+  });
+
+  it('caches the render in KV, so a second request for the same id does not render again', async () => {
+    const env = testEnv();
+    const list = (await (await worker.fetch(request('/api/gallery'), env)).json()) as {
+      entries: Array<{ snapshotId: string }>;
+    };
+    const id = list.entries[1].snapshotId;
+    expect(await env.KV.get(`og:${id}`)).toBeNull();
+    await worker.fetch(request(`/api/og?id=${id}`), env);
+    const cached = await env.KV.get(`og:${id}`);
+    expect(cached).not.toBeNull();
+    // A second request reads the same cached bytes back rather than
+    // rendering again - proven by the response matching the cache exactly,
+    // not by a spy, since satori and resvg are called for real here.
+    const res2 = await worker.fetch(request(`/api/og?id=${id}`), env);
+    const bytes2 = new Uint8Array(await res2.arrayBuffer());
+    expect(Buffer.from(bytes2).toString('base64')).toBe(cached);
+  }, 15_000);
+
+  it('carries og:image and a summary_large_image twitter card on a shared reading\'s page', async () => {
+    const env = testEnv();
+    const list = (await (await worker.fetch(request('/api/gallery'), env)).json()) as {
+      entries: Array<{ snapshotId: string }>;
+    };
+    const id = list.entries[0].snapshotId;
+    const html = await (await worker.fetch(request(`/?s=${id}`), env)).text();
+    expect(html).toContain(`<meta property="og:image" content="${ORIGIN}/api/og?id=${id}">`);
+    expect(html).toContain('<meta name="twitter:card" content="summary_large_image">');
   });
 });

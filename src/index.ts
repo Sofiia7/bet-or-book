@@ -17,6 +17,16 @@ import ledgerData from '../data/ledger.json';
 import type { Gallery } from './gallery';
 import { BUILDATHON_WINDOW, type LedgerSummary } from './ledger';
 import type { KVLike } from './kv';
+import type { SafeKV } from './safeKv';
+import { ogCardData } from './engine/ogCard';
+import { renderOgPng, type OgFont } from './engine/ogRender';
+import interRegular from '../assets/inter-regular.woff';
+import interBold from '../assets/inter-bold.woff';
+// @ts-expect-error -- a .wasm import has no declared module type; Wrangler
+// compiles it to a WebAssembly.Module at build time, which is exactly what
+// resvg-wasm's initWasm accepts.
+import resvgWasmModule from '../node_modules/@resvg/resvg-wasm/index_bg.wasm';
+import ogFallbackPng from '../assets/og-fallback.png';
 
 const gallery = galleryData as unknown as Gallery;
 /** Gallery cards by snapshot id, so a shared link to one opens the card that
@@ -93,6 +103,62 @@ const SCRIPT_HEADERS = {
   'cache-control': 'public, max-age=300',
 };
 
+/** A reading's image never changes once it exists - the reading itself is
+ * immutable - so a cache hit is cached forever, in the browser and at
+ * whatever CDN a crawler sits behind. */
+const OG_IMAGE_HEADERS = {
+  'content-type': 'image/png',
+  'cache-control': 'public, max-age=31536000, immutable',
+};
+
+const OG_FONTS: OgFont[] = [
+  { name: 'Inter', data: interRegular, weight: 400, style: 'normal' },
+  { name: 'Inter', data: interBold, weight: 700, style: 'normal' },
+];
+
+/**
+ * A reading's own social-preview picture, cached in KV under its snapshot
+ * id and rendered at most once per id.
+ *
+ * satori and resvg together take roughly 26-28 ms warm and up to 127 ms on
+ * a cold isolate - measured directly, and in line with independent reports
+ * of the same two libraries on Workers (docs/architecture.md). The Workers
+ * **free** plan's CPU budget is 10 ms per request; the render is attempted
+ * anyway, because the failure mode here is "no image", which is exactly
+ * what every reading had before this existed. A paid plan's 30 s budget
+ * clears it with room to spare. Nothing that calls this ever depends on it
+ * succeeding.
+ */
+async function ogPngFor(card: CheckResponse, kv: SafeKV): Promise<Uint8Array | null> {
+  const id = card.snapshotId;
+  if (!id) return null;
+  const cacheKey = `og:${id}`;
+  const cached = await kv.get(cacheKey);
+  if (cached !== null) {
+    try {
+      return new Uint8Array(Buffer.from(cached, 'base64'));
+    } catch {
+      // Fall through and re-render rather than serve a cache entry that
+      // does not even decode.
+    }
+  }
+  try {
+    const data = ogCardData({
+      address: card.address,
+      verdict: card.verdict,
+      summary: card.summary,
+      classifierVersion: card.classifierVersion,
+      breakdown: card.breakdown,
+    });
+    const png = await renderOgPng(data, OG_FONTS, resvgWasmModule);
+    await kv.put(cacheKey, Buffer.from(png).toString('base64'), { expirationTtl: SNAPSHOT_TTL_SECONDS });
+    return png;
+  } catch (err) {
+    console.error('og render failed', id, err);
+    return null;
+  }
+}
+
 /**
  * A saved reading is not a secret - the wallet is public - but that someone
  * asked about this address at this moment need not be indexed and kept.
@@ -149,10 +215,14 @@ async function readSnapshot(kv: KVLike, id: string): Promise<CheckResponse | nul
  * shared link, does not run JavaScript, and must not be able to make this
  * site spend a credit; serving it the reading's own words costs neither.
  */
-function withSocialTags(html: string, card: CheckResponse, url: URL): string {
+function withSocialTags(html: string, card: CheckResponse, url: URL, id: string): string {
   const p = card.positions;
   const what = p.headlineCoin === null ? 'No open position' : `${p.headlineCoin} ${p.headlineSide}`;
   const title = `${what}: ${VERDICT_WORDS[card.verdict.verdict] ?? 'checked'}`;
+  // `id` is the query parameter this reading was actually found under, not
+  // `card.snapshotId` - an older gallery entry can carry no id of its own
+  // even though the map it lives in is keyed by one (audit-era data).
+  const image = `${url.origin}/api/og?id=${encodeURIComponent(id)}`;
   return html.replace(
     SOCIAL_BLOCK,
     [
@@ -161,7 +231,11 @@ function withSocialTags(html: string, card: CheckResponse, url: URL): string {
       `<meta property="og:title" content="${escapeAttr(title)}">`,
       `<meta property="og:description" content="${escapeAttr(card.summary)}">`,
       `<meta property="og:url" content="${escapeAttr(url.toString())}">`,
-      '<meta name="twitter:card" content="summary">',
+      `<meta property="og:image" content="${escapeAttr(image)}">`,
+      '<meta property="og:image:width" content="1200">',
+      '<meta property="og:image:height" content="630">',
+      '<meta name="twitter:card" content="summary_large_image">',
+      `<meta name="twitter:image" content="${escapeAttr(image)}">`,
     ].join('\n'),
   );
 }
@@ -398,6 +472,19 @@ export default {
       );
     }
 
+    // A reading's own social-preview picture. Never called by this site's
+    // own code - only by whatever fetches the og:image URL a shared link
+    // carries - so a slow or failed render here costs nothing else: the
+    // static fallback picture ships regardless.
+    if (url.pathname === '/api/og') {
+      const id = url.searchParams.get('id') ?? '';
+      if (!isSnapshotId(id)) return new Response(ogFallbackPng, { headers: OG_IMAGE_HEADERS });
+      const card = galleryById.get(id) ?? (await readSnapshot(kv, id));
+      if (!card) return new Response(ogFallbackPng, { headers: OG_IMAGE_HEADERS });
+      const png = await ogPngFor(card, kv);
+      return new Response(png ?? ogFallbackPng, { headers: OG_IMAGE_HEADERS });
+    }
+
     // Two readings of one address, side by side. Reads what is already
     // stored and never starts a check: a comparison is a third thing made
     // out of two existing ones, and it costs nothing.
@@ -456,7 +543,7 @@ export default {
       const shared = url.searchParams.get('s') ?? '';
       if (isSnapshotId(shared)) {
         const card = galleryById.get(shared) ?? (await readSnapshot(kv, shared));
-        if (card) return new Response(withSocialTags(page, card, url), { headers: PAGE_HEADERS });
+        if (card) return new Response(withSocialTags(page, card, url, shared), { headers: PAGE_HEADERS });
       }
       return new Response(page, { headers: PAGE_HEADERS });
     }

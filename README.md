@@ -27,7 +27,7 @@ Bet or Book answers one question per address, shows the numbers that decided it,
 - **The funding wallets**, with explorer links, when they hold the matching asset. They hold it; that is not the same as this account holding it, and the card says so.
 - **What could not be read**, every time: which sources were missing or cut short, how old the numbers are, and which rules read them.
 - **What we cannot see**, always: centralized exchanges, OTC, wallets with no on-chain link. A hedge there is invisible, so a bet is only ever "looks like a bet".
-- **A share card** (PNG, carrying those limits) and a link that reopens *this* reading rather than starting a new one.
+- **A share card** (PNG, carrying those limits) and a link that reopens *this* reading rather than starting a new one, with a matching image for the link itself when it is pasted into X, Telegram or Discord.
 
 ## Run it locally (about 10 minutes)
 
@@ -128,6 +128,7 @@ npx wrangler deploy
 | `GET /api/snapshot?id=...` | One saved reading, exactly as it was read |
 | `GET /api/compare?a=...&b=...` | Two readings of one address, side by side: what moved, and whether the answer moved with the data or with the rules. Reads stored readings only |
 | `GET /api/gallery` | The dated scan |
+| `GET /api/og?id=...` | That reading's social-preview picture (PNG). Cached in KV after the first render; a gallery card's is pre-rendered offline and never rendered on request at all |
 | `GET /api/ledger` | Nansen calls made, attempted against answered, credits quoted against credits assumed |
 
 ## Scripts
@@ -138,6 +139,7 @@ npx wrangler deploy
 | `scripts/ledger.ts` | Sums `data/nansen-calls.jsonl` into `data/ledger.json`, served at `/api/ledger` |
 | `scripts/reexplain.ts` | Re-judges and re-explains the gallery cards whose stored observation carries what the current rules read, and marks the rest as history. No network: a rules fix never needs the credits the scan cost |
 | `scripts/fetch-fixtures.ts`, `scripts/fetch-nansen-fixtures.ts` | Capture real API responses for the tests (labels redacted) |
+| `scripts/prerender-og.ts` | Renders every gallery card's social-preview picture offline and uploads it to KV, so `/api/og` never has to render one on the Workers free plan's CPU budget (see [`docs/architecture.md`](docs/architecture.md)) |
 
 ## Nansen API usage
 
@@ -149,7 +151,7 @@ No logins, sessions, uploads, webhooks or SQL; the only user input is an address
 
 ## Stack
 
-Cloudflare Workers, Workers KV and two Durable Objects (the spend cap with its call ledger, and the rate limiter - both need an atomic read-modify-write that KV cannot promise), TypeScript, Vitest (367 tests on recorded real responses, including the Worker's own routes driven through real Requests). No runtime dependencies, no frontend framework: one HTML page, one script file and a canvas for the share card.
+Cloudflare Workers, Workers KV and two Durable Objects (the spend cap with its call ledger, and the rate limiter - both need an atomic read-modify-write that KV cannot promise), TypeScript, Vitest (402 tests on recorded real responses, including the Worker's own routes driven through real Requests, and two that run the real image renderer with no mocks). No frontend framework: one HTML page, one script file and a canvas for the share card. Two runtime dependencies, both for the one thing this Worker cannot do without them: [`satori`](https://github.com/vercel/satori) lays out a reading's social-preview picture and [`@resvg/resvg-wasm`](https://github.com/yisibl/resvg-js) rasterizes it to PNG - see [`docs/architecture.md`](docs/architecture.md) for why that render is pre-computed for every gallery card rather than run on request.
 
 ## Further reading
 

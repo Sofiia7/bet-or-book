@@ -7,3 +7,9 @@ dist/
 !.env.example
 *.log
 .DS_Store
+
+# Base64 PNGs for every gallery card, built by scripts/prerender-og.ts and
+# uploaded straight to KV with `wrangler kv bulk put`. Deterministic from
+# data/gallery.json plus already-committed code, and large (~18 MB) purely
+# from the encoding - regenerate it rather than track it.
+data/og-prerendered.json
