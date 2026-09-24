@@ -27,6 +27,18 @@ export interface GalleryRow {
   classifierVersion: string;
   verdict: Pick<CheckResponse['verdict'], 'verdict' | 'strength'>;
   positions: Pick<CheckResponse['positions'], 'headlineCoin' | 'headlineSide' | 'headlineNotionalUsd' | 'nPositions'>;
+  /** How much of the headline position this address's own holdings cover.
+   * Zero for a long (spot cannot offset one) and for anything the hedge
+   * search never ran on. Lets a ratings board rank covered/uncovered shorts
+   * without opening every card (24.09 mechanic: ratings board). */
+  hedgeRatio: number;
+  /** Headline notional divided by the market's open interest, or null when
+   * open interest could not be read for that reading. */
+  sizeVsOi: number | null;
+  /** Dollars of genuinely two-sided quoting in the headline market itself -
+   * the number the Book rule actually turns on (v5). Zero for every verdict
+   * but Book, since that is the only path `computeVerdict` reaches it from. */
+  headlineTwoSidedNotionalUsd: number;
   historical?: { reason: string };
   supersedes?: string;
 }
@@ -78,6 +90,17 @@ export function galleryIndex(gallery: Gallery, idOf: (e: CheckResponse) => strin
           headlineNotionalUsd: e.positions.headlineNotionalUsd,
           nPositions: e.positions.nPositions,
         },
+        hedgeRatio: e.hedge.hedgeRatio,
+        sizeVsOi: e.sizeVsOi,
+        // Missing (not zero) on any entry scanned before the 23.09 audit's
+        // L01 fix added this field to OrderFeatures - every such entry is
+        // already excluded from "current" by missingForCurrentRules (a book
+        // verdict needs exactly this number, so a legacy book-shaped entry
+        // is marked historical rather than silently re-judged), so a ranking
+        // that filters by verdict === 'book' before sorting by this value
+        // never actually sees the default; it is a safety net, not a claim
+        // that a legacy entry quotes nothing.
+        headlineTwoSidedNotionalUsd: e.orders.headlineTwoSidedNotionalUsd ?? 0,
         ...(e.historical ? { historical: { reason: e.historical.reason } } : {}),
         ...(e.supersedes ? { supersedes: e.supersedes } : {}),
       })),
