@@ -6,6 +6,7 @@ import { WORST_CASE_CALLS } from './budget';
 import { spendGuard, requestGate } from './coordinator';
 import { createNansenClient, meansOutOfCredits, type NansenCallMeta } from './sources/nansen';
 import { CLASSIFIER_VERSION } from './engine/verdict';
+import { ASSET_REGISTRY_VERSION } from './engine/observation';
 import type { CheckResponse } from './api/check';
 import { snapshotId, snapshotKey, isSnapshotId, SNAPSHOT_TTL_SECONDS, shortHash } from './snapshot';
 import { shareCard } from './engine/share';
@@ -373,7 +374,12 @@ export default {
       // exist, and an answer about the ETH short is not an answer about the
       // BTC long at the same address.
       const asked = focus ? `:${focus.coin}:${focus.side}` : '';
-      const cacheKey = `check:${CLASSIFIER_VERSION}:${address}${asked}`;
+      // The rules are one axis a cached answer can go stale on; the asset
+      // registry (which contracts count as a hedge) is another. Without this,
+      // a deploy that adds a token to the registry could still answer a
+      // recognised holding as unrecognised for up to ten minutes (24.09
+      // audit, L08).
+      const cacheKey = `check:${CLASSIFIER_VERSION}:${ASSET_REGISTRY_VERSION}:${address}${asked}`;
 
       // Reading an answer that already exists and starting a new one that
       // costs money are two different acts, so they are two different
@@ -439,7 +445,7 @@ export default {
       // outside that list can be answered from it for free instead of
       // spending a new check to learn the same "not open" a second time.
       if (focus) {
-        const largestCached = await kv.get(`check:${CLASSIFIER_VERSION}:${address}`);
+        const largestCached = await kv.get(`check:${CLASSIFIER_VERSION}:${ASSET_REGISTRY_VERSION}:${address}`);
         if (largestCached !== null) {
           const parsed = JSON.parse(largestCached) as CheckResponse;
           const known = parsed.positions.candidates.some(
