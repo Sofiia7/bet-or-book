@@ -69,7 +69,8 @@ function verdictOf(d) {
   return VERDICTS[d.verdict.verdict] || VERDICTS.unknown;
 }
 function badgeText(d) {
-  return verdictOf(d).label + (d.verdict.strength ? ' (' + d.verdict.strength + ')' : '');
+  const base = verdictOf(d).label + (d.verdict.strength ? ' (' + d.verdict.strength + ')' : '');
+  return d.verdict.verdict === 'unknown' && d.badgeQualifier ? base + ' · ' + d.badgeQualifier : base;
 }
 function headlineFor(d) {
   if (d.positions.nPositions === 0) return 'Nothing open right now.';
