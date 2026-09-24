@@ -14,11 +14,13 @@ import { testEnv, request } from '../support/worker';
 
 const featured = featuredData as unknown as Gallery;
 const gallery = galleryData as unknown as Gallery;
-const byReason = (reason: string) => featured.entries.find((e) => e.verdict.reasons[0] === reason)!;
+// The readings the page shows; one read again is kept at its own id only.
+const shown = featured.entries.filter((e) => !e.superseded);
+const byReason = (reason: string) => shown.find((e) => e.verdict.reasons[0] === reason)!;
 const bet = byReason('directional_concentration');
 const hedged = byReason('hedge_leg');
 const funded = byReason('linked_exposure_unverified');
-const book = featured.entries.find((e) => e.verdict.verdict === 'book')!;
+const book = shown.find((e) => e.verdict.verdict === 'book')!;
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -75,15 +77,20 @@ describe('what a reading leaves open', () => {
   });
 
   it('does not let a reading taken before loans were looked for imply that none were found', () => {
-    // The demonstration "Hedged" reading predates the loan check, and that
-    // account does owe USDC on Hyperliquid: "listed with the reading" would
-    // turn its silence into a "none".
-    expect(hedged.observationSchemaVersion).toBe(4);
-    expect(openQuestion(hedged)).toContain('Debts are not read here');
-    expect(openQuestion(hedged)).not.toContain('listed with the reading');
-    const fresh = { ...hedged, observationSchemaVersion: 5 };
-    expect(openQuestion(fresh)).toContain('A loan on Hyperliquid itself is listed with the reading');
-    expect(openQuestion(fresh)).toContain('a debt anywhere else is not read');
+    // The same account, read twice on 24 September: in the morning, before
+    // loans on Hyperliquid were looked for, and again once they were. It
+    // owes USDC there, and "listed with the reading" would have turned the
+    // morning's silence into a "none".
+    const morning = featured.entries.find((e) => e.superseded && e.address === hedged.address)!;
+    expect(morning.observationSchemaVersion).toBe(4);
+    expect(openQuestion(morning)).toContain('Debts are not read here');
+    expect(openQuestion(morning)).not.toContain('listed with the reading');
+    expect(morning.coverage.join(' ')).not.toContain('Borrowed on Hyperliquid');
+
+    expect(hedged.observationSchemaVersion).toBe(5);
+    expect(openQuestion(hedged)).toContain('A loan on Hyperliquid itself is listed with the reading');
+    expect(openQuestion(hedged)).toContain('a debt anywhere else is not read');
+    expect(hedged.coverage.join(' ')).toMatch(/Borrowed on Hyperliquid under portfolio margin: [\d,]+ USDC/);
   });
 
   it('has a question for every reason the current rules return', () => {

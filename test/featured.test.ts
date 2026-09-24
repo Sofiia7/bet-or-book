@@ -15,6 +15,11 @@ import type { Gallery } from '../src/gallery';
 
 const featured = featuredData as unknown as Gallery;
 const gallery = galleryData as unknown as Gallery;
+// A demonstration reading that was read again is kept at its own id, so a
+// link to it still opens it - but it is not one of the readings the page
+// shows, the same rule the gallery follows.
+const shown = featured.entries.filter((e) => !e.superseded);
+const replaced = featured.entries.filter((e) => e.superseded);
 const page = readFileSync(new URL('../web/index.html', import.meta.url), 'utf8');
 
 /** What the page's own chip says a position is, the way web/app.js formats it. */
@@ -26,8 +31,8 @@ function positionText(e: Gallery['entries'][number]): string {
 
 describe('the demonstration readings', () => {
   it('are few, fresh, and read by the rules in force', () => {
-    expect(featured.entries.length).toBeGreaterThanOrEqual(3);
-    expect(featured.entries.length).toBeLessThanOrEqual(4);
+    expect(shown.length).toBeGreaterThanOrEqual(3);
+    expect(shown.length).toBeLessThanOrEqual(4);
     for (const e of featured.entries) {
       expect(e.classifierVersion).toBe(CLASSIFIER_VERSION);
       expect(e.historical).toBeUndefined();
@@ -37,8 +42,8 @@ describe('the demonstration readings', () => {
   });
 
   it('show one of each kind of answer rather than four of the same', () => {
-    const kinds = new Set(featured.entries.map((e) => e.verdict.verdict));
-    expect(kinds.size).toBe(featured.entries.length);
+    const kinds = new Set(shown.map((e) => e.verdict.verdict));
+    expect(kinds.size).toBe(shown.length);
   });
 
   it('carry what the older scan could not: the position\'s own numbers', () => {
@@ -59,11 +64,31 @@ describe('the demonstration readings', () => {
   });
 
   it('each follow the same address\'s reading in the scan, so the card can say what changed', () => {
+    // Directly, or through an earlier demonstration reading of the same
+    // account that it replaced.
     const scanIds = new Set(gallery.entries.map((e) => e.snapshotId));
-    for (const e of featured.entries) {
-      expect(e.supersedes, e.address).toBeDefined();
-      expect(scanIds.has(e.supersedes!)).toBe(true);
-      expect(gallery.entries.find((g) => g.snapshotId === e.supersedes)!.address).toBe(e.address);
+    const byId = new Map(featured.entries.map((e) => [e.snapshotId, e]));
+    for (const e of shown) {
+      let step = e;
+      while (step.supersedes && byId.has(step.supersedes)) {
+        step = byId.get(step.supersedes)!;
+        expect(step.address).toBe(e.address);
+      }
+      expect(step.supersedes, e.address).toBeDefined();
+      expect(scanIds.has(step.supersedes!)).toBe(true);
+      expect(gallery.entries.find((g) => g.snapshotId === step.supersedes)!.address).toBe(e.address);
+    }
+  });
+
+  it('keep one that was read again at its own id, paired both ways with the reading that replaced it', () => {
+    // The Hedged account, read again on 24 September once loans on
+    // Hyperliquid were listed: it owes USDC there.
+    expect(replaced).toHaveLength(1);
+    for (const old of replaced) {
+      const now = shown.find((e) => e.supersedes === old.snapshotId)!;
+      expect(now.address).toBe(old.address);
+      expect(old.supersededBy).toBe(now.snapshotId);
+      expect(old.checkedAt < now.checkedAt).toBe(true);
     }
   });
 });
@@ -75,18 +100,18 @@ describe('the chips at the top of the page', () => {
   }));
 
   it('open exactly the demonstration readings, in order', () => {
-    expect(chips.map((c) => c.id)).toEqual(featured.entries.map((e) => e.snapshotId));
+    expect(chips.map((c) => c.id)).toEqual(shown.map((e) => e.snapshotId));
   });
 
   it('name the position each one is actually about', () => {
-    for (const [i, e] of featured.entries.entries()) {
+    for (const [i, e] of shown.entries()) {
       expect(chips[i].text.startsWith(positionText(e)), chips[i].text).toBe(true);
     }
   });
 
   it('say the day they were read, which is the day in the data', () => {
     const days = new Set(
-      featured.entries.map((e) =>
+      shown.map((e) =>
         new Date(e.checkedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' }),
       ),
     );
@@ -113,7 +138,7 @@ describe('the first live check of an address already on the page', () => {
 
   it('says what changed since the demonstration reading, with no live reading on record yet', async () => {
     hyperliquidOnly();
-    const demo = featured.entries[0];
+    const demo = shown[0];
     const res = await worker.fetch(request(`/api/check?address=${demo.address}`, { method: 'POST' }), testEnv());
     expect(((await res.json()) as { supersedes?: string }).supersedes).toBe(demo.snapshotId);
   });
@@ -148,7 +173,7 @@ describe('the first live check of an address already on the page', () => {
       return new Response(JSON.stringify(state[body.type as keyof typeof state] ?? []), { status: 200 });
     }) as typeof fetch;
 
-    const demo = featured.entries[0];
+    const demo = shown[0];
     const res = await worker.fetch(
       request(`/api/check?address=${demo.address}&coin=BTC&side=long`, { method: 'POST' }),
       testEnv(),
@@ -160,7 +185,7 @@ describe('the first live check of an address already on the page', () => {
 
   it('does compare an answer that fell back to the largest position with the last reading of the largest', async () => {
     hyperliquidOnly();
-    const demo = featured.entries[0];
+    const demo = shown[0];
     const res = await worker.fetch(
       request(`/api/check?address=${demo.address}&coin=DOGE&side=long`, { method: 'POST' }),
       testEnv(),
@@ -178,7 +203,7 @@ describe('served like any saved reading, for free', () => {
     const list = (await (await worker.fetch(request('/api/gallery'), testEnv())).json()) as {
       featured: Array<{ snapshotId: string; checkedAt: string }>;
     };
-    expect(list.featured.map((f) => f.snapshotId)).toEqual(featured.entries.map((e) => e.snapshotId));
+    expect(list.featured.map((f) => f.snapshotId)).toEqual(shown.map((e) => e.snapshotId));
   });
 
   it('opens each one as a saved reading, with its rule in words, and compares it with the scan', async () => {
@@ -192,6 +217,18 @@ describe('served like any saved reading, for free', () => {
       expect(card.share.provenance).toContain('saved reading');
       const compare = await worker.fetch(request(`/api/compare?a=${e.supersedes}&b=${e.snapshotId}`), env);
       expect(compare.status).toBe(200);
+    }
+  });
+
+  it('still opens one that was read again, and says what replaced it', async () => {
+    const env = testEnv();
+    for (const old of replaced) {
+      const res = await worker.fetch(request(`/api/snapshot?id=${old.snapshotId}`), env);
+      expect(res.status).toBe(200);
+      const card = (await res.json()) as { kind: string; superseded?: boolean; supersededBy?: string };
+      expect(card.kind).toBe('saved');
+      expect(card.superseded).toBe(true);
+      expect(card.supersededBy).toBe(old.supersededBy);
     }
   });
 });

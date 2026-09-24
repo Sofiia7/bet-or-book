@@ -8,7 +8,7 @@ The story has changed three times, and it is better each time. The first script 
 
 No rehearsal run to warm the cache. A cached answer replayed as a fresh request is the one thing a demo must not do, and the card says "cached, N minutes old" when it is one, so it would show. Check once, for real, on camera - and if the same address was checked on the site in the last ten minutes, wait that out first.
 
-> **Credits.** The account answered with **919 credits left** on 24 September, after the four demonstration readings. This check costs up to 7. The two contrast beats below open saved readings and cost nothing. The daily cap in the Worker is 300, and 40 of it is a reserve the public path cannot reach, which is what keeps a busy afternoon from leaving the demo on Hyperliquid-only data.
+> **Credits.** The account answered with **916 credits left** on 24 September, after the four demonstration readings and a second read of the Hedged one. This check costs up to 7. The two contrast beats below open saved readings and cost nothing. The daily cap in the Worker is 300, and 40 of it is a reserve the public path cannot reach, which is what keeps a busy afternoon from leaving the demo on Hyperliquid-only data.
 
 | Time | Action | What the viewer reads |
 |---|---|---|
@@ -17,7 +17,7 @@ No rehearsal run to warm the cache. A cached answer replayed as a fresh request 
 | 8-17 s | Hold on the diagram | One bar, the ETH short, **empty**. A dashed box outside it: about **$440M**, "in 2 wallets that funded this account, ownership unverified, not counted" |
 | 17-23 s | Hold on the sentence above it and the **From Nansen** line under it | "Less than 1% of the ... ETH short is covered by ETH at this address..." and, from Nansen: "2 funding wallets hold ... of ETH; without them this would read as "Looks like a bet"". The one line that says what the Nansen data changed |
 | 23-28 s | Hold on **What changed since 24 Sept** | the position size and the funders' ETH, each with an arrow, and "The answer did not change" |
-| 28-35 s | Click the chip **$43.2M HYPE short · 97% covered** | **Hedged**, the same bar **97% full**, and "Saved reading from 24 Sept". The same shape of question, the opposite answer |
+| 28-35 s | Click the chip **$41.8M HYPE short · 97% covered** | **Hedged**, the same bar **97% full**, and "Saved reading from 24 Sept". The same shape of question, the opposite answer |
 | 35-43 s | Click the chip **$46.9M ETH short · market maker**, then open **How this was decided** | **Book (likely)**: "2,613 resting orders quote both sides of 123 markets", and the rule in one sentence: this account quotes the position's own market on both sides |
 | 43-52 s | Click the first chip under **Your recent checks** (the live reading from 4 s), then **Share this reading**, then **Download image**, and show the PNG | the same bar, the standing limit, the time, the link back |
 | 52-58 s | Stop recording | |

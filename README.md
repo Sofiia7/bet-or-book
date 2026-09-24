@@ -21,7 +21,7 @@ Bet or Book answers one question per address, shows the numbers that decided it,
 ## What a check returns
 
 - **A verdict**: Book, Hedged, Looks like a bet, or Unknown, with a strength where it applies (`likely` / `strong` for a book).
-- **One sentence built from the numbers**, e.g. *"The $43.2M HYPE short is 97% covered by $41.7M of spot HYPE held by this address on Hyperliquid - other Nansen-supported chains were checked and found nothing."*
+- **One sentence built from the numbers**, e.g. *"The $41.8M HYPE short is 97% covered by $40.4M of spot HYPE held by this address on Hyperliquid - other Nansen-supported chains were checked and found nothing."*
 - **A picture of what stands against the position**: one bar for the position, split into what this address holds against it, what could not be identified, and what nothing was found against - with anything held by a wallet that merely funded this one drawn beside the bar on a dashed connection, never inside it. That distinction is the whole card, and a row of percentages is a poor way to carry it.
 - **A choice of position.** A post says BTC and the largest position at the address is ETH. The card offers the address's largest few and will answer about the one you came for.
 - **What changed since the last reading**, where there is one - and whether the answer moved because the account did something or because the rules did. Those look identical on a card and are not the same event.
@@ -154,7 +154,7 @@ npx wrangler deploy
 
 ## Nansen API usage
 
-**1,133 calls between 14 and 27 September, 1,125 answered 2xx** ([full breakdown by endpoint and purpose, and what each of the eight failed calls taught](docs/nansen-api-usage.md)). The deployed page adds its own calls from the budget Durable Object and serves the running total, endpoint by endpoint, at `/api/ledger`.
+**1,136 calls between 14 and 27 September, 1,128 answered 2xx** ([full breakdown by endpoint and purpose, and what each of the eight failed calls taught](docs/nansen-api-usage.md)). The deployed page adds its own calls from the budget Durable Object and serves the running total, endpoint by endpoint, at `/api/ledger`.
 
 ## Security
 

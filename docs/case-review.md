@@ -40,6 +40,8 @@ Three words, used strictly:
 
 **Flow is not direction.** Case 3 is all long and trading hard, mostly selling. The card is right about what it holds; what it is doing is a different question, which the position-flow line now answers on a fresh check and did not on the 18 September scan.
 
+**The question case 5 left open had an answer on Hyperliquid itself.** Read again the same afternoon as `0xfy57j0e8kvu`, once the check had learned to read Hyperliquid's portfolio-margin fields: the account owes 18.1M USDC there, and the 443,316 HYPE it holds against the short is supplied as collateral for that loan. The HYPE itself is not owed, so the cover stands and the verdict with it; what the morning's card could not say is that the cover is pledged. The new card lists the loan. The morning's keeps its own words, "Debts are not read here", which were true of what it read, and its link still opens it.
+
 **Nansen decides the hardest case.** Case 7 is where the answer turns: with the funding links, Unknown; without them, the same numbers read as a bet. That is the one counterfactual the page states ("From Nansen" on the card), because the links are the only input that comes from Nansen alone.
 
 What would make this stronger than a read-through: a labelled set of accounts whose owners are publicly known (market makers that say so, funds that report hedges), read the same way, with the misses written down. Until then the thresholds are what the README calls them: ordinary numbers chosen against observed data, none of them a probability.

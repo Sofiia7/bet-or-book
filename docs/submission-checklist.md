@@ -7,7 +7,7 @@ says what is required, what is true right now, and what is left.
 
 | Requirement | Where it stands |
 |---|---|
-| 100+ Nansen API calls inside 14-27 September (lowered from 1,000 by a Nansen email on 23 September) | **1,133 calls, 1,125 answered 2xx** - already well past either threshold. Counted locally in [`data/ledger.json`](../data/ledger.json) plus the deployed Worker's own, served at `/api/ledger`. Local arithmetic is not an independent confirmation - the figure on Nansen's account side is the one that counts, and it is worth checking there before submitting |
+| 100+ Nansen API calls inside 14-27 September (lowered from 1,000 by a Nansen email on 23 September) | **1,136 calls, 1,128 answered 2xx** - already well past either threshold. Counted locally in [`data/ledger.json`](../data/ledger.json) plus the deployed Worker's own, served at `/api/ledger`. Local arithmetic is not an independent confirmation - the figure on Nansen's account side is the one that counts, and it is worth checking there before submitting |
 | Public GitHub repository | https://github.com/Sofiia7/bet-or-book |
 | X post tagging `@nansen_ai`, with the repository link | Draft text in [`demo-script.md`](demo-script.md). **Not posted yet** |
 | 30-60 second recording of the working product on live Nansen data | Shot list in [`demo-script.md`](demo-script.md), about 58 seconds. **Not recorded yet** |

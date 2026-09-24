@@ -4,7 +4,7 @@ The [README](../README.md) has the total. This is every call accounted for, incl
 
 Every scripted call is logged in [`data/nansen-calls.jsonl`](../data/nansen-calls.jsonl) and summed in [`data/ledger.json`](../data/ledger.json); the deployed page adds its own calls from the budget Durable Object and serves the total at `/api/ledger`. Requests attempted, requests answered, credits the API itself priced and credits assumed for a call it did not price are four separate numbers, because a total that mixes a quoted figure with an assumed one is not a measurement.
 
-Between 14 and 27 September: **1,133 calls, 1,125 of them answered 2xx.** The gallery scan of 18 September accounts for most of it; 26 more went to re-checking nine cards on 21 September after the rules first changed, 83 to re-reading the 22 cards that had claimed Book or Hedged, once the audit of 21 September showed their stored observations could not support those claims, and 16 on 24 September to the four demonstration readings at the top of the page, one of each kind of answer, read fresh under the current rules (23 September audit, U05).
+Between 14 and 27 September: **1,136 calls, 1,128 of them answered 2xx.** The gallery scan of 18 September accounts for most of it; 26 more went to re-checking nine cards on 21 September after the rules first changed, 83 to re-reading the 22 cards that had claimed Book or Hedged, once the audit of 21 September showed their stored observations could not support those claims, and 19 on 24 September to the demonstration readings at the top of the page: 16 for the four of them, one of each kind of answer, read fresh under the current rules (23 September audit, U05), and 3 to read the Hedged one again that afternoon, once a check listed loans on Hyperliquid - that account owes 18.1M USDC there, which the morning's reading could not show.
 
 Eight of those calls did not return data, and each one taught something. An earlier version of this file said seven, against its own total of 1,117 - 1,109 = 8; the one it left out is the third call that never answered, below:
 
@@ -18,9 +18,9 @@ The ledger counts calls made. It is a record, not the spend cap: what a check is
 
 | Endpoint | Calls |
 |---|---|
-| `profiler/perp-positions` | 345 |
-| `profiler/perp-pnl-summary` | 345 |
-| `profiler/address/current-balance` | 259 |
+| `profiler/perp-positions` | 346 |
+| `profiler/perp-pnl-summary` | 346 |
+| `profiler/address/current-balance` | 260 |
 | `profiler/address/related-wallets` | 183 |
 | `profiler/perp-trades` | 1 |
 
@@ -33,5 +33,6 @@ The ledger counts calls made. It is a record, not the spend cap: what a check is
 | Re-checking nine gallery cards after the rules changed (21 September) | 26 |
 | Re-reading the 22 cards that had claimed Book or Hedged, after the 21 September audit | 83 |
 | The four demonstration readings, read fresh on 24 September (`data/featured.json`) | 16 |
+| The Hedged demonstration reading, read again on 24 September once loans on Hyperliquid were listed | 3 |
 
 `profiler/perp-trades` was tried once and dropped: it aggregates partial fills into one trade, and a thousand records covered sixteen minutes of the busiest account.

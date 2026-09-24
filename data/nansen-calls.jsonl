@@ -1114,3 +1114,6 @@
 {"at":"2026-09-24T07:45:03.834Z","source":"featured-2026-09-24","endpoint":"profiler/address/current-balance","status":200,"creditsCost":1,"creditsRemaining":921}
 {"at":"2026-09-24T07:45:07.202Z","source":"featured-2026-09-24","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":920}
 {"at":"2026-09-24T07:45:07.264Z","source":"featured-2026-09-24","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":919}
+{"at":"2026-09-24T12:37:07.970Z","source":"featured-2026-09-24","endpoint":"profiler/perp-positions","status":200,"creditsCost":1,"creditsRemaining":918}
+{"at":"2026-09-24T12:37:26.617Z","source":"featured-2026-09-24","endpoint":"profiler/perp-pnl-summary","status":200,"creditsCost":1,"creditsRemaining":917}
+{"at":"2026-09-24T12:37:27.642Z","source":"featured-2026-09-24","endpoint":"profiler/address/current-balance","status":200,"creditsCost":1,"creditsRemaining":916}
