@@ -71,6 +71,18 @@ describe('the gallery list is rows, not cards', () => {
     expect(card.summary).toEqual(expect.any(String));
     expect(card.kind).toBe('gallery');
   });
+
+  it('drops a current row whose address a featured reading already supersedes (24.09 audit, L03)', async () => {
+    const list = (await (await worker.fetch(request('/api/gallery'), testEnv())).json()) as {
+      entries: Array<{ address: string; historical?: unknown }>;
+      featured: Array<{ address: string }>;
+    };
+    const featuredAddresses = new Set(list.featured.map((f) => f.address.toLowerCase()));
+    const staleDuplicate = list.entries.find(
+      (e) => !e.historical && featuredAddresses.has(e.address.toLowerCase()),
+    );
+    expect(staleDuplicate).toBeUndefined();
+  });
 });
 
 describe('every card says its rule in words', () => {

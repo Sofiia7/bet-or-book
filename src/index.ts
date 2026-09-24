@@ -66,8 +66,18 @@ const bundledById = new Map<string, { card: CheckResponse; kind: 'gallery' | 'sa
 /** What the page lists, as one line per card. A reading that has since been
  * read again is kept - it is the other half of any comparison, and its link
  * stays good - but listing it as well would show the same account twice. */
+// A featured reading is a fresher re-read of one of these accounts. Once it
+// exists, the gallery's own (older) current row for the same address is a
+// second, staler answer about the same account shown next to the fresh one -
+// the older rules' rows in the archive are a different, intentional case and
+// are left alone (24.09 audit, L03).
+const featuredAddresses = new Set(featured.entries.filter((e) => !e.superseded).map((e) => e.address.toLowerCase()));
+const gallerySansFeatured: Gallery = {
+  ...gallery,
+  entries: gallery.entries.filter((e) => e.historical || !featuredAddresses.has(e.address.toLowerCase())),
+};
 const listedGallery: GalleryIndex & { featured: GalleryIndex['entries'] } = {
-  ...galleryIndex(gallery, galleryIdOf),
+  ...galleryIndex(gallerySansFeatured, galleryIdOf),
   featured: galleryIndex(featured, galleryIdOf).entries,
 };
 const scriptedLedger = ledgerData as unknown as LedgerSummary;
