@@ -245,11 +245,6 @@ exports[`a check, whole, on recorded real answers > a lone long, with its fundin
       "source": "Nansen",
       "value": "-$15.5M",
     },
-    {
-      "label": "Size vs open interest",
-      "source": "Hyperliquid",
-      "value": "1.8%",
-    },
   ],
   "focus": null,
   "hedge": {
@@ -1142,11 +1137,6 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen not used, an
       "label": "Hedge found",
       "source": "Hyperliquid",
       "value": "0% (Hyperliquid spot)",
-    },
-    {
-      "label": "Size vs open interest",
-      "source": "Hyperliquid",
-      "value": "7.3%",
     },
   ],
   "focus": null,
@@ -2195,11 +2185,6 @@ exports[`a check, whole, on recorded real answers > abraxas: the deadline alread
       "label": "Hedge found",
       "source": "Hyperliquid",
       "value": "0% (Hyperliquid spot)",
-    },
-    {
-      "label": "Size vs open interest",
-      "source": "Hyperliquid",
-      "value": "7.3%",
     },
   ],
   "focus": null,

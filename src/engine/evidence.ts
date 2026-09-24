@@ -560,9 +560,6 @@ export function explain(input: EvidenceInput): Explanation {
       hedgeItem(input),
       linkedItem(input),
       pnlItem(input.pnl),
-      input.sizeVsOi === null
-        ? null
-        : { label: 'Size vs open interest', value: formatPct(input.sizeVsOi), source: 'Hyperliquid' },
     ]),
   };
 }
