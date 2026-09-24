@@ -10,6 +10,13 @@ const VERDICTS = {
   unknown: { label: 'Unknown', cls: 'unknown', headline: 'Not enough evidence either way.', accent: '#444441' },
 };
 const PAGE_SIZE = 25;
+// The reading a visitor with nothing pasted yet sees first: the funded-short
+// demonstration reading, because its picture is the one that needs no
+// explanation (a big bar, an empty solid segment, and $443.7M held in a
+// dashed box beside it that "does not count"). Free to open - it is one of
+// the four bundled chips, opened the same way a shared link would (24.09
+// audit, U01).
+const FLAGSHIP_ID = '075ocy85yngsu';
 
 const $ = (id) => document.getElementById(id);
 let current = null;
@@ -1492,5 +1499,13 @@ if (saved) {
   $('address').value = preset;
   setStatus('Address filled in from the link. Press Check to run it.');
   $('check').focus();
+} else {
+  // Nothing pasted and nothing linked: the first thing on screen used to be
+  // a blank form, and the strongest picture on the whole page was one click
+  // away behind a chip nobody was told to press (24.09 audit, U01). This
+  // costs nothing - the reading is bundled with the Worker - and it renders
+  // the same way a shared link to it would, after `saveRecent`'s guard
+  // (above) so it never pollutes "recent checks".
+  openSnapshot(FLAGSHIP_ID);
 }
 renderRecent();
