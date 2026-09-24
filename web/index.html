@@ -89,6 +89,12 @@
   .examples-chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .examples-chips .chip { padding: 4px 10px; font-size: 12px; }
 
+  .guess { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 13px; }
+  .guess-label { color: var(--muted); }
+  .guess-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .guess-chips .chip { padding: 4px 10px; font-size: 12px; }
+  .guess-result { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+
   /* The one distinction the whole card turns on - what this address holds
      against the position, versus what a wallet that merely funded it holds -
      is a shape, not a row of percentages. Solid is counted; dashed is
@@ -173,6 +179,15 @@
   <button id="check">Check</button>
 </div>
 <p class="status" id="status" role="status"></p>
+<div class="guess" id="guess" hidden>
+  <span class="guess-label">Guess before it loads:</span>
+  <span class="guess-chips" id="guess-chips">
+    <button class="chip" data-guess="looks_like_a_bet">Bet</button>
+    <button class="chip" data-guess="hedged">Hedge</button>
+    <button class="chip" data-guess="book">Book</button>
+    <button class="chip" data-guess="cant_tell">Can't tell</button>
+  </span>
+</div>
 <!-- Read fresh on 24 September and picked by hand, one of each kind of
      answer, from data/featured.json; test/featured.test.ts holds these
      chips to that file. The scan further down is older and was read before

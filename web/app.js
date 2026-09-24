@@ -20,6 +20,8 @@ const FLAGSHIP_ID = '075ocy85yngsu';
 
 const $ = (id) => document.getElementById(id);
 let current = null;
+let pendingGuess = null;
+let guessRevealTimer = null;
 let gallery = null;
 let galleryFilter = 'all';
 let galleryShown = PAGE_SIZE;
@@ -459,6 +461,26 @@ function renderResult(d, opts) {
   // what the reader wants from this one.
   for (const id of ['share', 'nansen', 'decided', 'details']) $(id).open = false;
   const v = verdictOf(d);
+  $('guess').hidden = true;
+  clearTimeout(guessRevealTimer);
+  const guessBox = $('guess-result');
+  if (guessBox) guessBox.remove();
+  if (kindOf(opts) === 'live' && pendingGuess !== null) {
+    const guessed = pendingGuess;
+    pendingGuess = null;
+    const p = el('p', 'guess-result');
+    p.id = 'guess-result';
+    if (guessed === 'cant_tell') {
+      p.textContent = "You said you couldn't tell. The reading found: " + badgeText(d) + '.';
+    } else {
+      const matched = guessed === d.verdict.verdict;
+      const stats = recordGuess(matched);
+      p.textContent =
+        'You guessed ' + GUESS_LABEL[guessed] + '. The reading says ' + badgeText(d) + '.' +
+        (stats ? ' Matched ' + stats.matches + ' of ' + stats.total + ' so far.' : '');
+    }
+    $('status').insertAdjacentElement('afterend', p);
+  }
   $('badge').textContent = badgeText(d);
   // Faded and dashed when the rules that gave it are no longer in force, on
   // the card as it already was in the list.
@@ -728,6 +750,20 @@ async function setUpOperator() {
 async function load(url, onData, failureText, method, notice, retryDelays) {
   const seq = ++requestSeq;
   setBusy(true);
+  // A guessing prompt only belongs to a live check that is actually taking
+  // a moment - a cached or already-in-flight answer must not imply there was
+  // anything to guess. Revealed only if nothing has come back within 700ms,
+  // and hidden again the instant an answer (of any kind) does (24.09 audit,
+  // user-approved mechanic: "guess the verdict").
+  pendingGuess = null;
+  $('guess').hidden = true;
+  clearTimeout(guessRevealTimer);
+  const isLiveCheck = method === 'POST' && url.indexOf('/api/check') === 0;
+  if (isLiveCheck) {
+    guessRevealTimer = setTimeout(() => {
+      if (seq === requestSeq) $('guess').hidden = false;
+    }, 700);
+  }
   // A notice about the input - "three addresses here, using the first" - is
   // about to be replaced by the progress line one statement later, which is
   // how it became unreadable. It travels with the request instead.
@@ -753,6 +789,8 @@ async function load(url, onData, failureText, method, notice, retryDelays) {
       await new Promise((resolve) => setTimeout(resolve, wait));
       if (seq !== requestSeq) return;
     }
+    clearTimeout(guessRevealTimer);
+    $('guess').hidden = true;
     if (!res.ok) {
       // The previous card is still on screen and is still about whatever it
       // was about. Say so rather than let it pass for the answer just asked
@@ -763,6 +801,8 @@ async function load(url, onData, failureText, method, notice, retryDelays) {
     setStatus(notice || '', false);
     onData(data);
   } catch (e) {
+    clearTimeout(guessRevealTimer);
+    $('guess').hidden = true;
     if (seq === requestSeq) {
       setStatus(
         'Could not reach the server. Try again shortly.' + (current ? ' The card below is the previous reading.' : ''),
@@ -898,6 +938,13 @@ $('check-live').addEventListener('click', () => {
   } else {
     runCheck();
   }
+});
+
+$('guess-chips').addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  pendingGuess = btn.dataset.guess;
+  for (const b of $('guess-chips').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b === btn));
 });
 
 // A visitor with no address in hand had nothing to click above the fold
@@ -1458,6 +1505,34 @@ function renderRecent() {
     b.addEventListener('click', () => openSnapshot(r.id));
     return b;
   }));
+}
+
+// A viewer's own browser only, exactly like "recent checks" - never sent
+// anywhere, never read by the server, wrapped in try/catch for a private
+// window or blocked storage.
+const GUESS_STATS_KEY = 'betOrBook:guessStats';
+const GUESS_LABEL = { looks_like_a_bet: 'Bet', hedged: 'Hedge', book: 'Book', cant_tell: "couldn't tell" };
+
+function loadGuessStats() {
+  try {
+    const raw = window.localStorage.getItem(GUESS_STATS_KEY);
+    const parsed = raw ? JSON.parse(raw) : { matches: 0, total: 0 };
+    return typeof parsed.matches === 'number' && typeof parsed.total === 'number' ? parsed : { matches: 0, total: 0 };
+  } catch (e) {
+    return { matches: 0, total: 0 };
+  }
+}
+
+function recordGuess(matched) {
+  try {
+    const stats = loadGuessStats();
+    stats.total += 1;
+    if (matched) stats.matches += 1;
+    window.localStorage.setItem(GUESS_STATS_KEY, JSON.stringify(stats));
+    return stats;
+  } catch (e) {
+    return null;
+  }
 }
 
 async function loadLedger() {
