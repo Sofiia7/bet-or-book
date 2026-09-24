@@ -104,7 +104,7 @@ Book reads zero in the scan, not because no market maker is in the set, but beca
 
 - A hedge on a centralized exchange, in OTC or in a wallet with no on-chain link is invisible. The card says so every time.
 - Ownership through a funding link is not established by the link. A funder's holdings are reported as theirs and never counted as this account's hedge.
-- Debts are invisible. A lending deposit counts toward a hedge because the balance is real, but nothing here can see what was borrowed against it, so a leveraged position can still look flat.
+- Debts outside Hyperliquid are invisible. A loan on Hyperliquid itself (portfolio margin) is listed with the reading, and one in the position's own coin stands next to the answer, since owed and not held it works as a short. But a lending deposit elsewhere counts toward a hedge because the balance is real, and nothing here can see what was borrowed against it, so a leveraged position can still look flat.
 - Only the headline position's hedge is searched. A pair trade (long A against short B) is not modeled; net versus gross exposure and the same-asset offset share catch part of it.
 - An on-chain token whose contract is not one this tool recognises is left out of the hedge rather than counted by its ticker. The registry is short, so a real holding can be missed; the card says how much was left out.
 - Hyperliquid returns at most 2,000 fills per call; a busier account shows "2,000+", a lower bound. The card also says how many hours the fills actually span, which can be far less than the window asked for.
@@ -162,7 +162,7 @@ No logins, sessions, uploads, webhooks or SQL; the only user input is an address
 
 ## Stack
 
-Cloudflare Workers, Workers KV and two Durable Objects (the spend cap with its call ledger, and the rate limiter - both need an atomic read-modify-write that KV cannot promise), TypeScript, Vitest (486 tests on recorded real responses, including the Worker's own routes driven through real Requests and the real image renderer with no mocks, plus 9 that run the built Worker inside workerd through Miniflare). No frontend framework: one HTML page, one script file and a canvas for the share card. Two runtime dependencies, both for the one thing this Worker cannot do without them: [`satori`](https://github.com/vercel/satori) lays out a reading's social-preview picture and [`@resvg/resvg-wasm`](https://github.com/yisibl/resvg-js) rasterizes it to PNG - see [`docs/architecture.md`](docs/architecture.md) for why that render never runs on a crawler's request.
+Cloudflare Workers, Workers KV and two Durable Objects (the spend cap with its call ledger, and the rate limiter - both need an atomic read-modify-write that KV cannot promise), TypeScript, Vitest (548 tests on recorded real responses, including the Worker's own routes driven through real Requests and the real image renderer with no mocks, plus 9 that run the built Worker inside workerd through Miniflare). No frontend framework: one HTML page, one script file and a canvas for the share card. Two runtime dependencies, both for the one thing this Worker cannot do without them: [`satori`](https://github.com/vercel/satori) lays out a reading's social-preview picture and [`@resvg/resvg-wasm`](https://github.com/yisibl/resvg-js) rasterizes it to PNG - see [`docs/architecture.md`](docs/architecture.md) for why that render never runs on a crawler's request.
 
 ## Further reading
 

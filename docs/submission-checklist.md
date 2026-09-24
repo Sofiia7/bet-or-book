@@ -30,7 +30,7 @@ Where this project stands against them, honestly:
   audit the card also says *which* source produced each number, which turned out to
   matter: all seven hedges in the scan came from Hyperliquid's own spot balances,
   and used to be signed "Nansen" because Nansen had been asked.
-- **Functionality.** 489 tests on recorded real responses, including the Worker's own
+- **Functionality.** 548 tests on recorded real responses, including the Worker's own
   routes driven through real Requests, plus 9 that run the Worker as Wrangler builds it
   inside workerd through Miniflare (`npm run test:runtime`, also in CI): the spend cap
   under concurrent checks, a Durable Object restarting, a reader disconnecting mid-check,

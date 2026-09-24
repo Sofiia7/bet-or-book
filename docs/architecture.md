@@ -4,7 +4,7 @@ The [README](../README.md) links here for how the spend cap actually holds, and 
 
 ## Every credit has to be able to change the answer
 
-A check reads in stages ([`src/api/check.ts`](../src/api/check.ts)):
+A check reads in stages ([`src/api/observe.ts`](../src/api/observe.ts)):
 
 1. Free Hyperliquid reads first. If Hyperliquid is down, the check fails before a single credit is spent.
 2. Nansen positions and PnL: 2 calls, always.
@@ -24,6 +24,23 @@ Two things that are money and look like clock problems:
 A Durable Object runs one JavaScript thread, which is not the same as one request at a time: the thread yields at every await and two requests interleave around I/O. What makes storage safe is the runtime's gates, so the code is written for the weaker guarantee - concurrent callers wait on one load rather than each building their own state.
 
 KV keeps what it is good at: cached results and saved readings. The per-day call counts moved into the budget object with the money, because a read-modify-write on one shared key loses counts whenever two checks finish together, and those counts are what this submission rests on.
+
+## Three stages, and what an answer has to look like before it is used
+
+A check is three stages with one contract between each ([`src/api/check.ts`](../src/api/check.ts) is only that composition):
+
+1. **Observe** ([`src/api/observe.ts`](../src/api/observe.ts)): every request a check makes, and nothing else. It returns an `Observation` - features, coverage of each source, notes - and decides no verdict.
+2. **Interpret** ([`src/engine/interpret.ts`](../src/engine/interpret.ts)): the rules, applied to an `Observation` and nothing else. No rule can reach a source, so a saved reading can be judged again under newer rules without a single request, which is what [`scripts/reexplain.ts`](../scripts/reexplain.ts) and the gallery do.
+3. **Present**: the summary, the evidence, the exposure breakdown and the share card, in words from the verdict and the observation.
+
+The split was held to what the one long function produced before it: twelve whole results pinned as snapshots on recorded real answers and a fixed clock ([`test/api/check-golden.test.ts`](../test/api/check-golden.test.ts)) - the main paid path, a failed source, no Nansen, a chosen position, an expired deadline and the rest - and to sixteen replays of live Hyperliquid answers for eight accounts, identical byte for byte before and after.
+
+Every upstream answer passes [`src/sources/validate.ts`](../src/sources/validate.ts) before any of it is used. Two rules:
+
+- **A wrong envelope is not read at all.** A list that is not a list, a spot state that is not an object: that throws the same error a failed request does, so a source answering garbage and a source that is down end in the same place.
+- **A wrong row is left out, counted, and lowers the claim.** An order with a size of `"abc"` used to become NaN inside a notional sum, and a side that was neither buy nor sell became a sell. Now an order that is not one leaves the orders read in part, and in-part orders cannot support "quotes nothing", so the position is not called a clean bet. A spot balance that is not one leaves a short's cover open rather than at zero; a fill that is not one is left out of the trading figures and said to be; a Nansen balance makes the cover found on other chains a floor. Open interest decides nothing, so perp metadata of the wrong shape only hides it.
+
+The checks were calibrated on the recorded fixtures and on live answers for eight accounts taken on 24 September; not one real row is refused. That calibration is what caught Hyperliquid **portfolio margin**: a borrowed balance arrives as a negative spot `total` beside a `borrowed` amount, and collateral as `supplied` with its loan-to-value. The demonstration account for "Hedged" owes 17,967,395 USDC against the 443,316 HYPE it holds against its HYPE short - the carry trade Hyperliquid's own documentation describes. A validator that refused negative totals would have turned that reading into "hedge not checked"; the holdings normaliser, which drops balances that are not above zero, had been losing the loan without a word. Now a loan is listed with the reading, and a loan in the position's own coin - owed and not held, it works as a short - stands next to the answer. No rule counts a loan either way, so the rules and their version did not change.
 
 ## A reading's own picture, and the CPU budget it has to fit in
 
