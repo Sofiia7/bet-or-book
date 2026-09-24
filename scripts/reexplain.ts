@@ -29,16 +29,16 @@
 // Do not run while scripts/prescan.ts is writing the same file.
 import { readFileSync, writeFileSync, renameSync } from 'node:fs';
 import { computeVerdict, CLASSIFIER_VERSION } from '../src/engine/verdict';
-import { explain } from '../src/engine/evidence';
 import {
   missingForCurrentRules,
   legacySourceCoverage,
   historicalReason,
+  verdictInputOf,
   OBSERVATION_SCHEMA_VERSION,
   ASSET_REGISTRY_VERSION,
 } from '../src/engine/observation';
+import { words } from '../src/engine/interpret';
 import { shareCard } from '../src/engine/share';
-import { exposureBreakdown } from '../src/engine/breakdown';
 import { knownServiceName } from '../src/sources/normalize';
 import { snapshotId } from '../src/snapshot';
 import type { Gallery } from '../src/gallery';
@@ -149,16 +149,18 @@ export function reexplainGallery(gallery: Gallery, now: string): { gallery: Gall
         hedgeCoverage === 'partial' ||
         sources.orders !== 'complete' ||
         sources.positions !== 'complete');
-    const verdict = computeVerdict({
-      positions: e.positions,
-      orders: e.orders,
-      hedge: e.hedge,
-      trades: { tradesPerDay: e.trades.tradesPerDay, crossedShare: e.trades.crossedShare, buyShare: e.trades.buyShare },
-      linkedHedge: linked ? { linkedHedgeRatio: linked.linkedHedgeRatio } : undefined,
-      hedgeCoverage,
-      ordersCoverage: sources.orders,
-      positionsCoverage: sources.positions,
-    });
+    // The same rules input a live check builds (src/engine/observation.ts),
+    // over what this entry recorded, read back where older scans did not
+    // record it directly.
+    const verdict = computeVerdict(
+      verdictInputOf({
+        ...e,
+        linkedHedge: linked,
+        hedgeCoverage,
+        ordersCoverage: sources.orders,
+        positionsCoverage: sources.positions,
+      }),
+    );
     const verdictChanged = JSON.stringify(verdict) !== JSON.stringify(e.verdict);
     const oldId = e.snapshotId ?? snapshotId(e.address, e.checkedAt);
     // A changed verdict is a new interpretation and gets a new id; a changed
@@ -198,13 +200,10 @@ export function reexplainGallery(gallery: Gallery, now: string): { gallery: Gall
       snapshotId: newId,
       ...(fork ? { supersedes: oldId } : {}),
     };
-    const { summary, evidence } = explain(next);
-    const judged = {
-      ...next,
-      summary,
-      evidence,
-      breakdown: exposureBreakdown(next.positions, next.hedge, linked, hedgeCoverage),
-    };
+    // The same sentence, rows and diagram a live check writes
+    // (src/engine/interpret.ts), not a second copy of how to write them.
+    const judged = { ...next, ...words(next) };
+    const { summary, evidence } = judged;
 
     if (verdictChanged) stats.reverdicted++;
     if (summary !== e.summary || JSON.stringify(evidence) !== JSON.stringify(e.evidence)) stats.reexplained++;

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import galleryData from '../data/gallery.json';
 import { computeVerdict, CLASSIFIER_VERSION } from '../src/engine/verdict';
 import { explain } from '../src/engine/evidence';
-import { missingForCurrentRules } from '../src/engine/observation';
+import { missingForCurrentRules, verdictInputOf } from '../src/engine/observation';
 import type { Gallery } from '../src/gallery';
 
 /**
@@ -39,17 +39,7 @@ const open = live.filter((e) => e.positions.nPositions > 0);
 const current = live.filter((e) => !e.historical);
 const historical = live.filter((e) => e.historical);
 
-const rejudge = (e: Gallery['entries'][number]) =>
-  computeVerdict({
-    positions: e.positions,
-    orders: e.orders,
-    hedge: e.hedge,
-    trades: { tradesPerDay: e.trades.tradesPerDay, crossedShare: e.trades.crossedShare, buyShare: e.trades.buyShare },
-    linkedHedge: e.linkedHedge ? { linkedHedgeRatio: e.linkedHedge.linkedHedgeRatio } : undefined,
-    hedgeCoverage: e.hedgeCoverage,
-    ordersCoverage: e.ordersCoverage,
-    positionsCoverage: e.positionsCoverage,
-  });
+const rejudge = (e: Gallery['entries'][number]) => computeVerdict(verdictInputOf(e));
 
 describe('the saved gallery against the current rules', () => {
   it('has something to judge', () => {

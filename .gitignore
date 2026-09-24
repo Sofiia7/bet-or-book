@@ -13,3 +13,6 @@ dist/
 # data/gallery.json plus already-committed code, and large (~18 MB) purely
 # from the encoding - regenerate it rather than track it.
 data/og-prerendered.json
+
+# Scratch replays of recorded upstream answers, never committed.
+.replay/

@@ -19,8 +19,111 @@
  * that gave it, and is marked historical rather than quietly re-judged.
  */
 import type { CheckResponse } from '../api/check';
-import type { SourceCoverage } from './verdict';
+import type { SourceCoverage, VerdictInput } from './verdict';
 import { DEFAULT_THRESHOLDS } from './verdict';
+import type {
+  HedgeCoverage,
+  HedgeFeatures,
+  HedgeScope,
+  LinkedHedgeFeatures,
+  OrderFeatures,
+  PositionFeatures,
+  TradeFeatures,
+} from './features';
+import type { VitalsItem } from './vitals';
+import type { PnlSummary } from '../types';
+
+/**
+ * What one check saw, before any rule has read it: every number the rules
+ * take, how completely each source answered, and what could not be read.
+ *
+ * The first shape of this project read the sources, decided the verdict and
+ * wrote the card in one long function, so what was seen and what was
+ * concluded from it could not be told apart in code. The 23.09 audit asked
+ * for the three to be separate: an observation (src/api/observe.ts, all the
+ * I/O), the rules over it, and the words and picture made from both
+ * (src/engine/interpret.ts, no I/O). A saved reading is an observation plus
+ * one interpretation of it, which is what lets a rules change re-read a
+ * stored observation without pretending to have checked the account again.
+ */
+export interface Observation {
+  address: string;
+  positions: PositionFeatures;
+  orders: OrderFeatures;
+  hedge: HedgeFeatures;
+  hedgeScope: HedgeScope;
+  /** How completely the hedge was looked for, so that a gap in the reading
+   * is never served as a finding about the account. */
+  hedgeCoverage: HedgeCoverage;
+  /** How completely the resting orders were read. `partial` when a HIP-3
+   * dex would not answer: the account may be quoting where nobody looked. */
+  ordersCoverage: SourceCoverage;
+  /** How completely the positions were read. Hyperliquid's own clearinghouse
+   * answers for the main perp dex, so a fallback reading is `partial`. */
+  positionsCoverage: SourceCoverage;
+  linkedHedge: LinkedHedgeFeatures | null;
+  trades: TradeFeatures;
+  pnl: PnlSummary | null;
+  sizeVsOi: number | null;
+  source: 'nansen' | 'hyperliquid';
+  /** The position this answer is about, when the reader chose one. Null
+   * means the largest, which is what the check picks on its own. Part of
+   * the reading, so it travels into the saved snapshot with it. */
+  focus: { coin: string; side: 'long' | 'short' } | null;
+  /** When the source says the positions were measured, which is not the same
+   * as when this check asked for them. Null when the source gives no time. */
+  positionsAsOf: string | null;
+  /** The shape of the observation itself, as opposed to the reading of it.
+   * A stored entry from an older schema is missing inputs the current rules
+   * need, and re-running those rules over it would be a claim, not a check. */
+  observationSchemaVersion: number;
+  /** The contract allowlist that decided which holdings counted. */
+  assetRegistryVersion: number;
+  /** When the sources say the numbers were measured. A re-explain never
+   * moves it. */
+  observedAt: string;
+  /** True when a source that feeds a rule was missing or cut short, so the
+   * answer is worth less and should not be cached for as long. */
+  degraded: boolean;
+  /** Numbers about the headline position itself - leverage, distance to
+   * liquidation, unrealized PnL, funding since open, size vs open interest -
+   * rather than about the verdict. Both sources already return the first
+   * four on every position; nothing here costs an extra credit. */
+  vitals: VitalsItem[];
+  /** Plain-language notes on anything that could not be read. */
+  coverage: string[];
+  /** The same notes, each saying whether it cost the answer something. A
+   * shared card has room for two or three of these and has to choose the
+   * ones that matter, which a flat list of sentences cannot support. */
+  coverageNotes: Array<{ text: string; failure: boolean }>;
+  checkedAt: string;
+}
+
+/**
+ * The rules' input, built from an observation in exactly one place.
+ *
+ * The live check, the gallery re-explain, the "without these funding links"
+ * counterfactual and the tests that hold the gallery to the rules each used
+ * to assemble this by hand - four copies of one mapping, any of which could
+ * have been fixed without the others.
+ */
+export function verdictInputOf(
+  o: Pick<
+    Observation,
+    'positions' | 'orders' | 'hedge' | 'trades' | 'linkedHedge' | 'hedgeCoverage' | 'ordersCoverage' | 'positionsCoverage'
+  >,
+): VerdictInput {
+  return {
+    positions: o.positions,
+    orders: o.orders,
+    hedge: o.hedge,
+    trades: { tradesPerDay: o.trades.tradesPerDay, crossedShare: o.trades.crossedShare, buyShare: o.trades.buyShare },
+    linkedHedge: o.linkedHedge ? { linkedHedgeRatio: o.linkedHedge.linkedHedgeRatio } : undefined,
+    hedgeCoverage: o.hedgeCoverage,
+    ordersCoverage: o.ordersCoverage,
+    positionsCoverage: o.positionsCoverage,
+  };
+}
 
 /**
  * The shape of a stored observation.

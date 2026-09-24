@@ -8,6 +8,7 @@ import { testEnv, request } from './support/worker';
 import featuredData from '../data/featured.json';
 import galleryData from '../data/gallery.json';
 import { computeVerdict, CLASSIFIER_VERSION } from '../src/engine/verdict';
+import { verdictInputOf } from '../src/engine/observation';
 import { snapshotId } from '../src/snapshot';
 import { BUILDATHON_WINDOW } from '../src/ledger';
 import type { Gallery } from '../src/gallery';
@@ -46,16 +47,7 @@ describe('the demonstration readings', () => {
 
   it('reproduce exactly under the current rules', () => {
     for (const e of featured.entries) {
-      const again = computeVerdict({
-        positions: e.positions,
-        orders: e.orders,
-        hedge: e.hedge,
-        trades: { tradesPerDay: e.trades.tradesPerDay, crossedShare: e.trades.crossedShare, buyShare: e.trades.buyShare },
-        linkedHedge: e.linkedHedge ? { linkedHedgeRatio: e.linkedHedge.linkedHedgeRatio } : undefined,
-        hedgeCoverage: e.hedgeCoverage,
-        ordersCoverage: e.ordersCoverage,
-        positionsCoverage: e.positionsCoverage,
-      });
+      const again = computeVerdict(verdictInputOf(e));
       expect(again, e.address).toEqual(e.verdict);
     }
   });

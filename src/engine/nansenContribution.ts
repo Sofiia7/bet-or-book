@@ -18,6 +18,7 @@
  */
 import type { CheckResponse } from '../api/check';
 import { CLASSIFIER_VERSION, computeVerdict, type VerdictResult } from './verdict';
+import { verdictInputOf } from './observation';
 import { formatUsd } from './evidence';
 
 export interface NansenContribution {
@@ -45,18 +46,10 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
  * the verdict the reading carries. */
 function withoutFundingLinks(r: CheckResponse): VerdictResult | null {
   if (r.historical || r.classifierVersion !== CLASSIFIER_VERSION || !r.linkedHedge || !r.trades) return null;
-  const input = {
-    positions: r.positions,
-    orders: r.orders,
-    hedge: r.hedge,
-    trades: { tradesPerDay: r.trades.tradesPerDay, crossedShare: r.trades.crossedShare, buyShare: r.trades.buyShare },
-    hedgeCoverage: r.hedgeCoverage,
-    ordersCoverage: r.ordersCoverage,
-    positionsCoverage: r.positionsCoverage,
-  };
-  const withLinks = computeVerdict({ ...input, linkedHedge: { linkedHedgeRatio: r.linkedHedge.linkedHedgeRatio } });
+  const input = verdictInputOf(r);
+  const withLinks = computeVerdict(input);
   if (withLinks.verdict !== r.verdict.verdict || withLinks.reasons[0] !== r.verdict.reasons[0]) return null;
-  const without = computeVerdict(input);
+  const without = computeVerdict({ ...input, linkedHedge: undefined });
   return without.verdict === withLinks.verdict && without.strength === withLinks.strength ? null : without;
 }
 
