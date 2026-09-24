@@ -172,8 +172,48 @@ export interface VerdictInput {
 export interface VerdictResult {
   verdict: Verdict;
   strength: VerdictStrength;
+  /** `string[]` rather than `ReasonCode[]` on purpose: a reading kept from
+   * older rules carries the codes those rules gave, some of which are gone. */
   reasons: string[];
 }
+
+/** The signs of a market maker's book, in the order they are checked. */
+export type BookSignal = 'positions' | 'orders' | 'trades';
+
+/**
+ * Every reason the current rules can give. Each return in computeVerdict is
+ * checked against this list when the code compiles, and every table of words
+ * about the rules (src/engine/reasons.ts, src/engine/openQuestion.ts) has to
+ * cover all of it, so a new rule cannot ship without its sentence - the
+ * 23.09 audit found reason strings repeated by hand on the backend and the
+ * frontend, where a fix to one did not reach the other.
+ */
+export type ReasonCode =
+  | BookSignal
+  | 'no open positions found'
+  | 'balanced_book'
+  | 'over_covered'
+  | 'hedge_not_checked'
+  | 'unrecognised_assets'
+  | 'hedge_leg'
+  | 'maker_flow_only'
+  | 'partial_offset'
+  | 'quotes_not_checked'
+  | 'positions_not_complete'
+  | 'directional_concentration'
+  | 'offset_not_measured'
+  | 'mixed_long_short_book'
+  | 'diversified_book_no_quotes'
+  | 'linked_exposure_unverified'
+  | 'directional_portfolio'
+  | 'signals disagree: not enough evidence for book, hedge, or bet';
+
+/** A verdict as the current rules give it, with its reasons type-checked. */
+const decided = (verdict: Verdict, strength: VerdictStrength, reasons: ReasonCode[]): VerdictResult => ({
+  verdict,
+  strength,
+  reasons,
+});
 
 type StructureInput = Pick<VerdictInput, 'positions' | 'orders' | 'trades'>;
 
@@ -183,8 +223,8 @@ function materialQuoteFloor(input: StructureInput, t: VerdictThresholds['book'])
   return Math.max(t.minTwoSidedNotionalUsd, t.minTwoSidedNotionalShareOfHeadline * input.positions.headlineNotionalUsd);
 }
 
-function bookSignals(input: StructureInput, t: VerdictThresholds['book']): string[] {
-  const signals: string[] = [];
+function bookSignals(input: StructureInput, t: VerdictThresholds['book']): BookSignal[] {
+  const signals: BookSignal[] = [];
   if (input.positions.nPositions >= t.minPositions && input.positions.netToGross <= t.maxNetToGross) {
     signals.push('positions');
   }
@@ -267,7 +307,7 @@ export function computeVerdict(
   thresholds: VerdictThresholds = DEFAULT_THRESHOLDS,
 ): VerdictResult {
   if (input.positions.nPositions === 0) {
-    return { verdict: 'unknown', strength: null, reasons: ['no open positions found'] };
+    return decided('unknown', null, ['no open positions found']);
   }
 
   // A book is a claim about the position in front of the user: that it is
@@ -279,7 +319,7 @@ export function computeVerdict(
   // market the account touches rather than this one.
   const book = bookSignals(input, thresholds.book);
   if (book.includes('orders')) {
-    return { verdict: 'book', strength: book.length >= 2 ? 'strong' : 'likely', reasons: book };
+    return decided('book', book.length >= 2 ? 'strong' : 'likely', book);
   }
 
   const h = thresholds.hedged;
@@ -289,14 +329,14 @@ export function computeVerdict(
   // A balanced book is a statement about the positions themselves, so it
   // does not wait on the holdings read.
   if (isSameAssetBook(input, thresholds)) {
-    return { verdict: 'hedged', strength: null, reasons: ['balanced_book'] };
+    return decided('hedged', null, ['balanced_book']);
   }
 
   // Over-covered first: holdings that were missed can only add to the spot
   // leg, so a leg already past parity stays past it however much was missed.
   // It is the one conclusion an incomplete read can still support.
   if (ratio > h.maxHedgeRatio) {
-    return { verdict: 'unknown', strength: null, reasons: ['over_covered'] };
+    return decided('unknown', null, ['over_covered']);
   }
 
   // Everything below reads the ratio as a fact about the account, including
@@ -305,7 +345,7 @@ export function computeVerdict(
   // exposure: the next page may hold twice as much of the same asset.
   const hedgeCoverage = input.hedgeCoverage ?? 'complete';
   if (hedgeCoverage === 'missing' || hedgeCoverage === 'partial') {
-    return { verdict: 'unknown', strength: null, reasons: ['hedge_not_checked'] };
+    return decided('unknown', null, ['hedge_not_checked']);
   }
   // Holdings that were read but could not be identified are the same kind of
   // gap: the dollars are there, what they are is not established, and a
@@ -315,11 +355,11 @@ export function computeVerdict(
       ? (input.hedge.unverifiedUsd ?? 0) / input.positions.headlineNotionalUsd
       : 0;
   if (unverifiedShare >= h.maxUnverifiedShare || (input.hedge.unpricedMatches ?? 0) > 0) {
-    return { verdict: 'unknown', strength: null, reasons: ['unrecognised_assets'] };
+    return decided('unknown', null, ['unrecognised_assets']);
   }
 
   if (hedgedByLeg) {
-    return { verdict: 'hedged', strength: null, reasons: ['hedge_leg'] };
+    return decided('hedged', null, ['hedge_leg']);
   }
 
   // Busy maker-style fills describe the account, not this position, and used
@@ -331,13 +371,13 @@ export function computeVerdict(
   // maker flow only gets to withhold a verdict when nothing above resolved
   // it either way.
   if (book.includes('trades')) {
-    return { verdict: 'unknown', strength: null, reasons: ['maker_flow_only'] };
+    return decided('unknown', null, ['maker_flow_only']);
   }
 
   // Partly offset is still a position, and over-covered is a position the
   // other way round. Neither of them is "not a directional view".
   if (ratio >= thresholds.bet.maxHedgeRatio) {
-    return { verdict: 'unknown', strength: null, reasons: ['partial_offset'] };
+    return decided('unknown', null, ['partial_offset']);
   }
 
   const linkedRatio = input.linkedHedge?.linkedHedgeRatio ?? 0;
@@ -354,22 +394,18 @@ export function computeVerdict(
     // A HIP-3 dex that answered 503 is not an account that quotes nothing,
     // and a main-dex-only position read is not a whole portfolio.
     if ((input.ordersCoverage ?? 'complete') !== 'complete') {
-      return { verdict: 'unknown', strength: null, reasons: ['quotes_not_checked'] };
+      return decided('unknown', null, ['quotes_not_checked']);
     }
     if ((input.positionsCoverage ?? 'complete') !== 'complete') {
-      return { verdict: 'unknown', strength: null, reasons: ['positions_not_complete'] };
+      return decided('unknown', null, ['positions_not_complete']);
     }
-    return { verdict: 'looks_like_a_bet', strength: null, reasons: ['directional_concentration'] };
+    return decided('looks_like_a_bet', null, ['directional_concentration']);
   }
 
   // Dollars that cancel across unrelated assets are a portfolio, not a
   // hedge. Naming which of the two it is beats calling both "hedged".
   if (isDollarBalanced(input, thresholds)) {
-    return {
-      verdict: 'unknown',
-      strength: null,
-      reasons: [offsetShare(input) === null ? 'offset_not_measured' : 'mixed_long_short_book'],
-    };
+    return decided('unknown', null, [offsetShare(input) === null ? 'offset_not_measured' : 'mixed_long_short_book']);
   }
 
   // A spread wide enough that the account looks like it runs a book, with
@@ -377,7 +413,7 @@ export function computeVerdict(
   // "signals disagree", which is where it used to land once the position
   // count stopped deciding on its own.
   if (book.includes('positions')) {
-    return { verdict: 'unknown', strength: null, reasons: ['diversified_book_no_quotes'] };
+    return decided('unknown', null, ['diversified_book_no_quotes']);
   }
 
   // Matching assets in a wallet that funded this account are not this
@@ -386,7 +422,7 @@ export function computeVerdict(
   // gallery two of the four "probable hedge" cards were funded by one. Linked
   // holdings can therefore only withhold a verdict, never grant one.
   if (linkedRatio >= b.maxHedgeRatio) {
-    return { verdict: 'unknown', strength: null, reasons: ['linked_exposure_unverified'] };
+    return decided('unknown', null, ['linked_exposure_unverified']);
   }
 
   // A portfolio that fails the single-position bet rule only on position
@@ -404,17 +440,13 @@ export function computeVerdict(
     input.hedge.hedgeRatio + linkedRatio < b.maxHedgeRatio;
   if (directional) {
     if ((input.ordersCoverage ?? 'complete') !== 'complete') {
-      return { verdict: 'unknown', strength: null, reasons: ['quotes_not_checked'] };
+      return decided('unknown', null, ['quotes_not_checked']);
     }
     if ((input.positionsCoverage ?? 'complete') !== 'complete') {
-      return { verdict: 'unknown', strength: null, reasons: ['positions_not_complete'] };
+      return decided('unknown', null, ['positions_not_complete']);
     }
-    return { verdict: 'looks_like_a_bet', strength: null, reasons: ['directional_portfolio'] };
+    return decided('looks_like_a_bet', null, ['directional_portfolio']);
   }
 
-  return {
-    verdict: 'unknown',
-    strength: null,
-    reasons: ['signals disagree: not enough evidence for book, hedge, or bet'],
-  };
+  return decided('unknown', null, ['signals disagree: not enough evidence for book, hedge, or bet']);
 }

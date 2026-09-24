@@ -4,7 +4,7 @@ The recording for the X post (tag @nansen_ai). The page's own sentences carry th
 
 The story has changed three times, and it is better each time. The first script showed the big ETH short as **Hedged (probable)**, "220% covered by ETH held in 2 wallets that funded this account" - a reading that was wrong, because a funding transfer shows where money came from and not who holds it now. The 21 September audit made the tool draw what it found rather than list it, and put two readings of the same address side by side. The 23 September audit cut the first screen down to the question, the answer and the one picture that decided it, and added four fresh, dated readings at the top of the page - one of each kind of answer - so the contrast beats no longer depend on a days-old scan.
 
-**Before recording.** The live site in Chrome or Edge, window maximized, page zoom 125%, notifications off. Reload the page (F5) and copy the address `0xB83DE012dbA672c76A7dbbbf3E459CB59D7D6E36` before pressing record.
+**Before recording.** The live site in Chrome or Edge, window maximized, page zoom 125%, notifications off. Once, before anything else, open the site at `/#operator` and paste `DEMO_KEY` from `.dev.vars`: the page answers "Operator key accepted", and from then on this browser's checks can use the demo reserve and skip the public rate limits. The key is never on screen after that. Then reload the page (F5) and copy the address `0xB83DE012dbA672c76A7dbbbf3E459CB59D7D6E36` before pressing record.
 
 No rehearsal run to warm the cache. A cached answer replayed as a fresh request is the one thing a demo must not do, and the card says "cached, N minutes old" when it is one, so it would show. Check once, for real, on camera - and if the same address was checked on the site in the last ten minutes, wait that out first.
 
@@ -15,7 +15,7 @@ No rehearsal run to warm the cache. A cached answer replayed as a fresh request 
 | 0-4 s | Nothing, page at the top | "Bet or book. Before you copy the headline, check the position." |
 | 4-8 s | Click the address field, paste, click **Check** | "Reading positions from Nansen and orders from Hyperliquid...", then the card: "The position: $2xxM ETH short" |
 | 8-17 s | Hold on the diagram | One bar, the ETH short, **empty**. A dashed box outside it: about **$440M**, "in 2 wallets that funded this account, ownership unverified, not counted" |
-| 17-23 s | Hold on the sentence above it | "Less than 1% of the ... ETH short is covered by ETH at this address. 2 wallets that funded it hold ... of ETH, but funding does not establish ownership, so it is not counted as a hedge." |
+| 17-23 s | Hold on the sentence above it and the **From Nansen** line under it | "Less than 1% of the ... ETH short is covered by ETH at this address..." and, from Nansen: "2 funding wallets hold ... of ETH; without them this would read as "Looks like a bet"". The one line that says what the Nansen data changed |
 | 23-28 s | Hold on **What changed since 24 Sept** | the position size and the funders' ETH, each with an arrow, and "The answer did not change" |
 | 28-35 s | Click the chip **$43.2M HYPE short · 97% covered** | **Hedged**, the same bar **97% full**, and "Saved reading from 24 Sept". The same shape of question, the opposite answer |
 | 35-43 s | Click the chip **$46.9M ETH short · market maker**, then open **How this was decided** | **Book (likely)**: "2,613 resting orders quote both sides of 123 markets", and the rule in one sentence: this account quotes the position's own market on both sides |

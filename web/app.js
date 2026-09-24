@@ -450,7 +450,7 @@ function renderResult(d, opts) {
   $('card').hidden = false;
   // A new card starts folded: what the last one had open says nothing about
   // what the reader wants from this one.
-  for (const id of ['share', 'decided', 'details']) $(id).open = false;
+  for (const id of ['share', 'nansen', 'decided', 'details']) $(id).open = false;
   const v = verdictOf(d);
   $('badge').textContent = badgeText(d);
   // Faded and dashed when the rules that gave it are no longer in force, on
@@ -470,6 +470,20 @@ function renderResult(d, opts) {
   $('decided-rule').hidden = !d.rule;
   $('decided-reasons').textContent = reasons.join(', ') || 'none';
   $('decided-version').textContent = d.classifierVersion || '?';
+
+  // What the reading leaves open, and what Nansen added to it - both worked
+  // out on the server from the reading itself (src/engine/openQuestion.ts,
+  // src/engine/nansenContribution.ts). A reading saved before they existed
+  // simply has neither.
+  $('open-question').hidden = !d.openQuestion;
+  $('open-question').replaceChildren(el('strong', null, 'Still open: '), d.openQuestion || '');
+  const nz = d.nansen;
+  $('nansen').hidden = !nz;
+  if (nz) {
+    $('nansen-lead').textContent = nz.lead;
+    $('nansen-list').replaceChildren(...nz.items.map((text) => el('li', null, text)));
+    $('nansen-calls').textContent = plural(nz.calls, 'Nansen API call') + ' made for this reading.';
+  }
 
   const tile = (item) => {
     // The row the verdict turned on leads, rather than sitting fourth in a
@@ -641,6 +655,61 @@ function setBusy(on) {
   $('check-live').disabled = on;
 }
 
+// ---- the operator key for the demo reserve ----
+//
+// Part of the daily cap is kept out of the public path so a busy afternoon
+// cannot leave the demo on Hyperliquid-only data, and the key that reaches
+// it goes in a request header, never a URL: a query string ends up in
+// history, logs and a screen recording's own address bar (23.09 audit, S03).
+// This is the operator's way to set it: open /#operator once, before
+// recording, and paste the key. It is checked there and then, kept in this
+// browser only, sent only with a check, and never shown.
+const OPERATOR_KEY = 'betOrBook:operatorKey';
+
+function operatorKey() {
+  try {
+    return window.localStorage.getItem(OPERATOR_KEY) || '';
+  } catch (e) {
+    return '';
+  }
+}
+
+async function setUpOperator() {
+  // Off the address bar first, so not even the word lingers there.
+  window.history.replaceState(null, '', window.location.pathname + window.location.search);
+  const entered = window.prompt(
+    'Operator key for the demo reserve. It stays in this browser, is sent only as a request header with a ' +
+      'check, and is never shown. Leave it empty to remove it.',
+    '',
+  );
+  if (entered === null) return;
+  const key = entered.trim();
+  try {
+    if (key) window.localStorage.setItem(OPERATOR_KEY, key);
+    else window.localStorage.removeItem(OPERATOR_KEY);
+  } catch (e) {
+    setStatus('This browser would not keep the key.', true);
+    return;
+  }
+  if (!key) {
+    setStatus('Operator key removed from this browser.', false);
+    return;
+  }
+  // Asked now, on its own and for free, so a wrong key is found before the
+  // recording rather than on it.
+  try {
+    const res = await fetch('/api/demo-access', { method: 'POST', headers: { 'x-demo-key': key } });
+    if (res.status === 204) {
+      setStatus('Operator key accepted: checks from this browser can use the demo reserve.', false);
+    } else {
+      window.localStorage.removeItem(OPERATOR_KEY);
+      setStatus('The server did not accept that operator key, so it was not kept.', true);
+    }
+  } catch (e) {
+    setStatus('Could not reach the server to check the operator key; it is kept, unverified.', true);
+  }
+}
+
 // Starting a check spends money, so it is a POST: a GET is something a
 // crawler, a link preview or a browser prefetch can trigger on its own, and
 // used to run the paid branch when they did.
@@ -662,8 +731,10 @@ async function load(url, onData, failureText, method, notice, retryDelays) {
   try {
     let res;
     let data;
+    // Only a check carries the operator key, and only when one is set.
+    const key = method === 'POST' && url.indexOf('/api/check') === 0 ? operatorKey() : '';
     for (let attempt = 0; ; attempt++) {
-      res = await fetch(url, { method: method || 'GET' });
+      res = await fetch(url, key ? { method, headers: { 'x-demo-key': key } } : { method: method || 'GET' });
       data = await res.json().catch(() => ({}));
       if (seq !== requestSeq) return;
       const wait = res.status === 404 && retryDelays ? retryDelays[attempt] : undefined;
@@ -1404,6 +1475,7 @@ async function loadLedger() {
 // The ledger is a footnote, so it waits for the part of the page a reader
 // came for (23.09 audit).
 loadGallery().finally(loadLedger);
+if (window.location.hash === '#operator') setUpOperator();
 const params = new URLSearchParams(window.location.search);
 const saved = params.get('s');
 const preset = params.get('address');

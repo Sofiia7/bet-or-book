@@ -127,6 +127,10 @@
   .subject { margin: 12px 0 0; font-size: 14px; }
   .subject .muted { margin-right: 6px; }
   .limit { font-size: 12px; color: var(--muted); margin: 12px 0 0; }
+  .open-question { font-size: 13px; margin: 8px 0 0; }
+  .nansen > summary { color: var(--fg); }
+  .nansen ul { margin: 6px 0 0; padding-left: 18px; }
+  .nansen li { margin: 3px 0; }
   /* One way to share, not four buttons competing with the answer. */
   .share { margin-top: 16px; }
   .share > summary { display: inline-block; list-style: none; cursor: pointer; padding: 10px 16px; font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--fg); color: var(--bg); }
@@ -214,6 +218,15 @@
     <ul id="coverage-list"></ul>
   </div>
   <p class="limit">Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address. A hedge there would not show here.</p>
+  <!-- What this reading leaves open, and what Nansen added to it: the two
+       things the 23.09 audit asked a card to say before submission. The
+       Nansen line is readable without opening it; the list is one click. -->
+  <p class="open-question" id="open-question" hidden></p>
+  <details class="fold nansen" id="nansen" hidden>
+    <summary><strong>From Nansen:</strong> <span id="nansen-lead"></span></summary>
+    <ul id="nansen-list"></ul>
+    <p class="tech" id="nansen-calls"></p>
+  </details>
   <div class="box changed" id="changed" hidden>
     <p><strong id="changed-title"></strong> <span class="muted" id="changed-because"></span></p>
     <ul id="changed-list"></ul>

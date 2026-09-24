@@ -13,12 +13,15 @@
  * on the backend and the frontend, where a fix to one did not reach the
  * other.
  */
-import { DEFAULT_THRESHOLDS as T, type VerdictResult } from './verdict';
+import { DEFAULT_THRESHOLDS as T, type ReasonCode, type VerdictResult } from './verdict';
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const usd = (n: number) => (n >= 1000 ? `$${Math.round(n / 1000)}K` : `$${n}`);
 
-const WHY: Record<string, string> = {
+/** Words for every reason the rules can put first. Typed against the rules'
+ * own list, so a new reason does not compile until it has a sentence. The two
+ * signs that only ever grade a book are below, with their own wording. */
+const WHY: Record<Exclude<ReasonCode, 'positions' | 'trades'>, string> = {
   'no open positions found': 'Nothing is open at this address right now, so there is no position to judge.',
 
   // A book: quoting is what decides it, the rest only grades it.
@@ -82,7 +85,7 @@ const WHY: Record<string, string> = {
 };
 
 /** What grades a book beyond the quoting that decides it. */
-const BOOK_ALSO: Record<string, string> = {
+const BOOK_ALSO: Record<'positions' | 'trades', string> = {
   positions: 'a spread of positions typical of a book',
   trades: 'busy two-sided trading',
 };
@@ -100,9 +103,11 @@ export function ruleExplanation(verdict: VerdictResult, historical = false): str
   // A book's reasons list every signal that fired, in the order they are
   // checked; quoting is the one that decides, wherever it sits in the list.
   if (verdict.verdict === 'book' && reasons.includes('orders')) {
-    const also = reasons.map((r) => BOOK_ALSO[r]).filter((s): s is string => s !== undefined);
+    const also = reasons
+      .map((r) => (r === 'positions' || r === 'trades' ? BOOK_ALSO[r] : undefined))
+      .filter((s): s is string => s !== undefined);
     return also.length ? `${WHY.orders} Also seen: ${also.join(' and ')}.` : WHY.orders;
   }
   const first = reasons[0];
-  return first === undefined ? null : (WHY[first] ?? null);
+  return first !== undefined && first in WHY ? WHY[first as keyof typeof WHY] : null;
 }

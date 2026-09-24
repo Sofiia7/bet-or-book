@@ -51,10 +51,11 @@ Where this project stands against them, honestly:
 - Deploy, then open the deployed page in a private window: the script is versioned by
   content, so a stale one should be impossible, but look once.
 - `npm test`, `npm run test:runtime`, `npm run typecheck`, and `npx wrangler deploy --dry-run` all green.
-- After the deploy, pre-render and upload the bundled cards' link pictures
-  (`node --import tsx scripts/prerender-og.ts --upload`). Pictures are now kept under
-  the layout's own key (`og:v2:<id>`), so everything uploaded before - under the bare
-  `og:<id>` - is simply unused, and the four demonstration readings are included.
+- After every deploy that changes the picture's layout, pre-render and upload the bundled
+  cards' link pictures (`node --import tsx scripts/prerender-og.ts --upload`). Pictures
+  are kept under the layout's own key (`og:v3:<id>` since 24 September), so anything
+  uploaded under an older one is simply unused, and the four demonstration readings are
+  included.
   Until this runs, a shared link to a bundled card shows the standing picture until
   someone opens that card's Share button; the Worker no longer draws on a crawler's
   own request, because on the free plan's CPU budget that request could fail outright
@@ -63,3 +64,13 @@ Where this project stands against them, honestly:
   after the deploy, to see the check events arriving before relying on them.
 - The Book beat is settled: the fourth reading at the top of the page is a fresh
   **Book (likely)** under the current rules, free to open on camera (`demo-script.md`).
+- Before recording, open the live site at `/#operator` and paste `DEMO_KEY` from
+  `.dev.vars` (set on the Worker on 24 September). The page says whether the server
+  accepted it; from then on that browser's checks can use the 40-credit demo reserve
+  and skip the public rate limits. Nothing about it shows on screen afterwards.
+- By hand, and nobody else can do these: give five people who have not read the README
+  thirty seconds with a card and ask them whether it is a buy or sell signal, where the
+  cover was found, who owns the linked assets and how old the numbers are; then the
+  recording, the X post and the form. The case review the audit asked for is in
+  [`case-review.md`](case-review.md) - a read-through of stored readings, not an
+  independent validation.

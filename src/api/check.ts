@@ -46,6 +46,7 @@ import {
 import { explain, formatUsd, type EvidenceItem } from '../engine/evidence';
 import { computeVitals, type VitalsItem } from '../engine/vitals';
 import { shareCard, type ShareCard } from '../engine/share';
+import type { NansenContribution } from '../engine/nansenContribution';
 import { exposureBreakdown, type ExposureBreakdown } from '../engine/breakdown';
 import { OBSERVATION_SCHEMA_VERSION, ASSET_REGISTRY_VERSION } from '../engine/observation';
 import type { Position, SpotHolding, LinkedWallet, PnlSummary } from '../types';
@@ -182,6 +183,12 @@ export type CheckResponse = CheckResult & {
    * added wherever a reading is served; null where the rules that made it
    * have no words for its reason. */
   rule?: string | null;
+  /** What this reading leaves open, to follow "Still open:"
+   * (src/engine/openQuestion.ts). Added wherever a reading is served. */
+  openQuestion?: string | null;
+  /** What Nansen supplied to this reading and which of it the answer needed
+   * (src/engine/nansenContribution.ts). Added wherever a reading is served. */
+  nansen?: NansenContribution | null;
 };
 
 /** Reads in stages so that every Nansen credit is spent only where its answer

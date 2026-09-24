@@ -22,6 +22,8 @@ import type { SafeKV } from './safeKv';
 import { ogCardFor, ogCacheKey, OG_LAYOUT_VERSION } from './engine/ogCard';
 import { emit, readingFields, type CheckEvent, type PictureEvent, type SnapshotEvent } from './telemetry';
 import { ruleExplanation } from './engine/reasons';
+import { openQuestion } from './engine/openQuestion';
+import { nansenContribution } from './engine/nansenContribution';
 import { renderOgPng, type OgFont } from './engine/ogRender';
 import interRegular from '../assets/inter-regular.woff';
 import interBold from '../assets/inter-bold.woff';
@@ -33,11 +35,18 @@ import ogFallbackPng from '../assets/og-fallback.png';
 
 const gallery = galleryData as unknown as Gallery;
 
-/** A reading as it leaves the Worker: with the rule behind its verdict in
- * plain words, worked out here from its reason codes, so the page has the
- * sentence without keeping its own copy of the rules (23.09 audit, U06). */
+/** A reading as it leaves the Worker, with three things worked out here from
+ * what it already holds, so the page has the words without keeping its own
+ * copy of the rules: the rule behind the verdict (U06), the question it
+ * leaves open, and what Nansen added to it - the last two asked for by the
+ * 23.09 audit before submission. */
 function explained<T extends CheckResponse>(r: T): T {
-  return { ...r, rule: ruleExplanation(r.verdict, r.historical !== undefined) };
+  return {
+    ...r,
+    rule: ruleExplanation(r.verdict, r.historical !== undefined),
+    openQuestion: openQuestion(r),
+    nansen: nansenContribution(r),
+  };
 }
 /** Gallery cards by snapshot id, so a shared link to one opens the card that
  * was shared and not a fresh check of that account. */
@@ -224,6 +233,26 @@ function fromThisSite(request: Request, url: URL): boolean {
   return origin === null || origin === url.origin;
 }
 
+/**
+ * Whether a request carries the operator key for the demo reserve.
+ *
+ * Compared as SHA-256 digests, so the comparison takes the same time however
+ * much of the key a guess gets right, and neither length nor content leaks
+ * through it. An unset or empty DEMO_KEY matches nothing, including an empty
+ * header (23.09 audit, S03).
+ */
+async function isOperator(request: Request, env: Env): Promise<boolean> {
+  const expected = env.DEMO_KEY;
+  const provided = request.headers.get('x-demo-key');
+  if (!expected || !provided) return false;
+  const digest = async (text: string) =>
+    new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
+  const [a, b] = await Promise.all([digest(provided), digest(expected)]);
+  let differs = 0;
+  for (let i = 0; i < a.length; i++) differs |= a[i] ^ b[i];
+  return differs === 0;
+}
+
 /** A HEAD answer carries the headers of the GET it stands for and no body. */
 const headOf = (res: Response) => new Response(null, { status: res.status, headers: res.headers });
 
@@ -360,7 +389,7 @@ export default {
       // screen recording made for this project's own submission video. An
       // unset or empty DEMO_KEY must never itself become a demo pass, which
       // `!==undefined` alone did not rule out (23.09 audit, S03).
-      const demo = !!env.DEMO_KEY && request.headers.get('x-demo-key') === env.DEMO_KEY;
+      const demo = await isOperator(request, env);
 
       // One line for every check request that got this far, whatever it
       // got (23.09 audit, S06). See src/telemetry.ts for what is in it and,
@@ -526,19 +555,21 @@ export default {
             const previousId =
               (await kv.get(latestKey)) ??
               (result.focus ? null : previousReadingId([...featured.entries, ...gallery.entries], address, galleryIdOf));
-            const saved: CheckResponse = {
-              ...explained(result as CheckResponse),
+            // Explained last, once it knows how many calls it took: what
+            // Nansen added says so, and the reading is what it reads it from.
+            const saved: CheckResponse = explained({
+              ...result,
               nansenCalls: calls.length,
               snapshotId: id,
               ...(previousId !== null && previousId !== id ? { supersedes: previousId } : {}),
-            };
+            });
             // Kept so the link can open this reading rather than start a new
             // one. A failed write costs the share link, not the answer - but
             // the page has to be told, or it offers a link to nothing.
             const stored = await kv.put(snapshotKey(id), JSON.stringify(saved), {
               expirationTtl: SNAPSHOT_TTL_SECONDS,
             });
-            if (!stored) return { ...explained(result as CheckResponse), nansenCalls: calls.length, snapshotSaved: false };
+            if (!stored) return { ...explained({ ...result, nansenCalls: calls.length }), snapshotSaved: false };
             // The pointer only moves once this reading is durably the
             // newest one: a save that failed above already returned, so it
             // can never bump a real reading off the position of "latest".
@@ -713,6 +744,16 @@ export default {
       } catch {
         return Response.json({ error: 'those two readings are of different addresses' }, { status: 400 });
       }
+    }
+
+    // Whether this browser's operator key reaches the demo reserve - checked
+    // on its own, before the demo, so a wrong or missing key is found then
+    // rather than on camera (23.09 audit, S03). Costs nothing and says
+    // nothing but yes or no.
+    if (url.pathname === '/api/demo-access') {
+      if (method !== 'POST') return Response.json({ error: 'POST only' }, { status: 405, headers: { allow: 'POST' } });
+      if (!fromThisSite(request, url)) return Response.json({ error: 'from this site only' }, { status: 403 });
+      return new Response(null, { status: (await isOperator(request, env)) ? 204 : 403 });
     }
 
     if (url.pathname === '/api/gallery') {

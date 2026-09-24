@@ -27,6 +27,8 @@ Bet or Book answers one question per address, shows the numbers that decided it,
 - **What changed since the last reading**, where there is one - and whether the answer moved because the account did something or because the rules did. Those look identical on a card and are not the same event.
 - **The number the verdict turned on**, first, where there is no picture to show it. The other evidence numbers, each tagged with the source that produced it (Nansen, Hyperliquid, or both), and a strip of vitals - leverage, distance to liquidation, unrealized PnL, funding since open - that never decide the verdict but are already paid for, sit one click down.
 - **How this was decided**, in words: the rule that fired, with the thresholds it used. The raw reason code and the rules version are underneath it, for anyone checking the rules themselves.
+- **What Nansen added**, on one line without opening anything, and in full one click down: positions on every dex, balances on every chain, funding links, funding history. Where the funding links are what stop a verdict, the card runs the same rules over the same numbers without them and says what those numbers would have read as - for the $209.1M ETH short above, "Looks like a bet".
+- **What is still open**: the question the reading cannot settle, in its own terms - "whether any of that HYPE is owed to someone", "who controls the wallets that funded this account".
 - **The funding wallets**, with explorer links, when they hold the matching asset. They hold it; that is not the same as this account holding it, and the card says so.
 - **What could not be read**, every time: which sources were missing or cut short, how old the numbers are, and which rules read them.
 - **What we cannot see**, always: centralized exchanges, OTC, wallets with no on-chain link. A hedge there is invisible, so a bet is only ever "looks like a bet".
@@ -69,7 +71,7 @@ Rules run in order; the first one that fires wins ([`src/engine/verdict.ts`](src
 | 7 | Looks like a bet | 5 or fewer positions, net 80%+ of gross, the largest 50%+ of exposure, under 10% covered, no two-sided quotes; **or, failing only on position count or headline share, the same net-80%+-of-gross and no-quotes test applied to the whole portfolio** (`directional_portfolio`) - eleven positions all short is one stance, not eleven bets, and every clause here is still an absence, so **both paths need the orders and positions read in full** |
 | 8 | Unknown | `quotes_not_checked` / `positions_not_complete` (a source either bet path asserts something about would not answer), `mixed_long_short_book` (the dollars net out across different assets), `diversified_book_no_quotes` (the shape of a book with nothing quoted to say so), `maker_flow_only` (busy, but nothing says this position is inventory - checked only after a hedge this tool could prove or rule out, so a proven hedge is never withheld for something true about the account rather than the coverage), `linked_exposure_unverified` (the matching assets are in a wallet that funded this account, checked before the portfolio path so a funding link keeps first refusal), or the signals simply disagree |
 
-What each rule refuses to conclude, how an asset is identified, and what the three-account calibration run does and does not establish: [`docs/rules-in-depth.md`](docs/rules-in-depth.md).
+What each rule refuses to conclude, how an asset is identified, and what the three-account calibration run does and does not establish: [`docs/rules-in-depth.md`](docs/rules-in-depth.md). Seventeen real readings of every kind, gone through by hand for whether any card claims more than its data: [`docs/case-review.md`](docs/case-review.md).
 
 ## What the Nansen data decides
 
@@ -137,6 +139,7 @@ npx wrangler deploy
 | `GET /api/gallery` | The dated scan and the four demonstration readings, one short row per card; a card itself opens through `/api/snapshot` |
 | `GET /api/og?id=...` | That reading's social-preview picture (PNG), or a standing picture, briefly cached, while its own has not been drawn. Never draws on the request itself: that is what a crawler sends, and the render does not fit the free plan's CPU budget |
 | `POST /api/og?id=...` | Draws that picture and keeps it. Sent by this site's own page once a reading is saved and when its Share button is opened, so the picture exists before any crawler asks for it |
+| `POST /api/demo-access` | Whether the operator key in the `x-demo-key` header reaches the demo reserve: 204 or 403, nothing else, and it spends nothing. The page's `/#operator` uses it to check a key before a recording |
 | `GET /api/ledger` | Nansen calls made, attempted against answered, credits quoted against credits assumed |
 
 ## Scripts
@@ -165,6 +168,7 @@ Cloudflare Workers, Workers KV and two Durable Objects (the spend cap with its c
 
 - [`docs/rules-in-depth.md`](docs/rules-in-depth.md) - what each verdict rule refuses to conclude, asset identity, and the calibration run
 - [`docs/gallery-scan.md`](docs/gallery-scan.md) - how the 277-account scan was built and what moved when the rules changed
+- [`docs/case-review.md`](docs/case-review.md) - seventeen readings read by hand: what each one observes, interprets, or declines to say
 - [`docs/nansen-api-usage.md`](docs/nansen-api-usage.md) - every Nansen call accounted for, including the eight that failed
 - [`docs/architecture.md`](docs/architecture.md) - the credit-reservation and rate-limiting design, the link-preview picture on the free plan, what the Worker counts, the runtime tests, and the security checklist
 - [`docs/wiki/calibration.md`](docs/wiki/calibration.md) - the original three-account smoke test (superseded; kept as a record)

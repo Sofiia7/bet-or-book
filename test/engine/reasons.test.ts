@@ -7,14 +7,23 @@ import { DEFAULT_THRESHOLDS, type VerdictResult } from '../../src/engine/verdict
 
 const verdictSource = readFileSync(new URL('../../src/engine/verdict.ts', import.meta.url), 'utf8');
 
-/** Every reason the current rules can put first, read from the rules
- * themselves, so a new one cannot ship without words. */
-function reasonsTheRulesCanGive(): string[] {
+/** Every reason the current rules actually return, read from the calls in
+ * the rules themselves rather than from the type that is meant to list them,
+ * so the two are checked against each other. */
+function reasonsTheRulesReturn(): string[] {
   const codes = new Set<string>();
-  for (const [, list] of verdictSource.matchAll(/reasons: \[([^\]]*)\]/g)) {
+  for (const [, list] of verdictSource.matchAll(/decided\([^;]*?(\[[^\]]*\])\)/g)) {
     for (const [, code] of list.matchAll(/'([^']+)'/g)) codes.add(code);
   }
   return [...codes];
+}
+
+/** The rules' own list of the reasons they can give: the ReasonCode type,
+ * with the signs of a book it takes from BookSignal. */
+function reasonsTheTypeLists(): string[] {
+  const literals = (name: string) =>
+    [...new RegExp(`export type ${name} =([\\s\\S]*?);`).exec(verdictSource)![1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  return [...literals('ReasonCode'), ...literals('BookSignal')];
 }
 
 const v = (verdict: VerdictResult['verdict'], reasons: string[], strength: VerdictResult['strength'] = null) => ({
@@ -25,11 +34,19 @@ const v = (verdict: VerdictResult['verdict'], reasons: string[], strength: Verdi
 
 describe('ruleExplanation', () => {
   it('has words for every reason the current rules can give', () => {
-    const codes = reasonsTheRulesCanGive();
+    const codes = reasonsTheRulesReturn();
     expect(codes.length).toBeGreaterThan(10);
     for (const code of codes) {
       expect(ruleExplanation(v('unknown', [code])), code).toEqual(expect.any(String));
     }
+  });
+
+  it('lists in its type exactly the reasons the rules return', () => {
+    const listed = new Set(reasonsTheTypeLists());
+    for (const code of reasonsTheRulesReturn()) expect(listed.has(code), code).toBe(true);
+    // The book signals are returned as a list built at run time, not as
+    // literals, so they are checked by name.
+    for (const signal of ['positions', 'orders', 'trades']) expect(listed.has(signal), signal).toBe(true);
   });
 
   it('has words for every sign of a book, whichever the rules found first', () => {

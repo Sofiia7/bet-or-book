@@ -611,3 +611,39 @@ describe('a reading\'s own social-preview picture (22.09 audit, item 7)', () => 
     expect(html).toContain('<meta name="twitter:card" content="summary_large_image">');
   });
 });
+
+describe('an operator way into the demo reserve that never touches a URL (23.09 audit, S03)', () => {
+  const access = (env: ReturnType<typeof testEnv>, key: string | null, init: { origin?: string | null; sameSite?: string } = {}) =>
+    worker.fetch(
+      request('/api/demo-access', { method: 'POST', ...init, headers: key === null ? {} : { 'x-demo-key': key } }),
+      env,
+    );
+
+  it('says yes to the right key, before any check spends anything', async () => {
+    const seen = routeUpstreams();
+    const res = await access(testEnv({ DEMO_KEY: 'operator-secret' }), 'operator-secret');
+    expect(res.status).toBe(204);
+    expect(seen).toEqual([]);
+  });
+
+  it('says no to a wrong key, a near miss, and no key at all', async () => {
+    const env = testEnv({ DEMO_KEY: 'operator-secret' });
+    expect((await access(env, 'operator-secreT')).status).toBe(403);
+    // One character short. (A trailing space would not be a near miss: the
+    // Fetch spec strips whitespace around a header value before anyone sees it.)
+    expect((await access(env, 'operator-secre')).status).toBe(403);
+    expect((await access(env, null)).status).toBe(403);
+  });
+
+  it('grants nothing when the server has no key set, however the request asks', async () => {
+    expect((await access(testEnv({ DEMO_KEY: '' }), '')).status).toBe(403);
+    expect((await access(testEnv(), 'anything')).status).toBe(403);
+  });
+
+  it('answers only this site, and only a POST', async () => {
+    const env = testEnv({ DEMO_KEY: 'operator-secret' });
+    expect((await access(env, 'operator-secret', { origin: 'https://evil.example', sameSite: 'cross-site' })).status).toBe(403);
+    const get = await worker.fetch(request('/api/demo-access', { headers: { 'x-demo-key': 'operator-secret' } }), env);
+    expect(get.status).toBe(405);
+  });
+});
