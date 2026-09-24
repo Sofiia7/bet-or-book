@@ -321,7 +321,7 @@ function drawScale(svg, b, accent, W) {
   const covered = b.segments.find((s) => s.kind === 'covered')?.usd ?? 0;
   const notChecked = b.segments.find((s) => s.kind === 'not-checked')?.usd ?? 0;
   const unverified = b.segments.find((s) => s.kind === 'unverified')?.usd ?? 0;
-  const materialGap = Math.max(notChecked, notChecked > 0 ? 0 : unverified) >= MATERIAL_GAP_SHARE * b.headlineUsd;
+  const materialGap = unverified >= MATERIAL_GAP_SHARE * b.headlineUsd;
   const suspended = notChecked > 0 || (unverified > 0 && materialGap);
 
   svg.append(svgEl('text', { x: 0, y: 14, class: 'bar-title' }, `${fmtUsd(b.headlineUsd)} ${b.coin} ${b.side}`));
@@ -410,7 +410,7 @@ function drawBookQuoting(svg, d, W) {
 
 function renderBreakdown(d) {
   const box = $('breakdown');
-  const isBook = d.verdict.verdict === 'book' && d.orders && d.orders.headlineTwoSided;
+  const isBook = d.verdict.verdict === 'book' && !!d.orders;
   const b = d.breakdown;
   const isLong = !isBook && (!b || !b.applies) && d.positions.nPositions > 0 && d.positions.headlineSide === 'long';
   if (!isBook && (!b || !b.applies || !b.segments.length) && !isLong) {
