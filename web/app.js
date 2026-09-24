@@ -607,7 +607,7 @@ function renderResult(d, opts) {
 
   $('card-canvas').hidden = true;
   $('copy-card').textContent = 'Copy image';
-  if (d.snapshotId && d.positions.nPositions > 0) {
+  if (kind === 'live' && d.snapshotId && d.positions.nPositions > 0) {
     saveRecent({
       id: d.snapshotId,
       address: d.address,
