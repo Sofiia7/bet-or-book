@@ -211,26 +211,22 @@ function renderPicker(d, kind) {
   );
 }
 
-// ---- the evidence diagram ----
+// ---- the evidence diagram: a balance scale ----
 //
-// Five identical tiles of numbers made the reader assemble the answer, and
-// the thing they had to assemble - that $464M of matching ETH belongs to
-// wallets which funded this account rather than to this account - is the
-// whole card. So it is drawn: one bar for the position, split into what was
-// found against it, and anything held elsewhere on a dashed connection
-// beside it, never inside the bar.
+// Left pan is the position; right pan is what was found against it. A level
+// beam is a hedge in band; a beam that tilts toward the position is
+// uncovered; a beam that tilts the other way is over-covered ("leans
+// long") - the same three situations the rules already distinguish
+// (hedge_leg / partial_offset / over_covered), now a single continuous
+// angle instead of three unrelated sentences (24.09 mechanic: balance
+// scale, user-approved; replaces the segmented bar, which the audit's own
+// first reader could not parse unprompted).
 //
-// The arithmetic is the server's (src/engine/breakdown.ts); this only draws.
-const SEGMENT_STYLE = {
-  covered: { label: 'covered by this address', fill: 'var(--accent)', opacity: 1 },
-  unverified: { label: 'could not identify', fill: 'var(--accent)', opacity: 0.35 },
-  residual: { label: 'nothing found against it', fill: 'var(--line)', opacity: 1 },
-  // Fainter than "nothing found against it" on purpose: this part of the
-  // bar was never looked at, so it cannot say the same thing an empty,
-  // complete search says (23.09 audit, L12).
-  'not-checked': { label: 'not checked for a hedge', fill: 'var(--line)', opacity: 0.5 },
-};
-
+// A read that was partial or failed is drawn as a *suspended* pan - dashed,
+// with a question mark, beam level - never as a confident tilt: an unread
+// side of a scale has not been weighed, and drawing it as balanced or as
+// empty would both claim more than the data supports (mirrors the bar's
+// own not-checked/unverified opacity rule, audit L12).
 const svgEl = (name, attrs, text) => {
   const node = document.createElementNS('http://www.w3.org/2000/svg', name);
   for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, String(v));
@@ -238,208 +234,189 @@ const svgEl = (name, attrs, text) => {
   return node;
 };
 
-/** Below this real width, the "held elsewhere" block moves under the bar
- * instead of beside it. A fixed 640-unit viewBox scaled down to a 343px
- * phone shrank every label with it - 12px text became 6-7 rendered pixels,
- * the whole reason U01 called it unreadable. Building the SVG at its own
- * real rendered width instead (see `renderBreakdown`) fixes that on its
- * own; the stacked layout below is the second half, because 38% of a phone
- * screen is not enough room for four lines of text whatever their size. */
-const NARROW_BREAKDOWN_WIDTH = 520;
+const MAX_TILT_DEG = 12;
+/** Below this share of the position, an unread or unidentified segment is
+ * dust and the scale still gives a resolved tilt rather than suspending. */
+const MATERIAL_GAP_SHARE = 0.1;
 
-/** The side-by-side layout: the position keeps 62% of the width whether or
- * not anything is drawn beside it, so two cards of the same size read as
- * the same size. `W` is the real rendered width, so 1 SVG unit is 1 CSS
- * pixel and the `.seg-label`/`.seg-value` font sizes render at face value. */
-function drawBreakdownWide(svg, b, W) {
-  const barY = 26;
-  const barH = 34;
-  const hasElsewhere = !!b.elsewhere;
-  const barW = hasElsewhere ? W * 0.62 : W;
-  const H = hasElsewhere ? 150 : 120;
-
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  svg.append(svgEl('text', { x: 0, y: 14, class: 'bar-title' }, `${fmtUsd(b.headlineUsd)} ${b.coin} ${b.side}`));
-
-  let x = 0;
-  b.segments.forEach((seg) => {
-    const style = SEGMENT_STYLE[seg.kind];
-    // A sliver still has to be visible: 0.0003% of a $216M short is $609,
-    // and a band of zero pixels says the wrong thing about it.
-    const w = Math.max(2, seg.share * barW);
-    svg.append(
-      svgEl('rect', {
-        x, y: barY, width: w, height: barH, rx: 3,
-        fill: style.fill, 'fill-opacity': style.opacity,
-        stroke: 'var(--line)', 'stroke-width': 1,
-      }),
-    );
-    x += w;
-  });
-
-  // The legend stacks under the bar rather than sitting beneath each band:
-  // a band two pixels wide has nowhere to put a sentence, and a band at the
-  // right-hand end pushes its label off the edge.
-  b.segments.forEach((seg, i) => {
-    const style = SEGMENT_STYLE[seg.kind];
-    const ly = barY + barH + 18 + i * 19;
-    svg.append(
-      svgEl('rect', {
-        x: 0, y: ly - 9, width: 10, height: 10, rx: 2,
-        fill: style.fill, 'fill-opacity': style.opacity, stroke: 'var(--line)', 'stroke-width': 1,
-      }),
-    );
-    svg.append(
-      svgEl('text', { x: 18, y: ly, class: 'seg-label' },
-        `${fmtUsd(seg.usd)} (${fmtPct(seg.share)}) ${style.label}`),
-    );
-  });
-
-  if (b.excessUsd > 0) {
-    const ly = barY + barH + 18 + b.segments.length * 19;
-    svg.append(
-      svgEl('text', { x: 0, y: ly, class: 'seg-label' },
-        `and ${fmtUsd(b.excessUsd)} more of it held beyond the position: net long, not neutral`),
-    );
-  }
-
-  if (hasElsewhere) {
-    const ex = barW + 46;
-    const ew = W - ex;
-    svg.append(
-      svgEl('path', {
-        d: `M ${barW + 4} ${barY + barH / 2} L ${ex - 6} ${barY + barH / 2}`,
-        stroke: 'var(--faint)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4', fill: 'none',
-      }),
-    );
-    svg.append(
-      svgEl('rect', {
-        x: ex, y: barY, width: ew, height: barH, rx: 3,
-        fill: 'none', stroke: 'var(--faint)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4',
-      }),
-    );
-    svg.append(svgEl('text', { x: ex, y: 14, class: 'seg-label' }, 'held elsewhere'));
-    svg.append(
-      svgEl('text', { x: ex + 8, y: barY + barH / 2 + 5, class: 'seg-value' }, fmtUsd(b.elsewhere.usd)),
-    );
-    svg.append(
-      svgEl('text', { x: ex, y: barY + barH + 20, class: 'seg-label' },
-        `in ${plural(b.elsewhere.wallets, 'wallet')} that funded this account`),
-    );
-    svg.append(
-      svgEl('text', { x: ex, y: barY + barH + 38, class: 'seg-label' }, 'ownership unverified, not counted'),
-    );
-  }
+function scaleGeometry(W) {
+  const beamY = 46;
+  const beamHalf = Math.min(150, W * 0.32);
+  const pivotX = W / 2;
+  const panDrop = 54;
+  const panW = 30;
+  const panH = 22;
+  return { beamY, beamHalf, pivotX, panDrop, panW, panH };
 }
 
-/** The stacked layout for a narrow screen: the bar keeps the full width,
- * and anything held elsewhere goes underneath it rather than squeezed into
- * a sliver on the right. Height is not fixed - it grows with however many
- * legend lines and whether there is an elsewhere block at all - so the
- * viewBox is sized from where drawing actually stopped. */
-function drawBreakdownNarrow(svg, b, W) {
-  const barY = 26;
-  const barH = 34;
-  let y = barY;
+/** One pan (a small rectangle) hanging from one end of the beam, at the
+ * given vertical drop and horizontal offset the current tilt puts it at. */
+function drawPan(svg, cx, cy, g, dashed, fillColor, fillOpacity) {
+  const { panW, panH } = g;
+  svg.append(
+    svgEl('rect', {
+      x: cx - panW / 2, y: cy, width: panW, height: panH, rx: 3,
+      fill: dashed ? 'none' : fillColor, 'fill-opacity': dashed ? 1 : fillOpacity,
+      stroke: dashed ? 'var(--faint)' : 'var(--line)',
+      'stroke-width': dashed ? 1.5 : 1,
+      'stroke-dasharray': dashed ? '4 4' : 'none',
+    }),
+  );
+}
+
+function drawBeamAndPivot(svg, g, tiltDeg, accent) {
+  const { beamY, beamHalf, pivotX, panDrop } = g;
+  const rad = (tiltDeg * Math.PI) / 180;
+  const leftX = pivotX - beamHalf * Math.cos(rad);
+  const leftY = beamY - beamHalf * Math.sin(rad);
+  const rightX = pivotX + beamHalf * Math.cos(rad);
+  const rightY = beamY + beamHalf * Math.sin(rad);
+  // The post the beam pivots on.
+  svg.append(svgEl('line', { x1: pivotX, y1: beamY, x2: pivotX, y2: beamY + 8, stroke: 'var(--faint)', 'stroke-width': 2 }));
+  svg.append(svgEl('circle', { cx: pivotX, cy: beamY, r: 3, fill: accent }));
+  svg.append(svgEl('line', { x1: leftX, y1: leftY, x2: rightX, y2: rightY, stroke: accent, 'stroke-width': 3, 'stroke-linecap': 'round' }));
+  svg.append(svgEl('line', { x1: leftX, y1: leftY, x2: leftX, y2: leftY + panDrop, stroke: 'var(--faint)', 'stroke-width': 1.5 }));
+  svg.append(svgEl('line', { x1: rightX, y1: rightY, x2: rightX, y2: rightY + panDrop, stroke: 'var(--faint)', 'stroke-width': 1.5 }));
+  return { leftX, leftY: leftY + panDrop, rightX, rightY: rightY + panDrop };
+}
+
+/** The short/hedge case: a scale, tilted by how much was found against the
+ * position, or suspended (dashed, level, a question mark) when the read was
+ * partial or left something material unidentified. */
+function drawScale(svg, b, accent, W) {
+  const g = scaleGeometry(W);
+  const covered = b.segments.find((s) => s.kind === 'covered')?.usd ?? 0;
+  const notChecked = b.segments.find((s) => s.kind === 'not-checked')?.usd ?? 0;
+  const unverified = b.segments.find((s) => s.kind === 'unverified')?.usd ?? 0;
+  const materialGap = Math.max(notChecked, notChecked > 0 ? 0 : unverified) >= MATERIAL_GAP_SHARE * b.headlineUsd;
+  const suspended = notChecked > 0 || (unverified > 0 && materialGap);
 
   svg.append(svgEl('text', { x: 0, y: 14, class: 'bar-title' }, `${fmtUsd(b.headlineUsd)} ${b.coin} ${b.side}`));
 
-  let x = 0;
-  b.segments.forEach((seg) => {
-    const style = SEGMENT_STYLE[seg.kind];
-    const w = Math.max(2, seg.share * W);
-    svg.append(
-      svgEl('rect', {
-        x, y: barY, width: w, height: barH, rx: 3,
-        fill: style.fill, 'fill-opacity': style.opacity,
-        stroke: 'var(--line)', 'stroke-width': 1,
-      }),
-    );
-    x += w;
-  });
-
-  y = barY + barH + 18;
-  b.segments.forEach((seg) => {
-    const style = SEGMENT_STYLE[seg.kind];
-    svg.append(
-      svgEl('rect', {
-        x: 0, y: y - 9, width: 10, height: 10, rx: 2,
-        fill: style.fill, 'fill-opacity': style.opacity, stroke: 'var(--line)', 'stroke-width': 1,
-      }),
-    );
-    svg.append(svgEl('text', { x: 18, y, class: 'seg-label' }, `${fmtUsd(seg.usd)} (${fmtPct(seg.share)}) ${style.label}`));
-    y += 19;
-  });
-
-  if (b.excessUsd > 0) {
-    svg.append(
-      svgEl('text', { x: 0, y, class: 'seg-label' },
-        `and ${fmtUsd(b.excessUsd)} more of it held beyond the position: net long, not neutral`),
-    );
-    y += 19;
+  let caption;
+  let pans;
+  if (suspended) {
+    pans = drawBeamAndPivot(svg, g, 0, 'var(--faint)');
+    drawPan(svg, pans.leftX, pans.leftY, g, false, accent, 1);
+    drawPan(svg, pans.rightX, pans.rightY, g, true, accent, 1);
+    svg.append(svgEl('text', { x: pans.rightX, y: pans.rightY + 15, class: 'seg-value', 'text-anchor': 'middle' }, '?'));
+    const floor = covered > 0 ? `${fmtUsd(covered)} found so far (a floor). ` : '';
+    caption = `${floor}${notChecked > 0 ? "Part of this address's holdings" : 'Some matching holdings'} could not be read in full - the scale could still tip either way.`;
+  } else {
+    const excess = b.excessUsd ?? 0;
+    const ratio = b.headlineUsd > 0 ? (covered + excess) / b.headlineUsd : 0;
+    const tiltDeg = Math.max(-1, Math.min(1, ratio - 1)) * MAX_TILT_DEG;
+    pans = drawBeamAndPivot(svg, g, tiltDeg, accent);
+    drawPan(svg, pans.leftX, pans.leftY, g, false, accent, 1);
+    drawPan(svg, pans.rightX, pans.rightY, g, false, accent, 1);
+    if (ratio >= 1.05) {
+      caption = `Covered, and ${fmtUsd(excess)} more besides: on ${b.coin} itself, this leans long, not neutral.`;
+    } else if (ratio >= 0.85) {
+      caption = `${fmtPct(ratio)} covered by ${b.coin} this address holds - level, in band.`;
+    } else {
+      caption = `Only ${fmtPct(ratio)} covered by ${b.coin} this address holds; the rest is still open.`;
+    }
   }
+
+  const capY = pans.leftY + g.panH + 26;
+  const capEl = svgEl('text', { x: 0, y: capY, class: 'seg-label' }, caption);
+  svg.append(capEl);
+  let y = capY;
 
   if (b.elsewhere) {
+    y += 26;
     const midX = W / 2;
-    svg.append(
-      svgEl('path', {
-        d: `M ${midX} ${y + 4} L ${midX} ${y + 22}`,
-        stroke: 'var(--faint)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4', fill: 'none',
-      }),
-    );
-    y += 34;
-    svg.append(svgEl('text', { x: 0, y, class: 'seg-label' }, 'held elsewhere'));
-    y += 8;
-    const boxY = y;
-    svg.append(
-      svgEl('rect', {
-        x: 0, y: boxY, width: W, height: barH, rx: 3,
-        fill: 'none', stroke: 'var(--faint)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4',
-      }),
-    );
-    svg.append(svgEl('text', { x: 8, y: boxY + barH / 2 + 5, class: 'seg-value' }, fmtUsd(b.elsewhere.usd)));
-    y = boxY + barH + 20;
-    svg.append(
-      svgEl('text', { x: 0, y, class: 'seg-label' }, `in ${plural(b.elsewhere.wallets, 'wallet')} that funded this account`),
-    );
+    svg.append(svgEl('path', { d: `M ${midX} ${y - 12} L ${midX} ${y + 6}`, stroke: 'var(--faint)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4', fill: 'none' }));
+    y += 22;
+    svg.append(svgEl('text', { x: 0, y, class: 'seg-value' }, `${fmtUsd(b.elsewhere.usd)} held elsewhere`));
     y += 18;
-    svg.append(svgEl('text', { x: 0, y, class: 'seg-label' }, 'ownership unverified, not counted'));
-    y += 12;
-  } else {
-    y += 6;
+    svg.append(svgEl('text', { x: 0, y, class: 'seg-label' }, `in ${plural(b.elsewhere.wallets, 'wallet')} that funded this account - not on the scale, since funding is not ownership`));
   }
+  svg.setAttribute('viewBox', `0 0 ${W} ${y + 12}`);
+}
 
-  svg.setAttribute('viewBox', `0 0 ${W} ${y}`);
+/** A long: spot cannot offset it, so the right pan is empty by definition -
+ * not "unknown" (dashed/suspended), a plain fact (solid outline, nothing in
+ * it). Fixes audit L02: a long used to have no diagram at all. */
+function drawEmptyPan(svg, coin, side, headlineUsd, W) {
+  const g = scaleGeometry(W);
+  svg.append(svgEl('text', { x: 0, y: 14, class: 'bar-title' }, `${fmtUsd(headlineUsd)} ${coin} ${side}`));
+  const pans = drawBeamAndPivot(svg, g, -MAX_TILT_DEG * 0.6, 'var(--line)');
+  drawPan(svg, pans.leftX, pans.leftY, g, false, 'var(--line)', 1);
+  svg.append(svgEl('rect', { x: pans.rightX - g.panW / 2, y: pans.rightY, width: g.panW, height: g.panH, rx: 3, fill: 'none', stroke: 'var(--line)', 'stroke-width': 1.5 }));
+  const capY = pans.leftY + g.panH + 26;
+  svg.append(svgEl('text', { x: 0, y: capY, class: 'seg-label' }, 'Spot cannot offset a long. Debts and other derivatives are not read here.'));
+  svg.setAttribute('viewBox', `0 0 ${W} ${capY + 12}`);
+}
+
+/** Book: not a coverage question, so no scale - a bar showing the one
+ * number the v5 rule actually turns on: how much of the quoting in this
+ * market alone is genuinely matched (fixes audit L01: this number was
+ * previously shown on no card at all). */
+function drawBookQuoting(svg, d, W) {
+  const o = d.orders;
+  const p = d.positions;
+  const matched = o.headlineTwoSidedNotionalUsd || 0;
+  const quoted = Math.max(matched, o.headlineQuoteNotionalUsd || 0);
+  const barY = 26;
+  const barH = 30;
+  svg.append(svgEl('text', { x: 0, y: 14, class: 'bar-title' }, `Quoting in ${p.headlineCoin} itself`));
+  const matchedW = quoted > 0 ? Math.max(2, (matched / quoted) * W) : 0;
+  svg.append(svgEl('rect', { x: 0, y: barY, width: W, height: barH, rx: 3, fill: 'var(--accent)', 'fill-opacity': 0.25, stroke: 'var(--line)', 'stroke-width': 1 }));
+  if (matchedW > 0) {
+    svg.append(svgEl('rect', { x: 0, y: barY, width: matchedW, height: barH, rx: 3, fill: 'var(--accent)', 'fill-opacity': 1, stroke: 'var(--line)', 'stroke-width': 1 }));
+  }
+  const share = p.headlineNotionalUsd > 0 ? matched / p.headlineNotionalUsd : 0;
+  const capY = barY + barH + 22;
+  svg.append(
+    svgEl('text', { x: 0, y: capY, class: 'seg-label' },
+      `${fmtUsd(matched)} matched both sides in ${p.headlineCoin} itself - ${fmtPct(share)} of the ${fmtUsd(p.headlineNotionalUsd)} ${p.headlineSide}`),
+  );
+  svg.setAttribute('viewBox', `0 0 ${W} ${capY + 12}`);
 }
 
 function renderBreakdown(d) {
-  const b = d.breakdown;
   const box = $('breakdown');
-  if (!b || !b.applies || !b.segments.length) {
+  const isBook = d.verdict.verdict === 'book' && d.orders && d.orders.headlineTwoSided;
+  const b = d.breakdown;
+  const isLong = !isBook && (!b || !b.applies) && d.positions.nPositions > 0 && d.positions.headlineSide === 'long';
+  if (!isBook && (!b || !b.applies || !b.segments.length) && !isLong) {
     box.hidden = true;
     return;
   }
   box.hidden = false;
   box.style.setProperty('--accent', verdictOf(d).accent);
 
-  // The SVG is built at its own real rendered width - not a fixed 640 that
-  // then gets scaled down - so 1 SVG unit is 1 real CSS pixel and a 12px
-  // label renders at 12px whatever the screen (audit U01). `clientWidth` is
-  // read after un-hiding the figure, since a hidden element reports 0.
   const W = box.clientWidth || 640;
-  const svg = svgEl('svg', { viewBox: `0 0 ${W} 120`, role: 'img' });
-  svg.append(svgEl('title', {}, `${fmtUsd(b.headlineUsd)} ${b.coin} ${b.side}, and what was found against it`));
+  const svg = svgEl('svg', { viewBox: `0 0 ${W} 160`, role: 'img' });
+  // Sourced from `d.positions`, never from `b`, even when not isBook: an
+  // ancient stored reading from before `breakdown` existed at all can have
+  // `b === undefined` while still being a long position worth an empty pan
+  // (`isLong` only requires `!b || !b.applies`) - reading `b.coin` there
+  // would throw. `positions.headlineCoin/headlineSide/headlineNotionalUsd`
+  // are always present, and equal `b.coin/side/headlineUsd` in every case
+  // where `b` does exist (breakdown.ts sets them from `positions` even when
+  // `applies` is false), so this is never a different value, only a safer
+  // path to it.
+  const coin = d.positions.headlineCoin;
+  const side = d.positions.headlineSide;
+  const headlineUsd = d.positions.headlineNotionalUsd;
+  svg.append(svgEl('title', {}, `${fmtUsd(headlineUsd)} ${coin} ${side}, and what was found against it`));
 
-  if (W < NARROW_BREAKDOWN_WIDTH) {
-    drawBreakdownNarrow(svg, b, W);
+  if (isBook) {
+    drawBookQuoting(svg, d, W);
+  } else if (isLong) {
+    drawEmptyPan(svg, coin, side, headlineUsd, W);
   } else {
-    drawBreakdownWide(svg, b, W);
+    drawScale(svg, b, verdictOf(d).accent, W);
   }
 
   $('breakdown-svg').replaceChildren(svg);
-  $('breakdown-caption').textContent = b.elsewhere
-    ? `What stands against the ${b.coin} ${b.side} - and what only looks like it does`
-    : `What stands against the ${b.coin} ${b.side}`;
+  $('breakdown-caption').textContent = isBook
+    ? `What stands behind the ${coin} ${side}`
+    : b && b.elsewhere
+      ? `What stands against the ${coin} ${side} - and what only looks like it does`
+      : `What stands against the ${coin} ${side}`;
 }
 
 /** What this rendering is: a live check, a saved reading or a gallery card. */
