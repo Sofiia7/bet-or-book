@@ -234,6 +234,39 @@ const svgEl = (name, attrs, text) => {
   return node;
 };
 
+/** Wraps a caption across several <text> lines when it would not fit the
+ * available width - SVG text does not wrap on its own, and putting a full
+ * sentence on one line (as the scale's captions do) reintroduces the exact
+ * failure mode audit U01 already fixed once in the bar's own legend text.
+ * No DOM measurement is available before the SVG is attached to a visible
+ * container, so this estimates an average character width for the page's
+ * own sans-serif font rather than measuring exactly - wrapping one word
+ * earlier than strictly necessary is a smaller failure than overflowing the
+ * card, so the estimate leans conservative. Returns the y of the last line
+ * drawn, matching the convention the canvas `wrapText` helper already uses
+ * elsewhere in this file. */
+function wrapSvgText(svg, text, x, startY, maxWidth, fontSizePx, lineHeight, className) {
+  const avgCharWidth = fontSizePx * 0.6;
+  const maxChars = Math.max(12, Math.floor(maxWidth / avgCharWidth));
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  for (const word of words) {
+    const candidate = line ? line + ' ' + word : word;
+    if (candidate.length > maxChars && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = candidate;
+    }
+  }
+  if (line) lines.push(line);
+  lines.forEach((l, i) => {
+    svg.append(svgEl('text', { x, y: startY + i * lineHeight, class: className }, l));
+  });
+  return startY + (lines.length - 1) * lineHeight;
+}
+
 const MAX_TILT_DEG = 12;
 /** Below this share of the position, an unread or unidentified segment is
  * dust and the scale still gives a resolved tilt rather than suspending. */
@@ -319,9 +352,8 @@ function drawScale(svg, b, accent, W) {
   }
 
   const capY = pans.leftY + g.panH + 26;
-  const capEl = svgEl('text', { x: 0, y: capY, class: 'seg-label' }, caption);
-  svg.append(capEl);
-  let y = capY;
+  const CAPTION_LINE_HEIGHT = 17;
+  let y = wrapSvgText(svg, caption, 0, capY, W, 12, CAPTION_LINE_HEIGHT, 'seg-label');
 
   if (b.elsewhere) {
     y += 26;
@@ -330,7 +362,7 @@ function drawScale(svg, b, accent, W) {
     y += 22;
     svg.append(svgEl('text', { x: 0, y, class: 'seg-value' }, `${fmtUsd(b.elsewhere.usd)} held elsewhere`));
     y += 18;
-    svg.append(svgEl('text', { x: 0, y, class: 'seg-label' }, `in ${plural(b.elsewhere.wallets, 'wallet')} that funded this account - not on the scale, since funding is not ownership`));
+    y = wrapSvgText(svg, `in ${plural(b.elsewhere.wallets, 'wallet')} that funded this account - not on the scale, since funding is not ownership`, 0, y, W, 12, CAPTION_LINE_HEIGHT, 'seg-label');
   }
   svg.setAttribute('viewBox', `0 0 ${W} ${y + 12}`);
 }
@@ -345,8 +377,8 @@ function drawEmptyPan(svg, coin, side, headlineUsd, W) {
   drawPan(svg, pans.leftX, pans.leftY, g, false, 'var(--line)', 1);
   svg.append(svgEl('rect', { x: pans.rightX - g.panW / 2, y: pans.rightY, width: g.panW, height: g.panH, rx: 3, fill: 'none', stroke: 'var(--line)', 'stroke-width': 1.5 }));
   const capY = pans.leftY + g.panH + 26;
-  svg.append(svgEl('text', { x: 0, y: capY, class: 'seg-label' }, 'Spot cannot offset a long. Debts and other derivatives are not read here.'));
-  svg.setAttribute('viewBox', `0 0 ${W} ${capY + 12}`);
+  const finalY = wrapSvgText(svg, 'Spot cannot offset a long. Debts and other derivatives are not read here.', 0, capY, W, 12, 17, 'seg-label');
+  svg.setAttribute('viewBox', `0 0 ${W} ${finalY + 12}`);
 }
 
 /** Book: not a coverage question, so no scale - a bar showing the one
@@ -368,11 +400,12 @@ function drawBookQuoting(svg, d, W) {
   }
   const share = p.headlineNotionalUsd > 0 ? matched / p.headlineNotionalUsd : 0;
   const capY = barY + barH + 22;
-  svg.append(
-    svgEl('text', { x: 0, y: capY, class: 'seg-label' },
-      `${fmtUsd(matched)} matched both sides in ${p.headlineCoin} itself - ${fmtPct(share)} of the ${fmtUsd(p.headlineNotionalUsd)} ${p.headlineSide}`),
+  const finalY = wrapSvgText(
+    svg,
+    `${fmtUsd(matched)} matched both sides in ${p.headlineCoin} itself - ${fmtPct(share)} of the ${fmtUsd(p.headlineNotionalUsd)} ${p.headlineSide}`,
+    0, capY, W, 12, 17, 'seg-label',
   );
-  svg.setAttribute('viewBox', `0 0 ${W} ${capY + 12}`);
+  svg.setAttribute('viewBox', `0 0 ${W} ${finalY + 12}`);
 }
 
 function renderBreakdown(d) {
