@@ -1,0 +1,255 @@
+{
+  "bookWithoutHeadlineQuotes": {
+    "orders": {
+      "restingOrders": 50,
+      "bidShare": 0.5,
+      "coinsBothSides": 5,
+      "notionalUsd": 150000,
+      "twoSidedNotionalUsd": 150000,
+      "headlineTwoSided": false,
+      "headlineQuoteNotionalUsd": 0
+    },
+    "verdict": {
+      "verdict": "book",
+      "strength": "likely",
+      "reasons": [
+        "orders"
+      ]
+    }
+  },
+  "oneDollarOppositeQuotes": {
+    "bidsUsd": 250000,
+    "asksUsd": 25,
+    "measuredTwoSidedUsd": 250025,
+    "verdict": {
+      "verdict": "book",
+      "strength": "likely",
+      "reasons": [
+        "orders"
+      ]
+    }
+  },
+  "untrustedSpotIdentity": {
+    "spot": [
+      {
+        "coin": "HYPE",
+        "valueUsd": 1000000,
+        "priced": true,
+        "amount": 1000000,
+        "source": "hyperliquid-spot",
+        "tokenIndex": 987654
+      }
+    ],
+    "hedgeRatio": 1
+  },
+  "unpricedNansenHoldingDropped": {
+    "normalizedRows": [],
+    "verdict": {
+      "verdict": "looks_like_a_bet",
+      "strength": null,
+      "reasons": [
+        "directional_concentration"
+      ]
+    }
+  },
+  "unseenDexMarkedComplete": {
+    "ordersCoverage": "complete",
+    "queriedDexes": [
+      "main"
+    ],
+    "verdict": {
+      "verdict": "looks_like_a_bet",
+      "strength": null,
+      "reasons": [
+        "directional_concentration"
+      ]
+    }
+  },
+  "focusLooksLikeAccountChange": {
+    "from": "ETH",
+    "to": "BTC",
+    "comparison": {
+      "address": "0x1111111111111111111111111111111111111111",
+      "from": {
+        "observedAt": "2026-09-23T12:00:00.000Z",
+        "classifierVersion": "v4"
+      },
+      "to": {
+        "observedAt": "2026-09-23T12:00:00.000Z",
+        "classifierVersion": "v4"
+      },
+      "changes": [
+        {
+          "field": "largest position",
+          "from": "ETH",
+          "to": "BTC",
+          "direction": "sideways"
+        },
+        {
+          "field": "side",
+          "from": "short",
+          "to": "long",
+          "direction": "sideways"
+        },
+        {
+          "field": "position size",
+          "from": "$1.0M",
+          "to": "$100K",
+          "direction": "down"
+        }
+      ],
+      "verdictChange": null
+    },
+    "focusedSummary": "2 open positions, all pointing the same way, net out to 82% of gross exposure; the largest is $100K BTC long (9.1% of it). No two-sided quoting. Spot cannot offset a long, and debts or other derivatives are not read here.",
+    "focusedEvidence": [
+      {
+        "label": "Largest position",
+        "value": "$100K BTC long",
+        "source": "Nansen"
+      },
+      {
+        "label": "Share of exposure",
+        "value": "9.1%",
+        "source": "Nansen"
+      },
+      {
+        "label": "Net / gross exposure",
+        "value": "82%",
+        "source": "Nansen",
+        "decisive": true
+      },
+      {
+        "label": "Realized PnL, 30d",
+        "value": "no closed trades",
+        "source": "Nansen"
+      }
+    ]
+  },
+  "wrongSideFocusAccepted": {
+    "focus": {
+      "coin": "ETH",
+      "side": "long"
+    },
+    "actual": "short",
+    "coverage": []
+  },
+  "focusSnapshotCollision": {
+    "idA": "0f1vwwhune273",
+    "idB": "0f1vwwhune273",
+    "fromCoin": "ETH",
+    "toCoin": "BTC"
+  },
+  "unsupportedCausalAttribution": {
+    "address": "0x1111111111111111111111111111111111111111",
+    "from": {
+      "observedAt": "2026-09-23T12:00:00.000Z",
+      "classifierVersion": "v4"
+    },
+    "to": {
+      "observedAt": "2026-09-23T12:00:00.000Z",
+      "classifierVersion": "v5"
+    },
+    "changes": [],
+    "verdictChange": {
+      "from": "looks_like_a_bet",
+      "to": "unknown",
+      "fromRules": "v4",
+      "toRules": "v5",
+      "because": "the rules changed"
+    }
+  },
+  "firstFundingOverstated": {
+    "funding": {
+      "label": "First funded",
+      "value": "1 day ago, by an unlabelled wallet",
+      "source": "Nansen"
+    },
+    "degraded": false,
+    "coverage": [
+      "Funding history unavailable on one chain"
+    ]
+  },
+  "mixedPortfolioMisworded": {
+    "netToGross": 0.8,
+    "verdict": {
+      "verdict": "looks_like_a_bet",
+      "strength": null,
+      "reasons": [
+        "directional_portfolio"
+      ]
+    },
+    "summary": "2 open positions, all pointing the same way, net out to 80% of gross exposure; the largest is $100K BTC long (10% of it). No two-sided quoting. Spot cannot offset a long, and debts or other derivatives are not read here."
+  },
+  "makerFlowSuppressesHedge": {
+    "verdict": "unknown",
+    "strength": null,
+    "reasons": [
+      "maker_flow_only"
+    ]
+  },
+  "reversalMisreportedAsNoFills": {
+    "fills": 1,
+    "usd": 1000000,
+    "vitals": {
+      "label": "Position flow",
+      "value": "no fills",
+      "source": "Hyperliquid"
+    }
+  },
+  "crossDexOffsetNotRecognized": {
+    "sameAssetOffsetShare": 0,
+    "verdict": {
+      "verdict": "unknown",
+      "strength": null,
+      "reasons": [
+        "mixed_long_short_book"
+      ]
+    }
+  },
+  "gallery": {
+    "visible": 277,
+    "current": 183,
+    "historical": 94,
+    "longs": 159,
+    "vitals": 0,
+    "verdicts": {
+      "book": 3,
+      "hedged": 7,
+      "looks_like_a_bet": 132,
+      "unknown": 41
+    },
+    "hedgesAllFromHyperliquid": true
+  },
+  "reinterpretationChangesSameSnapshot": {
+    "before": {
+      "id": "082e843a-mu71i2vu",
+      "verdict": {
+        "verdict": "unknown",
+        "strength": null,
+        "reasons": [
+          "old rules"
+        ]
+      },
+      "rules": "v3"
+    },
+    "after": {
+      "id": "082e843a-mu71i2vu",
+      "verdict": {
+        "verdict": "looks_like_a_bet",
+        "strength": null,
+        "reasons": [
+          "directional_concentration"
+        ]
+      },
+      "rules": "v4"
+    },
+    "entriesAfter": 1
+  },
+  "ogHasNoTimeOrLimits": {
+    "badgeText": "Looks like a bet",
+    "accent": "#633806",
+    "summary": "2 open positions, all pointing the same way, net out to 80% of gross exposure; the largest is $100K BTC long (10% of it). No two-sided quoting. Spot cannot offset a long, and debts or other derivatives are not read here.",
+    "segments": null,
+    "footerLeft": "0x1111...1111 · rules v4"
+  }
+}
