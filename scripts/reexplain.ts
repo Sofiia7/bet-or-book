@@ -11,6 +11,19 @@
 // verdict and the rules version it was given and is marked historical; only
 // checking the account again can move it.
 //
+// A changed verdict used to overwrite the entry under its existing id, so a
+// link to it opened whatever this script last decided rather than what its
+// first reader saw - the 23.09 audit found the same id reading "Unknown"
+// one day and "Looks like a bet" the next. Now a verdict change mints a new
+// id for the new interpretation and keeps the old entry, frozen exactly as
+// it was, addressable at its own old id - the same supersedes/supersededBy
+// pairing a live re-check already uses (src/index.ts), so the two produce
+// one consistent history rather than two different ones. A wording-only
+// change (the sentence changed, the verdict word did not) still updates the
+// entry in place: forking a new id for every phrasing fix would be its own
+// kind of churn, and the promise this exists to keep is about the verdict,
+// not the prose.
+//
 // No network: `checkedAt` and `observedAt` are left alone, because the
 // observations are still the ones made at that time.
 // Do not run while scripts/prescan.ts is writing the same file.
@@ -30,10 +43,6 @@ import { knownServiceName } from '../src/sources/normalize';
 import { snapshotId } from '../src/snapshot';
 import type { Gallery } from '../src/gallery';
 import type { LinkedHedgeFeatures, HedgeCoverage } from '../src/engine/features';
-
-const path = process.argv[2] ?? 'data/gallery.json';
-const gallery = JSON.parse(readFileSync(path, 'utf-8')) as Gallery;
-const now = new Date().toISOString();
 
 /** Drops funders since confirmed to be exchange or bridge addresses. Their
  * balances are that service's, not the checked account's, and the scan that
@@ -68,102 +77,172 @@ function legacyHedgeCoverage(e: Gallery['entries'][number]): HedgeCoverage {
   return e.hedgeScope === 'all-chains' ? 'complete' : 'partial';
 }
 
-let reverdicted = 0;
-let reexplained = 0;
-let serviceFunders = 0;
-let historical = 0;
-gallery.entries = gallery.entries.map((e) => {
-  const missing = missingForCurrentRules(e);
-  if (missing.length > 0) {
-    // Kept exactly as it was read, under the rules that read it. Anything
-    // else would be this file asserting an answer it cannot reproduce. The
-    // share card is rebuilt, because that is presentation rather than
-    // judgement and a picture of a historical card has to say so.
-    historical++;
-    // Older scans never stored the raw per-position leverage, liquidation
-    // price or PnL that vitals need - only the aggregate PositionFeatures
-    // survives in this file - so there is nothing to recompute here.
-    const kept = { ...e, vitals: e.vitals ?? [], historical: { reason: historicalReason(missing), missing } };
-    return { ...kept, share: shareCard(kept, { kind: 'gallery', snapshotId: kept.snapshotId }) };
-  }
+export interface ReexplainStats {
+  alreadySuperseded: number;
+  historical: number;
+  reverdicted: number;
+  forked: number;
+  reexplained: number;
+  serviceFunders: number;
+}
 
-  const { linked, dropped } = withoutServices(e.linkedHedge, e.positions.headlineNotionalUsd);
-  const coverage = [...e.coverage];
-  for (const name of dropped) {
-    const note = `A wallet that funded this account is ${name}, an exchange address: its balances are not counted here`;
-    if (!coverage.includes(note)) coverage.push(note);
-  }
-  if (dropped.length > 0) serviceFunders += dropped.length;
+/**
+ * The pure transform: one gallery in, the re-judged gallery and a count of
+ * what moved out. No file I/O, so a test can run it twice on the same
+ * in-memory object and check the second pass leaves everything alone - which
+ * is exactly the property a real bug broke (see the guard below) before this
+ * was ever run for real on 2026-09-23.
+ */
+export function reexplainGallery(gallery: Gallery, now: string): { gallery: Gallery; stats: ReexplainStats } {
+  const stats: ReexplainStats = {
+    alreadySuperseded: 0,
+    historical: 0,
+    reverdicted: 0,
+    forked: 0,
+    reexplained: 0,
+    serviceFunders: 0,
+  };
 
-  const hedgeCoverage = legacyHedgeCoverage(e);
-  const sources = legacySourceCoverage(e);
-  // The scan did not record when its sources measured what they returned, so
-  // these cards can only say that they do not know.
-  const positionsAsOf = e.positionsAsOf ?? null;
-  const degraded =
-    e.degraded ??
-    (hedgeCoverage === 'missing' ||
-      hedgeCoverage === 'partial' ||
-      sources.orders !== 'complete' ||
-      sources.positions !== 'complete');
-  const verdict = computeVerdict({
-    positions: e.positions,
-    orders: e.orders,
-    hedge: e.hedge,
-    trades: { tradesPerDay: e.trades.tradesPerDay, crossedShare: e.trades.crossedShare, buyShare: e.trades.buyShare },
-    linkedHedge: linked ? { linkedHedgeRatio: linked.linkedHedgeRatio } : undefined,
-    hedgeCoverage,
-    ordersCoverage: sources.orders,
-    positionsCoverage: sources.positions,
+  const entries = gallery.entries.flatMap((e): Gallery['entries'] => {
+    // A superseded entry is a permanent record of what an earlier
+    // interpretation said, kept only so its old id keeps resolving - never a
+    // fresh observation to re-judge. Without this guard, a second run of
+    // this script judged it against the current rules like any other entry,
+    // found its frozen verdict "changed", and minted a new id that collided
+    // with the one already handed to the reading that had in fact replaced
+    // it - the same id claimed twice in one file. Caught on a dry run of
+    // this very fix, before it ever shipped (23.09 audit, L03).
+    if (e.superseded) {
+      stats.alreadySuperseded++;
+      return [e];
+    }
+    const missing = missingForCurrentRules(e);
+    if (missing.length > 0) {
+      // Kept exactly as it was read, under the rules that read it. Anything
+      // else would be this file asserting an answer it cannot reproduce. The
+      // share card is rebuilt, because that is presentation rather than
+      // judgement and a picture of a historical card has to say so.
+      stats.historical++;
+      // Older scans never stored the raw per-position leverage, liquidation
+      // price or PnL that vitals need - only the aggregate PositionFeatures
+      // survives in this file - so there is nothing to recompute here.
+      const kept = { ...e, vitals: e.vitals ?? [], historical: { reason: historicalReason(missing), missing } };
+      return [{ ...kept, share: shareCard(kept, { kind: 'gallery', snapshotId: kept.snapshotId }) }];
+    }
+
+    const { linked, dropped } = withoutServices(e.linkedHedge, e.positions.headlineNotionalUsd);
+    const coverage = [...e.coverage];
+    for (const name of dropped) {
+      const note = `A wallet that funded this account is ${name}, an exchange address: its balances are not counted here`;
+      if (!coverage.includes(note)) coverage.push(note);
+    }
+    if (dropped.length > 0) stats.serviceFunders += dropped.length;
+
+    const hedgeCoverage = legacyHedgeCoverage(e);
+    const sources = legacySourceCoverage(e);
+    // The scan did not record when its sources measured what they returned,
+    // so these cards can only say that they do not know.
+    const positionsAsOf = e.positionsAsOf ?? null;
+    const degraded =
+      e.degraded ??
+      (hedgeCoverage === 'missing' ||
+        hedgeCoverage === 'partial' ||
+        sources.orders !== 'complete' ||
+        sources.positions !== 'complete');
+    const verdict = computeVerdict({
+      positions: e.positions,
+      orders: e.orders,
+      hedge: e.hedge,
+      trades: { tradesPerDay: e.trades.tradesPerDay, crossedShare: e.trades.crossedShare, buyShare: e.trades.buyShare },
+      linkedHedge: linked ? { linkedHedgeRatio: linked.linkedHedgeRatio } : undefined,
+      hedgeCoverage,
+      ordersCoverage: sources.orders,
+      positionsCoverage: sources.positions,
+    });
+    const verdictChanged = JSON.stringify(verdict) !== JSON.stringify(e.verdict);
+    const oldId = e.snapshotId ?? snapshotId(e.address, e.checkedAt);
+    // A changed verdict is a new interpretation and gets a new id; a changed
+    // rules version is baked into that id already (src/snapshot.ts), so the
+    // two can never collide by construction as long as CLASSIFIER_VERSION was
+    // actually bumped for the rule change that produced this verdict - the
+    // same discipline the cache key and the gallery test already rely on.
+    const newId = verdictChanged ? snapshotId(e.address, e.checkedAt, CLASSIFIER_VERSION) : oldId;
+    const fork = verdictChanged && newId !== oldId;
+    const next = {
+      ...e,
+      verdict,
+      linkedHedge: linked,
+      // Same limit as the historical branch: the raw position record vitals
+      // need was never stored for this scan, live or re-judged.
+      vitals: e.vitals ?? [],
+      coverage,
+      hedgeCoverage,
+      ordersCoverage: sources.orders,
+      positionsCoverage: sources.positions,
+      positionsAsOf,
+      degraded,
+      classifierVersion: CLASSIFIER_VERSION,
+      observationSchemaVersion: e.observationSchemaVersion ?? OBSERVATION_SCHEMA_VERSION,
+      assetRegistryVersion: ASSET_REGISTRY_VERSION,
+      observedAt: e.observedAt ?? positionsAsOf ?? e.checkedAt,
+      interpretedAt: now,
+      // Only a real change is worth recording, and the record must survive
+      // this script being run twice: overwriting it on a second, identical
+      // pass replaced the v2 verdict with the v3 one and lost exactly the
+      // history the field exists to keep. Kept as a quick breadcrumb even now
+      // that a verdict change also forks a full frozen entry below - this is
+      // the one-line version, `supersedes` is the whole reading.
+      previousInterpretation: verdictChanged
+        ? { verdict: e.verdict.verdict, classifierVersion: e.classifierVersion, interpretedAt: e.interpretedAt ?? e.checkedAt }
+        : e.previousInterpretation,
+      snapshotId: newId,
+      ...(fork ? { supersedes: oldId } : {}),
+    };
+    const { summary, evidence } = explain(next);
+    const judged = {
+      ...next,
+      summary,
+      evidence,
+      breakdown: exposureBreakdown(next.positions, next.hedge, linked, hedgeCoverage),
+    };
+
+    if (verdictChanged) stats.reverdicted++;
+    if (summary !== e.summary || JSON.stringify(evidence) !== JSON.stringify(e.evidence)) stats.reexplained++;
+    const judgedWithShare = { ...judged, share: shareCard(judged, { kind: 'gallery', snapshotId: judged.snapshotId }) };
+    if (!fork) return [judgedWithShare];
+
+    stats.forked++;
+    // The old interpretation, kept exactly as it read, addressable at the id
+    // that was already handed out for it. `withoutServices` and the coverage
+    // note it adds are presentation of a fact discovered since (that a funder
+    // is an exchange), not part of what the old rules decided, so this stays
+    // as close to the original entry as `superseded`/`supersededBy` allow
+    // rather than reusing `next`.
+    const frozen = { ...e, snapshotId: oldId, superseded: true as const, supersededBy: newId };
+    return [{ ...frozen, share: shareCard(frozen, { kind: 'gallery', snapshotId: oldId }) }, judgedWithShare];
   });
-  const next = {
-    ...e,
-    verdict,
-    linkedHedge: linked,
-    // Same limit as the historical branch: the raw position record vitals
-    // need was never stored for this scan, live or re-judged.
-    vitals: e.vitals ?? [],
-    coverage,
-    hedgeCoverage,
-    ordersCoverage: sources.orders,
-    positionsCoverage: sources.positions,
-    positionsAsOf,
-    degraded,
-    classifierVersion: CLASSIFIER_VERSION,
-    observationSchemaVersion: e.observationSchemaVersion ?? OBSERVATION_SCHEMA_VERSION,
-    assetRegistryVersion: ASSET_REGISTRY_VERSION,
-    observedAt: e.observedAt ?? positionsAsOf ?? e.checkedAt,
-    interpretedAt: now,
-    // Only a real change is worth recording, and the record must survive
-    // this script being run twice: overwriting it on a second, identical
-    // pass replaced the v2 verdict with the v3 one and lost exactly the
-    // history the field exists to keep.
-    previousInterpretation:
-      e.verdict.verdict === verdict.verdict
-        ? e.previousInterpretation
-        : {
-            verdict: e.verdict.verdict,
-            classifierVersion: e.classifierVersion,
-            interpretedAt: e.interpretedAt ?? e.checkedAt,
-          },
-    snapshotId: e.snapshotId ?? snapshotId(e.address, e.checkedAt),
-  };
-  const { summary, evidence } = explain(next);
-  const judged = {
-    ...next,
-    summary,
-    evidence,
-    breakdown: exposureBreakdown(next.positions, next.hedge, linked),
-  };
 
-  if (JSON.stringify(verdict) !== JSON.stringify(e.verdict)) reverdicted++;
-  if (summary !== e.summary || JSON.stringify(evidence) !== JSON.stringify(e.evidence)) reexplained++;
-  return { ...judged, share: shareCard(judged, { kind: 'gallery', snapshotId: judged.snapshotId }) };
-});
+  return { gallery: { ...gallery, entries }, stats };
+}
 
-writeFileSync(`${path}.tmp`, JSON.stringify(gallery, null, 1) + '\n');
-renameSync(`${path}.tmp`, path);
-console.log(
-  `${gallery.entries.length} entries: ${historical} kept as history (observation predates the rules), ` +
-    `${reverdicted} re-judged, ${reexplained} re-explained, ${serviceFunders} exchange funder(s) dropped`,
-);
+function main() {
+  const path = process.argv[2] ?? 'data/gallery.json';
+  const gallery = JSON.parse(readFileSync(path, 'utf-8')) as Gallery;
+  const { gallery: next, stats } = reexplainGallery(gallery, new Date().toISOString());
+
+  writeFileSync(`${path}.tmp`, JSON.stringify(next, null, 1) + '\n');
+  renameSync(`${path}.tmp`, path);
+  console.log(
+    `${next.entries.length} entries: ${stats.alreadySuperseded} already-superseded readings left untouched, ` +
+      `${stats.historical} kept as history (observation predates the rules), ` +
+      `${stats.reverdicted} re-judged (${stats.forked} forked into a new id, old reading kept), ` +
+      `${stats.reexplained} re-explained, ${stats.serviceFunders} exchange funder(s) dropped`,
+  );
+}
+
+// Comparing argv[1] keeps `main()` from running - and touching
+// data/gallery.json - when this module is imported for its exports (a test)
+// rather than executed directly as a script.
+if (process.argv[1] && process.argv[1].endsWith('reexplain.ts')) {
+  main();
+}

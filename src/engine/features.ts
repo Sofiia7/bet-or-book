@@ -20,6 +20,12 @@ export interface PositionFeatures {
    * coin and a $1M short in another do not, however neatly the dollars net
    * out. Zero when nothing cancels, 1 when every leg has a counterpart. */
   sameAssetOffsetShare: number;
+  /** The sign `netUsd` threw away. A portfolio can net out to 80% of gross
+   * with its legs pointing opposite ways - $900K ETH short and $100K BTC
+   * long nets to $800K, 80% of $1M gross, entirely short - so "net to gross"
+   * alone cannot say which way the book leans, only how hard (23.09 audit,
+   * L04). Null only when longs and shorts are in exact balance. */
+  netSide: PositionSide | null;
   /** The positions a reader could ask about instead, largest first. A post
    * says BTC and the largest position at the address is ETH; until this
    * existed the answer was always about the ETH. */
@@ -60,14 +66,17 @@ export function computePositionFeatures(
       headlineLiqDistancePct: null,
       headlineLiqDistanceBasis: null,
       sameAssetOffsetShare: 0,
+      netSide: null,
       candidates: [],
     };
   }
 
   const signed = positions.map((p) => (p.side === 'long' ? p.sizeUsd : -p.sizeUsd));
   const grossUsd = positions.reduce((sum, p) => sum + p.sizeUsd, 0);
-  const netUsd = Math.abs(signed.reduce((sum, s) => sum + s, 0));
+  const netSigned = signed.reduce((sum, s) => sum + s, 0);
+  const netUsd = Math.abs(netSigned);
   const netToGross = grossUsd === 0 ? 0 : netUsd / grossUsd;
+  const netSide: PositionSide | null = netSigned === 0 ? null : netSigned > 0 ? 'long' : 'short';
 
   const largest = positions.reduce((max, p) => (p.sizeUsd > max.sizeUsd ? p : max), positions[0]);
   const asked =
@@ -114,6 +123,7 @@ export function computePositionFeatures(
     headlineLiqDistancePct,
     headlineLiqDistanceBasis,
     sameAssetOffsetShare: grossUsd === 0 ? 0 : offsetGrossUsd / grossUsd,
+    netSide,
     candidates: [...positions]
       .sort((a, b) => b.sizeUsd - a.sizeUsd)
       .slice(0, MAX_CANDIDATES)
@@ -128,14 +138,29 @@ export interface OrderFeatures {
   /** Dollars resting on the book, and the part of that sitting in markets
    * quoted on both sides. A count of orders says how many there are, not
    * whether they amount to anything: fifty $1 orders and fifty $20K orders
-   * are the same number and two different accounts. */
+   * are the same number and two different accounts.
+   *
+   * Both this and `headlineTwoSidedNotionalUsd` are `2 x min(bid, ask)` per
+   * market, summed: a $250K bid against a $25 ask is $250,025 of one-sided
+   * flow wearing two sides, and the sum used to count all of it (23.09
+   * audit, L01). Doubled minimum is the size that genuinely has a
+   * counterpart on the other side, the same measure `sameAssetOffsetShare`
+   * already uses for positions. */
   notionalUsd: number;
   twoSidedNotionalUsd: number;
   /** Whether the market of the position being asked about is itself quoted
-   * on both sides, and how much rests there. Quoting somewhere else is an
-   * activity of the account, not an explanation of this position. */
+   * on both sides. Quoting somewhere else is an activity of the account, not
+   * evidence about this position - a $1M short with fifty two-sided orders
+   * spread across five other coins used to pass as inventory for it (23.09
+   * audit, L01). */
   headlineTwoSided: boolean;
+  /** All resting notional in the headline market, either side. Descriptive;
+   * not what decides materiality (see `headlineTwoSidedNotionalUsd`). */
   headlineQuoteNotionalUsd: number;
+  /** Matched liquidity in the headline market alone: `2 x min(bid, ask)`
+   * there. This, not the account-wide total, is what a "this position is
+   * inventory" claim has to clear. */
+  headlineTwoSidedNotionalUsd: number;
 }
 
 export const EMPTY_ORDERS: OrderFeatures = {
@@ -146,6 +171,7 @@ export const EMPTY_ORDERS: OrderFeatures = {
   twoSidedNotionalUsd: 0,
   headlineTwoSided: false,
   headlineQuoteNotionalUsd: 0,
+  headlineTwoSidedNotionalUsd: 0,
 };
 
 export function computeOrderFeatures(orders: RestingOrder[], headlineCoin: string | null = null): OrderFeatures {
@@ -153,24 +179,28 @@ export function computeOrderFeatures(orders: RestingOrder[], headlineCoin: strin
   const bids = orders.filter((o) => o.side === 'bid').length;
   const bidShare = bids / orders.length;
 
-  const byCoin = new Map<string, { sides: Set<'bid' | 'ask'>; notionalUsd: number }>();
+  const byCoin = new Map<string, { bidUsd: number; askUsd: number }>();
   for (const order of orders) {
-    const e = byCoin.get(order.coin) ?? { sides: new Set<'bid' | 'ask'>(), notionalUsd: 0 };
-    e.sides.add(order.side);
-    e.notionalUsd += Number.isFinite(order.sizeUsd) ? order.sizeUsd : 0;
+    const e = byCoin.get(order.coin) ?? { bidUsd: 0, askUsd: 0 };
+    const usd = Number.isFinite(order.sizeUsd) ? order.sizeUsd : 0;
+    if (order.side === 'bid') e.bidUsd += usd;
+    else e.askUsd += usd;
     byCoin.set(order.coin, e);
   }
-  const twoSided = [...byCoin.entries()].filter(([, e]) => e.sides.size === 2);
+  const matched = (e: { bidUsd: number; askUsd: number }) =>
+    e.bidUsd > 0 && e.askUsd > 0 ? 2 * Math.min(e.bidUsd, e.askUsd) : 0;
+  const twoSided = [...byCoin.entries()].filter(([, e]) => e.bidUsd > 0 && e.askUsd > 0);
   const headline = headlineCoin === null ? undefined : byCoin.get(headlineCoin);
 
   return {
     restingOrders: orders.length,
     bidShare,
     coinsBothSides: twoSided.length,
-    notionalUsd: [...byCoin.values()].reduce((sum, e) => sum + e.notionalUsd, 0),
-    twoSidedNotionalUsd: twoSided.reduce((sum, [, e]) => sum + e.notionalUsd, 0),
-    headlineTwoSided: headline !== undefined && headline.sides.size === 2,
-    headlineQuoteNotionalUsd: headline?.notionalUsd ?? 0,
+    notionalUsd: [...byCoin.values()].reduce((sum, e) => sum + e.bidUsd + e.askUsd, 0),
+    twoSidedNotionalUsd: twoSided.reduce((sum, [, e]) => sum + matched(e), 0),
+    headlineTwoSided: headline !== undefined && headline.bidUsd > 0 && headline.askUsd > 0,
+    headlineQuoteNotionalUsd: headline ? headline.bidUsd + headline.askUsd : 0,
+    headlineTwoSidedNotionalUsd: headline ? matched(headline) : 0,
   };
 }
 

@@ -26,6 +26,7 @@ function input(overrides: Partial<VitalsInput> = {}): VitalsInput {
     sizeVsOi: 0.032,
     headlineOpenedUsd: 1_400_000,
     headlineClosedUsd: 300_000,
+    headlineFills: 2,
     tradesSpanHours: 3.4,
     ...overrides,
   };
@@ -97,8 +98,17 @@ describe('computeVitals', () => {
   });
 
   it('says so when the headline coin saw no fills at all - itself a finding, not a gap', () => {
-    const v = computeVitals(input({ headlineOpenedUsd: 0, headlineClosedUsd: 0 }));
+    const v = computeVitals(input({ headlineOpenedUsd: 0, headlineClosedUsd: 0, headlineFills: 0 }));
     expect(v).toContainEqual(expect.objectContaining({ label: 'Position flow', value: 'no fills (3.4h)' }));
+  });
+
+  it('does not call it "no fills" when a fill happened but did not open or close - a flip (23.09 audit, L10)', () => {
+    // "Long > Short" on Hyperliquid is neither Open nor Close, so both sums
+    // are zero even though the position clearly changed hands.
+    const v = computeVitals(input({ headlineOpenedUsd: 0, headlineClosedUsd: 0, headlineFills: 1 }));
+    expect(v).toContainEqual(
+      expect.objectContaining({ label: 'Position flow', value: '1 fill, change in exposure not determined (3.4h)' }),
+    );
   });
 
   it('keeps one decimal at every magnitude, so a span under an hour does not round to zero', () => {

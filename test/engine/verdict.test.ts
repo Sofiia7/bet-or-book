@@ -15,6 +15,7 @@ function positions(overrides: Partial<PositionFeatures>): PositionFeatures {
     headlineLiqDistancePct: null,
     headlineLiqDistanceBasis: null,
     sameAssetOffsetShare: 0,
+    netSide: null,
     candidates: [],
     ...overrides,
   };
@@ -48,7 +49,14 @@ describe('computeVerdict', () => {
   it('calls it a strong book when both position spread and order-book signals agree', () => {
     const result = computeVerdict({
       positions: positions({ nPositions: 76, netToGross: 0.04, headlineShare: 0.2, headlineCoin: 'BTC', headlineNotionalUsd: 40_000_000 }),
-      orders: orders({ restingOrders: 1732, bidShare: 0.51, coinsBothSides: 40, twoSidedNotionalUsd: 12_000_000 }),
+      orders: orders({
+        restingOrders: 1732,
+        bidShare: 0.51,
+        coinsBothSides: 40,
+        twoSidedNotionalUsd: 12_000_000,
+        headlineTwoSided: true,
+        headlineTwoSidedNotionalUsd: 5_000_000,
+      }),
       hedge: hedge({}),
     });
     expect(result.verdict).toBe('book');
@@ -215,7 +223,14 @@ describe('hedgeCanChangeVerdict', () => {
 
   it('is false when material two-sided quoting already settled the account', () => {
     const many = positions({ ...concentratedShort, nPositions: 40, netToGross: 0.1, headlineShare: 0.1 });
-    const quoting = orders({ restingOrders: 200, bidShare: 0.5, coinsBothSides: 12, twoSidedNotionalUsd: 20_000_000 });
+    const quoting = orders({
+      restingOrders: 200,
+      bidShare: 0.5,
+      coinsBothSides: 12,
+      twoSidedNotionalUsd: 20_000_000,
+      headlineTwoSided: true,
+      headlineTwoSidedNotionalUsd: 15_000_000,
+    });
     expect(hedgeCanChangeVerdict({ positions: many, orders: quoting })).toBe(false);
     // A spread of positions on its own no longer decides, so the holdings
     // read is still worth its credit.
@@ -247,6 +262,22 @@ describe('book rule (c): fills', () => {
     headlineNotionalUsd: 60_000_000,
   });
 
+  it('lets a fully-read hedge answer the position even when the account also shows maker flow (23.09 audit, L07)', () => {
+    // 100% of the short covered by this address's own spot, fully read, and
+    // 200 two-sided maker fills a day elsewhere in the account. The coverage
+    // already answers this position; the account's own market-making
+    // elsewhere is true and irrelevant, not a reason to withhold the answer.
+    const result = computeVerdict({
+      positions: directional,
+      orders: orders({}),
+      hedge: hedge({ hedgeUsd: 60_000_000, hedgeRatio: 1 }),
+      hedgeCoverage: 'complete',
+      trades: { tradesPerDay: 200, crossedShare: 0.1, buyShare: 0.5 },
+    });
+    expect(result.verdict).toBe('hedged');
+    expect(result.reasons).toEqual(['hedge_leg']);
+  });
+
   it('does not turn one big directional position into a book on maker flow alone', () => {
     // The signal counts fills across every market the account touches and
     // carries no notional, so 2 000 small quotes elsewhere used to decide
@@ -266,7 +297,14 @@ describe('book rule (c): fills', () => {
     const spread = positions({ nPositions: 76, netToGross: 0.04, headlineShare: 0.2, headlineCoin: 'BTC', headlineNotionalUsd: 40_000_000 });
     const result = computeVerdict({
       positions: spread,
-      orders: orders({ restingOrders: 1732, bidShare: 0.51, coinsBothSides: 40, twoSidedNotionalUsd: 12_000_000 }),
+      orders: orders({
+        restingOrders: 1732,
+        bidShare: 0.51,
+        coinsBothSides: 40,
+        twoSidedNotionalUsd: 12_000_000,
+        headlineTwoSided: true,
+        headlineTwoSidedNotionalUsd: 5_000_000,
+      }),
       hedge: hedge({}),
       trades: { tradesPerDay: 2000, crossedShare: 0.2, buyShare: 0.53 },
     });

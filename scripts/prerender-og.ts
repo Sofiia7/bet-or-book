@@ -1,19 +1,20 @@
-// Renders every gallery card's social-preview picture offline and uploads
-// the results to the live KV namespace, so a shared gallery link's image is
-// never the first, CPU-bound render (see docs/architecture.md for why that
-// render does not reliably fit the Workers free plan's 10ms budget): the
-// deployed Worker's /api/og route becomes a cache read for every one of
-// these ids from the day this runs.
+// Renders every gallery card's and demonstration reading's social-preview
+// picture offline and uploads the results to the live KV namespace. The
+// deployed Worker never draws on a crawler's request (see docs/architecture.md
+// for why that render does not fit the Workers free plan's 10ms budget), so
+// without this a bundled card's link shows the standing picture until
+// someone opens its Share button; with it, /api/og is a cache read for every
+// one of these ids from the day this runs.
 //
-// No TTL: a gallery card's picture is as permanent as the bundled
-// data/gallery.json entry it was built from, not a 30-day live snapshot.
+// No TTL: a bundled card's picture is as permanent as the data/gallery.json
+// or data/featured.json entry it was built from, not a 30-day live snapshot.
 //
 // Usage:
 //   node --import tsx scripts/prerender-og.ts               (write data/og-prerendered.json only)
 //   node --import tsx scripts/prerender-og.ts --upload       (also run `wrangler kv bulk put`)
 import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { ogCardData } from '../src/engine/ogCard';
+import { ogCardFor, ogCacheKey } from '../src/engine/ogCard';
 import { renderOgPng, type OgFont } from '../src/engine/ogRender';
 import type { Gallery } from '../src/gallery';
 
@@ -22,13 +23,20 @@ const OUT_FILE = 'data/og-prerendered.json';
 
 async function main() {
   const gallery = JSON.parse(readFileSync('data/gallery.json', 'utf-8')) as Gallery;
+  // The hand-picked demonstration readings ship with the Worker as well, and
+  // are the ones most likely to be shared first (23.09 audit, U05). They are
+  // saved readings, and their pictures say so.
+  const featured = JSON.parse(readFileSync('data/featured.json', 'utf-8')) as Gallery;
   const fonts: OgFont[] = [
     { name: 'Inter', data: readFileSync('assets/inter-regular.woff'), weight: 400, style: 'normal' },
     { name: 'Inter', data: readFileSync('assets/inter-bold.woff'), weight: 700, style: 'normal' },
   ];
   const wasmModule = await WebAssembly.compile(readFileSync('node_modules/@resvg/resvg-wasm/index_bg.wasm'));
 
-  const candidates = gallery.entries.filter((e) => e.snapshotId && e.positions.nPositions > 0);
+  const candidates = [
+    ...featured.entries.map((e) => ({ e, kind: 'saved' as const })),
+    ...gallery.entries.map((e) => ({ e, kind: 'gallery' as const })),
+  ].filter(({ e }) => e.snapshotId && e.positions.nPositions > 0);
   const seen = new Set<string>();
   // No `base64: true` here: that flag tells `wrangler kv bulk put` to
   // *decode* `value` and store the raw bytes, so a later `kv.get()` (which
@@ -42,20 +50,17 @@ async function main() {
   let rendered = 0;
   let skipped = 0;
 
-  for (const e of candidates) {
+  for (const { e, kind } of candidates) {
     const id = e.snapshotId!;
     if (seen.has(id)) continue; // a re-read and the reading it replaced share no id, but guard anyway
     seen.add(id);
     try {
-      const data = ogCardData({
-        address: e.address,
-        verdict: e.verdict,
-        summary: e.summary,
-        classifierVersion: e.classifierVersion,
-        breakdown: e.breakdown,
-      });
-      const png = await renderOgPng(data, fonts, wasmModule);
-      bulk.push({ key: `og:${id}`, value: Buffer.from(png).toString('base64') });
+      // Same words and the same key as the deployed Worker's own draw of a
+      // gallery card (src/index.ts): the date and caveat a reader sees on
+      // the page (23.09 audit, U02), under the current layout's key, so a
+      // picture uploaded from an older layout is never served as this one.
+      const png = await renderOgPng(ogCardFor(e, kind), fonts, wasmModule);
+      bulk.push({ key: ogCacheKey(id), value: Buffer.from(png).toString('base64') });
       rendered++;
     } catch (err) {
       console.error(`skipped ${id} (${e.address}):`, err instanceof Error ? err.message : err);

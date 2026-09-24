@@ -2,36 +2,35 @@
 
 The recording for the X post (tag @nansen_ai). The page's own sentences carry the story, so no captions or narration are needed.
 
-The story has changed twice, and it is better each time. The first script showed the big ETH short as **Hedged (probable)**, "220% covered by ETH held in 2 wallets that funded this account" - a reading that was wrong, because a funding transfer shows where money came from and not who holds it now. The 21 September audit changed it again: the tool now draws what it found rather than listing it, and it can put two readings of the same address side by side. So the demo is no longer a tool agreeing with a timeline. It is a tool showing you the shape of the position, and what moved in it since it was last looked at.
+The story has changed three times, and it is better each time. The first script showed the big ETH short as **Hedged (probable)**, "220% covered by ETH held in 2 wallets that funded this account" - a reading that was wrong, because a funding transfer shows where money came from and not who holds it now. The 21 September audit made the tool draw what it found rather than list it, and put two readings of the same address side by side. The 23 September audit cut the first screen down to the question, the answer and the one picture that decided it, and added four fresh, dated readings at the top of the page - one of each kind of answer - so the contrast beats no longer depend on a days-old scan.
 
 **Before recording.** The live site in Chrome or Edge, window maximized, page zoom 125%, notifications off. Reload the page (F5) and copy the address `0xB83DE012dbA672c76A7dbbbf3E459CB59D7D6E36` before pressing record.
 
-No rehearsal run to warm the cache. A cached answer replayed as a fresh request is the one thing a demo must not do, and the card carries its own timestamp and says "cached, N minutes old" when it is one, so it would show. Check once, for real, on camera.
+No rehearsal run to warm the cache. A cached answer replayed as a fresh request is the one thing a demo must not do, and the card says "cached, N minutes old" when it is one, so it would show. Check once, for real, on camera - and if the same address was checked on the site in the last ten minutes, wait that out first.
 
-> **Credits.** The account answered with **995 credits left** on 21 September, so there is room for as many takes as the recording needs. This check costs up to 7. The daily cap in the Worker is 300 - and 40 of it is a reserve the public path cannot reach, which is what keeps a busy afternoon from leaving the demo on Hyperliquid-only data.
+> **Credits.** The account answered with **919 credits left** on 24 September, after the four demonstration readings. This check costs up to 7. The two contrast beats below open saved readings and cost nothing. The daily cap in the Worker is 300, and 40 of it is a reserve the public path cannot reach, which is what keeps a busy afternoon from leaving the demo on Hyperliquid-only data.
 
 | Time | Action | What the viewer reads |
 |---|---|---|
-| 0-4 s | Nothing, page at the top | "Bet or book. Should you copy this whale?" |
-| 4-7 s | Click the address field, paste, click **Check** | "Checking...", then the card |
-| 7-16 s | Hold on the diagram | One bar, the ETH short, **empty**. A dashed box outside it: **$464.7M**, "in 2 wallets that funded this account, ownership unverified, not counted" |
-| 16-22 s | Hold on the sentence above it | "Less than 1% of the $216.7M ETH short is covered by ETH at this address. 2 wallets that funded it hold $464.7M of ETH, but funding does not establish ownership, so it is not counted as a hedge." |
-| 22-28 s | Hold on **What changed since 18 Sept** | "position size: $184.0M → $216.7M", "held by wallets that funded it: $405.3M → $464.7M", and "The answer did not change" |
-| 28-33 s | Scroll to the gallery, hold | "One scan of big Hyperliquid positions: bet, hedge or book?" and the counts, including **Earlier rules 94** |
-| 33-41 s | Click the **Hedged** chip, open the $42.7M HYPE row (`0xf02d16a2...`) | **Hedged**, and the same bar **97% full**: "$41.3M (97%) covered by this address". Source line: **Hyperliquid** |
-| 41-49 s | Back, click the **Book** chip, open `0xecb63caa...` | **Book (strong)**: "2,722 resting orders quote both sides of 120 markets" |
-| 49-55 s | Click **Download card** and show the PNG | the same bar, the standing limit, the time, the link back |
-| 55-58 s | Stop recording | |
+| 0-4 s | Nothing, page at the top | "Bet or book. Before you copy the headline, check the position." |
+| 4-8 s | Click the address field, paste, click **Check** | "Reading positions from Nansen and orders from Hyperliquid...", then the card: "The position: $2xxM ETH short" |
+| 8-17 s | Hold on the diagram | One bar, the ETH short, **empty**. A dashed box outside it: about **$440M**, "in 2 wallets that funded this account, ownership unverified, not counted" |
+| 17-23 s | Hold on the sentence above it | "Less than 1% of the ... ETH short is covered by ETH at this address. 2 wallets that funded it hold ... of ETH, but funding does not establish ownership, so it is not counted as a hedge." |
+| 23-28 s | Hold on **What changed since 24 Sept** | the position size and the funders' ETH, each with an arrow, and "The answer did not change" |
+| 28-35 s | Click the chip **$43.2M HYPE short · 97% covered** | **Hedged**, the same bar **97% full**, and "Saved reading from 24 Sept". The same shape of question, the opposite answer |
+| 35-43 s | Click the chip **$46.9M ETH short · market maker**, then open **How this was decided** | **Book (likely)**: "2,613 resting orders quote both sides of 123 markets", and the rule in one sentence: this account quotes the position's own market on both sides |
+| 43-52 s | Click the first chip under **Your recent checks** (the live reading from 4 s), then **Share this reading**, then **Download image**, and show the PNG | the same bar, the standing limit, the time, the link back |
+| 52-58 s | Stop recording | |
 
-Three positions of the same shape, in order: the assets are somewhere else and nobody can prove whose they are; the assets are right here and they match; and an account whose business is quoting, not holding a view. The bar is the same bar in all three, which is what makes the contrast land without a word of narration.
+Three positions of the same size and shape, in order: the assets are somewhere else and nobody can prove whose they are; the assets are right here and they match; and an account whose business is quoting, not holding a view. The bar is the same bar in the first two, which is what makes the contrast land without a word of narration.
 
-The first check is live. The gallery cards are labeled "Snapshot from the gallery scan" on screen, with the date they were read.
+The first check is live. The two chips open readings saved on 24 September, and say so on screen, with the time they were read.
 
-Post text (262 of 280 characters - X counts each link as 23 whatever its length):
+Post text (under 280 characters - X counts each link as 23 whatever its length). The numbers are the 24 September reading; put in what the card on screen says:
 
-> A whale is short $216M of ETH. The timeline calls it hedged.
+> A whale is short $209M of ETH. The timeline calls it hedged.
 >
-> Bet or Book: under 1% is covered at that address. Two wallets that funded it hold $464M of ETH - but funding is not ownership.
+> Bet or Book: under 1% is covered at that address. Two wallets that funded it hold $443M of ETH - but funding is not ownership.
 >
 > Built on @nansen_ai
 > https://bet-or-book.sofiaseremeteva.workers.dev
@@ -39,8 +38,8 @@ Post text (262 of 280 characters - X counts each link as 23 whatever its length)
 
 ## Check these before recording
 
-- Every number above comes from the readings of 21 September. The live check will show today's figures, which will differ. Read the card on screen; do not read this file.
-- The gallery counts in the chips are computed in the page from the data, so they update themselves. As of 22 September: 183 cards judged by the current rules - 132 look like bets, 41 unknown, 3 books, 7 hedged - and 94 more kept as history because their observations predate those rules.
-- The 22 cards that had claimed Book or Hedged were re-read live on 21 September. Each of those carries a **What changed** block against the reading it replaced; the other 256 do not, and that is why the demo opens on one that does.
-- `0xf02d16a2...` and `0xecb63caa...` were read on 21 September. If either has changed shape since, pick the next row with the same verdict rather than explaining the difference on camera.
-- The diagram only appears for a **short**: spot cannot offset a long, so there is nothing to draw. Every card in the script above is a short.
+- Every number above comes from the readings of 24 September. The live check will show today's figures, which will differ. Read the card on screen; do not read this file.
+- The first live check of an address shows **What changed** against the last reading of the same question the site knows about - a live one if there is one, otherwise the demonstration reading the page ships with. If the answer and every number are unchanged since then, the block does not appear; the beat at 23-28 s is then simply skipped.
+- The four chips at the top are fixed readings; they do not move. The gallery further down reads "More readings of big Hyperliquid positions", counts only what the current rules judged (177: 132 look like bets, 38 unknown, 7 hedged), and keeps the 100 older readings and how the set was chosen in an archive under it.
+- The diagram only appears for a **short**: spot cannot offset a long, so there is nothing to draw. The book has one too; it is not in the script because its bar says less than its sentence does.
+- The picture a pasted link shows is drawn when the reading's Share button is first opened. Open it once on the live reading before pasting the link anywhere, and give it a minute: a crawler that asks earlier gets the standing picture, briefly cached, and comes back later for the real one.

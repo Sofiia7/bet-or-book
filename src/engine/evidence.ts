@@ -8,7 +8,7 @@ import type {
   TradeFeatures,
 } from './features';
 import { DEFAULT_THRESHOLDS, type VerdictResult } from './verdict';
-import type { PnlSummary } from '../types';
+import type { PnlSummary, PositionSide } from '../types';
 
 export type EvidenceSource = 'Nansen' | 'Hyperliquid' | 'Nansen + Hyperliquid';
 
@@ -35,6 +35,12 @@ export interface EvidenceInput {
   pnl: PnlSummary | null;
   sizeVsOi: number | null;
   source: 'nansen' | 'hyperliquid';
+  /** The position the reader asked about, when they chose one rather than
+   * getting the largest. A card about a chosen leg may not call it "the
+   * largest" - it can be a ninth of the account's biggest position and still
+   * be what was asked about (23.09 audit, L04). Absent on entries written
+   * before this was tracked, which is the same as null: the largest. */
+  focus?: { coin: string; side: PositionSide } | null;
 }
 
 export interface Explanation {
@@ -66,7 +72,7 @@ function count(n: number): string {
   return Math.round(n).toLocaleString('en-US');
 }
 
-function plural(n: number, word: string): string {
+export function plural(n: number, word: string): string {
   return `${count(n)} ${word}${n === 1 ? '' : 's'}`;
 }
 
@@ -144,7 +150,7 @@ function hedgedSummary(input: EvidenceInput): string {
   }
   return (
     `The ${formatUsd(p.headlineNotionalUsd)} ${p.headlineCoin} short is ${formatPct(h.hedgeRatio)} covered by ` +
-    `${formatUsd(h.hedgeUsd)} of spot ${p.headlineCoin} held by this address ${holdingsScope(input)}.` +
+    `${formatUsd(h.hedgeUsd)} of spot ${p.headlineCoin} held by this address ${foundScope(input)}.` +
     lendingCaveat(input)
   );
 }
@@ -154,6 +160,29 @@ function hedgedSummary(input: EvidenceInput): string {
  * of them, so the honest phrase names the source rather than the universe. */
 function holdingsScope(input: EvidenceInput): string {
   return input.hedgeScope === 'all-chains' ? 'on Nansen-supported chains' : 'on Hyperliquid';
+}
+
+/**
+ * Where the covering dollars actually came from, for a sentence that quotes
+ * a found amount - as opposed to `holdingsScope`, which says where the
+ * search was allowed to look.
+ *
+ * The two read the same until an all-chains search finds its dollars on
+ * Hyperliquid's own spot and nothing on any chain Nansen covers: every one
+ * of the 18.09 gallery's seven Hedged cards was that case, and the sentence
+ * said "on Nansen-supported chains" regardless, because it asked what was
+ * searched rather than what was found. The evidence tile's own source label
+ * already reads `hedgeUsdBySource` correctly (`hedgeSource`, below); this is
+ * the same read for the sentence above it (23.09 audit, U04).
+ */
+function foundScope(input: EvidenceInput): string {
+  const by = input.hedge.hedgeUsdBySource;
+  if (!by || (by.onchain <= 0 && by.hyperliquidSpot <= 0)) return holdingsScope(input);
+  if (by.onchain > 0 && by.hyperliquidSpot > 0) return 'on Hyperliquid and on Nansen-supported chains';
+  if (by.onchain > 0) return 'on Nansen-supported chains';
+  return input.hedgeScope === 'all-chains'
+    ? 'on Hyperliquid - other Nansen-supported chains were checked and found nothing'
+    : 'on Hyperliquid';
 }
 
 /** What a lending deposit inside the counted leg forces the sentence to add.
@@ -175,19 +204,23 @@ function partialOffsetSummary(input: EvidenceInput): string {
   const { positions: p, hedge: h } = input;
   return (
     `The ${formatUsd(p.headlineNotionalUsd)} ${p.headlineCoin} short is ${formatPct(h.hedgeRatio)} covered by ` +
-    `spot ${p.headlineCoin} held by this address ${holdingsScope(input)}, ` +
+    `spot ${p.headlineCoin} held by this address ${foundScope(input)}, ` +
     `which leaves ${formatUsd(p.headlineNotionalUsd - h.hedgeUsd)} of it short.`
   );
 }
 
-/** Coverage past parity: the spot leg is the larger one, so the account is
- * long the asset its headline position is short. */
+/** Coverage past parity: the visible spot leg is larger than this one short.
+ * Not the account's net position - debt, other positions and cross-margin
+ * are not read here, so "the account is net long" is a claim about
+ * everything it holds, and this measures one short against one spot balance
+ * (23.09 audit, L12). */
 function overCoveredSummary(input: EvidenceInput): string {
   const { positions: p, hedge: h } = input;
   return (
     `The ${formatUsd(p.headlineNotionalUsd)} ${p.headlineCoin} short is more than covered: ` +
-    `${formatUsd(h.hedgeUsd)} of spot ${p.headlineCoin} held by this address ${holdingsScope(input)} ` +
-    `leaves it net long ${formatUsd(h.hedgeUsd - p.headlineNotionalUsd)} of ${p.headlineCoin}.`
+    `visible spot ${p.headlineCoin} held by this address ${foundScope(input)} exceeds it by ` +
+    `${formatUsd(h.hedgeUsd - p.headlineNotionalUsd)}, ${formatUsd(h.hedgeUsd)} in total. ` +
+    'Debts, other positions and cross-margin are not read here, so this is not the account\'s net position.'
   );
 }
 
@@ -236,24 +269,36 @@ function linkedSummary(input: EvidenceInput): string {
 
 /** A directional stance spread over several positions rather than sitting
  * in one. The bet rule's own sentence names "one $X position"; here the
- * finding is the portfolio's direction, so the spread leads and the largest
- * leg is named second. */
+ * finding is the portfolio's direction, so the spread leads and the leg
+ * this card is about is named second. */
 function directionalPortfolioSummary(input: EvidenceInput): string {
   const { positions: p } = input;
+  // 80% net/gross does not mean every leg points the same way - $900K ETH
+  // short and $100K BTC long is 80% of $1M gross and entirely short. "All
+  // pointing the same way" was simply false for that account (23.09 audit,
+  // L04); netSide is the sign netToGross throws away.
+  const sideWord = p.netSide ?? p.headlineSide ?? 'short';
   const head =
-    `${plural(p.nPositions, 'open position')}, all pointing the same way, net out to ` +
-    `${formatPct(p.netToGross)} of gross exposure`;
-  const largest = `the largest is ${headlineText(p)} (${formatPct(p.headlineShare)} of it)`;
+    `${plural(p.nPositions, 'open position')} net out to ${formatPct(p.netToGross)} of gross exposure, mostly ${sideWord}`;
+  // A card about a position the reader picked may not call it "the largest"
+  // - the same audit found a selected leg nine times smaller than the
+  // account's real largest introduced this way.
+  const leg = input.focus
+    ? `the selected leg is ${headlineText(p)} (${formatPct(p.headlineShare)} of it)`
+    : `the largest is ${headlineText(p)} (${formatPct(p.headlineShare)} of it)`;
   if (p.headlineSide !== 'short') {
-    return `${head}; ${largest}. No two-sided quoting. Spot cannot offset a long, and debts or other derivatives are not read here.`;
+    return `${head}; ${leg}. No two-sided quoting. Spot cannot offset a long, and debts or other derivatives are not read here.`;
   }
   const where = input.hedgeScope === 'all-chains' ? 'at this address on Nansen-supported chains' : 'at this address on Hyperliquid';
   const own = input.hedge.hedgeRatio;
+  // Zero found is a statement about where this looked, so the search scope
+  // is the honest phrase; a nonzero amount is a statement about where it
+  // was found, which foundScope answers instead (23.09 audit, U04).
   const cov =
     own === 0
       ? `no ${p.headlineCoin} was found ${where}`
-      : `only ${formatPct(own)} of it is covered by ${p.headlineCoin} ${where}`;
-  return `${head}; ${largest}. No two-sided quoting, and ${cov}. Debts and other derivatives are not read here.`;
+      : `only ${formatPct(own)} of it is covered by ${p.headlineCoin} at this address ${foundScope(input)}`;
+  return `${head}; ${leg}. No two-sided quoting, and ${cov}. Debts and other derivatives are not read here.`;
 }
 
 function betSummary(input: EvidenceInput): string {
@@ -272,7 +317,7 @@ function betSummary(input: EvidenceInput): string {
   const own = input.hedge.hedgeRatio;
   const caveat = ' Debts and other derivatives are not read here.';
   if (own === 0) return `${opening}, and no ${p.headlineCoin} was found ${where}.${caveat}`;
-  return `${opening}, and only ${formatPct(own)} of it is covered by ${p.headlineCoin} ${where}.${caveat}`;
+  return `${opening}, and only ${formatPct(own)} of it is covered by ${p.headlineCoin} at this address ${foundScope(input)}.${caveat}`;
 }
 
 /** Names each bet condition the account fails, in the order the rule lists them. */
@@ -315,7 +360,22 @@ function hedgeSource(input: EvidenceInput): EvidenceSource {
 
 function hedgeItem(input: EvidenceInput): EvidenceItem | null {
   if (input.hedgeScope === 'none') return null;
-  const where = input.hedgeScope === 'all-chains' ? 'Nansen-supported chains' : 'Hyperliquid spot';
+  // Same split as hedgeSource, just short enough for a tile: what the ratio
+  // is actually made of, not what the search was allowed to reach. This
+  // parenthetical used to name the search scope regardless, so a coverage
+  // ratio that was entirely Hyperliquid spot still read "(Nansen-supported
+  // chains)" (23.09 audit, U04).
+  const by = input.hedge.hedgeUsdBySource;
+  const where =
+    !by || (by.onchain <= 0 && by.hyperliquidSpot <= 0)
+      ? input.hedgeScope === 'all-chains'
+        ? 'Nansen-supported chains'
+        : 'Hyperliquid spot'
+      : by.onchain > 0 && by.hyperliquidSpot > 0
+        ? 'Hyperliquid + Nansen chains'
+        : by.onchain > 0
+          ? 'Nansen-supported chains'
+          : 'Hyperliquid spot';
   return {
     label: 'Hedge found',
     value: `${formatPct(input.hedge.hedgeRatio)} (${where})`,
@@ -494,7 +554,7 @@ export function explain(input: EvidenceInput): Explanation {
   return {
     summary,
     evidence: present([
-      { label: 'Largest position', value: headlineText(p), source: posSource },
+      { label: input.focus ? 'Selected position' : 'Largest position', value: headlineText(p), source: posSource },
       { label: 'Share of exposure', value: formatPct(p.headlineShare), source: posSource },
       { label: 'Net / gross exposure', value: formatPct(p.netToGross), source: posSource },
       hedgeItem(input),

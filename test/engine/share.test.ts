@@ -9,7 +9,7 @@ import type { EvidenceItem } from '../../src/engine/evidence';
 
 const positions: PositionFeatures = {
   nPositions: 1, grossUsd: 1e8, netUsd: 1e8, netToGross: 1, headlineCoin: 'ETH', headlineSide: 'short',
-  headlineNotionalUsd: 1e8, headlineShare: 1, headlineLiqDistancePct: null, headlineLiqDistanceBasis: null,
+  headlineNotionalUsd: 1e8, headlineShare: 1, headlineLiqDistancePct: null, headlineLiqDistanceBasis: null, netSide: 'short',
   sameAssetOffsetShare: 0,
     candidates: [],
 };

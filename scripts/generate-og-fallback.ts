@@ -14,6 +14,9 @@ const data: OgCardData = {
   summary: 'Paste a Hyperliquid address. Is that whale position a bet, a hedge, or a market maker’s book?',
   segments: null,
   footerLeft: 'bet-or-book.sofiaseremeteva.workers.dev',
+  // No reading behind this card, so no date and no caveat to give.
+  provenance: '',
+  limitText: null,
 };
 
 async function main() {

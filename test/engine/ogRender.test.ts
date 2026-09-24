@@ -19,6 +19,8 @@ function data(overrides: Partial<OgCardData> = {}): OgCardData {
     summary: '2,685 resting orders quote both sides of 119 markets.',
     segments: null,
     footerLeft: '0xecb6...2b00 · rules v4',
+    provenance: 'Positions as of 23 Sep, 14:32 UTC · saved reading, rules v4',
+    limitText: null,
     ...overrides,
   };
 }
@@ -48,7 +50,22 @@ describe('ogTree', () => {
   it('cuts an oversized summary short rather than overflowing the card', () => {
     const tree = JSON.stringify(ogTree(data({ summary: 'x'.repeat(500) })));
     expect(tree).toContain('…');
-    expect(tree.length).toBeLessThan(1200);
+    // The cap is on the summary, not the whole tree: the provenance/caveat
+    // line added for U02 is a fixed-size addition on top of it.
+    expect(tree.length).toBeLessThan(1400);
+  });
+
+  it('carries the date and the reading\'s own caveat, not just the badge and summary (23.09 audit, U02)', () => {
+    const tree = JSON.stringify(
+      ogTree(data({ provenance: 'Positions as of 23 Sep, 14:32 UTC · saved reading, rules v4', limitText: 'Only its Hyperliquid balances were read.' })),
+    );
+    expect(tree).toContain('23 Sep, 14:32 UTC');
+    expect(tree).toContain('Only its Hyperliquid balances were read.');
+  });
+
+  it('shows the date alone when the reading carries no caveat beyond the permanent one', () => {
+    const tree = JSON.stringify(ogTree(data({ provenance: 'Positions as of 23 Sep, 14:32 UTC · saved reading, rules v4', limitText: null })));
+    expect(tree).toContain('23 Sep, 14:32 UTC');
   });
 });
 

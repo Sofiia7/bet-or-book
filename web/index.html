@@ -114,14 +114,28 @@
   .box { background: var(--panel); border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-top: 10px; }
   .box ul { margin: 6px 0 0; padding-left: 18px; }
   .box p { margin: 0; }
-  /* Closed by default - a judge or a skeptical reader opens it, everyone
-     else is not made to read a rule-engine internals sentence they did not
-     ask for (audit item 9). Native <details>, so no JS runs the toggle. */
-  .decided { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
-  .decided summary { cursor: pointer; color: var(--link); }
-  .decided p { margin: 6px 0 0; }
-  .decided code { font-family: ui-monospace, Consolas, monospace; background: var(--panel); padding: 1px 5px; border-radius: 4px; }
+  /* Closed by default - a judge or a skeptical reader opens them, everyone
+     else is not made to read what they did not ask for (audit item 9, and
+     U06 on 23.09). Native <details>, so no JS runs the toggle. */
+  .fold { margin: 10px 0 0; font-size: 13px; }
+  .fold > summary { cursor: pointer; color: var(--link); }
+  .fold p { margin: 6px 0 0; }
+  .fold .tech { font-size: 12px; color: var(--muted); }
+  .fold code { font-family: ui-monospace, Consolas, monospace; background: var(--panel); padding: 1px 5px; border-radius: 4px; }
   .note { background: var(--note-bg); color: var(--note-fg); }
+  /* Which position the answer is about, before the answer. */
+  .subject { margin: 12px 0 0; font-size: 14px; }
+  .subject .muted { margin-right: 6px; }
+  .limit { font-size: 12px; color: var(--muted); margin: 12px 0 0; }
+  /* One way to share, not four buttons competing with the answer. */
+  .share { margin-top: 16px; }
+  .share > summary { display: inline-block; list-style: none; cursor: pointer; padding: 10px 16px; font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--fg); color: var(--bg); }
+  .share > summary::-webkit-details-marker { display: none; }
+  .share[open] > summary { opacity: 0.85; }
+  .share .actions { margin-top: 10px; }
+  .archive { margin-top: 20px; font-size: 13px; }
+  .archive > summary { cursor: pointer; color: var(--link); }
+  .archive .list { margin-top: 12px; }
   .attribution { font-size: 12px; color: var(--muted); margin-top: 6px; }
   .meta { font-size: 12px; color: var(--faint); margin-top: 12px; }
   .snapshot { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
@@ -155,12 +169,17 @@
   <button id="check">Check</button>
 </div>
 <p class="status" id="status" role="status"></p>
+<!-- Read fresh on 24 September and picked by hand, one of each kind of
+     answer, from data/featured.json; test/featured.test.ts holds these
+     chips to that file. The scan further down is older and was read before
+     the card had the position's own numbers (23.09 audit, U05). -->
 <div class="examples">
-  <span class="examples-label">No address handy? See a real one:</span>
+  <span class="examples-label">No address handy? Four readings from 24 September, one of each kind:</span>
   <span class="examples-chips" id="examples-chips">
-    <button class="chip" data-example="082e843a-mu71i2vu">$125.9M HYPE long &middot; bet</button>
-    <button class="chip" data-example="1ny4ncx4j6myd">$42.7M HYPE short &middot; 97% hedged</button>
-    <button class="chip" data-example="2b2e7wqput6yt">$81.5M ETH short &middot; market maker</button>
+    <button class="chip" data-example="3p2dqa2fjl01r">$130.0M HYPE long &middot; looks like a bet</button>
+    <button class="chip" data-example="0x4uv7ru4tpka">$43.2M HYPE short &middot; 97% covered</button>
+    <button class="chip" data-example="075ocy85yngsu">$209.1M ETH short &middot; the ETH sits with its funders</button>
+    <button class="chip" data-example="17adm6ld3op4a">$46.9M ETH short &middot; market maker</button>
   </span>
 </div>
 <div class="examples" id="recent" hidden>
@@ -168,64 +187,88 @@
   <span class="examples-chips" id="recent-chips"></span>
 </div>
 
+<!-- The first screen of a card is the question and its answer: which
+     position, what it is, the one picture or number that decided it, and
+     one way to share it. Everything else a card knows is one click down,
+     not gone (23.09 audit, U06). -->
 <div class="card" id="card" hidden>
   <div class="box snapshot" id="snapshot" hidden>
     <span id="snapshot-text"></span>
     <button id="check-live">Check live</button>
   </div>
-  <p style="margin: 10px 0 0;"><span class="badge" id="badge"></span></p>
-  <p class="headline" id="headline"></p>
-  <p class="summary" id="summary"></p>
-  <details class="decided" id="decided" hidden>
-    <summary>How this was decided</summary>
-    <p>Reason code: <code id="decided-reasons"></code>. Rules version <code id="decided-version"></code>. <a href="https://github.com/Sofiia7/bet-or-book#how-the-verdict-is-decided" target="_blank" rel="noopener noreferrer">See the full rule table</a>.</p>
-  </details>
-  <div class="box changed" id="changed" hidden>
-    <p><strong id="changed-title"></strong> <span class="muted" id="changed-because"></span></p>
-    <ul id="changed-list"></ul>
-  </div>
+  <p class="subject" id="subject" hidden></p>
   <div class="picker" id="picker" hidden>
     <span class="picker-label">This answer is about</span>
     <span class="picker-chips" id="picker-chips"></span>
   </div>
+  <p style="margin: 10px 0 0;"><span class="badge" id="badge"></span></p>
+  <p class="headline" id="headline"></p>
+  <p class="summary" id="summary"></p>
   <figure class="breakdown" id="breakdown" hidden>
     <figcaption id="breakdown-caption"></figcaption>
     <div id="breakdown-svg"></div>
   </figure>
-  <div class="stats" id="stats"></div>
-  <figure class="vitals" id="vitals" hidden>
-    <figcaption>The position itself, not the verdict</figcaption>
-    <div class="stats" id="vitals-stats"></div>
-  </figure>
-  <div class="box" id="funders" hidden>
-    <p><strong>Wallets that funded this account</strong> - they hold the matching asset, which is not the same as this account holding it</p>
-    <ul id="funders-list"></ul>
-    <p class="attribution">Linked wallets: Powered by Nansen API. Ownership is inferred from the funding link, not confirmed.</p>
-  </div>
-  <div class="box note">
-    <p><strong>What we cannot see:</strong> positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address. A hedge there would be invisible to us.</p>
-  </div>
+  <div class="stats" id="decisive" hidden></div>
   <div class="box" id="coverage" hidden>
     <p><strong>Not read this time</strong></p>
     <ul id="coverage-list"></ul>
   </div>
-  <p class="meta" id="meta"></p>
-  <div class="actions">
-    <button id="copy-card">Copy card</button>
-    <button id="download-card">Download PNG</button>
-    <button id="copy-link">Copy link</button>
-    <button id="copy-post">Copy post text</button>
+  <p class="limit">Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address. A hedge there would not show here.</p>
+  <div class="box changed" id="changed" hidden>
+    <p><strong id="changed-title"></strong> <span class="muted" id="changed-because"></span></p>
+    <ul id="changed-list"></ul>
   </div>
+  <details class="share" id="share">
+    <summary>Share this reading</summary>
+    <div class="actions">
+      <button id="copy-link">Copy link</button>
+      <button id="copy-post">Copy post text</button>
+      <button id="copy-card">Copy image</button>
+      <button id="download-card">Download image</button>
+    </div>
+  </details>
   <canvas id="card-canvas" width="1200" height="675" hidden></canvas>
+  <p class="meta" id="meta"></p>
+  <details class="fold" id="decided" hidden>
+    <summary>How this was decided</summary>
+    <p id="decided-rule"></p>
+    <p class="tech">Technical details: reason code <code id="decided-reasons"></code>, rules <code id="decided-version"></code>. <a href="https://github.com/Sofiia7/bet-or-book#how-the-verdict-is-decided" target="_blank" rel="noopener noreferrer">The full rule table</a>.</p>
+  </details>
+  <details class="fold" id="details">
+    <summary>Everything else this reading found</summary>
+    <div class="stats" id="stats"></div>
+    <figure class="vitals" id="vitals" hidden>
+      <figcaption>The position itself, not the verdict</figcaption>
+      <div class="stats" id="vitals-stats"></div>
+    </figure>
+    <div class="box" id="funders" hidden>
+      <p><strong>Wallets that funded this account</strong> - they hold the matching asset, which is not the same as this account holding it</p>
+      <ul id="funders-list"></ul>
+      <p class="attribution">Linked wallets: Powered by Nansen API. Ownership is inferred from the funding link, not confirmed.</p>
+    </div>
+    <div class="box" id="notes" hidden>
+      <p><strong>Notes on this reading</strong></p>
+      <ul id="notes-list"></ul>
+    </div>
+  </details>
 </div>
 
 <section id="gallery" hidden>
-  <h2>One scan of big Hyperliquid positions: bet, hedge or book?</h2>
+  <h2 id="gallery-title">More readings of big Hyperliquid positions</h2>
   <p class="sub" id="gallery-sub"></p>
-  <p class="sub" id="gallery-method"></p>
   <div class="chips" id="chips"></div>
   <ol class="list" id="gallery-list"></ol>
   <button class="more" id="more" hidden>Show more</button>
+  <!-- How the set was chosen, the counts across it, and the readings made
+       under earlier rules: all real, all kept, none of it the first thing a
+       new visitor needs (23.09 audit, U06). -->
+  <details class="archive" id="archive">
+    <summary id="archive-summary">How these were picked, and the readings made under earlier rules</summary>
+    <p class="sub" id="gallery-stats"></p>
+    <p class="sub" id="gallery-method"></p>
+    <ol class="list" id="archive-list"></ol>
+    <button class="more" id="archive-more" hidden>Show more</button>
+  </details>
 </section>
 
 <footer>

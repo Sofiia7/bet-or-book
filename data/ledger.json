@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-09-21T20:20:46.206Z",
+  "generatedAt": "2026-09-24T07:48:50.308Z",
   "window": {
     "from": "2026-09-14",
     "to": "2026-09-27"
   },
-  "calls": 1117,
-  "okCalls": 1109,
-  "credits": 1117,
+  "calls": 1133,
+  "okCalls": 1125,
+  "credits": 1133,
   "byEndpoint": {
-    "profiler/perp-positions": 341,
+    "profiler/perp-positions": 345,
     "profiler/perp-trades": 1,
-    "profiler/perp-pnl-summary": 341,
-    "profiler/address/current-balance": 255,
-    "profiler/address/related-wallets": 179
+    "profiler/perp-pnl-summary": 345,
+    "profiler/address/current-balance": 259,
+    "profiler/address/related-wallets": 183
   },
   "bySource": {
     "fetch-nansen-fixtures": 12,
@@ -20,10 +20,12 @@
     "prescan": 964,
     "wrangler-dev": 21,
     "rescan-offset": 26,
-    "rescan-2026-09-21": 83
+    "rescan-2026-09-21": 83,
+    "featured-2026-09-24": 16
   },
   "byDay": {
     "2026-09-18": 1008,
-    "2026-09-21": 109
+    "2026-09-21": 109,
+    "2026-09-24": 16
   }
 }

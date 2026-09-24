@@ -91,6 +91,22 @@ export function ogTree(d: OgCardData): object {
             children: clip(d.summary, 210),
           },
         },
+        // The date and the reading's own limit travel with the badge and the
+        // summary now, not only with the page around them - a saved reading
+        // opened as a bare image used to carry neither (23.09 audit, U02).
+        // Absent on the generic, verdict-less fallback card, which is about
+        // no reading in particular and has no date to give.
+        ...(d.provenance
+          ? [
+              {
+                type: 'div',
+                props: {
+                  style: { display: 'flex', color: FAINT, fontSize: 22, marginTop: 14 },
+                  children: clip(d.limitText ? `${d.provenance} · ${d.limitText}` : d.provenance, 180),
+                },
+              },
+            ]
+          : []),
         ...(bar ? [bar] : []),
         {
           type: 'div',

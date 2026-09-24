@@ -7,7 +7,7 @@ import { EMPTY_HEDGE, type PositionFeatures, type HedgeFeatures, type LinkedHedg
 
 const positions = (over: Partial<PositionFeatures> = {}): PositionFeatures => ({
   nPositions: 1, grossUsd: 1e8, netUsd: 1e8, netToGross: 1, headlineCoin: 'ETH', headlineSide: 'short',
-  headlineNotionalUsd: 1e8, headlineShare: 1, headlineLiqDistancePct: null, headlineLiqDistanceBasis: null,
+  headlineNotionalUsd: 1e8, headlineShare: 1, headlineLiqDistancePct: null, headlineLiqDistanceBasis: null, netSide: null,
   sameAssetOffsetShare: 0,
     candidates: [], ...over,
 });
@@ -57,6 +57,36 @@ describe('what someone else holds is beside the bar, not in it', () => {
   it('leaves it out when no funder holds anything worth mentioning', () => {
     expect(exposureBreakdown(positions(), hedge(), funders(0, 2)).elsewhere).toBeNull();
     expect(exposureBreakdown(positions(), hedge(), null).elsewhere).toBeNull();
+  });
+});
+
+describe('an incomplete hedge read is not looked at, not found empty (23.09 audit, L12)', () => {
+  it('draws the unexplained part as not-checked when the read was partial', () => {
+    const b = exposureBreakdown(positions(), hedge(), null, 'partial');
+    expect(b.segments).toEqual([{ kind: 'not-checked', usd: 1e8, share: 1 }]);
+  });
+
+  it('draws the unexplained part as not-checked when the read failed outright', () => {
+    const b = exposureBreakdown(positions(), hedge(), null, 'missing');
+    expect(b.segments).toEqual([{ kind: 'not-checked', usd: 1e8, share: 1 }]);
+  });
+
+  it('still draws residual, not not-checked, once the read is complete', () => {
+    const b = exposureBreakdown(positions(), hedge(), null, 'complete');
+    expect(b.segments).toEqual([{ kind: 'residual', usd: 1e8, share: 1 }]);
+  });
+
+  it('defaults to residual for a call that predates hedgeCoverage being tracked', () => {
+    const b = exposureBreakdown(positions(), hedge(), null);
+    expect(b.segments).toEqual([{ kind: 'residual', usd: 1e8, share: 1 }]);
+  });
+
+  it('only marks the unexplained remainder, not dollars already covered or unverified', () => {
+    const b = exposureBreakdown(positions(), hedge({ hedgeUsd: 60e6, hedgeRatio: 0.6 }), null, 'partial');
+    expect(b.segments).toEqual([
+      { kind: 'covered', usd: 60e6, share: 0.6 },
+      { kind: 'not-checked', usd: 40e6, share: 0.4 },
+    ]);
   });
 });
 

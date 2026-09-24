@@ -131,14 +131,33 @@ async function renderChanged(d) {
   }
   // The card may have moved on while this was in the air.
   if (!current || current.snapshotId !== d.snapshotId) return;
+  // A different question - a manual pick against the largest-position
+  // default, or two different manual picks - is not a change at this
+  // address, and putting the two side by side as if it were is worse than
+  // saying nothing (23.09 audit, L02).
+  if (c.questionChanged) {
+    box.hidden = false;
+    $('changed-title').textContent = 'Since ' + fmtTime(c.from.observedAt);
+    $('changed-because').textContent = 'That reading answered a different question, so there is nothing to compare it to.';
+    $('changed-list').replaceChildren();
+    return;
+  }
   if (!c.changes.length && !c.verdictChange) return;
 
   box.hidden = false;
   $('changed-title').textContent = 'What changed since ' + fmtTime(c.from.observedAt);
-  $('changed-because').textContent = c.verdictChange
-    ? 'The answer went from "' + VERDICTS[c.verdictChange.from].label + '" to "' +
-      VERDICTS[c.verdictChange.to].label + '" because ' + c.verdictChange.because + '.'
-    : 'The answer did not change.';
+  // A grade is part of the answer: "Book (strong)" to "Book (likely)" is a
+  // change, and "did not change" under two different versions of the rules
+  // says so rather than reading as the same rules agreeing twice.
+  const named = (verdict, strength) => (VERDICTS[verdict] || VERDICTS.unknown).label + (strength ? ' (' + strength + ')' : '');
+  const vc = c.verdictChange;
+  $('changed-because').textContent = vc
+    ? 'The answer went from "' + named(vc.from, vc.fromStrength) + '" to "' + named(vc.to, vc.toStrength) +
+      '" because ' + vc.because + '.'
+    : c.rulesChanged
+      ? 'The answer did not change, though the rules reading it did (' + c.from.classifierVersion + ' to ' +
+        c.to.classifierVersion + ').'
+      : 'The answer did not change.';
   const arrow = { up: '\u2191', down: '\u2193', sideways: '\u2192' };
   $('changed-list').replaceChildren(
     ...c.changes.map((ch) => {
@@ -197,6 +216,10 @@ const SEGMENT_STYLE = {
   covered: { label: 'covered by this address', fill: 'var(--accent)', opacity: 1 },
   unverified: { label: 'could not identify', fill: 'var(--accent)', opacity: 0.35 },
   residual: { label: 'nothing found against it', fill: 'var(--line)', opacity: 1 },
+  // Fainter than "nothing found against it" on purpose: this part of the
+  // bar was never looked at, so it cannot say the same thing an empty,
+  // complete search says (23.09 audit, L12).
+  'not-checked': { label: 'not checked for a hedge', fill: 'var(--line)', opacity: 0.5 },
 };
 
 const svgEl = (name, attrs, text) => {
@@ -418,28 +441,44 @@ function kindOf(opts) {
 function renderResult(d, opts) {
   current = d;
   current.__kind = kindOf(opts);
+  // Unhidden first, before anything below measures a box inside it: with
+  // `#card` still hidden, `#breakdown`'s own clientWidth reads 0 regardless
+  // of its own hidden state, and renderBreakdown fell back to a fixed 640 on
+  // every first paint - correct only by coincidence on a desktop-width phone
+  // emulation, wrong on a real one (23.09 audit, U01). Every update below
+  // runs synchronously in this same task, so there is nothing to flash.
+  $('card').hidden = false;
+  // A new card starts folded: what the last one had open says nothing about
+  // what the reader wants from this one.
+  for (const id of ['share', 'decided', 'details']) $(id).open = false;
   const v = verdictOf(d);
   $('badge').textContent = badgeText(d);
-  $('badge').className = 'badge ' + v.cls;
+  // Faded and dashed when the rules that gave it are no longer in force, on
+  // the card as it already was in the list.
+  $('badge').className = 'badge ' + v.cls + (d.historical ? ' historical' : '');
   $('headline').textContent = headlineFor(d);
   $('summary').textContent = d.summary || '';
 
-  // Closed by default, so the plain-English summary above is the whole
-  // answer for a reader who does not ask for more. Opening it names the
-  // exact reason code the rules produced, for the reader who wants to check
-  // the classifier's own work against the README's rule table (audit U/9).
+  // Closed by default, so the summary above is the whole answer for a
+  // reader who does not ask for more. Opening it says the rule in words
+  // first - the server's sentence, from the same thresholds the rules use -
+  // and keeps the raw reason code for whoever wants to check the rules
+  // themselves (23.09 audit, U06).
   const reasons = (d.verdict && d.verdict.reasons) || [];
-  $('decided').hidden = reasons.length === 0;
+  $('decided').hidden = reasons.length === 0 && !d.rule;
+  $('decided-rule').textContent = d.rule || '';
+  $('decided-rule').hidden = !d.rule;
   $('decided-reasons').textContent = reasons.join(', ') || 'none';
   $('decided-version').textContent = d.classifierVersion || '?';
 
-  $('stats').replaceChildren(...(d.evidence || []).map((item) => {
+  const tile = (item) => {
     // The row the verdict turned on leads, rather than sitting fourth in a
     // line of identical tiles (audit U03).
     const box = el('div', 'stat' + (item.decisive ? ' decisive' : ''));
     box.append(el('div', 'stat-label', item.label), el('div', 'stat-value', item.value), el('div', 'stat-source', item.source));
     return box;
-  }));
+  };
+  $('stats').replaceChildren(...(d.evidence || []).map(tile));
 
   // Leverage, distance to liquidation, unrealized PnL, funding since open:
   // numbers about the position itself rather than about the verdict, so
@@ -455,8 +494,23 @@ function renderResult(d, opts) {
   }));
 
   renderPicker(d, kindOf(opts));
+  // Which position this answer is about, said before the answer. The
+  // picker says it when there is a choice to offer; otherwise this line does.
+  $('subject').hidden = !$('picker').hidden;
+  $('subject').replaceChildren(
+    el('span', 'muted', d.focus ? 'The position asked about' : 'The position'),
+    ' ',
+    el('strong', null, positionText(d)),
+  );
   renderChanged(d);
   renderBreakdown(d);
+
+  // The one piece of evidence the verdict turned on, when there is no
+  // picture of it: the bar above already is that evidence for a short, and
+  // repeating it as a number underneath would say it twice.
+  const decisive = $('breakdown').hidden ? (d.evidence || []).filter((item) => item.decisive) : [];
+  $('decisive').hidden = decisive.length === 0;
+  $('decisive').replaceChildren(...decisive.map(tile));
 
   const funders = d.linkedHedge && Array.isArray(d.linkedHedge.funders) ? d.linkedHedge.funders : [];
   $('funders').hidden = funders.length === 0;
@@ -469,9 +523,23 @@ function renderResult(d, opts) {
     return li;
   }));
 
-  const coverage = d.coverage || [];
-  $('coverage').hidden = coverage.length === 0;
-  $('coverage-list').replaceChildren(...coverage.map((c) => el('li', null, c)));
+  // A source that failed cost this answer something, so it stays in sight
+  // next to the answer. A note that only describes what was found goes one
+  // click down. A reading saved before notes said which kind they were
+  // keeps every one of them in sight, the cautious way round.
+  const flagged = Array.isArray(d.coverageNotes) ? d.coverageNotes : [];
+  const notes = [
+    ...flagged,
+    ...(d.coverage || [])
+      .filter((text) => !flagged.some((n) => n.text === text))
+      .map((text) => ({ text, failure: true })),
+  ];
+  const failures = notes.filter((n) => n.failure).map((n) => n.text);
+  const remarks = notes.filter((n) => !n.failure).map((n) => n.text);
+  $('coverage').hidden = failures.length === 0;
+  $('coverage-list').replaceChildren(...failures.map((c) => el('li', null, c)));
+  $('notes').hidden = remarks.length === 0;
+  $('notes-list').replaceChildren(...remarks.map((c) => el('li', null, c)));
 
   const meta = $('meta');
   meta.replaceChildren();
@@ -524,7 +592,7 @@ function renderResult(d, opts) {
   }
 
   $('card-canvas').hidden = true;
-  $('copy-card').textContent = 'Copy card';
+  $('copy-card').textContent = 'Copy image';
   if (d.snapshotId && d.positions.nPositions > 0) {
     saveRecent({
       id: d.snapshotId,
@@ -535,7 +603,6 @@ function renderResult(d, opts) {
     });
     renderRecent();
   }
-  $('card').hidden = false;
 }
 
 // Every request gets a number. Enter, the Check button and "Check live" can
@@ -577,17 +644,37 @@ function setBusy(on) {
 // Starting a check spends money, so it is a POST: a GET is something a
 // crawler, a link preview or a browser prefetch can trigger on its own, and
 // used to run the paid branch when they did.
-async function load(url, onData, failureText, method, notice) {
+//
+// `retryDelays` is for a saved reading that answers 404. KV can take up to a
+// minute to show a new write in a region that has not seen it, and a link
+// is opened within that minute of being shared all the time - so a 404 that
+// early is often "not here yet" rather than "gone" (23.09 audit, S05).
+async function load(url, onData, failureText, method, notice, retryDelays) {
   const seq = ++requestSeq;
   setBusy(true);
   // A notice about the input - "three addresses here, using the first" - is
   // about to be replaced by the progress line one statement later, which is
   // how it became unreadable. It travels with the request instead.
-  setStatus((notice ? notice + ' ' : '') + 'Reading positions from Nansen and orders from Hyperliquid...', false);
+  // A saved reading is opened, not read again: saying Nansen is being asked
+  // when nothing is would misdescribe a free lookup as a paid check.
+  const doing = method === 'POST' ? 'Reading positions from Nansen and orders from Hyperliquid...' : 'Opening the saved reading...';
+  setStatus((notice ? notice + ' ' : '') + doing, false);
   try {
-    const res = await fetch(url, { method: method || 'GET' });
-    const data = await res.json().catch(() => ({}));
-    if (seq !== requestSeq) return;
+    let res;
+    let data;
+    for (let attempt = 0; ; attempt++) {
+      res = await fetch(url, { method: method || 'GET' });
+      data = await res.json().catch(() => ({}));
+      if (seq !== requestSeq) return;
+      const wait = res.status === 404 && retryDelays ? retryDelays[attempt] : undefined;
+      if (wait === undefined) break;
+      setStatus(
+        'Not found here yet. A reading saved in the last minute can take that long to reach every region - trying again...',
+        false,
+      );
+      await new Promise((resolve) => setTimeout(resolve, wait));
+      if (seq !== requestSeq) return;
+    }
     if (!res.ok) {
       // The previous card is still on screen and is still about whatever it
       // was about. Say so rather than let it pass for the answer just asked
@@ -607,6 +694,38 @@ async function load(url, onData, failureText, method, notice) {
   } finally {
     if (seq === requestSeq) setBusy(false);
   }
+}
+
+// ---- the link's own picture ----
+//
+// A crawler following a shared link never waits for its picture to be
+// drawn: on the Workers free plan the drawing does not fit in one request's
+// CPU budget, and a request stopped for CPU answers with an error, not with
+// the stand-in picture (23.09 audit, S04). So the page asks for it here, in a
+// request of its own whose answer nothing shows - as soon as a reading is
+// saved, and again when the reader reaches for a share button - well before
+// any crawler has the link.
+const pictureAsked = new Set();
+function askForPicture(d, isRetry) {
+  const id = d && d.snapshotId;
+  if (!id || d.snapshotSaved === false || pictureAsked.has(id)) return;
+  pictureAsked.add(id);
+  fetch('/api/og?id=' + encodeURIComponent(id), { method: 'POST', keepalive: true })
+    .then((res) => {
+      // Saved moments ago and not visible in this region yet: once more,
+      // a little later, and then leave it to the next share button.
+      if (res.status === 404 && !isRetry) {
+        setTimeout(() => {
+          pictureAsked.delete(id);
+          askForPicture(d, true);
+        }, 4000);
+      }
+    })
+    .catch(() => {
+      // Nothing is shown either way; forgetting it lets a later share
+      // button ask again.
+      pictureAsked.delete(id);
+    });
 }
 
 function runCheck() {
@@ -636,6 +755,7 @@ function runCheck() {
       // only once the server says it really saved one.
       if (data.snapshotId && data.snapshotSaved !== false) {
         showLink(data.snapshotId);
+        askForPicture(data);
       } else {
         // Nothing was saved, so there is nothing to link to. Leaving the
         // previous reading's id in the bar would be worse than none.
@@ -660,6 +780,7 @@ function checkPosition(address, position) {
     (data) => {
       renderResult(data, { kind: 'live' });
       showLink(data.snapshotId && data.snapshotSaved !== false ? data.snapshotId : null);
+      askForPicture(data);
     },
     'Something went wrong. Try again shortly.',
     'POST',
@@ -671,10 +792,15 @@ function openSnapshot(id) {
   return load(
     '/api/snapshot?id=' + encodeURIComponent(id),
     (data) => {
-      renderResult(data, { kind: 'saved' });
+      // The server says which of the two this is: a gallery card opened by
+      // its link is still a gallery card, with the gallery's own wording.
+      renderResult(data, { kind: data.kind === 'gallery' ? 'gallery' : 'saved' });
       showLink(id);
     },
     'That link points at a reading that is no longer saved. Check the address again to make a new one.',
+    'GET',
+    '',
+    [2000, 6000, 12000],
   );
 }
 
@@ -685,7 +811,15 @@ $('address').addEventListener('keydown', (e) => {
 $('check-live').addEventListener('click', () => {
   if (!current) return;
   $('address').value = current.address;
-  runCheck();
+  // A saved BTC reading has to stay about BTC: runCheck() only ever knows
+  // the address in the bar, so "Check live" on a chosen position used to
+  // silently re-ask for the largest one instead, which can be a different
+  // position entirely (23.09 audit, U03).
+  if (current.focus) {
+    checkPosition(current.address, current.focus);
+  } else {
+    runCheck();
+  }
 });
 
 // A visitor with no address in hand had nothing to click above the fold
@@ -712,30 +846,67 @@ window.addEventListener('resize', () => {
 });
 
 // ---- gallery ----
+//
+// The list arrives as rows - /api/gallery sends one line per card, not 730
+// KB of whole cards - and a row opens its card by id through /api/snapshot,
+// free, from the Worker's own bundle. The list shows what the current rules
+// read. How the set was chosen, the counts across it and the readings made
+// under earlier rules are all kept, in an archive below it: real, and not
+// the first thing a new visitor needs (23.09 audit, U06). Account PnL is not
+// on a row: thirty days of the account say nothing about one position.
 
-/** Counts only cards the current rules actually read. A verdict from rules
- * that no longer exist is history, and adding it to today's tally is how the
- * page came to advertise seven hedged accounts that the current rules have
- * never judged (audit A06). */
-function galleryCounts(entries) {
-  const counts = { book: 0, hedged: 0, looks_like_a_bet: 0, unknown: 0, historical: 0 };
-  for (const e of entries) {
-    if (e.historical) counts.historical++;
-    else counts[e.verdict.verdict] = (counts[e.verdict.verdict] || 0) + 1;
-  }
+let archiveShown = PAGE_SIZE;
+
+function galleryCounts(rows) {
+  const counts = { book: 0, hedged: 0, looks_like_a_bet: 0, unknown: 0 };
+  for (const e of rows) counts[e.verdict.verdict] = (counts[e.verdict.verdict] || 0) + 1;
   return counts;
 }
 
+function galleryRow(e, rank) {
+  const li = el('li');
+  const b = el('button');
+  const badge = el('span', 'badge ' + verdictOf(e).cls, badgeText(e));
+  // A verdict from rules that are no longer in force is labelled as one, in
+  // the list as well as on the card.
+  if (e.historical) {
+    badge.classList.add('historical');
+    badge.title = e.historical.reason;
+  }
+  b.append(
+    el('span', 'rank', '#' + rank),
+    el('span', 'pos', positionText(e)),
+    badge,
+    el(
+      'span',
+      'row-meta',
+      plural(e.positions.nPositions, 'open position') +
+        ' · ' +
+        shortAddr(e.address) +
+        (e.historical ? ' · read by earlier rules (' + (e.classifierVersion || 'v1') + ')' : ''),
+    ),
+  );
+  b.addEventListener('click', async () => {
+    // Whatever check is in the air was about a different account; the
+    // snapshot load takes the next request number, so its answer cannot
+    // land on this card (audit R03).
+    await openSnapshot(e.snapshotId);
+    if (current && current.snapshotId === e.snapshotId) {
+      $('card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+  li.append(b);
+  return li;
+}
+
 function renderGallery() {
-  const all = gallery.sorted;
-  const counts = galleryCounts(all);
+  const rows = gallery.currentRows;
+  const counts = galleryCounts(rows);
   const filters = [
-    ['all', 'All ' + all.length],
-    ['book', 'Book ' + counts.book],
-    ['hedged', 'Hedged ' + counts.hedged],
-    ['looks_like_a_bet', 'Looks like a bet ' + counts.looks_like_a_bet],
-    ['unknown', 'Unknown ' + counts.unknown],
-    ['historical', 'Earlier rules ' + counts.historical],
+    ['all', 'All ' + rows.length],
+    ...['looks_like_a_bet', 'hedged', 'unknown', 'book']
+      .filter((k) => counts[k] > 0)
+      .map((k) => [k, VERDICTS[k].label + ' ' + counts[k]]),
   ];
   // Re-rendering the chips destroys the one the reader is on, and focus with
   // it, which drops a keyboard user back to the top of the document.
@@ -752,56 +923,15 @@ function renderGallery() {
     return b;
   }));
 
-  const visible =
-    galleryFilter === 'all'
-      ? all
-      : galleryFilter === 'historical'
-        ? all.filter((e) => e.historical)
-        : all.filter((e) => !e.historical && e.verdict.verdict === galleryFilter);
-  $('gallery-list').replaceChildren(...visible.slice(0, galleryShown).map((e) => {
-    const li = el('li');
-    const b = el('button');
-    const v = verdictOf(e);
-    const badge = el('span', 'badge ' + v.cls, badgeText(e));
-    // A verdict from rules that are no longer in force is labelled as one,
-    // in the list as well as on the card.
-    if (e.historical) {
-      badge.classList.add('historical');
-      badge.title = e.historical.reason;
-    }
-    const pnl = !e.pnl
-      ? ''
-      : e.pnl.closedTrades === 0
-        ? 'no closed trades in 30d · '
-        : 'PnL 30d ' + fmtUsd(e.pnl.realizedPnlUsd) + ' · ';
-    b.append(
-      el('span', 'rank', '#' + (all.indexOf(e) + 1)),
-      el('span', 'pos', positionText(e)),
-      badge,
-      el(
-        'span',
-        'row-meta',
-        pnl +
-          plural(e.positions.nPositions, 'open position') +
-          ' · ' +
-          shortAddr(e.address) +
-          (e.historical ? ' · read by earlier rules (' + (e.classifierVersion || 'v1') + ')' : ''),
-      ),
-    );
-    b.addEventListener('click', () => {
-      // Whatever check is in the air was about a different account. Let it
-      // finish on the server - the credits are spent - and stop it from
-      // landing on the card the reader just chose.
-      takeOver();
-      renderResult(e, { kind: 'gallery' });
-      setStatus('', false);
-      showLink(e.snapshotId);
-      $('card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-    li.append(b);
-    return li;
-  }));
+  const visible = galleryFilter === 'all' ? rows : rows.filter((e) => e.verdict.verdict === galleryFilter);
+  $('gallery-list').replaceChildren(...visible.slice(0, galleryShown).map((e) => galleryRow(e, rows.indexOf(e) + 1)));
   $('more').hidden = visible.length <= galleryShown;
+}
+
+function renderArchive() {
+  const rows = gallery.historicalRows;
+  $('archive-list').replaceChildren(...rows.slice(0, archiveShown).map((e, i) => galleryRow(e, i + 1)));
+  $('archive-more').hidden = rows.length <= archiveShown;
 }
 
 async function loadGallery() {
@@ -814,31 +944,48 @@ async function loadGallery() {
   }
   // An account can close its position between the ranking and its check;
   // with nothing open it is not one of the biggest positions any more.
-  const entries = (gallery.entries || [])
+  const open = (gallery.entries || [])
     .filter((e) => e.positions.nPositions > 0)
     .sort((a, b) => b.positions.headlineNotionalUsd - a.positions.headlineNotionalUsd);
-  if (entries.length === 0) return;
-  gallery.sorted = entries;
-  const counts = galleryCounts(entries);
-  const betShare = Math.round((counts.looks_like_a_bet / entries.length) * 100);
+  if (open.length === 0) return;
+  gallery.currentRows = open.filter((e) => !e.historical);
+  gallery.historicalRows = open.filter((e) => e.historical);
+
+  // Each demonstration chip says, on hover, exactly when it was read.
+  for (const row of gallery.featured || []) {
+    const chip = document.querySelector('#examples-chips [data-example="' + row.snapshotId + '"]');
+    if (chip) chip.title = 'Read ' + fmtTime(row.checkedAt) + ' - a saved reading; opening it costs nothing';
+  }
+
   // Cards are re-checked one at a time as credits allow, so the set can span
   // days. Showing one timestamp for all of them would be wrong.
-  const times = entries.map((e) => e.checkedAt).sort();
+  const times = open.map((e) => e.checkedAt).sort();
   const first = fmtTime(times[0]);
   const last = fmtTime(times[times.length - 1]);
-  const when = first === last ? 'checked ' + first : 'checked between ' + first + ' and ' + last;
-  // "Of the N read", not "of the market". These are counts from one dated
-  // scan of a set of accounts that was chosen a particular way, and saying
-  // otherwise turns a sample into a statistic it cannot support.
+  const when = first === last ? 'read ' + first : 'read between ' + first + ' and ' + last;
   $('gallery-sub').textContent =
-    gallery.universe + ', ' + when + '. Of the ' + entries.length + ' read, ' +
+    'Saved readings from one scan, ' + when + '. Opening one costs nothing and checks nothing again.';
+
+  const rows = gallery.currentRows;
+  const counts = galleryCounts(rows);
+  const betShare = rows.length ? Math.round((counts.looks_like_a_bet / rows.length) * 100) : 0;
+  // "Of the N read", not "of the market": counts from one dated scan of a
+  // set chosen a particular way, which is not a statistic about the market.
+  $('gallery-stats').textContent =
+    gallery.universe + '. Of the ' + rows.length + ' read by the current rules, ' +
     counts.looks_like_a_bet + ' (' + betShare + '%) look like real bets and ' +
-    (counts.book + counts.hedged) + ' are books or hedges. Pick one to see why.';
+    (counts.book + counts.hedged) + ' are books or hedges.';
   $('gallery-method').textContent =
     'How these were picked: the top 3,000 accounts by value from the public leaderboard, ranked by the size of ' +
     'their largest main-dex position. Leverage breaks the link between what an account is worth and what it holds, ' +
     'a HIP-3-only account can fall out before it is ever checked, and the scan spent its last credits on the ' +
-    'cheaper checks. These cards are saved readings, not live ones: opening one costs nothing and changes nothing.';
+    'cheaper checks. ' +
+    (gallery.historicalRows.length
+      ? 'Below: ' + plural(gallery.historicalRows.length, 'reading') + ' kept as the earlier rules read them.'
+      : '');
+  $('archive-summary').textContent = gallery.historicalRows.length
+    ? 'How these were picked, and ' + plural(gallery.historicalRows.length, 'reading') + ' made under earlier rules'
+    : 'How these were picked';
   $('gallery').hidden = false;
   renderGallery();
 }
@@ -846,6 +993,15 @@ async function loadGallery() {
 $('more').addEventListener('click', () => {
   galleryShown += PAGE_SIZE;
   renderGallery();
+});
+
+// The archive's rows are drawn when it is first opened, not on every load.
+$('archive').addEventListener('toggle', () => {
+  if ($('archive').open && gallery && gallery.historicalRows) renderArchive();
+});
+$('archive-more').addEventListener('click', () => {
+  archiveShown += PAGE_SIZE;
+  renderArchive();
 });
 
 // ---- share card ----
@@ -1084,8 +1240,16 @@ function drawCard() {
   ctx.textAlign = 'left';
 }
 
+// Opening the one Share button is the moment a reader means to share, and
+// the best time to have the link's own picture drawn before any crawler
+// asks for it.
+$('share').addEventListener('toggle', () => {
+  if ($('share').open && current) askForPicture(current);
+});
+
 $('copy-card').addEventListener('click', () => {
   if (!current) return;
+  askForPicture(current);
   drawCard();
   const canvas = $('card-canvas');
   const btn = $('copy-card');
@@ -1093,7 +1257,7 @@ $('copy-card').addEventListener('click', () => {
     try {
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
       btn.textContent = 'Copied';
-      setTimeout(() => { btn.textContent = 'Copy card'; }, 1500);
+      setTimeout(() => { btn.textContent = 'Copy image'; }, 1500);
     } catch (e) {
       // A window opened from an awaited callback is popup-blocked silently, so
       // the fallback shows the image inline, where it cannot be blocked.
@@ -1108,6 +1272,7 @@ $('copy-card').addEventListener('click', () => {
 // a fallback nobody finds.
 $('download-card').addEventListener('click', () => {
   if (!current) return;
+  askForPicture(current);
   drawCard();
   $('card-canvas').toBlob((blob) => {
     const url = URL.createObjectURL(blob);
@@ -1123,6 +1288,7 @@ $('download-card').addEventListener('click', () => {
 
 $('copy-link').addEventListener('click', async () => {
   if (!current) return;
+  askForPicture(current);
   // The link opens this reading, not a new check of this account. Without a
   // snapshot id there is nothing saved to point at, so it falls back to the
   // address and the button says which one it gave.
@@ -1160,6 +1326,7 @@ function postText(d) {
 
 $('copy-post').addEventListener('click', async () => {
   if (!current) return;
+  askForPicture(current);
   const text = postText(current);
   const btn = $('copy-post');
   try {
@@ -1234,8 +1401,9 @@ async function loadLedger() {
   }
 }
 
-loadGallery();
-loadLedger();
+// The ledger is a footnote, so it waits for the part of the page a reader
+// came for (23.09 audit).
+loadGallery().finally(loadLedger);
 const params = new URLSearchParams(window.location.search);
 const saved = params.get('s');
 const preset = params.get('address');
@@ -1244,7 +1412,13 @@ if (saved) {
   // nothing can have changed between the link being written and read.
   openSnapshot(saved);
 } else if (preset) {
+  // Filling the field is not running the check: a `?address=` link used to
+  // spend a check the moment it opened in a browser, no click involved, so
+  // a same-origin POST was one crafted link away regardless of who opened it
+  // (23.09 audit, S01). The address is still ready for the reader's own
+  // press of Check or Enter.
   $('address').value = preset;
-  runCheck();
+  setStatus('Address filled in from the link. Press Check to run it.');
+  $('check').focus();
 }
 renderRecent();

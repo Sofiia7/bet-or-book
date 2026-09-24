@@ -10,6 +10,11 @@ export interface SafeKV extends Omit<KVLike, 'put'> {
   put(key: string, value: string, options?: { expirationTtl?: number }): Promise<boolean>;
 }
 
+/** What sort of entry a key is - `check`, `snapshot`, `latest`, `og` - which
+ * is what a failure line needs. The rest of most keys is a wallet address,
+ * and a log line has no use for one (23.09 audit, S06). */
+const kindOf = (key: string): string => key.split(':')[0];
+
 /** Wraps KV so a quota or outage error degrades to "not cached" instead of
  * failing the request. Errors are logged, not thrown.
  *
@@ -29,7 +34,7 @@ export function safeKv(kv: KVLike): SafeKV {
         return await kv.get(key);
       } catch (err) {
         degraded = true;
-        console.error('kv get failed', key, err);
+        console.error('kv get failed', kindOf(key), err);
         return null;
       }
     },
@@ -39,7 +44,7 @@ export function safeKv(kv: KVLike): SafeKV {
         return true;
       } catch (err) {
         degraded = true;
-        console.error('kv put failed', key, err);
+        console.error('kv put failed', kindOf(key), err);
         return false;
       }
     },

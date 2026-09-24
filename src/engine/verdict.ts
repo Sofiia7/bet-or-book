@@ -78,8 +78,18 @@ export interface VerdictThresholds {
  * single-position rule already needs (orders and positions read in full),
  * and only once the funding-link finding - which needs the same holdings
  * read to be this thin - has had first refusal.
+ *
+ * v5 follows the 23.09 audit. A book now needs the headline market itself
+ * quoted on both sides, not just enough two-sided activity somewhere in the
+ * account to clear a floor: fifty orders spread across five other coins used
+ * to carry a $1M short with no orders of its own. Two-sidedness is measured
+ * as `2 x min(bid, ask)` per market rather than their sum, so a large bid
+ * against a token ask no longer reads as matched liquidity. A hedge this
+ * tool already proved or ruled out - in-band, over-covered, unchecked,
+ * unrecognised - now outranks a busy-maker-flow reading, which used to fire
+ * first and withhold a verdict the coverage had already answered.
  */
-export const CLASSIFIER_VERSION = 'v4';
+export const CLASSIFIER_VERSION = 'v5';
 
 export const DEFAULT_THRESHOLDS: VerdictThresholds = {
   book: {
@@ -178,12 +188,20 @@ function bookSignals(input: StructureInput, t: VerdictThresholds['book']): strin
   if (input.positions.nPositions >= t.minPositions && input.positions.netToGross <= t.maxNetToGross) {
     signals.push('positions');
   }
+  // Being a market maker somewhere is the account's activity; being one in
+  // the position the reader asked about is evidence about it. Fifty orders
+  // spread two-sided across five other coins, none of them the headline
+  // market, used to satisfy every clause below and call a $1M short
+  // inventory (23.09 audit, L01) - so the headline market itself has to be
+  // quoted both sides, and by enough to be a real counterparty rather than a
+  // token order dressing up one-sided flow.
   if (
+    input.orders.headlineTwoSided &&
     input.orders.restingOrders >= t.minRestingOrders &&
     input.orders.bidShare >= t.minBidShare &&
     input.orders.bidShare <= t.maxBidShare &&
     input.orders.coinsBothSides >= t.minCoinsBothSides &&
-    (input.orders.twoSidedNotionalUsd ?? 0) >= materialQuoteFloor(input, t)
+    input.orders.headlineTwoSidedNotionalUsd >= materialQuoteFloor(input, t)
   ) {
     signals.push('orders');
   }
@@ -263,9 +281,6 @@ export function computeVerdict(
   if (book.includes('orders')) {
     return { verdict: 'book', strength: book.length >= 2 ? 'strong' : 'likely', reasons: book };
   }
-  if (book.includes('trades')) {
-    return { verdict: 'unknown', strength: null, reasons: ['maker_flow_only'] };
-  }
 
   const h = thresholds.hedged;
   const ratio = input.hedge.hedgeRatio;
@@ -305,6 +320,18 @@ export function computeVerdict(
 
   if (hedgedByLeg) {
     return { verdict: 'hedged', strength: null, reasons: ['hedge_leg'] };
+  }
+
+  // Busy maker-style fills describe the account, not this position, and used
+  // to be checked before the hedge was even read: 100% spot coverage, fully
+  // read, still lost to a "signals disagree"-style Unknown because the same
+  // account also had 200 two-sided fills elsewhere (23.09 audit, L07). A
+  // hedge the checks above already proved or ruled out - over-covered,
+  // unchecked, unrecognised, in-band - answers this position's question, so
+  // maker flow only gets to withhold a verdict when nothing above resolved
+  // it either way.
+  if (book.includes('trades')) {
+    return { verdict: 'unknown', strength: null, reasons: ['maker_flow_only'] };
   }
 
   // Partly offset is still a position, and over-covered is a position the

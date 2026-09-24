@@ -110,12 +110,20 @@ export interface HoldingLike {
   priced?: boolean;
   chain?: string;
   tokenAddress?: string;
+  identityAmbiguous?: boolean;
 }
 
 export function classifyHolding(holding: HoldingLike, perpCoin: string): AssetMatch {
   const perp = perpCoin.toUpperCase();
   if (!nameMatches(holding.coin, perp) && !spotHedgesPerp(holding.coin, perp, holding)) return 'unrelated';
   if (spotHedgesPerp(holding.coin, perp, holding)) {
+    // A name this tool would otherwise trust outright, except Hyperliquid's
+    // own fresh listing has more than one token under it right now: which
+    // one this balance actually is is not established, the same gap an
+    // unrecognised on-chain contract leaves - so it withholds the same way,
+    // rather than being counted as a clean match by name alone (23.09
+    // audit, L08).
+    if (holding.identityAmbiguous) return 'unknown-contract';
     return holding.priced === false ? 'unpriced' : 'match';
   }
   if (holding.source === 'hyperliquid-spot') return holding.priced === false ? 'unpriced' : 'unrelated';

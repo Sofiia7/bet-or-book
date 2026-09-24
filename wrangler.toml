@@ -35,14 +35,21 @@ class_name = "RequestGate"
 tag = "v1"
 new_sqlite_classes = ["NansenBudget", "RequestGate"]
 
-# Structured logs, so a budget refusal or a failing upstream can be seen
-# without adding print statements to a deployed Worker. This flag is logs;
-# it is not latency, error-rate, fallback, cache-hit or credit measurement,
-# and none of those exist yet (audit C03). Sampled traces are a separate
-# setting and are deliberately not on: there is nothing to correlate them
-# against until those measurements do exist.
+# Logs, and the measurements built on them. Every check, picture and saved
+# reading leaves one JSON line (src/telemetry.ts): latency, cache hit or
+# fresh, degraded, the reason that decided the verdict, credits spent,
+# budget refusals, failed saves. Workers Logs indexes the fields, and its
+# query builder gives P50/P95 and counts over them (docs/architecture.md,
+# "What the Worker counts"). Traces were left off until there was something
+# to correlate them against (audit C03); with those events in place, one
+# request in ten is traced, which at this site's traffic stays far inside
+# the free plan's 200,000 observability events a day.
 [observability]
 enabled = true
+
+[observability.traces]
+enabled = true
+head_sampling_rate = 0.1
 
 [vars]
 NANSEN_DAILY_CREDIT_CAP = "300"

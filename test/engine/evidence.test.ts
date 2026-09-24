@@ -15,6 +15,7 @@ function positions(overrides: Partial<PositionFeatures>): PositionFeatures {
     headlineLiqDistancePct: null,
     headlineLiqDistanceBasis: null,
     sameAssetOffsetShare: 0,
+    netSide: 'short',
     candidates: [],
     ...overrides,
   };
@@ -112,6 +113,44 @@ describe('explain', () => {
     expect(e.evidence).toContainEqual(expect.objectContaining({ label: 'Hedge found', value: '60% (Nansen-supported chains)', source: 'Nansen' }));
   });
 
+  it('says where the hedge was found, not only where it was looked for (23.09 audit, U04)', () => {
+    // All seven Hedged cards of the scan were covered by Hyperliquid's own
+    // spot, with nothing on-chain, and the sentence said "on Nansen-supported
+    // chains" because that is where it had searched.
+    const onHyperliquid = explain(
+      input({
+        verdict: { verdict: 'hedged', strength: null, reasons: ['hedge_leg'] },
+        hedge: {
+          ...EMPTY_HEDGE,
+          hedgeUsd: 97_000_000,
+          hedgeRatio: 0.97,
+          unverifiedUsd: 0,
+          lendingUsd: 0,
+          hedgeUsdBySource: { hyperliquidSpot: 97_000_000, onchain: 0 },
+        },
+      }),
+    );
+    expect(onHyperliquid.summary).toContain(
+      'held by this address on Hyperliquid - other Nansen-supported chains were checked and found nothing',
+    );
+    expect(onHyperliquid.summary).not.toMatch(/held by this address on Nansen-supported chains/);
+
+    const onBoth = explain(
+      input({
+        verdict: { verdict: 'hedged', strength: null, reasons: ['hedge_leg'] },
+        hedge: {
+          ...EMPTY_HEDGE,
+          hedgeUsd: 90_000_000,
+          hedgeRatio: 0.9,
+          unverifiedUsd: 0,
+          lendingUsd: 0,
+          hedgeUsdBySource: { hyperliquidSpot: 60_000_000, onchain: 30_000_000 },
+        },
+      }),
+    );
+    expect(onBoth.summary).toContain('on Hyperliquid and on Nansen-supported chains');
+  });
+
   it('calls busy maker flow what it is, without deciding the position', () => {
     const e = explain(
       input({
@@ -154,7 +193,7 @@ describe('explain', () => {
     );
   });
 
-  it('says an over-covered short leaves the account long, not neutral', () => {
+  it('says visible spot exceeds the short, not that the account is net long (23.09 audit, L12)', () => {
     const e = explain(
       input({
         verdict: { verdict: 'unknown', strength: null, reasons: ['over_covered'] },
@@ -163,9 +202,11 @@ describe('explain', () => {
       }),
     );
     expect(e.summary).toBe(
-      'The $15.4M ETH short is more than covered: $30.0M of spot ETH held by this address on Nansen-supported chains ' +
-        'leaves it net long $14.6M of ETH.',
+      'The $15.4M ETH short is more than covered: visible spot ETH held by this address on Nansen-supported chains ' +
+        'exceeds it by $14.6M, $30.0M in total. Debts, other positions and cross-margin are not read here, so this ' +
+        'is not the account\'s net position.',
     );
+    expect(e.summary).not.toContain('net long');
     expect(e.summary).not.toContain('neutral');
   });
 
@@ -282,7 +323,7 @@ describe('explain', () => {
       }),
     );
     expect(e.summary).toBe(
-      '8 open positions, all pointing the same way, net out to 100% of gross exposure; the largest is $30.0M ETH ' +
+      '8 open positions net out to 100% of gross exposure, mostly short; the largest is $30.0M ETH ' +
         'short (30% of it). No two-sided quoting, and no ETH was found at this address on Nansen-supported chains. ' +
         'Debts and other derivatives are not read here.',
     );
@@ -299,12 +340,13 @@ describe('explain', () => {
           headlineShare: 0.4,
           headlineNotionalUsd: 24_000_000,
           headlineSide: 'long',
+          netSide: 'long',
         }),
         hedgeScope: 'none',
       }),
     );
     expect(e.summary).toBe(
-      '6 open positions, all pointing the same way, net out to 100% of gross exposure; the largest is $24.0M ETH ' +
+      '6 open positions net out to 100% of gross exposure, mostly long; the largest is $24.0M ETH ' +
         'long (40% of it). No two-sided quoting. Spot cannot offset a long, and debts or other derivatives are not read here.',
     );
     expect(e.evidence.some((i) => i.label === 'Hedge found')).toBe(false);
@@ -320,10 +362,47 @@ describe('explain', () => {
       }),
     );
     expect(e.summary).toBe(
-      '5 open positions, all pointing the same way, net out to 90% of gross exposure; the largest is $10.0M ETH ' +
+      '5 open positions net out to 90% of gross exposure, mostly short; the largest is $10.0M ETH ' +
         'short (50% of it). No two-sided quoting, and only 2.0% of it is covered by ETH at this address on ' +
         'Hyperliquid. Debts and other derivatives are not read here.',
     );
+  });
+
+  it('does not call opposite-direction legs "all pointing the same way" (23.09 audit, L04)', () => {
+    // $900K ETH short and $100K BTC long: 80% of $1M gross, entirely short,
+    // legs pointing opposite ways. "All pointing the same way" was false.
+    const e = explain(
+      input({
+        verdict: { verdict: 'looks_like_a_bet', strength: null, reasons: ['directional_portfolio'] },
+        positions: positions({
+          nPositions: 2,
+          netToGross: 0.8,
+          headlineShare: 0.9,
+          headlineNotionalUsd: 900_000,
+          netSide: 'short',
+        }),
+      }),
+    );
+    expect(e.summary).not.toContain('all pointing the same way');
+    expect(e.summary).toContain('mostly short');
+  });
+
+  it('calls a chosen leg "selected", not "largest", when it is not the account\'s biggest (23.09 audit, L04)', () => {
+    const e = explain(
+      input({
+        verdict: { verdict: 'looks_like_a_bet', strength: null, reasons: ['directional_portfolio'] },
+        positions: positions({
+          nPositions: 9,
+          netToGross: 1,
+          headlineShare: 1 / 9,
+          headlineNotionalUsd: 10_000_000,
+        }),
+        focus: { coin: 'ETH', side: 'short' },
+      }),
+    );
+    expect(e.summary).toContain('the selected leg is $10.0M ETH short');
+    expect(e.summary).not.toContain('the largest is');
+    expect(e.evidence[0]).toMatchObject({ label: 'Selected position' });
   });
 
   it('lists why an undecided account is not a clean bet', () => {

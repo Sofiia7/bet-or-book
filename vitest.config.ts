@@ -72,6 +72,11 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['test/**/*.test.ts'],
+    // The workerd scenarios build the Worker with Wrangler and start the real
+    // runtime for each one - about fifteen seconds against three for all of
+    // the rest - so they run as their own step: `npm run test:runtime`, and
+    // in CI after this one (vitest.runtime.config.ts).
+    exclude: ['test/runtime/**', '**/node_modules/**'],
     // Anything under node_modules is normally handed straight to Node's own
     // loader rather than through Vite's transform pipeline - a reasonable
     // default for vendored code, but it means resolveId/load above never

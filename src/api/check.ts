@@ -13,6 +13,7 @@ import {
   normalizeTrades,
   buildSpotPriceIndex,
   normalizeSpotHoldings,
+  duplicateSpotTokenNames,
   normalizeNansenPositions,
   normalizeNansenBalances,
   normalizeRelatedWallets,
@@ -177,6 +178,10 @@ export type CheckResponse = CheckResult & {
   supersededBy?: string;
   /** The reading this one replaced, where there is one. */
   supersedes?: string;
+  /** The rule behind the verdict in plain words (src/engine/reasons.ts),
+   * added wherever a reading is served; null where the rules that made it
+   * have no words for its reason. */
+  rule?: string | null;
 };
 
 /** Reads in stages so that every Nansen credit is spent only where its answer
@@ -311,14 +316,24 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
   }
   const positionFeatures = computePositionFeatures(positions, markPxByCoin, opts.focus);
   // Asking about a position that is not open is worth saying out loud: the
-  // answer below is about a different position from the one requested.
+  // answer below is about a different position from the one requested. Coin
+  // alone used to decide this, so an ETH long asked for against an ETH short
+  // silently kept `focus: {ETH, long}` while the card showed the short and
+  // said nothing had changed (23.09 audit, U03).
   const askedFor = opts.focus ?? null;
   const focus =
-    askedFor && positionFeatures.headlineCoin?.toUpperCase() === askedFor.coin.toUpperCase() ? askedFor : null;
+    askedFor &&
+    positionFeatures.headlineCoin?.toUpperCase() === askedFor.coin.toUpperCase() &&
+    positionFeatures.headlineSide === askedFor.side
+      ? askedFor
+      : null;
   if (askedFor && focus === null) {
-    coverage.push(
-      `No ${askedFor.coin} ${askedFor.side} is open at this address; this answer is about the largest position instead`,
-    );
+    const text = `No ${askedFor.coin} ${askedFor.side} is open at this address; this answer is about the largest position instead`;
+    coverage.push(text);
+    // Nothing failed to read, so the answer is not degraded - but it is not
+    // an answer to the question asked, and that has to stand next to it
+    // rather than among the notes a reader opens on purpose (23.09 U06).
+    coverageNotes.push({ text, failure: true });
   }
 
   // frontendOpenOrders answers for one perp dex and spot. Nansen reports
@@ -343,6 +358,19 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     });
   }
   const orderFeatures = computeOrderFeatures(resting, positionFeatures.headlineCoin);
+  // A HIP-3 dex this account merely quotes on, with no open position, is not
+  // in `hip3Dexes` at all - nothing here asks Hyperliquid to name every dex
+  // that exists, only the ones a position points at. "Complete" is therefore
+  // a claim about the venues checked, not about every venue there is. It
+  // only matters once the venues checked come back quiet - a bet or book
+  // rule is about to read that silence as "quotes nothing" - so the caveat
+  // is stated exactly there rather than on every reading (23.09 audit, L06).
+  if (ordersCoverage === 'complete' && orderFeatures.coinsBothSides === 0) {
+    note(
+      'No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a ' +
+        'position on. A dex it only quotes, with no position of its own, would not appear here',
+    );
+  }
   const tradeFeatures = computeTradeFeatures(normalizeTrades(rawFills), TRADES_WINDOW_HOURS, positionFeatures.headlineCoin);
   const tradeSignal = {
     tradesPerDay: tradeFeatures.tradesPerDay,
@@ -372,7 +400,11 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     }
   }
   const [spotMeta, spotAssetCtxs] = spotMetaPair;
-  const hlSpot = normalizeSpotHoldings(spotBalances.balances, buildSpotPriceIndex(spotMeta, spotAssetCtxs));
+  const hlSpot = normalizeSpotHoldings(
+    spotBalances.balances,
+    buildSpotPriceIndex(spotMeta, spotAssetCtxs),
+    duplicateSpotTokenNames(spotMeta),
+  );
   const hedgeFeatures = computeHedgeFeatures(
     positionFeatures.headlineCoin,
     positionFeatures.headlineSide,
@@ -466,6 +498,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     sizeVsOi,
     headlineOpenedUsd: tradeFeatures.headlineOpenedUsd,
     headlineClosedUsd: tradeFeatures.headlineClosedUsd,
+    headlineFills: tradeFeatures.headlineFills,
     tradesSpanHours: tradeFeatures.spanHours,
   });
   if (fundingContext) vitals.push(fundingContext);
@@ -504,7 +537,7 @@ export async function checkAddress(address: string, opts: CheckOptions): Promise
     ...measured,
     summary,
     evidence,
-    breakdown: exposureBreakdown(positionFeatures, hedgeFeatures, linkedHedge),
+    breakdown: exposureBreakdown(positionFeatures, hedgeFeatures, linkedHedge, hedgeCoverage),
     vitals,
     coverage,
     coverageNotes,
@@ -596,37 +629,48 @@ async function readLinkedHedge(
   );
 }
 
+const FUNDING_CONTEXT_CHAINS = ['arbitrum', 'ethereum'] as const;
+
 /** When a long's own wallet was first funded, and by what kind of address -
  * two calls, only for a small account. Never a hedge: a hedge search does
  * not apply to a long at all, so this is the one piece of Nansen context a
- * lone long can still carry. Named "First funded" rather than folded into
- * the hedge-focused "Linked wallets" evidence, because it answers a
- * different question and is never gated on hedge coverage. */
+ * lone long can still carry.
+ *
+ * Named "Earliest funding found" rather than "First funded" - and scoped to
+ * the chain it was found on - because it is neither the account's first
+ * activity on every chain, nor the date the position or the Hyperliquid
+ * account itself was created, only the earliest First Funder record on the
+ * two chains this checks. A read that failed on one of them used to be
+ * noted elsewhere on the card while this line kept its unqualified claim,
+ * so a one-day-old Ethereum record could read as the account's age even
+ * when Arbitrum was never actually checked (23.09 audit, L09). */
 async function readFundingContext(
   nansen: NansenClient,
   address: string,
   now: number,
   note: (text: string, failure?: boolean) => void,
 ): Promise<VitalsItem | null> {
-  const related = await Promise.allSettled([
-    nansen.relatedWallets(address, 'arbitrum'),
-    nansen.relatedWallets(address, 'ethereum'),
-  ]);
+  const related = await Promise.allSettled(
+    FUNDING_CONTEXT_CHAINS.map((chain) => nansen.relatedWallets(address, chain)),
+  );
   const links: LinkedWallet[] = [];
-  for (const r of related) {
+  const uncheckedChains: string[] = [];
+  related.forEach((r, i) => {
     if (r.status === 'fulfilled') {
       try {
         links.push(...normalizeRelatedWallets(r.value.rows));
       } catch (err) {
         console.error('nansen related wallets (funding context)', err);
         note('Funding history came back in an unexpected shape on one chain');
+        uncheckedChains.push(FUNDING_CONTEXT_CHAINS[i]);
       }
     } else {
       note('Funding history unavailable on one chain');
+      uncheckedChains.push(FUNDING_CONTEXT_CHAINS[i]);
     }
-  }
-  // The earliest First Funder across both chains is when the account
-  // actually started, whichever chain it started on.
+  });
+  // The earliest First Funder found, whichever of the two chains it is on -
+  // not "the earliest across every chain", which nothing here checked.
   const first = links
     .filter((w) => w.relation === 'First Funder' && w.address !== address.toLowerCase() && w.fundedAt !== null)
     .sort((a, b) => (a.fundedAt as number) - (b.fundedAt as number))[0];
@@ -639,5 +683,6 @@ async function readFundingContext(
       : first.serviceStatus === 'unverified'
         ? 'an unlabelled wallet'
         : 'another wallet';
-  return { label: 'First funded', value: `${when}, by ${who}`, source: 'Nansen' };
+  const scope = uncheckedChains.length > 0 ? `, ${uncheckedChains.join(' and ')} not read` : '';
+  return { label: 'Earliest funding found', value: `${when} on ${first.chain}${scope}, by ${who}`, source: 'Nansen' };
 }

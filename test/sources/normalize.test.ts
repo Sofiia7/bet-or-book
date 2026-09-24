@@ -13,6 +13,7 @@ import {
   normalizeOrders,
   buildSpotPriceIndex,
   normalizeSpotHoldings,
+  duplicateSpotTokenNames,
   normalizeTrades,
   normalizeNansenPositions,
   normalizeNansenBalances,
@@ -147,6 +148,42 @@ describe('spot price index and holdings', () => {
       expect(h.coin).not.toBe('USDC');
     }
   });
+
+  it('finds no duplicate names in a real captured spotMeta (23.09 audit, L08)', () => {
+    const [meta] = spotMetaFixture as unknown as [HlSpotMeta, HlSpotAssetCtx[]];
+    expect(duplicateSpotTokenNames(meta).size).toBe(0);
+  });
+
+  it('flags a holding whose name is not unique in this check\'s own token list', () => {
+    // A token deployed under a name already in use: nothing here proves this
+    // balance is the well-known HYPE rather than the look-alike at a
+    // different index, so it cannot be trusted by name alone.
+    const meta: HlSpotMeta = {
+      tokens: [
+        { name: 'HYPE', index: 150 },
+        { name: 'HYPE', index: 987654 },
+      ],
+      universe: [],
+    } as unknown as HlSpotMeta;
+    const duplicates = duplicateSpotTokenNames(meta);
+    expect(duplicates.has('HYPE')).toBe(true);
+
+    const balances: HlSpotBalance[] = [
+      { coin: 'HYPE', token: 987654, total: '1000', hold: '0', entryNtl: '0' },
+    ];
+    const holdings = normalizeSpotHoldings(balances, new Map([[987654, 40]]), duplicates);
+    expect(holdings[0]).toMatchObject({ coin: 'HYPE', identityAmbiguous: true });
+  });
+
+  it('does not flag an ordinary name that only one token holds', () => {
+    const [meta] = spotMetaFixture as unknown as [HlSpotMeta, HlSpotAssetCtx[]];
+    const holdings = normalizeSpotHoldings(
+      (spotBalancesFixture as { balances: HlSpotBalance[] }).balances,
+      buildSpotPriceIndex(meta, (spotMetaFixture as unknown as [HlSpotMeta, HlSpotAssetCtx[]])[1]),
+      duplicateSpotTokenNames(meta),
+    );
+    expect(holdings.every((h) => !h.identityAmbiguous)).toBe(true);
+  });
 });
 
 describe('normalizeTrades', () => {
@@ -191,11 +228,30 @@ describe('Nansen normalizers', () => {
     expect(positions.some((p) => p.leverageType === 'cross')).toBe(true);
   });
 
-  it('keeps chain on balances and drops zero-value rows', () => {
+  it('keeps chain on balances and drops zero-amount rows', () => {
     const rows = (funderEthBalancesFixture as { data: NansenBalance[] }).data;
     const holdings = normalizeNansenBalances(rows);
     expect(holdings.every((h) => h.valueUsd > 0)).toBe(true);
     expect(holdings.find((h) => h.coin === 'AETHWETH')?.chain).toBe('ethereum');
+  });
+
+  it('keeps a real balance with no price instead of reading it as absent (23.09 audit, L05)', () => {
+    // A known WETH contract, 1,000 tokens, and an upstream that could not
+    // price it this time. The old filter read on `value_usd` alone, so this
+    // row - and the hedge it would have counted toward - vanished before the
+    // verdict ever saw it, and a complete page of holdings looked like an
+    // account with nothing there.
+    const base = (funderEthBalancesFixture as { data: NansenBalance[] }).data[0];
+    const unpriced: NansenBalance = { ...base, token_amount: 1000, value_usd: null as unknown as number };
+    const holdings = normalizeNansenBalances([unpriced]);
+    expect(holdings).toHaveLength(1);
+    expect(holdings[0]).toMatchObject({ priced: false, valueUsd: 0, amount: 1000 });
+  });
+
+  it('still drops a row with no real amount, priced or not', () => {
+    const base = (funderEthBalancesFixture as { data: NansenBalance[] }).data[0];
+    const empty: NansenBalance = { ...base, token_amount: 0 };
+    expect(normalizeNansenBalances([empty])).toHaveLength(0);
   });
 
   it('never returns the label itself, and grades a link as service, not-service or unverified', () => {

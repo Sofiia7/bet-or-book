@@ -22,6 +22,11 @@ jobs:
         run: npm run typecheck
       - name: Tests
         run: npm test
+      - name: Runtime tests (workerd)
+        # The Worker as Wrangler builds it, in the real runtime: the spend
+        # cap under concurrent checks, a Durable Object restarting, a reader
+        # disconnecting, KV failing and KV lagging (23.09 audit, S05).
+        run: npm run test:runtime
       - name: Worker builds
         run: npx wrangler deploy --dry-run --outdir /tmp/worker-build
       - name: No secret in the tree

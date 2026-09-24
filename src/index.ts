@@ -13,12 +13,15 @@ import { compareReadings } from './engine/compare';
 import pageHtml from '../web/index.html';
 import pageScript from '../web/app.js';
 import galleryData from '../data/gallery.json';
+import featuredData from '../data/featured.json';
 import ledgerData from '../data/ledger.json';
-import type { Gallery } from './gallery';
+import { galleryIndex, previousReadingId, type Gallery, type GalleryIndex } from './gallery';
 import { BUILDATHON_WINDOW, type LedgerSummary } from './ledger';
 import type { KVLike } from './kv';
 import type { SafeKV } from './safeKv';
-import { ogCardData } from './engine/ogCard';
+import { ogCardFor, ogCacheKey, OG_LAYOUT_VERSION } from './engine/ogCard';
+import { emit, readingFields, type CheckEvent, type PictureEvent, type SnapshotEvent } from './telemetry';
+import { ruleExplanation } from './engine/reasons';
 import { renderOgPng, type OgFont } from './engine/ogRender';
 import interRegular from '../assets/inter-regular.woff';
 import interBold from '../assets/inter-bold.woff';
@@ -29,15 +32,35 @@ import resvgWasmModule from '../node_modules/@resvg/resvg-wasm/index_bg.wasm';
 import ogFallbackPng from '../assets/og-fallback.png';
 
 const gallery = galleryData as unknown as Gallery;
+
+/** A reading as it leaves the Worker: with the rule behind its verdict in
+ * plain words, worked out here from its reason codes, so the page has the
+ * sentence without keeping its own copy of the rules (23.09 audit, U06). */
+function explained<T extends CheckResponse>(r: T): T {
+  return { ...r, rule: ruleExplanation(r.verdict, r.historical !== undefined) };
+}
 /** Gallery cards by snapshot id, so a shared link to one opens the card that
  * was shared and not a fresh check of that account. */
-const galleryById = new Map(
-  gallery.entries.map((e) => [e.snapshotId ?? snapshotId(e.address, e.checkedAt), e] as const),
-);
-/** What the page lists. A reading that has since been read again is kept -
- * it is the other half of any comparison, and its link stays good - but
- * listing it as well would show the same account twice. */
-const listedGallery: Gallery = { ...gallery, entries: gallery.entries.filter((e) => !e.superseded) };
+/** A handful of readings made fresh and picked by hand, one of each kind of
+ * answer, shown first to a visitor with no address of their own. The scan
+ * below them is days old and read before vitals existed, so on its own it
+ * showed a new visitor mostly the older product (23.09 audit, U05). */
+const featured = featuredData as unknown as Gallery;
+const galleryIdOf = (e: CheckResponse) => e.snapshotId ?? snapshotId(e.address, e.checkedAt);
+/** Every reading that ships with the Worker, by id, and what it is: a card
+ * from the gallery scan, or a demonstration reading - saved like any live
+ * one, and worded as one. Either answers without touching storage. */
+const bundledById = new Map<string, { card: CheckResponse; kind: 'gallery' | 'saved' }>([
+  ...gallery.entries.map((e) => [galleryIdOf(e), { card: e, kind: 'gallery' as const }] as const),
+  ...featured.entries.map((e) => [galleryIdOf(e), { card: e, kind: 'saved' as const }] as const),
+]);
+/** What the page lists, as one line per card. A reading that has since been
+ * read again is kept - it is the other half of any comparison, and its link
+ * stays good - but listing it as well would show the same account twice. */
+const listedGallery: GalleryIndex & { featured: GalleryIndex['entries'] } = {
+  ...galleryIndex(gallery, galleryIdOf),
+  featured: galleryIndex(featured, galleryIdOf).entries,
+};
 const scriptedLedger = ledgerData as unknown as LedgerSummary;
 
 /**
@@ -103,12 +126,22 @@ const SCRIPT_HEADERS = {
   'cache-control': 'public, max-age=300',
 };
 
-/** A reading's image never changes once it exists - the reading itself is
- * immutable - so a cache hit is cached forever, in the browser and at
- * whatever CDN a crawler sits behind. */
+/** A reading's own picture. The reading never changes under its id and the
+ * layout is part of the key (OG_LAYOUT_VERSION), so once a picture exists
+ * it is cached for good, in the browser and at whatever CDN a crawler sits
+ * behind. */
 const OG_IMAGE_HEADERS = {
   'content-type': 'image/png',
   'cache-control': 'public, max-age=31536000, immutable',
+};
+
+/** The standing picture, served while a reading's own does not exist yet -
+ * or cannot be found yet: KV can take a minute to show a new write in every
+ * region. It used to go out marked immutable for a year, so a crawler that
+ * came a little early kept the stand-in for good (23.09 audit, S04). */
+const OG_STAND_IN_HEADERS = {
+  'content-type': 'image/png',
+  'cache-control': 'public, max-age=60',
 };
 
 const OG_FONTS: OgFont[] = [
@@ -117,46 +150,32 @@ const OG_FONTS: OgFont[] = [
 ];
 
 /**
- * A reading's own social-preview picture, cached in KV under its snapshot
- * id and rendered at most once per id.
+ * A reading's picture as already drawn, or null.
  *
- * satori and resvg together take roughly 26-28 ms warm and up to 127 ms on
- * a cold isolate - measured directly, and in line with independent reports
- * of the same two libraries on Workers (docs/architecture.md). The Workers
- * **free** plan's CPU budget is 10 ms per request; the render is attempted
- * anyway, because the failure mode here is "no image", which is exactly
- * what every reading had before this existed. A paid plan's 30 s budget
- * clears it with room to spare. Nothing that calls this ever depends on it
- * succeeding.
+ * This is all a crawler's request ever does. satori and resvg together take
+ * roughly 26-28 ms warm and up to 127 ms on a cold isolate (measured, see
+ * docs/architecture.md), and the Workers free plan allows 10 ms per request.
+ * Drawing used to happen right here, inside a try/catch, on the theory that
+ * the worst case was the stand-in picture. It was not: a request over its
+ * CPU limit is stopped by the runtime, which answers the crawler with Error
+ * 1102, and no catch block runs (23.09 audit, S04). So the crawler's request
+ * only reads, and drawing happens in a request of its own - see drawOgPng.
  */
-async function ogPngFor(card: CheckResponse, kv: SafeKV): Promise<Uint8Array | null> {
-  const id = card.snapshotId;
-  if (!id) return null;
-  const cacheKey = `og:${id}`;
-  const cached = await kv.get(cacheKey);
-  if (cached !== null) {
-    try {
-      return new Uint8Array(Buffer.from(cached, 'base64'));
-    } catch {
-      // Fall through and re-render rather than serve a cache entry that
-      // does not even decode.
-    }
-  }
-  try {
-    const data = ogCardData({
-      address: card.address,
-      verdict: card.verdict,
-      summary: card.summary,
-      classifierVersion: card.classifierVersion,
-      breakdown: card.breakdown,
-    });
-    const png = await renderOgPng(data, OG_FONTS, resvgWasmModule);
-    await kv.put(cacheKey, Buffer.from(png).toString('base64'), { expirationTtl: SNAPSHOT_TTL_SECONDS });
-    return png;
-  } catch (err) {
-    console.error('og render failed', id, err);
-    return null;
-  }
+async function storedOgPng(kv: SafeKV, id: string): Promise<Uint8Array | null> {
+  const cached = await kv.get(ogCacheKey(id));
+  return cached === null ? null : new Uint8Array(Buffer.from(cached, 'base64'));
+}
+
+/**
+ * Draws one reading's picture and keeps it, in a request whose answer
+ * nothing displays: the page asks for it once a live reading is saved, and
+ * again when the reader reaches for a share button, before any crawler has
+ * the link. If the runtime stops this request for CPU, the reader's page
+ * does not notice, and a crawler still gets the stand-in rather than an
+ * error. A paid plan's 30 s budget clears the render with room to spare.
+ */
+async function drawOgPng(card: CheckResponse, kind: 'saved' | 'gallery'): Promise<Uint8Array> {
+  return renderOgPng(ogCardFor(card, kind), OG_FONTS, resvgWasmModule);
 }
 
 /**
@@ -168,6 +187,25 @@ const SNAPSHOT_HEADERS = {
   'cache-control': 'public, max-age=3600',
   'x-robots-tag': 'noindex',
 };
+
+/**
+ * A saved reading that could not be found here. That is not the same as
+ * one that never existed: KV can take up to a minute to show a new write in
+ * a region that has not seen it yet, and a link is shared - and opened, and
+ * fetched by a crawler - within that minute all the time. Reproduced on
+ * workerd with a lagging KV (test/runtime/workerd.test.ts, 23.09 audit S05):
+ * the answer said "never existed" and carried nothing to stop a cache
+ * keeping it. It is no-store now, and it says what it can actually know.
+ */
+const notFoundYet = () =>
+  Response.json(
+    {
+      error:
+        'that reading could not be found here: it may have expired, or, if it was saved in the last minute, ' +
+        'it may not have reached this region yet',
+    },
+    { status: 404, headers: { 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } },
+  );
 
 /**
  * True when this request did not come from another site's page.
@@ -221,8 +259,10 @@ function withSocialTags(html: string, card: CheckResponse, url: URL, id: string)
   const title = `${what}: ${VERDICT_WORDS[card.verdict.verdict] ?? 'checked'}`;
   // `id` is the query parameter this reading was actually found under, not
   // `card.snapshotId` - an older gallery entry can carry no id of its own
-  // even though the map it lives in is keyed by one (audit-era data).
-  const image = `${url.origin}/api/og?id=${encodeURIComponent(id)}`;
+  // even though the map it lives in is keyed by one (audit-era data). The
+  // layout goes in the URL as well as the key: a crawler's cache holds a
+  // picture by URL, for a year, and a new layout has to be a new address.
+  const image = `${url.origin}/api/og?id=${encodeURIComponent(id)}&v=${OG_LAYOUT_VERSION}`;
   return html.replace(
     SOCIAL_BLOCK,
     [
@@ -313,30 +353,107 @@ export default {
         return method === 'HEAD' ? headOf(res) : res;
       }
 
+      // A reserve the public path cannot reach, so an afternoon of visitors
+      // cannot leave the demo with a Hyperliquid-only answer. A header, not
+      // `?demo=`: a query string ends up in browser history, server access
+      // logs and - the specific way this was found - the URL bar of a
+      // screen recording made for this project's own submission video. An
+      // unset or empty DEMO_KEY must never itself become a demo pass, which
+      // `!==undefined` alone did not rule out (23.09 audit, S03).
+      const demo = !!env.DEMO_KEY && request.headers.get('x-demo-key') === env.DEMO_KEY;
+
+      // One line for every check request that got this far, whatever it
+      // got (23.09 audit, S06). See src/telemetry.ts for what is in it and,
+      // as carefully, what is not.
+      const started = Date.now();
+      const counted = (outcome: CheckEvent['outcome'], more: Partial<CheckEvent> = {}) =>
+        emit({
+          event: 'check',
+          outcome,
+          ms: Date.now() - started,
+          kvDegraded: kv.degraded,
+          focus: focus !== null,
+          demo,
+          ...more,
+        });
+
       if (!fromThisSite(request, url)) {
+        counted('cross_site');
         return Response.json({ error: 'checks are started from this site' }, { status: 403 });
       }
 
-      const limiter = requestGate(env.REQUEST_GATE, RATE_LIMIT_MAX_PER_WINDOW, RATE_LIMIT_WINDOW_SECONDS);
-      const ip = extractIp(request);
-      if (!(await limiter.allow(ip))) {
-        return Response.json(
-          { error: 'too many checks from this address, try again shortly' },
-          { status: 429, headers: { 'retry-after': String(RATE_LIMIT_WINDOW_SECONDS) } },
-        );
-      }
-      const burst = requestGate(env.REQUEST_GATE, GLOBAL_BURST_MAX, GLOBAL_BURST_WINDOW_SECONDS);
-      if (!(await burst.allow('all-clients'))) {
-        return Response.json(
-          { error: 'this site is busy right now, try again in a few seconds' },
-          { status: 429, headers: { 'retry-after': String(GLOBAL_BURST_WINDOW_SECONDS) } },
-        );
+      // A POST that only replays a reading already on record is exactly as
+      // free as the GET path above - it costs a KV read, nothing else - so
+      // it should not spend a place in the rate limiter meant to bound how
+      // often a new, expensive check may start (23.09 audit, S02).
+      const alreadyCached = await kv.get(cacheKey);
+      if (alreadyCached !== null) {
+        counted('cached', readingFields(JSON.parse(alreadyCached) as CheckResponse));
+        return new Response(alreadyCached, { headers: { 'content-type': 'application/json' } });
       }
 
-      // A reserve the public path cannot reach, so an afternoon of visitors
-      // cannot leave the demo with a Hyperliquid-only answer.
-      const demo = env.DEMO_KEY !== undefined && url.searchParams.get('demo') === env.DEMO_KEY;
+      // A coin/side that is not actually open still mints its own cache key
+      // and its own fresh paid check, however many different ones are tried
+      // - every one of them was going to fall back to the same largest
+      // position anyway. When a plain reading of this address is already on
+      // record, its candidates already say which positions exist, so an ask
+      // outside that list can be answered from it for free instead of
+      // spending a new check to learn the same "not open" a second time.
+      if (focus) {
+        const largestCached = await kv.get(`check:${CLASSIFIER_VERSION}:${address}`);
+        if (largestCached !== null) {
+          const parsed = JSON.parse(largestCached) as CheckResponse;
+          const known = parsed.positions.candidates.some(
+            (c) => c.coin.toUpperCase() === focus.coin.toUpperCase() && c.side === focus.side,
+          );
+          if (!known) {
+            const note = `No ${focus.coin} ${focus.side} is open at this address; this answer is about the largest position instead`;
+            counted('not_open', readingFields(parsed));
+            return Response.json({
+              ...explained(parsed),
+              coverage: parsed.coverage.includes(note) ? parsed.coverage : [note, ...parsed.coverage],
+              // Shown next to the answer, not among the notes: the question
+              // asked is not the one this answers (see src/api/check.ts).
+              coverageNotes: parsed.coverageNotes?.some((n) => n.text === note)
+                ? parsed.coverageNotes
+                : [{ text: note, failure: true }, ...(parsed.coverageNotes ?? [])],
+            });
+          }
+        }
+      }
 
+      // The reserve exists so the demo path still works while the public
+      // one is busy - which it cannot do if reaching it first requires
+      // getting past the same public limits it is meant to stand apart
+      // from. So this checks the operator key before either limiter, and a
+      // demo request skips both: the reserve is what protects it from
+      // public load, not a place in the public queue.
+      if (!demo) {
+        const limiter = requestGate(env.REQUEST_GATE, RATE_LIMIT_MAX_PER_WINDOW, RATE_LIMIT_WINDOW_SECONDS);
+        const ip = extractIp(request);
+        if (!(await limiter.allow(ip))) {
+          counted('rate_limited');
+          return Response.json(
+            { error: 'too many checks from this address, try again shortly' },
+            { status: 429, headers: { 'retry-after': String(RATE_LIMIT_WINDOW_SECONDS) } },
+          );
+        }
+        const burst = requestGate(env.REQUEST_GATE, GLOBAL_BURST_MAX, GLOBAL_BURST_WINDOW_SECONDS);
+        if (!(await burst.allow('all-clients'))) {
+          counted('busy');
+          return Response.json(
+            { error: 'this site is busy right now, try again in a few seconds' },
+            { status: 429, headers: { 'retry-after': String(GLOBAL_BURST_WINDOW_SECONDS) } },
+          );
+        }
+      }
+
+      // Filled in only when this request is the one that made the reading;
+      // an answer that came from the cache or from a check already running
+      // for the same question cost this request nothing. The `as` keeps
+      // TypeScript from deciding it is still null after the await: it is
+      // assigned inside the producer below.
+      let fresh = null as Pick<CheckEvent, 'nansenCalls' | 'credits' | 'nansenOff'> | null;
       try {
         const ttl = (r: CheckResponse) => (r.degraded ? DEGRADED_CACHE_TTL_SECONDS : CHECK_CACHE_TTL_SECONDS);
         const result = await withCache(kv, cacheKey, ttl, async () => {
@@ -385,16 +502,32 @@ export default {
               deadline: startedAt + CHECK_DEADLINE_MS,
               signal: timeout,
             });
-            const id = snapshotId(address, result.checkedAt, result.classifierVersion);
+            const id = snapshotId(address, result.checkedAt, result.classifierVersion, result.focus);
             // The "what changed" comparison used to fire only for the 22
             // gallery cards a script had re-read by hand; a reader who just
             // checks the same address twice never saw it (audit J05). This
             // is that mechanism for every address: whatever this address's
-            // last live reading was, before this one claims the title.
-            const latestKey = `latest:${address}`;
-            const previousId = await kv.get(latestKey);
+            // last live reading of the same question was, before this one
+            // claims the title.
+            //
+            // "Same question" means the same explicit pick, or both left to
+            // the largest position - never one against the other. Before
+            // this, switching from an ETH short to a BTC long at one address
+            // shared a single `latest:${address}` pointer, so the next check
+            // of either one superseded the other and a manual pick compared
+            // as if the account itself had moved (23.09 audit, L02).
+            const question = result.focus ? `${result.focus.coin}:${result.focus.side}` : 'largest';
+            const latestKey = `latest:${address}:${question}`;
+            // With no live reading of this question on record yet, the last
+            // one is whichever the Worker ships with - a demonstration
+            // reading or a gallery card, both of the largest position - so
+            // the first live check of an address someone has already seen
+            // on this page says what changed since (23.09 audit, U05).
+            const previousId =
+              (await kv.get(latestKey)) ??
+              (result.focus ? null : previousReadingId([...featured.entries, ...gallery.entries], address, galleryIdOf));
             const saved: CheckResponse = {
-              ...result,
+              ...explained(result as CheckResponse),
               nansenCalls: calls.length,
               snapshotId: id,
               ...(previousId !== null && previousId !== id ? { supersedes: previousId } : {}),
@@ -405,7 +538,7 @@ export default {
             const stored = await kv.put(snapshotKey(id), JSON.stringify(saved), {
               expirationTtl: SNAPSHOT_TTL_SECONDS,
             });
-            if (!stored) return { ...result, nansenCalls: calls.length, snapshotSaved: false };
+            if (!stored) return { ...explained(result as CheckResponse), nansenCalls: calls.length, snapshotSaved: false };
             // The pointer only moves once this reading is durably the
             // newest one: a save that failed above already returned, so it
             // can never bump a real reading off the position of "latest".
@@ -421,8 +554,13 @@ export default {
             // Settle first: the hold has to come off whatever else fails.
             // A call with no cost header counts as one credit, the
             // conservative direction for a cap.
+            const spent = calls.reduce((sum, c) => sum + (c.creditsCost ?? 1), 0);
+            fresh = {
+              nansenCalls: calls.length,
+              credits: spent,
+              ...(nansenOffReason !== undefined ? { nansenOff: nansenOffReason } : {}),
+            };
             if (hold !== null) {
-              const spent = calls.reduce((sum, c) => sum + (c.creditsCost ?? 1), 0);
               const lastKnown = [...calls].reverse().find((c) => c.creditsRemaining !== null);
               // A refusal that still reports credits is about one endpoint,
               // not about the balance, and must not stop tomorrow too.
@@ -436,53 +574,119 @@ export default {
             await budget.record(day, calls);
           }
         });
+        counted(
+          fresh ? 'fresh' : 'cached',
+          fresh ? { ...readingFields(result), ...fresh, saved: result.snapshotSaved === true } : readingFields(result),
+        );
         return Response.json(result);
       } catch (err) {
         console.error('check failed', err);
+        counted('failed', fresh ?? {});
         return Response.json({ error: 'could not read this address right now, try again shortly' }, { status: 502 });
       }
     }
 
-    // A saved reading, by id. Gallery cards ship with the Worker, so they
-    // answer without touching storage; live checks are in KV.
+    // A saved reading, by id. Gallery cards and the demonstration readings
+    // ship with the Worker, so they answer without touching storage; live
+    // checks are in KV.
     if (url.pathname === '/api/snapshot') {
       const id = url.searchParams.get('id') ?? '';
       if (!isSnapshotId(id)) return Response.json({ error: 'not a snapshot id' }, { status: 400 });
-      const fromGallery = galleryById.get(id);
-      if (fromGallery) {
+      const started = Date.now();
+      const counted = (outcome: SnapshotEvent['outcome']) =>
+        emit({ event: 'snapshot', outcome, ms: Date.now() - started, kvDegraded: kv.degraded });
+      const bundled = bundledById.get(id);
+      if (bundled) {
+        counted('bundled');
         return Response.json(
-          { ...fromGallery, share: shareCard(fromGallery, { kind: 'gallery', origin: url.origin, snapshotId: id }) },
+          {
+            ...explained(bundled.card),
+            kind: bundled.kind,
+            share: shareCard(bundled.card, { kind: bundled.kind, origin: url.origin, snapshotId: id }),
+          },
           { headers: SNAPSHOT_HEADERS },
         );
       }
       const raw = await kv.get(snapshotKey(id));
       if (raw === null) {
-        return Response.json({ error: 'that snapshot has expired or never existed' }, {
-          status: 404,
-          headers: { 'x-robots-tag': 'noindex' },
-        });
+        counted('missing');
+        return notFoundYet();
       }
+      counted('stored');
       // What was stored called itself live, because it was when it was made.
       // Opened again by a link, it is a saved reading, and the card has to
       // say which of the two the reader is looking at.
       const card = JSON.parse(raw) as CheckResponse;
       return Response.json(
-        { ...card, share: shareCard(card, { kind: 'saved', origin: url.origin, snapshotId: id }) },
+        { ...explained(card), kind: 'saved', share: shareCard(card, { kind: 'saved', origin: url.origin, snapshotId: id }) },
         { headers: SNAPSHOT_HEADERS },
       );
     }
 
-    // A reading's own social-preview picture. Never called by this site's
-    // own code - only by whatever fetches the og:image URL a shared link
-    // carries - so a slow or failed render here costs nothing else: the
-    // static fallback picture ships regardless.
+    // A reading's own social-preview picture. GET is what a crawler sends
+    // for the og:image URL a shared link carries, and it only ever reads:
+    // the picture if it has been drawn, the standing one if not. POST is
+    // this site's own page asking for the picture to be drawn now, in a
+    // request of its own whose failure nothing displays (23.09 audit, S04).
     if (url.pathname === '/api/og') {
       const id = url.searchParams.get('id') ?? '';
-      if (!isSnapshotId(id)) return new Response(ogFallbackPng, { headers: OG_IMAGE_HEADERS });
-      const card = galleryById.get(id) ?? (await readSnapshot(kv, id));
-      if (!card) return new Response(ogFallbackPng, { headers: OG_IMAGE_HEADERS });
-      const png = await ogPngFor(card, kv);
-      return new Response(png ?? ogFallbackPng, { headers: OG_IMAGE_HEADERS });
+      const started = Date.now();
+      const counted = (outcome: PictureEvent['outcome']) =>
+        emit({ event: 'picture', outcome, ms: Date.now() - started, kvDegraded: kv.degraded });
+      if (method === 'POST') {
+        if (!fromThisSite(request, url)) {
+          counted('refused');
+          return Response.json({ error: 'pictures are drawn for this site' }, { status: 403 });
+        }
+        if (!isSnapshotId(id)) return Response.json({ error: 'not a snapshot id' }, { status: 400 });
+        if ((await kv.get(ogCacheKey(id))) !== null) {
+          counted('already_drawn');
+          return new Response(null, { status: 204 });
+        }
+        const bundled = bundledById.get(id);
+        const card = bundled?.card ?? (await readSnapshot(kv, id));
+        if (!card) {
+          counted('no_reading');
+          return notFoundYet();
+        }
+        // Only a real draw is counted: asking about a picture that already
+        // exists costs one KV read and is answered above.
+        const limiter = requestGate(env.REQUEST_GATE, RATE_LIMIT_MAX_PER_WINDOW, RATE_LIMIT_WINDOW_SECONDS);
+        if (!(await limiter.allow(`og:${extractIp(request)}`))) {
+          counted('rate_limited');
+          return Response.json(
+            { error: 'too many pictures from this address, try again shortly' },
+            { status: 429, headers: { 'retry-after': String(RATE_LIMIT_WINDOW_SECONDS) } },
+          );
+        }
+        let png: Uint8Array;
+        try {
+          png = await drawOgPng(card, bundled?.kind ?? 'saved');
+        } catch (err) {
+          console.error('og render failed', id, err);
+          counted('draw_failed');
+          return Response.json({ error: 'could not draw that picture' }, { status: 500 });
+        }
+        // A bundled card is as permanent as the bundle it ships in; a live
+        // reading's picture lives exactly as long as the reading.
+        const kept = await kv.put(
+          ogCacheKey(id),
+          Buffer.from(png).toString('base64'),
+          bundled ? undefined : { expirationTtl: SNAPSHOT_TTL_SECONDS },
+        );
+        if (!kept) {
+          counted('save_failed');
+          return Response.json({ error: 'drew that picture but could not keep it' }, { status: 503 });
+        }
+        counted('drawn');
+        return new Response(null, { status: 204 });
+      }
+      const png = isSnapshotId(id) ? await storedOgPng(kv, id) : null;
+      counted(png ? 'served' : 'stand_in');
+      const res = png
+        ? new Response(png, { headers: OG_IMAGE_HEADERS })
+        : new Response(ogFallbackPng, { headers: OG_STAND_IN_HEADERS });
+      return method === 'HEAD' ? headOf(res) : res;
     }
 
     // Two readings of one address, side by side. Reads what is already
@@ -494,12 +698,14 @@ export default {
       if (!isSnapshotId(a) || !isSnapshotId(b)) {
         return Response.json({ error: 'two snapshot ids are needed' }, { status: 400 });
       }
-      const read = async (id: string) => galleryById.get(id) ?? (await readSnapshot(kv, id));
+      const read = async (id: string) => bundledById.get(id)?.card ?? (await readSnapshot(kv, id));
       const [left, right] = await Promise.all([read(a), read(b)]);
       if (!left || !right) {
+        // The newer of the two was usually saved moments ago, which is
+        // exactly when this region may not see it yet (see notFoundYet).
         return Response.json(
-          { error: 'one of those readings has expired or never existed' },
-          { status: 404, headers: { 'x-robots-tag': 'noindex' } },
+          { error: 'one of those readings could not be found here: it may have expired, or not have reached this region yet' },
+          { status: 404, headers: { 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } },
         );
       }
       try {
@@ -542,7 +748,7 @@ export default {
     if (url.pathname === '/') {
       const shared = url.searchParams.get('s') ?? '';
       if (isSnapshotId(shared)) {
-        const card = galleryById.get(shared) ?? (await readSnapshot(kv, shared));
+        const card = bundledById.get(shared)?.card ?? (await readSnapshot(kv, shared));
         if (card) return new Response(withSocialTags(page, card, url, shared), { headers: PAGE_HEADERS });
       }
       return new Response(page, { headers: PAGE_HEADERS });

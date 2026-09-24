@@ -6,5 +6,9 @@
 NANSEN_API_KEY=
 
 # Optional. Lets one request reach past the public cap into the reserve kept
-# for the demo (see NANSEN_DEMO_RESERVE in wrangler.toml), with ?demo=<key>.
+# for the demo (see NANSEN_DEMO_RESERVE in wrangler.toml) and skip the public
+# rate limits, via the `x-demo-key` request header - never a query string,
+# which ends up in browser history, access logs and a screen recording's own
+# URL bar (23.09 audit, S03). An empty value here never grants the reserve to
+# anyone: e.g. `curl -H "x-demo-key: $KEY" -X POST ".../api/check?address=..."`.
 DEMO_KEY=

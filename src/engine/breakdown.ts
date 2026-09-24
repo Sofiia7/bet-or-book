@@ -13,7 +13,7 @@
  * The arithmetic lives here rather than in the drawing code so the picture
  * has nothing to decide, and so the split can be tested without a canvas.
  */
-import type { PositionFeatures, HedgeFeatures, LinkedHedgeFeatures } from './features';
+import type { PositionFeatures, HedgeFeatures, HedgeCoverage, LinkedHedgeFeatures } from './features';
 
 /** A band of the position bar. They are drawn in this order and always sum
  * to the headline notional. */
@@ -23,8 +23,13 @@ export type SegmentKind =
   /** Matched by dollars whose asset could not be established. Not coverage,
    * and not an absence either. */
   | 'unverified'
-  /** Nothing found against it. */
-  | 'residual';
+  /** Nothing found against it, and the search for it was complete. */
+  | 'residual'
+  /** The search for a hedge here was itself incomplete or failed, so this
+   * part of the bar is not "found to have nothing against it" - it is
+   * "not looked at". Drawing it the same as `residual` said "checked, empty"
+   * for a source that never answered (23.09 audit, L12). */
+  | 'not-checked';
 
 export interface Segment {
   kind: SegmentKind;
@@ -57,6 +62,7 @@ export function exposureBreakdown(
   positions: PositionFeatures,
   hedge: HedgeFeatures,
   linked: LinkedHedgeFeatures | null,
+  hedgeCoverage: HedgeCoverage = 'complete',
 ): ExposureBreakdown {
   const headlineUsd = positions.headlineNotionalUsd;
   const applies = positions.nPositions > 0 && positions.headlineSide === 'short' && headlineUsd > 0;
@@ -84,7 +90,12 @@ export function exposureBreakdown(
   };
   push('covered', covered);
   push('unverified', unverified);
-  push('residual', residual);
+  // A read that failed or stopped early can only have hidden a hedge, never
+  // invented one - so what neither `covered` nor `unverified` explains is
+  // "not looked at" under a partial or missing read, not "looked at and
+  // empty". `complete` (and the historical default above, for entries from
+  // before this was tracked) draws it as `residual`, unchanged.
+  push(hedgeCoverage === 'missing' || hedgeCoverage === 'partial' ? 'not-checked' : 'residual', residual);
 
   const matching = (linked?.funders ?? []).filter((f) => f.matchingUsd >= MIN_ELSEWHERE_SHARE * headlineUsd);
   const elsewhereUsd = matching.reduce((sum, f) => sum + f.matchingUsd, 0);

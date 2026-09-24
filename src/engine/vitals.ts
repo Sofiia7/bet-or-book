@@ -1,5 +1,5 @@
 import type { Position } from '../types';
-import { formatUsd, formatPct, type EvidenceSource } from './evidence';
+import { formatUsd, formatPct, plural, type EvidenceSource } from './evidence';
 
 /** Vitals only ever come from the same two places evidence does. Kept as a
  * narrower alias so this file cannot accidentally claim "Nansen + Hyperliquid"
@@ -34,6 +34,12 @@ export interface VitalsInput {
    * not omitted: a static position is itself worth saying. */
   headlineOpenedUsd: number;
   headlineClosedUsd: number;
+  /** How many of the headline coin's fills exist at all, regardless of
+   * whether their `dir` was one this tool sums. A flip ("Long > Short") or a
+   * spot trade counts toward neither Opened nor Closed, and "no fills" used
+   * to be printed anyway - a $1M flip read as a static position (23.09
+   * audit, L10). Zero here is the only thing "no fills" may describe. */
+  headlineFills: number;
   /** Hours the fill sample actually spans, which can be far less than the
    * window asked for on a busy account. */
   tradesSpanHours: number;
@@ -50,9 +56,10 @@ function formatSpan(hours: number): string {
   return ` (${hours.toFixed(1)}h)`;
 }
 
-function flowText(openedUsd: number, closedUsd: number, spanHours: number): string {
+function flowText(openedUsd: number, closedUsd: number, fills: number, spanHours: number): string {
   const span = formatSpan(spanHours);
-  if (openedUsd <= 0 && closedUsd <= 0) return `no fills${span}`;
+  if (fills <= 0) return `no fills${span}`;
+  if (openedUsd <= 0 && closedUsd <= 0) return `${plural(fills, 'fill')}, change in exposure not determined${span}`;
   const parts: string[] = [];
   if (openedUsd > 0) parts.push(`${formatUsd(openedUsd)} opened`);
   if (closedUsd > 0) parts.push(`${formatUsd(closedUsd)} closed`);
@@ -98,7 +105,7 @@ export function computeVitals(input: VitalsInput): VitalsItem[] {
   }
   items.push({
     label: 'Position flow',
-    value: flowText(input.headlineOpenedUsd, input.headlineClosedUsd, input.tradesSpanHours),
+    value: flowText(input.headlineOpenedUsd, input.headlineClosedUsd, input.headlineFills, input.tradesSpanHours),
     source: 'Hyperliquid',
   });
   return items;

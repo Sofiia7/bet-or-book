@@ -1,15 +1,15 @@
 # Nansen API usage, in full
 
-The [README](../README.md) has the total. This is every call accounted for, including the seven that did not return data and what each one taught.
+The [README](../README.md) has the total. This is every call accounted for, including the eight that did not return data and what each one taught.
 
 Every scripted call is logged in [`data/nansen-calls.jsonl`](../data/nansen-calls.jsonl) and summed in [`data/ledger.json`](../data/ledger.json); the deployed page adds its own calls from the budget Durable Object and serves the total at `/api/ledger`. Requests attempted, requests answered, credits the API itself priced and credits assumed for a call it did not price are four separate numbers, because a total that mixes a quoted figure with an assumed one is not a measurement.
 
-Between 14 and 27 September: **1,117 calls, 1,109 of them answered 2xx.** The gallery scan of 18 September accounts for most of it; 26 more went to re-checking nine cards on 21 September after the rules first changed, and 83 to re-reading the 22 cards that had claimed Book or Hedged, once the audit of 21 September showed their stored observations could not support those claims.
+Between 14 and 27 September: **1,133 calls, 1,125 of them answered 2xx.** The gallery scan of 18 September accounts for most of it; 26 more went to re-checking nine cards on 21 September after the rules first changed, 83 to re-reading the 22 cards that had claimed Book or Hedged, once the audit of 21 September showed their stored observations could not support those claims, and 16 on 24 September to the four demonstration readings at the top of the page, one of each kind of answer, read fresh under the current rules (23 September audit, U05).
 
-Seven of those calls did not return data, and each one taught something:
+Eight of those calls did not return data, and each one taught something. An earlier version of this file said seven, against its own total of 1,117 - 1,109 = 8; the one it left out is the third call that never answered, below:
 
 - One 403, on the very first call made with a freshly issued key, while the same response reported 1,100 credits available. Later calls to that endpoint succeeded; **why the first one did not is not established** - a key still propagating and a transient permission look the same from here, and an earlier version of this file asserted the first. What the episode settled is narrower and does not depend on the cause: the breaker could not tell a refusal about an endpoint from an empty account, and it can now, because a refusal counts as exhaustion only when it reports no credits left.
-- Two that never answered at all, a local network drop. They are recorded with status 0, attempted and outcome unknown, and charged as spent, because Nansen may have served them. Silence is the one thing that must not be recorded as nothing having happened.
+- Three that never answered at all: two in a local network drop on the morning of 21 September, and one during that evening's re-read of the 22 cards. They are recorded with status 0, attempted and outcome unknown, and charged as spent, because Nansen may have served them. Silence is the one thing that must not be recorded as nothing having happened.
 - Three 502s and one 500 during the original scan. The 502s cost three cards their Nansen positions, and those cards say they read Hyperliquid's main dex instead; one of the three has since been re-checked, which leaves two. The 500 cost one card its realized PnL.
 
 The live count restarts from the deploy that moved it out of KV (21 September). The Worker's own calls before that - about a dozen, from `wrangler dev` and the smoke tests - are in the scripted ledger already and are not double-counted here; nothing is lost, but the two halves of the total come from different places and the boundary is a deploy, not a date.
@@ -18,10 +18,10 @@ The ledger counts calls made. It is a record, not the spend cap: what a check is
 
 | Endpoint | Calls |
 |---|---|
-| `profiler/perp-positions` | 341 |
-| `profiler/perp-pnl-summary` | 341 |
-| `profiler/address/current-balance` | 255 |
-| `profiler/address/related-wallets` | 179 |
+| `profiler/perp-positions` | 345 |
+| `profiler/perp-pnl-summary` | 345 |
+| `profiler/address/current-balance` | 259 |
+| `profiler/address/related-wallets` | 183 |
 | `profiler/perp-trades` | 1 |
 
 | Purpose | Calls |
@@ -32,5 +32,6 @@ The ledger counts calls made. It is a record, not the spend cap: what a check is
 | Live smoke test of the three calibration accounts | 11 |
 | Re-checking nine gallery cards after the rules changed (21 September) | 26 |
 | Re-reading the 22 cards that had claimed Book or Hedged, after the 21 September audit | 83 |
+| The four demonstration readings, read fresh on 24 September (`data/featured.json`) | 16 |
 
 `profiler/perp-trades` was tried once and dropped: it aggregates partial fills into one trade, and a thousand records covered sixteen minutes of the busiest account.

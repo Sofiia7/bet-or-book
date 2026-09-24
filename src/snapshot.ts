@@ -46,11 +46,22 @@ function fnv1a64(input: string): bigint {
  * that makes the reading what it is goes into the hash, so a reading under
  * different rules is a different id rather than the same link quietly
  * answering something else.
+ *
+ * That includes which question was asked. Without `focus` in the hash, an
+ * ETH short and a BTC long at the same address, checked in the same
+ * millisecond, produced the same id - a deterministic collision, not a hash
+ * accident (23.09 audit, L03).
  */
-export function snapshotId(address: string, checkedAt: string, classifierVersion = ''): string {
+export function snapshotId(
+  address: string,
+  checkedAt: string,
+  classifierVersion = '',
+  focus?: { coin: string; side: string } | null,
+): string {
   const at = Date.parse(checkedAt);
   if (!Number.isFinite(at)) throw new Error('snapshot id needs a real timestamp');
-  const digest = fnv1a64(`${address.toLowerCase()}|${at}|${classifierVersion}`);
+  const question = focus ? `${focus.coin.toUpperCase()}:${focus.side}` : '';
+  const digest = fnv1a64(`${address.toLowerCase()}|${at}|${classifierVersion}|${question}`);
   return digest.toString(36).padStart(13, '0');
 }
 

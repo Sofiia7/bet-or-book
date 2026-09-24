@@ -131,6 +131,30 @@ export function buildSpotPriceIndex(meta: HlSpotMeta, assetCtxs: HlSpotAssetCtx[
 }
 
 /**
+ * Names that more than one Hyperliquid spot token claims, in this check's
+ * own fresh metadata.
+ *
+ * A ticker in this namespace is trusted by name because nobody outside
+ * Hyperliquid can mint into it - but that only holds while each name is
+ * still unique. A token index is a coin's real identity; the display name
+ * is what this tool actually matches on, and if the exchange ever lists a
+ * second token under a name already in use, name-matching alone cannot tell
+ * the two apart (23.09 audit, L08 - a reproducible identity gap, not an
+ * exploit observed on Hyperliquid: a live `spotMeta` in that audit's own
+ * session held 503 tokens with no repeated name).
+ */
+export function duplicateSpotTokenNames(meta: HlSpotMeta): Set<string> {
+  const counts = new Map<string, number>();
+  for (const t of meta.tokens) {
+    const name = t.name.toUpperCase();
+    counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
+  const duplicates = new Set<string>();
+  for (const [name, count] of counts) if (count > 1) duplicates.add(name);
+  return duplicates;
+}
+
+/**
  * Hyperliquid spot balances, priced by token index.
  *
  * A balance nobody could put a price on is kept and marked `priced: false`.
@@ -140,6 +164,7 @@ export function buildSpotPriceIndex(meta: HlSpotMeta, assetCtxs: HlSpotAssetCtx[
 export function normalizeSpotHoldings(
   balances: HlSpotBalance[],
   priceByTokenIndex: Map<number, number>,
+  ambiguousNames: Set<string> = new Set(),
 ): SpotHolding[] {
   return (arrayOf(balances, 'spot balances') as HlSpotBalance[])
     .filter((b) => b.coin !== 'USDC')
@@ -154,6 +179,7 @@ export function normalizeSpotHoldings(
         amount: Number.isFinite(amount) ? amount : 0,
         source: 'hyperliquid-spot' as const,
         tokenIndex: b.token,
+        identityAmbiguous: ambiguousNames.has(b.coin.toUpperCase()),
       };
     })
     // An empty balance is dropped whether or not it had a price; an unpriced
@@ -200,19 +226,30 @@ export function normalizeNansenPositions(data: NansenPerpPositions): Position[] 
  * a Hyperliquid ticker. The old code inferred the namespace from whether an
  * address was present, and a malformed row calling itself WETH was accepted
  * by name alone (audit A01, 21.09).
+ *
+ * A row is kept whenever it carries a real, positive amount - whether or not
+ * `value_usd` came back priced. It used to be filtered on `value_usd` alone,
+ * so 1,000 tokens of a real contract with `value_usd: null` vanished before
+ * the hedge search ever saw them, and a complete page of holdings read as an
+ * account with nothing there (23.09 audit, L05). `normalizeSpotHoldings`
+ * already treats an unpriced Hyperliquid balance this way; this is the same
+ * rule for the on-chain side.
  */
 export function normalizeNansenBalances(rows: NansenBalance[]): SpotHolding[] {
   return (arrayOf(rows, 'balances') as NansenBalance[])
-    .filter((r) => Number.isFinite(r?.value_usd) && r.value_usd > 0)
-    .map((r) => ({
-      coin: typeof r.token_symbol === 'string' ? r.token_symbol : '',
-      valueUsd: r.value_usd,
-      priced: true,
-      source: 'onchain' as const,
-      amount: Number.isFinite(r.token_amount) ? r.token_amount : undefined,
-      chain: typeof r.chain === 'string' ? r.chain : undefined,
-      tokenAddress: typeof r.token_address === 'string' ? r.token_address : undefined,
-    }));
+    .filter((r) => Number.isFinite(r?.token_amount) && r.token_amount > 0)
+    .map((r) => {
+      const priced = Number.isFinite(r.value_usd) && r.value_usd > 0;
+      return {
+        coin: typeof r.token_symbol === 'string' ? r.token_symbol : '',
+        valueUsd: priced ? r.value_usd : 0,
+        priced,
+        source: 'onchain' as const,
+        amount: r.token_amount,
+        chain: typeof r.chain === 'string' ? r.chain : undefined,
+        tokenAddress: typeof r.token_address === 'string' ? r.token_address : undefined,
+      };
+    });
 }
 
 const SHARED_SERVICE_LABEL =

@@ -14,6 +14,8 @@ function input(overrides: Record<string, unknown> = {}) {
     summary: '93% of the exposure is one $42.1M ZEC long.',
     classifierVersion: 'v4',
     breakdown: undefined as ExposureBreakdown | undefined,
+    provenance: 'Positions as of 23 Sep, 14:32 UTC · saved reading, rules v4',
+    limitText: null as string | null,
     ...overrides,
   };
 }
@@ -44,6 +46,17 @@ describe('ogCardData', () => {
   it('shortens the address for the footer, with the rules version', () => {
     const d = ogCardData(input());
     expect(d.footerLeft).toBe('0xb83d...6e36 · rules v4');
+  });
+
+  it('carries the date and reading kind through untouched, from shareCard (23.09 audit, U02)', () => {
+    const d = ogCardData(input());
+    expect(d.provenance).toBe('Positions as of 23 Sep, 14:32 UTC · saved reading, rules v4');
+  });
+
+  it('carries a specific caveat when the reading has one, and none when it does not', () => {
+    expect(ogCardData(input()).limitText).toBeNull();
+    const d = ogCardData(input({ limitText: 'Snapshot from the gallery scan, read by the rules of the time (v3).' }));
+    expect(d.limitText).toBe('Snapshot from the gallery scan, read by the rules of the time (v3).');
   });
 
   it('carries no bar when the breakdown does not apply', () => {

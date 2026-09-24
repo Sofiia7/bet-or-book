@@ -19,6 +19,7 @@ function positions(overrides: Partial<PositionFeatures>): PositionFeatures {
     headlineLiqDistancePct: null,
     headlineLiqDistanceBasis: null,
     sameAssetOffsetShare: 0,
+    netSide: 'short',
     candidates: [],
     ...overrides,
   };
@@ -109,9 +110,55 @@ describe('A03: a book is a claim about quoting, not about counting positions', (
     expect(v.verdict).not.toBe('book');
   });
 
+  it('does not let $150K of material quoting in five other markets classify an unquoted ETH short (23.09 audit, L01)', () => {
+    // Live repro: a $1M ETH short with no ETH orders at all, and 50 orders
+    // worth $150K split across five markets that are not ETH. Every account-
+    // wide gate the old rule checked - order count, bid/ask balance, markets
+    // touched, total notional - passed, and it read as inventory for a
+    // position the account had never quoted.
+    const elsewhere: RestingOrder[] = Array.from({ length: 50 }, (_, i) => ({
+      coin: `OTHER${Math.floor(i / 10)}`,
+      side: i % 2 === 0 ? 'bid' : 'ask',
+      sizeUsd: 3_000,
+    }));
+    const v = computeVerdict({
+      positions: positions({}),
+      orders: computeOrderFeatures(elsewhere, 'ETH'),
+      hedge: hedge(),
+      hedgeCoverage: 'complete',
+    });
+    expect(v.verdict).not.toBe('book');
+  });
+
+  it('does not let a $250K bid against a $25 ask in the headline market count as material quoting (23.09 audit, L01)', () => {
+    // Four other markets supply a clean account-wide signal - 50 orders,
+    // five markets touched, an even bid/ask count - so only the headline
+    // market's own $250,025 decides whether it is material. Summing the two
+    // sides instead of doubling the smaller one used to call $250,025
+    // material; almost none of it has a counterpart.
+    const other: RestingOrder[] = Array.from({ length: 40 }, (_, i) => ({
+      coin: `OTHER${Math.floor(i / 10)}`,
+      side: i % 2 === 0 ? 'bid' : 'ask',
+      sizeUsd: 3_000,
+    }));
+    const headline: RestingOrder[] = [
+      ...Array.from({ length: 5 }, () => ({ coin: 'ETH', side: 'bid' as const, sizeUsd: 50_000 })),
+      ...Array.from({ length: 5 }, () => ({ coin: 'ETH', side: 'ask' as const, sizeUsd: 5 })),
+    ];
+    const v = computeVerdict({
+      positions: positions({}),
+      orders: computeOrderFeatures([...other, ...headline], 'ETH'),
+      hedge: hedge(),
+      hedgeCoverage: 'complete',
+    });
+    expect(v.verdict).not.toBe('book');
+  });
+
   it('calls it a book when the two-sided quoting is material against the position', () => {
+    // Bucket 0 is the headline market itself (23.09 audit, L01): quoting
+    // elsewhere describes the account, not this position.
     const real: RestingOrder[] = Array.from({ length: 50 }, (_, i) => ({
-      coin: `M${Math.floor(i / 10)}`,
+      coin: Math.floor(i / 10) === 0 ? 'ETH' : `M${Math.floor(i / 10)}`,
       side: i % 2 === 0 ? 'bid' : 'ask',
       sizeUsd: 20_000,
     }));
@@ -158,7 +205,7 @@ describe('A03: a book is a claim about quoting, not about counting positions', (
 
   it('counts the position spread toward strength once quoting has decided it', () => {
     const real: RestingOrder[] = Array.from({ length: 60 }, (_, i) => ({
-      coin: `M${Math.floor(i / 10)}`,
+      coin: Math.floor(i / 10) === 0 ? 'ETH' : `M${Math.floor(i / 10)}`,
       side: i % 2 === 0 ? 'bid' : 'ask',
       sizeUsd: 20_000,
     }));
@@ -286,7 +333,7 @@ describe('L01 (22.09 audit): a directional portfolio is a bet even past the posi
 describe('the hedge read is only paid for when it can still move the answer', () => {
   it('skips it once material two-sided quoting has settled the account', () => {
     const real: RestingOrder[] = Array.from({ length: 50 }, (_, i) => ({
-      coin: `M${Math.floor(i / 10)}`,
+      coin: Math.floor(i / 10) === 0 ? 'ETH' : `M${Math.floor(i / 10)}`,
       side: i % 2 === 0 ? 'bid' : 'ask',
       sizeUsd: 20_000,
     }));

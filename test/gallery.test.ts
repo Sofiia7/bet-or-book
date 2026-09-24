@@ -55,8 +55,9 @@ describe('the saved gallery against the current rules', () => {
   it('has something to judge', () => {
     expect(open.length).toBe(277);
     expect(live.length).toBe(278);
-    // Plus the readings those 22 re-reads replaced, kept for comparison.
-    expect(gallery.entries.filter((e) => e.superseded).length).toBe(22);
+    // 22 from live re-reads, plus 7 the 23.09 rule changes (L01, L07) gave a
+    // new interpretation and a new id, keeping the old one intact at its own.
+    expect(gallery.entries.filter((e) => e.superseded).length).toBe(29);
   });
 
   it('reproduces every stored verdict it claims to have judged', () => {
@@ -100,7 +101,14 @@ describe('the saved gallery against the current rules', () => {
       book: count(openCurrent, 'book'),
       hedged: count(openCurrent, 'hedged'),
       history: open.length - openCurrent.length,
-    }).toEqual({ judged: 183, looks_like_a_bet: 132, unknown: 41, book: 3, hedged: 7, history: 94 });
+      // The 23.09 rules (L01) require the headline market itself quoted on
+      // both sides, not just enough two-sided activity somewhere in the
+      // account - and no stored scan ever recorded that for one market
+      // alone. The three cards that used to read "book" here are not
+      // reclassified on a guess; they are the difference in `history`,
+      // waiting on a fresh check the way any account is once a rule needs a
+      // number scanned before that rule existed did not capture.
+    }).toEqual({ judged: 177, looks_like_a_bet: 132, unknown: 38, book: 0, hedged: 7, history: 100 });
   });
 
   it('gives every card its own share id', () => {
@@ -115,8 +123,14 @@ describe('the saved gallery against the current rules', () => {
       const current = live.find((e) => e.address === old.address);
       expect(current?.supersedes).toBe(old.snapshotId);
       expect(old.supersededBy).toBe(current?.snapshotId);
-      // The point of keeping it is that the two are of different moments.
-      expect(old.checkedAt < (current?.checkedAt ?? '')).toBe(true);
+      // The point of keeping it is that the two are of different moments -
+      // a later observation (a live re-check) or, since the 23.09 audit's
+      // L03 fix, the same observation given a later interpretation (a rule
+      // change re-judging it via scripts/reexplain.ts). Either is real; the
+      // two must not be equal in both.
+      const laterObservation = old.checkedAt < (current?.checkedAt ?? '');
+      const laterInterpretation = (old.interpretedAt ?? '') < (current?.interpretedAt ?? '');
+      expect(laterObservation || laterInterpretation).toBe(true);
     }
   });
 

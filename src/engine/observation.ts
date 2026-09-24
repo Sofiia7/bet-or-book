@@ -29,8 +29,13 @@ import { DEFAULT_THRESHOLDS } from './verdict';
  * 2: adds hedgeCoverage, positionsAsOf and a classifier version.
  * 3: adds order notional, the per-source hedge split, what the asset
  *    registry could not identify, and how completely each source was read.
+ * 4: adds whether the headline market itself was quoted on both sides, and
+ *    how much of that was genuinely matched (23.09 audit, L01). A book
+ *    verdict now needs this; an entry that never recorded it cannot be told
+ *    apart from one that would have failed the check, and defaulting it to
+ *    "not quoted" is a guess dressed as a re-read.
  */
-export const OBSERVATION_SCHEMA_VERSION = 3;
+export const OBSERVATION_SCHEMA_VERSION = 4;
 
 /** The contract allowlist and alias table that read the holdings. Bumped
  * whenever a token is added, because "not recognised" is a statement about
@@ -77,6 +82,18 @@ export function missingForCurrentRules(e: Stored): string[] {
     e.orders.restingOrders >= DEFAULT_THRESHOLDS.book.minRestingOrders
   ) {
     missing.push('orders.twoSidedNotionalUsd');
+  }
+
+  // A book also needs the headline market itself quoted both sides - the
+  // same floor as above, because below it the account-wide signal could
+  // never have fired the rule regardless of the headline market. Without
+  // this field, re-judging cannot tell "the headline market was quiet" from
+  // "this was never recorded", and defaulting to the first is a guess.
+  if (
+    !isNumber(e.orders.headlineTwoSidedNotionalUsd) &&
+    e.orders.restingOrders >= DEFAULT_THRESHOLDS.book.minRestingOrders
+  ) {
+    missing.push('orders.headlineTwoSidedNotionalUsd');
   }
 
   // A hedge sum with no record of what it left out cannot be told apart from

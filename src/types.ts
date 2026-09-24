@@ -45,6 +45,10 @@ export interface SpotHolding {
   /** Hyperliquid's own token index. Spot names are not unique there, so the
    * index, not the name, is what a price belongs to. */
   tokenIndex?: number;
+  /** True when this check's own fresh Hyperliquid spot metadata lists more
+   * than one token under this exact name - so the name this tool matches on
+   * does not, this time, pick out one asset (23.09 audit, L08). */
+  identityAmbiguous?: boolean;
   /** Chain the holding lives on; absent for Hyperliquid's own spot balances. */
   chain?: string;
   /** Contract address, for on-chain balances. A ticker is a label anyone can

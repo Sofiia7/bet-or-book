@@ -89,6 +89,23 @@ describe('a failed HIP-3 order read reaches the rule that needs it', () => {
     expect(result.ordersCoverage).toBe('complete');
     expect(result.verdict.verdict).toBe('looks_like_a_bet');
   });
+
+  it('says quiet venues were the ones checked, not every venue there is (23.09 audit, L06)', async () => {
+    // A dex the account only quotes on, with no position there, is never
+    // asked: "complete" is about the venues read, and the card has to say
+    // so exactly when that silence is about to count as "quotes nothing".
+    route();
+    const result = await checkAddress(ADDRESS, { nansen: nansenWith('ETH', 'long') });
+    expect(result.ordersCoverage).toBe('complete');
+    expect(result.coverage.join(' ')).toContain('No two-sided quoting found on the venues checked');
+    expect(result.coverage.join(' ')).toContain('A dex it only quotes, with no position of its own, would not appear here');
+  });
+
+  it('says nothing about quiet venues when one of them would not answer, since then nothing is claimed', async () => {
+    route({ failHip3Orders: true });
+    const result = await checkAddress(ADDRESS, { nansen: nansenWith('xyz:ETH', 'long') });
+    expect(result.coverage.join(' ')).not.toContain('No two-sided quoting found on the venues checked');
+  });
 });
 
 describe('a reading that is old, or was never taken, says so', () => {
@@ -170,7 +187,11 @@ describe('L02a (22.09 audit): a long\'s own funding history is context a hedge s
     route();
     const result = await checkAddress(ADDRESS, { nansen: withFunder([funderRow()]), now: () => frozen });
     expect(result.vitals).toContainEqual(
-      expect.objectContaining({ label: 'First funded', source: 'Nansen', value: expect.stringContaining('8 days ago') }),
+      expect.objectContaining({
+        label: 'Earliest funding found',
+        source: 'Nansen',
+        value: expect.stringContaining('8 days ago on ethereum'),
+      }),
     );
   });
 
@@ -180,7 +201,23 @@ describe('L02a (22.09 audit): a long\'s own funding history is context a hedge s
       nansen: withFunder([funderRow({ address_label: 'Binance: Hot Wallet' })]),
       now: () => frozen,
     });
-    expect(result.vitals.find((v) => v.label === 'First funded')?.value).toContain('an exchange or bridge');
+    expect(result.vitals.find((v) => v.label === 'Earliest funding found')?.value).toContain('an exchange or bridge');
+  });
+
+  it('says which chain could not be read, rather than staying silent about the gap (23.09 audit, L09)', async () => {
+    route();
+    // Ethereum answers with a record; Arbitrum fails outright. The old label
+    // "First funded" would have read as the account's age regardless.
+    const partial: NansenClient = {
+      ...nansenWith('HYPE', 'long'),
+      relatedWallets: async (_addr, chain) => {
+        if (chain === 'ethereum') return { rows: [funderRow()], complete: true };
+        throw new Error('arbitrum unavailable');
+      },
+    };
+    const result = await checkAddress(ADDRESS, { nansen: partial, now: () => frozen });
+    const item = result.vitals.find((v) => v.label === 'Earliest funding found');
+    expect(item?.value).toBe('8 days ago on ethereum, arbitrum not read, by an unlabelled wallet');
   });
 
   it('does not read funding history for a short: the hedge search already covers that ground', async () => {
@@ -190,12 +227,12 @@ describe('L02a (22.09 audit): a long\'s own funding history is context a hedge s
       relatedWallets: async (_addr, chain) => ({ rows: chain === 'ethereum' ? [funderRow()] : [], complete: true }),
     };
     const result = await checkAddress(ADDRESS, { nansen: shortWithFunder, now: () => frozen });
-    expect(result.vitals.some((v) => v.label === 'First funded')).toBe(false);
+    expect(result.vitals.some((v) => v.label === 'Earliest funding found')).toBe(false);
   });
 
   it('says nothing when there is no funding link to read', async () => {
     route();
     const result = await checkAddress(ADDRESS, { nansen: withFunder([]), now: () => frozen });
-    expect(result.vitals.some((v) => v.label === 'First funded')).toBe(false);
+    expect(result.vitals.some((v) => v.label === 'Earliest funding found')).toBe(false);
   });
 });

@@ -106,4 +106,23 @@ describe('a check can be asked about a particular position', () => {
     expect(result.positions.headlineCoin).toBe('ETH');
     expect(result.coverage.join(' ')).toContain('DOGE');
   });
+
+  it('flags "not the position you asked about" to stand next to the answer, not among the optional notes (23.09 U06)', async () => {
+    route();
+    const result = await checkAddress(ADDRESS, { nansen: nansen(), focus: { coin: 'DOGE', side: 'long' } });
+    expect(result.coverageNotes).toContainEqual({ text: expect.stringContaining('No DOGE long is open'), failure: true });
+  });
+
+  it('does not claim the asked-for side when only the other side of that coin is open (23.09 audit, U03)', async () => {
+    // ETH long was asked for; the account holds ETH short. Coin alone used
+    // to satisfy this check, so `focus` came back {ETH, long} - the label
+    // asked for - while `positions` was still the short, and nothing told
+    // the reader the side they asked about was not the one on screen.
+    route();
+    const result = await checkAddress(ADDRESS, { nansen: nansen(), focus: { coin: 'ETH', side: 'long' } });
+    expect(result.positions.headlineCoin).toBe('ETH');
+    expect(result.positions.headlineSide).toBe('short');
+    expect(result.focus).toBeNull();
+    expect(result.coverage.join(' ')).toContain('No ETH long is open');
+  });
 });

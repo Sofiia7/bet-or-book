@@ -31,10 +31,47 @@ A link preview needs a real image, and neither X, Telegram nor Discord will rend
 
 That render is not free, and the Workers **free** plan's CPU budget is 10 ms per request. Measured directly, on the real `workerd` runtime and independently in Node: **roughly 26-28 ms warm, up to 127 ms on a cold isolate.** A minimal one-line card alone measured 40 ms cold - there is no version of this render that reliably fits a 10 ms budget. A **paid** plan's default 30 s budget clears it with room to spare.
 
-So the render is never load-bearing:
+The first version drew the picture on the crawler's own request, inside a `try/catch`, on the theory that the worst case was a generic fallback picture. It was not: a request over its CPU limit is stopped by the runtime, which answers with Error 1102, and no catch block runs. A crawler that met that on a cold isolate got an error where the picture should be, and the fallback went out marked immutable for a year, so a crawler that came early kept the fallback for good ([S04](audits/2026-09-23-full-audit-ru.md)). Now the render is never on a path anyone waits for:
 
-- **Every gallery card's picture is rendered once, offline, before it is ever requested.** [`scripts/prerender-og.ts`](../scripts/prerender-og.ts) runs the same renderer in a plain Node process - no CPU limit there at all - and uploads the results straight into the same KV namespace the deployed Worker reads (`wrangler kv bulk put`), under the key a live render would have used anyway. `/api/og` for any of the 277 gallery cards is a cache read, not a render, from the day this last ran.
-- **A freshly live-checked address is attempted for real**, because there is no way to pre-render a reading that does not exist yet. If it renders in time, it is cached in KV the same way and every later request is a cache read. If the isolate is cold and it does not, the route falls back to a small, always-bundled generic picture ([`assets/og-fallback.png`](../assets/og-fallback.png)) rather than a broken image link - which is exactly what every reading's preview looked like before this existed. Nothing that calls `/api/og` is ever this site's own code, so a slow or failed render here costs nothing else: the check itself, the page, and every other route are unaffected either way.
+- **A crawler's request never draws.** `GET /api/og` reads the picture from KV if it exists and otherwise serves a small, always-bundled standing picture ([`assets/og-fallback.png`](../assets/og-fallback.png)) with a one-minute cache, so a crawler that comes back later finds the real one. Only a picture that exists is served as immutable.
+- **Drawing is a request of its own that nothing displays.** The page sends `POST /api/og` once a live reading is saved, and again when its Share button is opened - before any crawler has the link. If that request is stopped for CPU, the reader's page does not notice and a crawler still gets the standing picture rather than an error. A paid plan's 30 s budget clears the render with room to spare; the free plan's "some built-in flexibility" for an isolate that goes over only occasionally is what lets it succeed most of the time there.
+- **Every bundled card's picture is rendered once, offline.** [`scripts/prerender-og.ts`](../scripts/prerender-og.ts) runs the same renderer in a plain Node process - no CPU limit there at all - over the gallery and the four demonstration readings, and uploads the results into the same KV namespace (`wrangler kv bulk put`) under the key the Worker itself uses.
+- **The layout is part of the key and the URL** (`og:v2:<id>`, `/api/og?id=<id>&v=2`). A reading never changes under its id, but what its picture says about it did when the date and the reading's own limit were added ([U02](audits/2026-09-23-full-audit-ru.md)); pictures stored under the bare id kept saying neither. A new layout is a new key and a new URL, so no stored or crawler-cached picture from an older one can stand in for it.
+
+## A reading KV has not shown yet
+
+KV is eventually consistent: a write is visible at once where it was made and can take up to a minute to show everywhere else. A shared link is opened, and fetched by a crawler, within that minute all the time. So a saved reading that cannot be found answers 404 with `cache-control: no-store` and says it may have expired or may not have reached this region yet, rather than "never existed"; the page retries it for about twenty seconds, saying why, before giving up; and the picture route's standing picture is cached for a minute, not a year. Reproduced on workerd with a KV that lags (below).
+
+## What the Worker counts
+
+Every check, picture and saved-reading request leaves one line of JSON ([`src/telemetry.ts`](../src/telemetry.ts)), and Workers Logs indexes its fields, so the dashboard's query builder can group by them and take percentiles over them. No binding and no second store: the measurements the 23 September audit asked for ([S06](audits/2026-09-23-full-audit-ru.md)) are queries over those lines.
+
+| To see | Query in Workers Logs |
+|---|---|
+| Latency | P50 and P95 of `ms`, where `event` = `check`, grouped by `outcome` |
+| Cache hits | count grouped by `outcome` (`fresh` against `cached`) |
+| Degraded answers | count where `outcome` = `fresh`, grouped by `degraded` |
+| Why a verdict came out Unknown | count where `verdict` = `unknown`, grouped by `reason` |
+| What a full answer costs | sum or P95 of `credits` and `nansenCalls` where `outcome` = `fresh` |
+| Budget refusals | count grouped by `nansenOff` |
+| Readings that could not be kept | count where `saved` = false |
+| Link pictures | count where `event` = `picture`, grouped by `outcome` (`served`, `stand_in`, `drawn`, `draw_failed`, `save_failed`) |
+| KV trouble | count where `kvDegraded` = true |
+| Links that found nothing | count where `event` = `snapshot` and `outcome` = `missing` |
+
+A failure goes out at error level. What never goes in: the Nansen key, the demo key, the client's IP and the wallet address; none of them is needed to count anything, and a KV failure line names the kind of key (`check`, `snapshot`, `og`) rather than the key itself, which is usually an address. A draw stopped by the runtime for CPU leaves no line of its own; it shows up as an `exceededCpu` outcome on the platform's invocation log for that request. One request in ten is traced, which at this site's traffic stays far inside the free plan's 200,000 observability events a day. None of this is shown to the reader of a card.
+
+## Tested in the real runtime
+
+The route tests drive the Worker through in-process fakes of KV and the Durable Objects. Those prove the routing and the arithmetic, and do not model what the audit named ([S05](audits/2026-09-23-full-audit-ru.md)): input and output gates, an object restarting with only its storage, a reader disconnecting, KV failing or lagging. [`test/runtime/`](../test/runtime/) builds the Worker with Wrangler exactly as `wrangler deploy` does and runs it inside workerd through Miniflare, the library Cloudflare's own Vitest integration is built on; that integration needs Vitest 4, and this project is on 5. `npm run test:runtime`, and in CI after the rest:
+
+- Twelve paid checks arriving together never hold or spend more than the cap, and once they finish the cap is charged exactly the calls Nansen received.
+- A settle delivered twice is charged once, including when the second comes after the process restarted; a hold taken before a restart still stands against the cap after it.
+- Twenty ledger records arriving together right after a restart all count: they wait on one load of the object's state.
+- A reader who disconnects while Nansen has not answered leaves the check's worst case held, not handed back.
+- The global burst limit lets exactly ten of twenty-five simultaneous checks through.
+- With KV down, a check still answers, says it could not be kept and offers no link, the budget still settles, and the picture route still answers with the standing picture; with KV refusing writes (the free plan's daily quota), a repeat is a real second check and is charged as one.
+- With KV lagging, a saved reading's early 404 is `no-store` and does not say "never existed", and the same link opens once KV catches up.
 
 ## Security
 
@@ -45,3 +82,5 @@ The two embedded fonts ([`assets/inter-regular.woff`](../assets/inter-regular.wo
 The two rendering dependencies (`satori`, `@resvg/resvg-wasm`) never see anything a caller supplies directly: every string that reaches them - the badge, the summary sentence, the footer - already passed through this Worker's own formatting functions, and satori treats a JS string as a literal text node rather than markup, the same guarantee `textContent` gives the page. `og-fallback.png` and the two font files are static, checked-in binaries loaded once per isolate; no font or image is ever fetched from the network.
 
 Two things the 21 September audit changed here. **Starting a check is a POST from this site**, because GET and HEAD ran the paid branch and a link preview, a browser prefetch or a scanner could spend credits by looking; GET and HEAD now return an answer that already exists, or 404, and spend nothing. And the page's script moved into a file of its own, so its Content-Security-Policy forbids inline script outright rather than allowing it - along with `frame-ancestors 'none'`, no cross-origin requests and no plugin content. A reserve of the daily cap is kept out of the public path so an afternoon of visitors cannot leave the demo with a Hyperliquid-only answer.
+
+Two more from 23 September. Opening `?address=...` in a browser used to run the check itself, on load, with no click involved - a same-origin POST is exactly what a same-origin `fetch()` triggered by any page a reader had open could also send, so a crafted link was one open-in-a-tab away from spending credits; the URL now only fills the field, and `Check` is a separate, deliberate action ([S01](audits/2026-09-23-full-audit-ru.md)). And the operator key that reaches the demo reserve moved from a `?demo=` query parameter to an `x-demo-key` request header: a query string is what ends up in browser history, server access logs, and the URL bar of a screen recording made for this project's own submission video, which is the specific way this was found. The check for it also moved ahead of the public rate limiter and the global burst limiter, and a demo request now skips both outright - a reserve that still has to clear the same gate the public traffic just exhausted is not a reserve. An empty or unset `DEMO_KEY` can no longer grant it to anyone by accident ([S03](audits/2026-09-23-full-audit-ru.md)).

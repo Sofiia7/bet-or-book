@@ -21,12 +21,24 @@
 //   npx tsx scripts/prescan.ts [--pool=1000] [--reserve=30] [--gap-ms=7000]
 //                              [--limit=N] [--addresses=0x..,0x..]
 //                              [--source=prescan] [--out=data/gallery.json]
+//                              [--universe="what this set is"]
+//                              [--supersede-from=data/gallery.json]
 //                              [--resume] [--refresh]
+//
+// The hand-picked demonstration readings at the top of the page
+// (data/featured.json, 23.09 audit U05) are this script run over a few
+// named addresses into their own file:
+//   npx tsx scripts/prescan.ts --addresses=0x..,0x.. --out=data/featured.json
+//     --source=featured-YYYY-MM-DD --universe="Readings picked to show each kind of answer"
+//     --supersede-from=data/gallery.json --gap-ms=3000
+// `--supersede-from` links each new reading to the same address's latest
+// reading in that file, so the card can say what changed since then.
 import { readFileSync, writeFileSync, appendFileSync, existsSync, renameSync } from 'node:fs';
 import { checkAddress, type CheckResult } from '../src/api/check';
 import { createNansenClient, meansOutOfCredits, type NansenCallMeta } from '../src/sources/nansen';
 import { getClearinghouseState } from '../src/sources/hyperliquid';
-import type { Gallery } from '../src/gallery';
+import { snapshotId } from '../src/snapshot';
+import { previousReadingId, type Gallery } from '../src/gallery';
 
 const LEADERBOARD_URL = 'https://stats-data.hyperliquid.xyz/Mainnet/leaderboard';
 const LEDGER = 'data/nansen-calls.jsonl';
@@ -54,6 +66,11 @@ interface Args {
   addresses: string[] | null;
   source: string;
   out: string;
+  /** What the set is, for the page to say. Defaults to the leaderboard scan's
+   * own description, which is wrong for a hand-picked set. */
+  universe: string | null;
+  /** A file of earlier readings each new one follows, for "what changed". */
+  supersedeFrom: string | null;
   resume: boolean;
   /** Re-check the named addresses even though the gallery already holds
    * them, replacing what is there. `--resume` skips anything already
@@ -73,6 +90,8 @@ function parseArgs(argv: string[]): Args {
     addresses: addresses ? addresses.split(',').map((a) => a.trim().toLowerCase()) : null,
     source: get('source') ?? 'prescan',
     out: get('out') ?? 'data/gallery.json',
+    universe: get('universe') ?? null,
+    supersedeFrom: get('supersede-from') ?? null,
     resume: argv.includes('--resume'),
     refresh: argv.includes('--refresh'),
   };
@@ -184,12 +203,13 @@ async function main(): Promise<void> {
   installHyperliquidRetry();
 
   const addresses = args.addresses ?? (await rankCandidates(args.pool)).map((c) => c.address);
-  const universe = `Largest open positions among the top ${args.pool.toLocaleString('en-US')} Hyperliquid accounts by value`;
+  const universe =
+    args.universe ?? `Largest open positions among the top ${args.pool.toLocaleString('en-US')} Hyperliquid accounts by value`;
   const gallery: Gallery =
     args.resume && existsSync(args.out)
       ? (JSON.parse(readFileSync(args.out, 'utf-8')) as Gallery)
       : { scannedAt: null, finishedAt: null, universe, entries: [] };
-  if (!args.addresses) gallery.universe = universe;
+  if (!args.addresses || args.universe) gallery.universe = universe;
   gallery.scannedAt ??= new Date().toISOString();
 
   // A refresh replaces the named entries rather than skipping them. The old
@@ -202,6 +222,11 @@ async function main(): Promise<void> {
     gallery.entries = gallery.entries.filter((e) => !refreshing.has(e.address));
     console.log(`refresh: ${before - gallery.entries.length} existing entries set aside to be read again`);
   }
+
+  const earlier = args.supersedeFrom
+    ? (JSON.parse(readFileSync(args.supersedeFrom, 'utf-8')) as Gallery).entries
+    : [];
+  const idOf = (e: Gallery['entries'][number]) => e.snapshotId ?? snapshotId(e.address, e.checkedAt);
 
   const done = new Set(gallery.entries.map((e) => e.address));
   const todo = addresses.filter((a) => !done.has(a)).slice(0, args.limit);
@@ -271,7 +296,16 @@ async function main(): Promise<void> {
     if (reported) lastRemaining = reported.creditsRemaining;
 
     if (result) {
-      gallery.entries.push({ ...result, nansenCalls: calls.length });
+      // Its own id, from the same function a live check uses, so a link to
+      // it is a link to exactly this reading (23.09 audit, L03) rather than
+      // one the Worker has to work out from the address and the time.
+      const previous = previousReadingId(earlier, address, idOf);
+      gallery.entries.push({
+        ...result,
+        nansenCalls: calls.length,
+        snapshotId: snapshotId(address, result.checkedAt, result.classifierVersion, result.focus),
+        ...(previous ? { supersedes: previous } : {}),
+      });
       gallery.finishedAt = new Date().toISOString();
       writeAtomically(args.out, gallery);
       const v = result.verdict;

@@ -3,6 +3,8 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import worker from '../src/index';
 import { testEnv, request, ORIGIN } from './support/worker';
+import { ogCacheKey, OG_LAYOUT_VERSION } from '../src/engine/ogCard';
+import ogFallbackPng from '../assets/og-fallback.png';
 
 const ADDRESS = '0x1111111111111111111111111111111111111111';
 
@@ -113,10 +115,86 @@ describe('the demo keeps a reserve the public path cannot reach', () => {
     expect(((await second.json()) as { coverage: string[] }).coverage.join(' ')).toContain('Nansen not used');
 
     const demo = await worker.fetch(
-      request(`/api/check?address=0x3333333333333333333333333333333333333333&demo=secret`, { method: 'POST' }),
+      request(`/api/check?address=0x3333333333333333333333333333333333333333`, {
+        method: 'POST',
+        headers: { 'x-demo-key': 'secret' },
+      }),
       env,
     );
     expect(((await demo.json()) as { coverage: string[] }).coverage.join(' ')).not.toContain('Nansen not used');
+  });
+
+  it('does not accept the key in the query string any more (23.09 audit, S03)', async () => {
+    // A query string ends up in browser history, access logs and a demo
+    // recording's own URL bar - the header is the point of the fix.
+    routeUpstreams();
+    const env = testEnv({ NANSEN_API_KEY: 'k', NANSEN_DAILY_CREDIT_CAP: '14', NANSEN_DEMO_RESERVE: '7', DEMO_KEY: 'secret' });
+    await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
+    const exhausted = await worker.fetch(
+      request(`/api/check?address=0x4444444444444444444444444444444444444444`, { method: 'POST' }),
+      env,
+    );
+    expect(((await exhausted.json()) as { coverage: string[] }).coverage.join(' ')).toContain('Nansen not used');
+
+    const viaQuery = await worker.fetch(
+      request(`/api/check?address=0x5555555555555555555555555555555555555555&demo=secret`, { method: 'POST' }),
+      env,
+    );
+    expect(((await viaQuery.json()) as { coverage: string[] }).coverage.join(' ')).toContain('Nansen not used');
+  });
+
+  it('does not let an unset or empty DEMO_KEY grant the reserve to anyone', async () => {
+    routeUpstreams();
+    const env = testEnv({ NANSEN_API_KEY: 'k', NANSEN_DAILY_CREDIT_CAP: '14', NANSEN_DEMO_RESERVE: '7', DEMO_KEY: '' });
+    await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
+    const exhausted = await worker.fetch(
+      request(`/api/check?address=0x6666666666666666666666666666666666666666`, { method: 'POST' }),
+      env,
+    );
+    expect(((await exhausted.json()) as { coverage: string[] }).coverage.join(' ')).toContain('Nansen not used');
+
+    const emptyHeader = await worker.fetch(
+      request(`/api/check?address=0x7777777777777777777777777777777777777777`, {
+        method: 'POST',
+        headers: { 'x-demo-key': '' },
+      }),
+      env,
+    );
+    expect(((await emptyHeader.json()) as { coverage: string[] }).coverage.join(' ')).toContain('Nansen not used');
+  });
+
+  it('lets a demo request through even while the public burst limit is exhausted (23.09 audit, S03)', async () => {
+    // The reserve is supposed to survive a busy public afternoon - which it
+    // cannot if reaching it needs the same limiter the public traffic just
+    // used up.
+    routeUpstreams();
+    const env = testEnv({
+      NANSEN_API_KEY: 'k',
+      NANSEN_DAILY_CREDIT_CAP: '14',
+      NANSEN_DEMO_RESERVE: '7',
+      DEMO_KEY: 'secret',
+    });
+    let lastStatus = 200;
+    for (let i = 0; i < 15; i++) {
+      const res = await worker.fetch(
+        request(`/api/check?address=0x${String(i).padStart(40, '0')}`, {
+          method: 'POST',
+          headers: { 'cf-connecting-ip': `203.0.113.${i}` },
+        }),
+        env,
+      );
+      lastStatus = res.status;
+    }
+    expect(lastStatus).toBe(429); // the public burst limit is now exhausted
+
+    const demo = await worker.fetch(
+      request(`/api/check?address=0x8888888888888888888888888888888888888888`, {
+        method: 'POST',
+        headers: { 'x-demo-key': 'secret' },
+      }),
+      env,
+    );
+    expect(demo.status).toBe(200);
   });
 });
 
@@ -209,8 +287,18 @@ describe('putting two readings of one address side by side', () => {
     const pair = list.entries.find((e) => e.supersedes)!;
     const res = await worker.fetch(request(`/api/compare?a=${pair.supersedes}&b=${pair.snapshotId}`), env);
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { from: { observedAt: string }; to: { observedAt: string }; changes: unknown[] };
-    expect(body.from.observedAt < body.to.observedAt).toBe(true);
+    const body = (await res.json()) as {
+      from: { observedAt: string; snapshotId?: string };
+      to: { observedAt: string; snapshotId?: string };
+      changes: unknown[];
+    };
+    // "from" is the older reading, but not always by observedAt: since the
+    // 23.09 audit's L03 fix, a rule change can re-judge the same observation
+    // under a new id (scripts/reexplain.ts), and the two share one
+    // observedAt. Only a live re-check moves it.
+    expect(body.from.observedAt <= body.to.observedAt).toBe(true);
+    expect(body.from.snapshotId).toBe(pair.supersedes);
+    expect(body.to.snapshotId).toBe(pair.snapshotId);
     expect(Array.isArray(body.changes)).toBe(true);
   });
 
@@ -289,33 +377,191 @@ describe('a live check remembers the reading it replaces (22.09 audit, J05)', ()
     expect(body.supersedes).toBeUndefined();
     expect(body.snapshotId).toBeTruthy();
   });
+
+  it('does not let switching to a different position at the same address supersede it (23.09 audit, L02)', async () => {
+    // Two real positions, ETH short and BTC long. Checking BTC after ETH is
+    // a different question, not a change at the address - the old shared
+    // `latest:${address}` pointer read it as one.
+    const hlPosition = (coin: string, szi: string, positionValue: string) => ({
+      type: 'oneWay',
+      position: {
+        coin,
+        szi,
+        entryPx: '100',
+        leverage: { type: 'cross', value: 5 },
+        liquidationPx: null,
+        positionValue,
+        unrealizedPnl: '0',
+        cumFunding: { allTime: '0', sinceOpen: '0', sinceChange: '0' },
+        marginUsed: '0',
+        maxLeverage: 20,
+        returnOnEquity: '0',
+      },
+    });
+    global.fetch = vi.fn(async (_url: string | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body ?? '{}'));
+      if (body.type === 'clearinghouseState') {
+        return new Response(
+          JSON.stringify({
+            assetPositions: [hlPosition('ETH', '-500', '1000000'), hlPosition('BTC', '10', '100000')],
+            marginSummary: { accountValue: '0', totalMarginUsed: '0', totalNtlPos: '0', totalRawUsd: '0' },
+            withdrawable: '0',
+            time: Date.now(),
+          }),
+          { status: 200 },
+        );
+      }
+      return new Response(JSON.stringify(HL[body.type] ?? []), { status: 200 });
+    }) as unknown as typeof fetch;
+    const env = testEnv();
+
+    const eth = await worker.fetch(request(`/api/check?address=${ADDRESS}&coin=ETH&side=short`, { method: 'POST' }), env);
+    const ethBody = (await eth.json()) as { snapshotId: string; supersedes?: string };
+    expect(ethBody.supersedes).toBeUndefined();
+
+    env.KV.now = () => Date.now() + 700_000;
+    const btc = await worker.fetch(request(`/api/check?address=${ADDRESS}&coin=BTC&side=long`, { method: 'POST' }), env);
+    const btcBody = (await btc.json()) as { snapshotId: string; supersedes?: string };
+    // The different question, not the ETH reading, is what BTC has none of.
+    expect(btcBody.supersedes).toBeUndefined();
+
+    // Asking about ETH again, though, still supersedes the first ETH reading.
+    env.KV.now = () => Date.now() + 1_400_000;
+    const ethAgain = await worker.fetch(
+      request(`/api/check?address=${ADDRESS}&coin=ETH&side=short`, { method: 'POST' }),
+      env,
+    );
+    const ethAgainBody = (await ethAgain.json()) as { snapshotId: string; supersedes?: string };
+    expect(ethAgainBody.supersedes).toBe(ethBody.snapshotId);
+  });
+});
+
+describe('a rate limit bounds new checks, not free reads of one already on record (23.09 audit, S02)', () => {
+  it('still answers a repeat POST of an already-cached reading once the burst limit is exhausted', async () => {
+    routeUpstreams();
+    const env = testEnv();
+    const first = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
+    expect(first.status).toBe(200);
+
+    // Exhaust the global burst with other addresses, each its own IP so the
+    // per-IP limit is not what is being measured.
+    for (let i = 0; i < 12; i++) {
+      await worker.fetch(
+        request(`/api/check?address=0x${String(i).padStart(40, '9')}`, {
+          method: 'POST',
+          headers: { 'cf-connecting-ip': `203.0.113.${i}` },
+        }),
+        env,
+      );
+    }
+    const blocked = await worker.fetch(
+      request('/api/check?address=0x1010101010101010101010101010101010101010', {
+        method: 'POST',
+        headers: { 'cf-connecting-ip': '203.0.113.99' },
+      }),
+      env,
+    );
+    expect(blocked.status).toBe(429); // confirms the burst really is exhausted
+
+    const repeat = await worker.fetch(
+      request(`/api/check?address=${ADDRESS}`, { method: 'POST', headers: { 'cf-connecting-ip': '203.0.113.100' } }),
+      env,
+    );
+    expect(repeat.status).toBe(200);
+  });
+
+  it('answers a coin/side that is not open from the address\'s own cached reading, for free', async () => {
+    const hlPosition = (coin: string, szi: string, positionValue: string) => ({
+      type: 'oneWay',
+      position: {
+        coin, szi, entryPx: '100', leverage: { type: 'cross', value: 5 }, liquidationPx: null,
+        positionValue, unrealizedPnl: '0', cumFunding: { allTime: '0', sinceOpen: '0', sinceChange: '0' },
+        marginUsed: '0', maxLeverage: 20, returnOnEquity: '0',
+      },
+    });
+    const seen = { calls: 0 };
+    global.fetch = vi.fn(async (_url: string | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body ?? '{}'));
+      if (body.type === 'clearinghouseState') {
+        seen.calls++;
+        return new Response(
+          JSON.stringify({
+            assetPositions: [hlPosition('ETH', '-500', '1000000')],
+            marginSummary: { accountValue: '0', totalMarginUsed: '0', totalNtlPos: '0', totalRawUsd: '0' },
+            withdrawable: '0',
+            time: Date.now(),
+          }),
+          { status: 200 },
+        );
+      }
+      return new Response(JSON.stringify(HL[body.type] ?? []), { status: 200 });
+    }) as unknown as typeof fetch;
+    const env = testEnv();
+
+    const plain = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
+    expect(plain.status).toBe(200);
+    const callsAfterFirst = seen.calls;
+    expect(callsAfterFirst).toBeGreaterThan(0);
+
+    const bogus = await worker.fetch(
+      request(`/api/check?address=${ADDRESS}&coin=DOGE&side=long`, { method: 'POST' }),
+      env,
+    );
+    expect(bogus.status).toBe(200);
+    const bogusBody = (await bogus.json()) as {
+      focus: unknown;
+      positions: { headlineCoin: string };
+      coverage: string[];
+      coverageNotes: Array<{ text: string; failure: boolean }>;
+    };
+    // No new Hyperliquid read - answered from the plain reading already on
+    // record, not a fresh check of an ask that was never going to resolve.
+    expect(seen.calls).toBe(callsAfterFirst);
+    expect(bogusBody.focus).toBeNull();
+    expect(bogusBody.positions.headlineCoin).toBe('ETH');
+    expect(bogusBody.coverage.join(' ')).toContain('No DOGE long is open');
+    // Flagged, so the page shows it beside the answer (23.09 audit, U06).
+    expect(bogusBody.coverageNotes).toContainEqual({
+      text: expect.stringContaining('No DOGE long is open'),
+      failure: true,
+    });
+  });
 });
 
 const PNG_MAGIC = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 describe('a reading\'s own social-preview picture (22.09 audit, item 7)', () => {
-  it('renders a real PNG for a gallery card, real satori and resvg, no mocks', async () => {
+  // Since 23.09 (S04) a crawler's GET never draws: the picture is drawn by a
+  // POST from this site's own page, and GET serves what that drew. The cold
+  // path itself is covered in test/og-route.test.ts.
+  const FALLBACK = Buffer.from(new Uint8Array(ogFallbackPng as ArrayBuffer)).toString('base64');
+
+  it('draws a real PNG for a gallery card, real satori and resvg, no mocks', async () => {
     const env = testEnv();
     const list = (await (await worker.fetch(request('/api/gallery'), env)).json()) as {
       entries: Array<{ snapshotId: string }>;
     };
     const id = list.entries[0].snapshotId;
+    expect((await worker.fetch(request(`/api/og?id=${id}`, { method: 'POST' }), env)).status).toBe(204);
     const res = await worker.fetch(request(`/api/og?id=${id}`), env);
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('image/png');
     const bytes = new Uint8Array(await res.arrayBuffer());
     expect(Array.from(bytes.slice(0, 8))).toEqual(PNG_MAGIC);
+    expect(Buffer.from(bytes).toString('base64')).not.toBe(FALLBACK);
   }, 15_000);
 
-  it('renders a real PNG for a freshly live-checked address too, not only a gallery card', async () => {
+  it('draws a real PNG for a freshly live-checked address too, not only a gallery card', async () => {
     routeUpstreams();
     const env = testEnv();
     const check = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
     const { snapshotId } = (await check.json()) as { snapshotId: string };
+    expect((await worker.fetch(request(`/api/og?id=${snapshotId}`, { method: 'POST' }), env)).status).toBe(204);
     const res = await worker.fetch(request(`/api/og?id=${snapshotId}`), env);
     expect(res.status).toBe(200);
     const bytes = new Uint8Array(await res.arrayBuffer());
     expect(Array.from(bytes.slice(0, 8))).toEqual(PNG_MAGIC);
+    expect(Buffer.from(bytes).toString('base64')).not.toBe(FALLBACK);
   }, 15_000);
 
   it('serves the standing fallback picture for an id that is not a snapshot id at all', async () => {
@@ -332,19 +578,21 @@ describe('a reading\'s own social-preview picture (22.09 audit, item 7)', () => 
     expect(Array.from(bytes.slice(0, 8))).toEqual(PNG_MAGIC);
   });
 
-  it('caches the render in KV, so a second request for the same id does not render again', async () => {
+  it('keeps a drawn picture in KV, so every later request reads it rather than drawing again', async () => {
     const env = testEnv();
     const list = (await (await worker.fetch(request('/api/gallery'), env)).json()) as {
       entries: Array<{ snapshotId: string }>;
     };
     const id = list.entries[1].snapshotId;
-    expect(await env.KV.get(`og:${id}`)).toBeNull();
-    await worker.fetch(request(`/api/og?id=${id}`), env);
-    const cached = await env.KV.get(`og:${id}`);
+    expect(await env.KV.get(ogCacheKey(id))).toBeNull();
+    await worker.fetch(request(`/api/og?id=${id}`, { method: 'POST' }), env);
+    const cached = await env.KV.get(ogCacheKey(id));
     expect(cached).not.toBeNull();
-    // A second request reads the same cached bytes back rather than
-    // rendering again - proven by the response matching the cache exactly,
-    // not by a spy, since satori and resvg are called for real here.
+    // A gallery card's picture is as permanent as the card itself.
+    expect(env.KV.ttlOf(ogCacheKey(id))).toBeNull();
+    // A later request reads the same cached bytes back rather than drawing
+    // again - proven by the response matching the cache exactly, not by a
+    // spy, since satori and resvg are called for real here.
     const res2 = await worker.fetch(request(`/api/og?id=${id}`), env);
     const bytes2 = new Uint8Array(await res2.arrayBuffer());
     expect(Buffer.from(bytes2).toString('base64')).toBe(cached);
@@ -357,7 +605,9 @@ describe('a reading\'s own social-preview picture (22.09 audit, item 7)', () => 
     };
     const id = list.entries[0].snapshotId;
     const html = await (await worker.fetch(request(`/?s=${id}`), env)).text();
-    expect(html).toContain(`<meta property="og:image" content="${ORIGIN}/api/og?id=${id}">`);
+    expect(html).toContain(
+      `<meta property="og:image" content="${ORIGIN}/api/og?id=${id}&amp;v=${OG_LAYOUT_VERSION}">`,
+    );
     expect(html).toContain('<meta name="twitter:card" content="summary_large_image">');
   });
 });
