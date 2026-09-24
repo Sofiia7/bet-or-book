@@ -1154,7 +1154,11 @@ async function loadGallery() {
   if (open.length === 0) return;
   gallery.currentRows = open.filter((e) => !e.historical);
   gallery.historicalRows = open.filter((e) => e.historical);
-  renderBoards(gallery.currentRows);
+  // gallery.featured (the four hand-picked demonstration readings) never
+  // overlaps gallery.currentRows by address - the L03 fix already strips a
+  // current row wherever a featured reading supersedes it - so this is a
+  // plain concatenation, not a merge that needs de-duplicating.
+  renderBoards([...gallery.currentRows, ...gallery.featured]);
 
   // Each demonstration chip says, on hover, exactly when it was read.
   for (const row of gallery.featured || []) {
