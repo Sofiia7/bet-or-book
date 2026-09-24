@@ -1024,6 +1024,85 @@ function galleryRow(e, rank) {
   return li;
 }
 
+// ---- ratings board ----
+//
+// Five short boards, ranked from numbers every reading already carries -
+// nothing new is fetched, nothing is invented, and a board with nothing
+// that qualifies is left out rather than shown empty (24.09 mechanic:
+// ratings board, user-approved; replaces the flat "More readings" list as
+// the first thing shown, folding in audit item U07).
+const BOARDS = [
+  {
+    title: 'Biggest bets',
+    note: 'Looks like a bet, ranked by size.',
+    filter: (e) => e.verdict.verdict === 'looks_like_a_bet',
+    sort: (a, b) => b.positions.headlineNotionalUsd - a.positions.headlineNotionalUsd,
+    stat: (e) => fmtUsd(e.positions.headlineNotionalUsd),
+  },
+  {
+    title: 'Biggest slice of a market',
+    note: "Position size against that market's open interest on Hyperliquid.",
+    filter: (e) => e.sizeVsOi !== null && e.sizeVsOi > 0,
+    sort: (a, b) => b.sizeVsOi - a.sizeVsOi,
+    stat: (e) => fmtPct(e.sizeVsOi) + ' of open interest',
+  },
+  {
+    title: 'Best covered shorts',
+    note: 'Hedged: the same account holds the offsetting spot.',
+    filter: (e) => e.verdict.verdict === 'hedged' && e.positions.headlineSide === 'short',
+    sort: (a, b) => b.hedgeRatio - a.hedgeRatio,
+    stat: (e) => fmtPct(e.hedgeRatio) + ' covered',
+  },
+  {
+    title: 'Least covered shorts',
+    note: 'Under 10% covered by this address - the rest is still open.',
+    filter: (e) => e.positions.headlineSide === 'short' && e.hedgeRatio < 0.1,
+    sort: (a, b) => a.hedgeRatio - b.hedgeRatio,
+    stat: (e) => fmtPct(e.hedgeRatio) + ' covered',
+  },
+  {
+    title: 'Market makers',
+    note: "Book: the account quotes the position's own market on both sides.",
+    filter: (e) => e.verdict.verdict === 'book',
+    sort: (a, b) => b.headlineTwoSidedNotionalUsd - a.headlineTwoSidedNotionalUsd,
+    stat: (e) => fmtUsd(e.headlineTwoSidedNotionalUsd) + ' matched',
+  },
+];
+const BOARD_SIZE = 5;
+
+function boardRow(e, board) {
+  const li = el('li');
+  const b = el('button');
+  b.append(
+    el('span', 'pos', positionText(e)),
+    el('span', 'badge ' + verdictOf(e).cls, badgeText(e)),
+    el('span', 'row-meta', board.stat(e) + ' · ' + shortAddr(e.address)),
+  );
+  b.addEventListener('click', async () => {
+    await openSnapshot(e.snapshotId);
+    if (current && current.snapshotId === e.snapshotId) {
+      $('card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+  li.append(b);
+  return li;
+}
+
+function renderBoards(rows) {
+  const box = $('boards');
+  box.replaceChildren();
+  for (const board of BOARDS) {
+    const matches = rows.filter(board.filter).sort(board.sort).slice(0, BOARD_SIZE);
+    if (matches.length === 0) continue;
+    const section = el('div', 'board');
+    section.append(el('h3', null, board.title), el('p', 'board-note', board.note));
+    const list = el('ol', 'list');
+    list.append(...matches.map((e) => boardRow(e, board)));
+    section.append(list);
+    box.append(section);
+  }
+}
+
 function renderGallery() {
   const rows = gallery.currentRows;
   const counts = galleryCounts(rows);
@@ -1075,6 +1154,7 @@ async function loadGallery() {
   if (open.length === 0) return;
   gallery.currentRows = open.filter((e) => !e.historical);
   gallery.historicalRows = open.filter((e) => e.historical);
+  renderBoards(gallery.currentRows);
 
   // Each demonstration chip says, on hover, exactly when it was read.
   for (const row of gallery.featured || []) {
