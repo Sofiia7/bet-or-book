@@ -137,8 +137,15 @@ export function verdictInputOf(
  *    verdict now needs this; an entry that never recorded it cannot be told
  *    apart from one that would have failed the check, and defaulting it to
  *    "not quoted" is a guess dressed as a re-read.
+ * 5: every row checked before use, and loans Hyperliquid reports under
+ *    portfolio margin listed among the notes (24.09). No field was added -
+ *    what changed is what the notes cover: in an earlier entry, no loan
+ *    listed means none was looked for, not none found.
  */
-export const OBSERVATION_SCHEMA_VERSION = 4;
+export const OBSERVATION_SCHEMA_VERSION = 5;
+
+/** The first observation that looked for loans on Hyperliquid. */
+export const LOANS_READ_FROM_SCHEMA = 5;
 
 /** The contract allowlist and alias table that read the holdings. Bumped
  * whenever a token is added, because "not recognised" is a statement about

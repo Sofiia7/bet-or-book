@@ -12,8 +12,10 @@
 import type { CheckResponse } from '../api/check';
 import type { ReasonCode } from './verdict';
 import { formatPct, formatUsd } from './evidence';
+import { LOANS_READ_FROM_SCHEMA } from './observation';
 
-type Reading = Pick<CheckResponse, 'verdict' | 'positions' | 'hedge' | 'historical'>;
+type Reading = Pick<CheckResponse, 'verdict' | 'positions' | 'hedge' | 'historical'> &
+  Partial<Pick<CheckResponse, 'observationSchemaVersion'>>;
 
 const coinOf = (r: Reading) => r.positions.headlineCoin ?? 'the asset';
 
@@ -34,9 +36,14 @@ const OPEN: Record<Exclude<ReasonCode, 'positions' | 'trades'>, (r: Reading) => 
     'view it chose to keep. One reading of its orders cannot tell; watching the quoting over days would.',
   balanced_book: () =>
     'whether the offsetting legs stay together. Positions that cancel now can be closed one at a time.',
+  // A reading taken before loans were looked for says so in its own terms:
+  // "listed with the reading" would make its silence read as "none".
   hedge_leg: (r) =>
-    `whether any of that ${coinOf(r)} is owed to someone. A loan on Hyperliquid itself is listed with the ` +
-    `reading; a debt anywhere else is not read, and ${coinOf(r)} that was borrowed would not offset the short.`,
+    `whether any of that ${coinOf(r)} is owed to someone. ` +
+    ((r.observationSchemaVersion ?? 0) >= LOANS_READ_FROM_SCHEMA
+      ? 'A loan on Hyperliquid itself is listed with the reading; a debt anywhere else is not read, '
+      : 'Debts are not read here, ') +
+    `and ${coinOf(r)} that was borrowed would not offset the short.`,
   over_covered: (r) =>
     `what the ${coinOf(r)} beyond the short is for: a view on ${coinOf(r)}, or collateral for something not read here.`,
   hedge_not_checked: () => 'the holdings this reading could not finish. Checking again may complete them.',

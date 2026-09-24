@@ -74,6 +74,18 @@ describe('what a reading leaves open', () => {
     expect(openQuestion(bet)).toMatch(/exchange, agreed over the counter/);
   });
 
+  it('does not let a reading taken before loans were looked for imply that none were found', () => {
+    // The demonstration "Hedged" reading predates the loan check, and that
+    // account does owe USDC on Hyperliquid: "listed with the reading" would
+    // turn its silence into a "none".
+    expect(hedged.observationSchemaVersion).toBe(4);
+    expect(openQuestion(hedged)).toContain('Debts are not read here');
+    expect(openQuestion(hedged)).not.toContain('listed with the reading');
+    const fresh = { ...hedged, observationSchemaVersion: 5 };
+    expect(openQuestion(fresh)).toContain('A loan on Hyperliquid itself is listed with the reading');
+    expect(openQuestion(fresh)).toContain('a debt anywhere else is not read');
+  });
+
   it('has a question for every reason the current rules return', () => {
     const source = readFileSync(new URL('../../src/engine/verdict.ts', import.meta.url), 'utf8');
     const codes = new Set<string>();

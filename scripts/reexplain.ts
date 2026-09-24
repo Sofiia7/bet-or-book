@@ -34,7 +34,6 @@ import {
   legacySourceCoverage,
   historicalReason,
   verdictInputOf,
-  OBSERVATION_SCHEMA_VERSION,
   ASSET_REGISTRY_VERSION,
 } from '../src/engine/observation';
 import { words } from '../src/engine/interpret';
@@ -184,7 +183,10 @@ export function reexplainGallery(gallery: Gallery, now: string): { gallery: Gall
       positionsAsOf,
       degraded,
       classifierVersion: CLASSIFIER_VERSION,
-      observationSchemaVersion: e.observationSchemaVersion ?? OBSERVATION_SCHEMA_VERSION,
+      // An entry that recorded no version is from the first scan, before the
+      // field existed. Stamping it with today's would claim it looked for
+      // what later versions look for - loans, since version 5.
+      observationSchemaVersion: e.observationSchemaVersion ?? 1,
       assetRegistryVersion: ASSET_REGISTRY_VERSION,
       observedAt: e.observedAt ?? positionsAsOf ?? e.checkedAt,
       interpretedAt: now,

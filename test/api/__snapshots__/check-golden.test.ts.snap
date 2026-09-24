@@ -70,7 +70,7 @@ exports[`a check, whole, on recorded real answers > a HIP-3 long whose dex will 
   "hedgeScope": "none",
   "interpretedAt": "2026-09-18T15:00:00.000Z",
   "linkedHedge": null,
-  "observationSchemaVersion": 4,
+  "observationSchemaVersion": 5,
   "observedAt": "2026-09-18T14:59:00.000Z",
   "orders": {
     "bidShare": 0.5,
@@ -268,7 +268,7 @@ exports[`a check, whole, on recorded real answers > a lone long, with its fundin
   "hedgeScope": "none",
   "interpretedAt": "2026-09-18T15:00:00.000Z",
   "linkedHedge": null,
-  "observationSchemaVersion": 4,
+  "observationSchemaVersion": 5,
   "observedAt": "2026-09-18T14:59:00.000Z",
   "orders": {
     "bidShare": 0.5,
@@ -486,7 +486,7 @@ exports[`a check, whole, on recorded real answers > a short 60% covered 1`] = `
   "hedgeScope": "all-chains",
   "interpretedAt": "2026-09-18T15:00:00.000Z",
   "linkedHedge": null,
-  "observationSchemaVersion": 4,
+  "observationSchemaVersion": 5,
   "observedAt": "2026-09-18T14:59:00.000Z",
   "orders": {
     "bidShare": 0.5,
@@ -699,7 +699,7 @@ exports[`a check, whole, on recorded real answers > a short covered by its own W
   "hedgeScope": "all-chains",
   "interpretedAt": "2026-09-18T15:00:00.000Z",
   "linkedHedge": null,
-  "observationSchemaVersion": 4,
+  "observationSchemaVersion": 5,
   "observedAt": "2026-09-18T14:59:00.000Z",
   "orders": {
     "bidShare": 0.5,
@@ -922,7 +922,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen answers 200 
   "hedgeScope": "all-chains",
   "interpretedAt": "2026-09-18T15:00:00.000Z",
   "linkedHedge": null,
-  "observationSchemaVersion": 4,
+  "observationSchemaVersion": 5,
   "observedAt": "2026-09-18T13:04:24.997Z",
   "orders": {
     "bidShare": 0.5,
@@ -1166,7 +1166,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen not used, an
   "hedgeScope": "hyperliquid",
   "interpretedAt": "2026-09-18T15:00:00.000Z",
   "linkedHedge": null,
-  "observationSchemaVersion": 4,
+  "observationSchemaVersion": 5,
   "observedAt": "2026-09-18T13:04:24.997Z",
   "orders": {
     "bidShare": 0.5,
@@ -1436,7 +1436,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen positions fa
     "linkedHedgeRatio": 2.225254470219281,
     "linkedHedgeUsd": 399107867.06126976,
   },
-  "observationSchemaVersion": 4,
+  "observationSchemaVersion": 5,
   "observedAt": "2026-09-18T13:04:24.997Z",
   "orders": {
     "bidShare": 0.5,
@@ -1706,7 +1706,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about a posit
     "linkedHedgeRatio": 2.2246310748020024,
     "linkedHedgeUsd": 399107867.06126976,
   },
-  "observationSchemaVersion": 4,
+  "observationSchemaVersion": 5,
   "observedAt": "2026-09-18T13:04:21.479Z",
   "orders": {
     "bidShare": 0.5,
@@ -1965,7 +1965,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about its sec
     "linkedHedgeRatio": 0.0000024532327353110757,
     "linkedHedgeUsd": 261.2576868558804,
   },
-  "observationSchemaVersion": 4,
+  "observationSchemaVersion": 5,
   "observedAt": "2026-09-18T13:04:21.479Z",
   "orders": {
     "bidShare": 0.5,
@@ -2219,7 +2219,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the deadline alread
   "hedgeScope": "hyperliquid",
   "interpretedAt": "2026-09-18T15:00:00.000Z",
   "linkedHedge": null,
-  "observationSchemaVersion": 4,
+  "observationSchemaVersion": 5,
   "observedAt": "2026-09-18T13:04:24.997Z",
   "orders": {
     "bidShare": 0.5,
@@ -2479,7 +2479,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the full paid path,
     "linkedHedgeRatio": 2.2246310748020024,
     "linkedHedgeUsd": 399107867.06126976,
   },
-  "observationSchemaVersion": 4,
+  "observationSchemaVersion": 5,
   "observedAt": "2026-09-18T13:04:21.479Z",
   "orders": {
     "bidShare": 0.5,
@@ -2697,7 +2697,7 @@ exports[`a check, whole, on recorded real answers > thirty offsetting positions 
   "hedgeScope": "none",
   "interpretedAt": "2026-09-18T15:00:00.000Z",
   "linkedHedge": null,
-  "observationSchemaVersion": 4,
+  "observationSchemaVersion": 5,
   "observedAt": "2026-09-18T14:59:00.000Z",
   "orders": {
     "bidShare": 0.5,
