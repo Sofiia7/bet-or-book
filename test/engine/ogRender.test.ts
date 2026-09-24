@@ -21,6 +21,7 @@ function data(overrides: Partial<OgCardData> = {}): OgCardData {
     footerLeft: '0xecb6...2b00 · rules v4',
     provenance: 'Positions as of 23 Sep, 14:32 UTC · saved reading, rules v4',
     limitText: null,
+    elsewhere: null,
     ...overrides,
   };
 }
@@ -102,5 +103,21 @@ describe('OG image dimensions', () => {
   it('is the standard social-preview size', () => {
     expect(OG_WIDTH).toBe(1200);
     expect(OG_HEIGHT).toBe(630);
+  });
+});
+
+describe('the funder box on the link picture', () => {
+  it('puts the amount beside the bar on a dashed line, with its caption', () => {
+    const tree = JSON.stringify(
+      ogTree(
+        data({
+          segments: [{ share: 1, color: '#e6e6e2', opacity: 1 }],
+          elsewhere: { amount: '$443.7M', caption: 'held by 2 wallets that funded it, ownership unverified, not counted' },
+        }),
+      ),
+    );
+    expect(tree).toContain('$443.7M');
+    expect(tree).toContain('dashed');
+    expect(tree).toContain('ownership unverified, not counted');
   });
 });

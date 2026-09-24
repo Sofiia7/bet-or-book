@@ -82,3 +82,32 @@ describe('ogCardData', () => {
     ]);
   });
 });
+
+describe('what a funder holds, on the picture as on the page', () => {
+  const breakdown = (elsewhere: { usd: number; wallets: number } | null) =>
+    ({
+      applies: true,
+      coin: 'ETH',
+      side: 'short',
+      headlineUsd: 209_121_627,
+      segments: [{ kind: 'residual', usd: 209_121_627, share: 1 }],
+      excessUsd: 0,
+      elsewhere: elsewhere ? { ...elsewhere, ownership: 'unverified' } : null,
+    }) as unknown as ExposureBreakdown;
+
+  it('carries the amount and says it is not counted, beside a bar and never in it', () => {
+    const d = ogCardData(input({ breakdown: breakdown({ usd: 443_676_085, wallets: 2 }) }));
+    expect(d.elsewhere).toEqual({
+      amount: '$443.7M',
+      caption: 'held by 2 wallets that funded it, ownership unverified, not counted',
+    });
+  });
+
+  it('draws nothing beside the bar when nothing is held elsewhere', () => {
+    expect(ogCardData(input({ breakdown: breakdown(null) })).elsewhere).toBeNull();
+  });
+
+  it('draws nothing beside a bar that is not there', () => {
+    expect(ogCardData(input({ breakdown: undefined })).elsewhere).toBeNull();
+  });
+});

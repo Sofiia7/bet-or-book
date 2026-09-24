@@ -36,9 +36,8 @@ export function ogTree(d: OgCardData): object {
     props: {
       style: {
         display: 'flex',
-        width: '100%',
+        width: d.elsewhere ? '58%' : '100%',
         height: 28,
-        marginTop: 34,
         borderRadius: 4,
         overflow: 'hidden',
         border: `1px solid #d9d9d6`,
@@ -55,6 +54,55 @@ export function ogTree(d: OgCardData): object {
           },
         },
       })),
+    },
+  };
+
+  // What the funders hold goes beside the bar on a dashed line, never inside
+  // it - the same drawing as the page's and the downloaded picture's, so the
+  // picture that travels with a link does not leave the card's one
+  // distinction to the sentence alone.
+  const elsewhere = bar && d.elsewhere && [
+    {
+      type: 'div',
+      props: { style: { display: 'flex', width: '6%', height: 0, margin: '0 10px', borderTop: `2px dashed ${FAINT}` } },
+    },
+    {
+      type: 'div',
+      props: {
+        style: {
+          display: 'flex',
+          flexGrow: 1,
+          height: 28,
+          alignItems: 'center',
+          paddingLeft: 10,
+          borderRadius: 4,
+          border: `2px dashed ${FAINT}`,
+          color: INK,
+          fontSize: 20,
+          fontWeight: 700,
+        },
+        children: d.elsewhere.amount,
+      },
+    },
+  ];
+  const barRow = bar && {
+    type: 'div',
+    props: {
+      style: { display: 'flex', flexDirection: 'column', width: '100%', marginTop: 30 },
+      children: [
+        { type: 'div', props: { style: { display: 'flex', alignItems: 'center', width: '100%' }, children: [bar, ...(elsewhere || [])] } },
+        ...(d.elsewhere
+          ? [
+              {
+                type: 'div',
+                props: {
+                  style: { display: 'flex', justifyContent: 'flex-end', color: FAINT, fontSize: 18, marginTop: 6 },
+                  children: d.elsewhere.caption,
+                },
+              },
+            ]
+          : []),
+      ],
     },
   };
 
@@ -107,7 +155,7 @@ export function ogTree(d: OgCardData): object {
               },
             ]
           : []),
-        ...(bar ? [bar] : []),
+        ...(barRow ? [barRow] : []),
         {
           type: 'div',
           props: {

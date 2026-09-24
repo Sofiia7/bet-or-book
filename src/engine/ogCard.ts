@@ -8,6 +8,7 @@ import type { VerdictResult } from './verdict';
 import type { ExposureBreakdown, SegmentKind } from './breakdown';
 import type { CheckResult } from '../api/check';
 import { shareCard } from './share';
+import { formatUsd } from './evidence';
 
 /**
  * The picture's own layout, as part of where it is kept.
@@ -18,8 +19,10 @@ import { shareCard } from './share';
  * neither - served from KV, and marked immutable for a year at whatever
  * cache a crawler sits behind. A new layout is a new key and a new URL, so
  * no stored or cached picture from an older one can stand in for it.
+ * Version 3 draws what a wallet that funded the account holds, beside the
+ * bar on a dashed line, as the page and the downloaded picture already did.
  */
-export const OG_LAYOUT_VERSION = 2;
+export const OG_LAYOUT_VERSION = 3;
 
 /** Where one reading's picture is kept, in this layout. */
 export const ogCacheKey = (id: string): string => `og:v${OG_LAYOUT_VERSION}:${id}`;
@@ -49,6 +52,11 @@ export interface OgCardData {
    * clipped before a trailing caveat, and the caption is otherwise the only
    * other place this reading's limits are said out loud at all. */
   limitText: string | null;
+  /** What wallets that funded the account hold of the asset, drawn outside
+   * the bar and never inside it: the one distinction the card turns on, and
+   * the picture used to leave it to the sentence alone. Null when nothing
+   * is held elsewhere, or there is no bar to put it beside. */
+  elsewhere: { amount: string; caption: string } | null;
 }
 
 const ACCENT: Record<VerdictResult['verdict'], string> = {
@@ -124,6 +132,7 @@ export function ogCardData(input: OgCardInput): OgCardData {
     input.breakdown && input.breakdown.applies && input.breakdown.segments.length > 0
       ? input.breakdown.segments.map((seg) => ({ share: seg.share, ...segmentColor(seg.kind, accent) }))
       : null;
+  const held = segments && input.breakdown?.elsewhere;
   return {
     badgeText,
     accent,
@@ -132,5 +141,11 @@ export function ogCardData(input: OgCardInput): OgCardData {
     footerLeft: `${shortAddress(input.address)} · rules ${input.classifierVersion}`,
     provenance: input.provenance,
     limitText: input.limitText,
+    elsewhere: held
+      ? {
+          amount: formatUsd(held.usd),
+          caption: `held by ${held.wallets} ${held.wallets === 1 ? 'wallet' : 'wallets'} that funded it, ownership unverified, not counted`,
+        }
+      : null,
   };
 }

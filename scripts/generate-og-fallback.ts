@@ -17,6 +17,7 @@ const data: OgCardData = {
   // No reading behind this card, so no date and no caveat to give.
   provenance: '',
   limitText: null,
+  elsewhere: null,
 };
 
 async function main() {
