@@ -50,6 +50,7 @@ export function present(r: Interpreted, share: ShareCardOptions = { kind: 'live'
     pnl: r.pnl,
     sizeVsOi: r.sizeVsOi,
     source: r.source,
+    mainDexPositionCount: r.mainDexPositionCount,
     focus: r.focus,
     positionsAsOf: r.positionsAsOf,
     classifierVersion: r.classifierVersion,

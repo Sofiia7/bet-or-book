@@ -79,10 +79,15 @@ export function nansenContribution(r: CheckResponse): NansenContribution | null 
 
   // Positions: the one read every rule depends on.
   const hip3 = (r.positions.candidates ?? []).map((c) => c.coin).filter((c) => c.includes(':'));
+  const mainDex = r.mainDexPositionCount ?? null;
+  const dexComparison =
+    mainDex !== null && mainDex !== n
+      ? `Hyperliquid's own free endpoint shows ${plural(mainDex, 'position')} on the main dex alone.`
+      : "Hyperliquid's own free endpoint reads the main dex only.";
   items.push(
     `Positions on every Hyperliquid dex, HIP-3 included: ${plural(n, 'open position')}` +
       (hip3.length ? `, among the largest ${hip3.slice(0, 2).join(' and ')}` : '') +
-      ". Hyperliquid's own free endpoint reads the main dex only." +
+      `. ${dexComparison}` +
       (isBet ? ' The bet rule needs every position read, so it could only be applied with these.' : ''),
   );
   if (isBet) lead = `every dex read, ${plural(n, 'position')} in all, which the bet rule needs`;
