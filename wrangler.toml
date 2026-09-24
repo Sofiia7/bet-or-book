@@ -52,7 +52,13 @@ enabled = true
 head_sampling_rate = 0.1
 
 [vars]
-NANSEN_DAILY_CREDIT_CAP = "300"
+# Raised from 300 for 25-27 September (judging week): the public share (cap
+# minus NANSEN_DEMO_RESERVE) was exhausted by roughly 35-40 checks a day at
+# up to 7 credits each, which a single afternoon of visitors clears easily.
+# The account balance (~916 credits as of 24.09) and NANSEN_CREDIT_FLOOR
+# still bound total spend regardless of this number. Revert to 300 (or lower)
+# after the buildathon window closes (2026-09-27 23:59 UTC).
+NANSEN_DAILY_CREDIT_CAP = "600"
 NANSEN_CREDIT_FLOOR = "5"
 # Credits of the cap that public checks may not reach, so an afternoon of
 # visitors cannot leave the demo with a Hyperliquid-only answer. Reaching
