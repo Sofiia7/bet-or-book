@@ -1,0 +1,91 @@
+{
+  "portfolioMarginEnabled": true,
+  "balances": [
+    {
+      "coin": "USDC",
+      "token": 0,
+      "total": "-9573815.1387989298",
+      "hold": "-17817028.2466779202",
+      "entryNtl": "0.0",
+      "spotHold": "-9573815.1387989298",
+      "ltv": "0.0",
+      "borrowed": "17967395.4998109415"
+    },
+    {
+      "coin": "HYPE",
+      "token": 150,
+      "total": "443316.24181068",
+      "hold": "303467.9094902501",
+      "entryNtl": "0.0",
+      "ltv": "0.65",
+      "supplied": "443316.24181068"
+    },
+    {
+      "coin": "UBTC",
+      "token": 197,
+      "total": "0.0",
+      "hold": "0.0",
+      "entryNtl": "0.0",
+      "ltv": "0.5"
+    },
+    {
+      "coin": "USDE",
+      "token": 235,
+      "total": "0.0",
+      "hold": "0.0",
+      "entryNtl": "0.0"
+    },
+    {
+      "coin": "USDT0",
+      "token": 268,
+      "total": "0.0",
+      "hold": "-999999.99999999",
+      "entryNtl": "0.0",
+      "spotHold": "0.0",
+      "ltv": "0.0"
+    },
+    {
+      "coin": "USDH",
+      "token": 360,
+      "total": "0.0",
+      "hold": "0.0",
+      "entryNtl": "0.0",
+      "ltv": "0.0"
+    }
+  ],
+  "portfolioMarginRatio": "0.4373986849",
+  "tokenToPortfolioBorrowRatio": [
+    [
+      0,
+      "0.35934791"
+    ]
+  ],
+  "tokenToPortfolioSupplyRatio": [
+    [
+      150,
+      "0.4433162418"
+    ]
+  ],
+  "tokenToAvailableAfterMaintenance": [
+    [
+      0,
+      "20435322.3617889918"
+    ],
+    [
+      150,
+      "273150.28959407"
+    ],
+    [
+      197,
+      "0.0"
+    ],
+    [
+      268,
+      "999999.99999999"
+    ],
+    [
+      360,
+      "0.0"
+    ]
+  ]
+}

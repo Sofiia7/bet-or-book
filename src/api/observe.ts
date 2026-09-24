@@ -33,6 +33,17 @@ import {
   normalizeNansenPnl,
 } from '../sources/normalize';
 import type { NansenClient } from '../sources/nansen';
+import type { HlOpenOrder, HlPerpAssetCtx, HlPerpMeta, HlSpotBalance } from '../sources/hyperliquid';
+import {
+  checkFills,
+  checkNansenBalances,
+  checkOrders,
+  checkPerpMeta,
+  checkRelatedWallets,
+  checkSpotBalances,
+  checkSpotMeta,
+  type Checked,
+} from '../sources/validate';
 import {
   computePositionFeatures,
   computeOrderFeatures,
@@ -46,6 +57,7 @@ import {
   type LinkedHedgeFeatures,
 } from '../engine/features';
 import { hedgeCanChangeVerdict, DEFAULT_THRESHOLDS, type SourceCoverage } from '../engine/verdict';
+import { spotHedgesPerp } from '../engine/assets';
 import { formatUsd } from '../engine/evidence';
 import { computeVitals, type VitalsItem } from '../engine/vitals';
 import { OBSERVATION_SCHEMA_VERSION, ASSET_REGISTRY_VERSION, type Observation } from '../engine/observation';
@@ -121,7 +133,25 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
       () => ({ ok: false as const, v: null }),
     ),
   ]);
-  if (!perpMetaRes.ok) coverage.push('Open interest unavailable, so size versus open interest is not shown');
+  // Every answer's shape is checked before any of it is used
+  // (src/sources/validate.ts). A wrong envelope throws here, which fails the
+  // check exactly as a failed request would; a wrong row is left out and
+  // counted, and the count is said below where it lowers a claim.
+  const ordersRead = checkOrders(rawOrders);
+  const spotRead = checkSpotBalances(spotBalances);
+  const spotMetaRead = checkSpotMeta(spotMetaPair);
+  const fillsRead = checkFills(rawFills);
+  // Open interest decides nothing, so perp metadata that is the wrong shape
+  // is the same as perp metadata that never came: not shown.
+  let perpMeta: [HlPerpMeta, HlPerpAssetCtx[]] | null = null;
+  if (perpMetaRes.ok) {
+    try {
+      perpMeta = checkPerpMeta(perpMetaRes.v);
+    } catch (err) {
+      console.error('perp metadata', err);
+    }
+  }
+  if (!perpMeta) coverage.push('Open interest unavailable, so size versus open interest is not shown');
 
   let source: Observation['source'] = 'hyperliquid';
   let positions: Position[] | null = null;
@@ -206,9 +236,9 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   // Mark prices, so distance to liquidation is measured from where the price
   // is rather than from where the position was opened.
   const markPxByCoin = new Map<string, number>();
-  if (perpMetaRes.ok) {
-    const [perpMeta, perpAssetCtxs] = perpMetaRes.v;
-    perpMeta.universe.forEach((asset, i) => {
+  if (perpMeta) {
+    const [perpUniverse, perpAssetCtxs] = perpMeta;
+    perpUniverse.universe.forEach((asset, i) => {
       const markPx = Number(perpAssetCtxs[i]?.markPx);
       if (Number.isFinite(markPx) && markPx > 0) markPxByCoin.set(asset.name, markPx);
     });
@@ -239,22 +269,43 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   // positions on every HIP-3 dex as well, so without asking those by name an
   // account quoting both sides of a HIP-3 market reads as quoting nothing -
   // which is one of the conditions for calling a position a clean bet.
-  const resting = normalizeOrders(rawOrders);
+  const resting = normalizeOrders(ordersRead.rows);
+  let malformedOrders = ordersRead.malformed;
   let ordersCoverage: SourceCoverage = 'complete';
   const hip3Dexes = [...new Set(positions.map((p) => dexOf(p.coin)).filter((d): d is string => d !== null))];
   if (hip3Dexes.length > 0) {
     const perDex = await Promise.allSettled(hip3Dexes.map((dex) => getOpenOrders(address, dex, signal)));
     perDex.forEach((r, i) => {
+      let read: Checked<HlOpenOrder> | null = null;
       if (r.status === 'fulfilled') {
-        resting.push(...normalizeOrders(r.value));
+        try {
+          read = checkOrders(r.value);
+        } catch (err) {
+          console.error('hip-3 orders', err);
+        }
+      }
+      if (read) {
+        resting.push(...normalizeOrders(read.rows));
+        malformedOrders += read.malformed;
       } else {
         // "It quotes nothing" is one of the conditions for calling a
-        // position a clean bet, and a dex that would not answer has not
+        // position a clean bet, and a dex that would not answer - or
+        // answered with something that is not a list of orders - has not
         // been shown to be quiet.
         ordersCoverage = 'partial';
         note(`Resting orders on the ${hip3Dexes[i]} dex could not be read`, true);
       }
     });
+  }
+  // An order that is not an order is left out, and an account whose orders
+  // were not all readable has not been shown to quote nothing.
+  if (malformedOrders > 0) {
+    ordersCoverage = 'partial';
+    note(
+      `${malformedOrders} resting ${malformedOrders === 1 ? 'order' : 'orders'} came back malformed and ` +
+        'were left out, so "quotes nothing" cannot be said',
+      true,
+    );
   }
   const orderFeatures = computeOrderFeatures(resting, positionFeatures.headlineCoin);
   // A HIP-3 dex this account merely quotes on, with no open position, is not
@@ -270,7 +321,14 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
         'position on. A dex it only quotes, with no position of its own, would not appear here',
     );
   }
-  const tradeFeatures = computeTradeFeatures(normalizeTrades(rawFills), TRADES_WINDOW_HOURS, positionFeatures.headlineCoin);
+  const tradeFeatures = computeTradeFeatures(normalizeTrades(fillsRead.rows), TRADES_WINDOW_HOURS, positionFeatures.headlineCoin);
+  if (fillsRead.malformed > 0) {
+    note(
+      `${fillsRead.malformed} of ${fillsRead.malformed + fillsRead.rows.length} fills came back malformed and were ` +
+        'left out of the trading and position-flow figures',
+      true,
+    );
+  }
   const tradeSignal = {
     tradesPerDay: tradeFeatures.tradesPerDay,
     crossedShare: tradeFeatures.crossedShare,
@@ -289,21 +347,43 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   } else if (nansen && hedgeMatters) {
     try {
       const bal = await nansen.currentBalance(address);
-      ownChain = normalizeNansenBalances(bal.rows);
+      const read = checkNansenBalances(bal.rows);
+      ownChain = normalizeNansenBalances(read.rows);
       otherChainsRead = true;
-      hedgeCoverage = bal.complete ? 'complete' : 'partial';
+      hedgeCoverage = bal.complete && read.malformed === 0 ? 'complete' : 'partial';
       if (!bal.complete) note('Holdings on other chains: first 100 tokens only', true);
+      if (read.malformed > 0) {
+        note(
+          `${read.malformed} of the account's balances on other chains came back malformed and were left out, ` +
+            'so the cover found there is a floor',
+          true,
+        );
+      }
     } catch {
       hedgeCoverage = 'missing';
       note('Holdings on other chains unavailable', true);
     }
   }
-  const [spotMeta, spotAssetCtxs] = spotMetaPair;
-  const hlSpot = normalizeSpotHoldings(
-    spotBalances.balances,
-    buildSpotPriceIndex(spotMeta, spotAssetCtxs),
-    duplicateSpotTokenNames(spotMeta),
-  );
+  const [spotMeta, spotAssetCtxs] = spotMetaRead.meta;
+  const spotPrices = buildSpotPriceIndex(spotMeta, spotAssetCtxs);
+  const hlSpot = normalizeSpotHoldings(spotRead.rows, spotPrices, duplicateSpotTokenNames(spotMeta));
+  if (spotRead.malformed > 0) {
+    // For a short these balances are part of the hedge search, and one that
+    // could not be read leaves the cover unknown rather than zero.
+    if (hedgeCoverage === 'complete') hedgeCoverage = 'partial';
+    note(
+      `${spotRead.malformed} spot ${spotRead.malformed === 1 ? 'balance' : 'balances'} on Hyperliquid came back ` +
+        'malformed and were left out',
+      true,
+    );
+  }
+  if (spotMetaRead.malformed > 0) {
+    note(
+      `${spotMetaRead.malformed} entries of Hyperliquid's spot metadata came back malformed and were left out; ` +
+        'a balance in one of those tokens reads as unpriced',
+    );
+  }
+  for (const n of borrowingNotes(spotRead.rows, spotPrices, positionFeatures)) note(n.text, n.failure);
   const hedgeFeatures = computeHedgeFeatures(
     positionFeatures.headlineCoin,
     positionFeatures.headlineSide,
@@ -356,9 +436,9 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   }
 
   let openInterestUsd = 0;
-  if (perpMetaRes.ok) {
-    const [perpMeta, perpAssetCtxs] = perpMetaRes.v;
-    const headlineIndex = perpMeta.universe.findIndex((a) => a.name === positionFeatures.headlineCoin);
+  if (perpMeta) {
+    const [perpUniverse, perpAssetCtxs] = perpMeta;
+    const headlineIndex = perpUniverse.universe.findIndex((a) => a.name === positionFeatures.headlineCoin);
     openInterestUsd =
       headlineIndex >= 0
         ? Number(perpAssetCtxs[headlineIndex].openInterest) * Number(perpAssetCtxs[headlineIndex].markPx)
@@ -442,8 +522,11 @@ async function readLinkedHedge(
   for (const r of related) {
     if (r.status === 'fulfilled') {
       try {
-        links.push(...normalizeRelatedWallets(r.value.rows));
+        const read = checkRelatedWallets(r.value.rows);
+        links.push(...normalizeRelatedWallets(read.rows));
         if (!r.value.complete) linksTruncated = true;
+        // A funder left out is a funder whose holdings were never looked at.
+        if (read.malformed > 0) note(`${read.malformed} funding links came back malformed on one chain and were left out`, true);
       } catch (err) {
         console.error('nansen related wallets', err);
         note('Linked wallets came back in an unexpected shape on one chain', true);
@@ -487,8 +570,9 @@ async function readLinkedHedge(
     // extra context, and an extra source answering with the wrong shape
     // used to throw here, outside any guard, and lose the whole check.
     try {
-      const holdings = normalizeNansenBalances(b.value.rows);
-      if (!b.value.complete) truncatedFunder = true;
+      const read = checkNansenBalances(b.value.rows);
+      const holdings = normalizeNansenBalances(read.rows);
+      if (!b.value.complete || read.malformed > 0) truncatedFunder = true;
       return [{ wallet, holdings }];
     } catch (err) {
       console.error('nansen funder balances', err);
@@ -497,7 +581,7 @@ async function readLinkedHedge(
     }
   });
   if (truncatedFunder) {
-    note('A funding wallet was read to its first 100 tokens only, so its holdings may be understated', true);
+    note('A funding wallet was not read in full - its first 100 tokens only, or rows that came back malformed - so its holdings may be understated', true);
   }
   return computeLinkedHedge(
     positionFeatures.headlineCoin,
@@ -536,7 +620,9 @@ async function readFundingContext(
   related.forEach((r, i) => {
     if (r.status === 'fulfilled') {
       try {
-        links.push(...normalizeRelatedWallets(r.value.rows));
+        const read = checkRelatedWallets(r.value.rows);
+        links.push(...normalizeRelatedWallets(read.rows));
+        if (read.malformed > 0) note(`${read.malformed} funding records came back malformed on one chain and were left out`);
       } catch (err) {
         console.error('nansen related wallets (funding context)', err);
         note('Funding history came back in an unexpected shape on one chain');
@@ -563,4 +649,72 @@ async function readFundingContext(
         : 'another wallet';
   const scope = uncheckedChains.length > 0 ? `, ${uncheckedChains.join(' and ')} not read` : '';
   return { label: 'Earliest funding found', value: `${when} on ${first.chain}${scope}, by ${who}`, source: 'Nansen' };
+}
+
+/** A coin amount the way a reader counts it: whole units once there are a
+ * hundred of them, four significant digits below that. */
+function amountText(n: number): string {
+  return n >= 100
+    ? Math.round(n).toLocaleString('en-US')
+    : Number(n.toPrecision(4)).toLocaleString('en-US', { maximumFractionDigits: 8 });
+}
+
+/**
+ * Loans Hyperliquid shows under portfolio margin, said rather than lost.
+ *
+ * A borrowed balance arrives as a negative spot `total`, and the holdings
+ * normaliser drops a balance that is not above zero, so a debt of millions
+ * used to read as nothing at all. Seen live on 24.09: the demonstration
+ * account for "Hedged" owes 17,967,395 USDC against the HYPE it holds
+ * against its HYPE short - the carry trade Hyperliquid's own documentation
+ * describes, and still a covered short, so the note only describes it.
+ *
+ * A loan in the headline coin itself is different. Owed and not held, it is
+ * a short of that coin: it offsets a long and adds to a short, and no rule
+ * here counts a loan either way, so that one stands next to the answer.
+ */
+function borrowingNotes(
+  rows: HlSpotBalance[],
+  priceByTokenIndex: Map<number, number>,
+  headline: Pick<PositionFeatures, 'headlineCoin' | 'headlineSide'>,
+): Array<{ text: string; failure: boolean }> {
+  const notes: Array<{ text: string; failure: boolean }> = [];
+  const isHeadline = (b: HlSpotBalance) =>
+    headline.headlineCoin !== null && spotHedgesPerp(b.coin, headline.headlineCoin, { source: 'hyperliquid-spot' });
+  const loans: string[] = [];
+  for (const b of rows) {
+    const net = Number(b.total);
+    const borrowed = Number(b.borrowed ?? 0);
+    const owed = borrowed > 0 ? borrowed : net < 0 ? -net : 0;
+    if (owed === 0) continue;
+    if (isHeadline(b) && net < 0) {
+      const held = `${amountText(-net)} ${b.coin} is owed on Hyperliquid spot - borrowed and not held`;
+      notes.push({
+        text:
+          headline.headlineSide === 'long'
+            ? `${held}, which works as a short against this long. This reading does not count a loan as cover`
+            : `${held}, which adds to this short. The figures here are the perp position alone`,
+        failure: true,
+      });
+      continue;
+    }
+    const price = b.token === undefined ? undefined : priceByTokenIndex.get(b.token);
+    loans.push(`${amountText(owed)} ${b.coin}${price === undefined ? '' : ` (${formatUsd(owed * price)})`}`);
+  }
+  if (loans.length > 0) {
+    const pledged =
+      headline.headlineSide === 'short'
+        ? rows.filter((b) => isHeadline(b) && Number(b.supplied ?? 0) > 0)
+        : [];
+    const collateral = pledged
+      .map((b) => ` ${amountText(Number(b.supplied))} ${b.coin} of the spot held against the short is supplied as collateral.`)
+      .join('');
+    notes.push({
+      text:
+        `Borrowed on Hyperliquid under portfolio margin: ${loans.join(', ')}.${collateral} ` +
+        'Spot balances are counted net of what is borrowed, and a loan taken anywhere else would not appear here',
+      failure: false,
+    });
+  }
+  return notes;
 }

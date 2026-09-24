@@ -43,10 +43,19 @@ export interface HlOpenOrder {
 
 export interface HlSpotBalance {
   coin: string;
-  token: number;
+  /** Absent on some rows in real answers (recorded fixtures carry several):
+   * a balance with no index cannot be priced, and is kept as unpriced. */
+  token?: number;
+  /** Negative for a borrowed token under portfolio margin. */
   total: string;
   hold: string;
   entryNtl: string;
+  /** Hyperliquid portfolio margin, seen live on 24.09: how much of this
+   * token is lent to the account, how much the account has pledged, and the
+   * loan-to-value it is allowed against it. */
+  borrowed?: string;
+  supplied?: string;
+  ltv?: string;
 }
 
 /**

@@ -170,7 +170,7 @@ export function normalizeSpotHoldings(
     .filter((b) => b.coin !== 'USDC')
     .map((b) => {
       const amount = Number(b.total);
-      const price = priceByTokenIndex.get(b.token);
+      const price = b.token === undefined ? undefined : priceByTokenIndex.get(b.token);
       const priced = price !== undefined && Number.isFinite(amount);
       return {
         coin: b.coin,
