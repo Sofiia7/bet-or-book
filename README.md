@@ -88,15 +88,15 @@ Hyperliquid's free API supplies resting orders (per dex, including HIP-3 markets
 
 The four chips under the address field open readings made fresh on 24 September and picked by hand, one of each kind of answer: a bet, a short covered in the same account, a short whose matching asset sits with the wallets that funded it, and a market maker's book. They are in [`data/featured.json`](data/featured.json), made by the same `checkAddress` a live check runs, and each one says what changed since the scan's reading of the same address.
 
-Below them, the same check ran once over 277 large Hyperliquid positions (the top 3,000 accounts by value, ranked by their largest main-dex position) and is re-judged offline whenever the rules change, at no cost. Of the 177 cards the current rules can read:
+Below them, the same check ran once over 277 large Hyperliquid positions (the top 3,000 accounts by value, ranked by their largest main-dex position) and is re-judged offline whenever the rules change, at no cost. Of the 188 cards the current rules can read:
 
-| Verdict | Positions | Share of the 177 judged |
+| Verdict | Positions | Share of the 188 judged |
 |---|---|---|
-| Looks like a bet | 132 | 75% |
-| Unknown | 38 | 21% |
+| Looks like a bet | 131 | 70% |
+| Unknown | 51 | 27% |
 | Book | 0 | 0% |
-| Hedged | 7 | 4% |
-| *Read by earlier rules* | *100* | *not judged by v5* |
+| Hedged | 6 | 3% |
+| *Read by earlier rules* | *115* | *not judged by v5* |
 
 Book reads zero in the scan, not because no market maker is in the set, but because the 23 September audit found the rule crediting quoting *anywhere in the account* as evidence about the one position on screen - and no scan before that fix recorded whether the headline market itself was ever quoted. The three cards that used to read Book are part of "read by earlier rules": kept exactly as v4 judged them. One of them has since been read fresh, and the current rules call it a book again, now on quoting in its own headline market - it is the fourth of the readings at the top. Read the whole table as "of the 277 read", never as "of the market" - leverage breaks the link between what an account is worth and what it holds, and the scan spent its last credits on the cheaper checks. How the set was built and what moved when the rules changed: [`docs/gallery-scan.md`](docs/gallery-scan.md).
 
@@ -162,7 +162,7 @@ No logins, sessions, uploads, webhooks or SQL; the only user input is an address
 
 ## Stack
 
-Cloudflare Workers, Workers KV and two Durable Objects (the spend cap with its call ledger, and the rate limiter - both need an atomic read-modify-write that KV cannot promise), TypeScript, Vitest (548 tests on recorded real responses, including the Worker's own routes driven through real Requests and the real image renderer with no mocks, plus 9 that run the built Worker inside workerd through Miniflare). No frontend framework: one HTML page, one script file and a canvas for the share card. Two runtime dependencies, both for the one thing this Worker cannot do without them: [`satori`](https://github.com/vercel/satori) lays out a reading's social-preview picture and [`@resvg/resvg-wasm`](https://github.com/yisibl/resvg-js) rasterizes it to PNG - see [`docs/architecture.md`](docs/architecture.md) for why that render never runs on a crawler's request.
+Cloudflare Workers, Workers KV and two Durable Objects (the spend cap with its call ledger, and the rate limiter - both need an atomic read-modify-write that KV cannot promise), TypeScript, Vitest (562 tests on recorded real responses, including the Worker's own routes driven through real Requests and the real image renderer with no mocks, plus 9 that run the built Worker inside workerd through Miniflare). No frontend framework: one HTML page, one script file and a canvas for the share card. Two runtime dependencies, both for the one thing this Worker cannot do without them: [`satori`](https://github.com/vercel/satori) lays out a reading's social-preview picture and [`@resvg/resvg-wasm`](https://github.com/yisibl/resvg-js) rasterizes it to PNG - see [`docs/architecture.md`](docs/architecture.md) for why that render never runs on a crawler's request.
 
 ## Further reading
 
