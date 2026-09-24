@@ -2,7 +2,7 @@
 // keeps the reason code for the technical details underneath.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { ruleExplanation } from '../../src/engine/reasons';
+import { ruleExplanation, badgeQualifier } from '../../src/engine/reasons';
 import { DEFAULT_THRESHOLDS, type VerdictResult } from '../../src/engine/verdict';
 
 const verdictSource = readFileSync(new URL('../../src/engine/verdict.ts', import.meta.url), 'utf8');
@@ -78,5 +78,37 @@ describe('ruleExplanation', () => {
   it('says nothing rather than guess at a code it has no words for', () => {
     expect(ruleExplanation(v('unknown', ['a_code_from_rules_long_gone']))).toBeNull();
     expect(ruleExplanation(v('unknown', []))).toBeNull();
+  });
+});
+
+describe('badgeQualifier', () => {
+  it('gives a short phrase for a funding-link Unknown', () => {
+    expect(badgeQualifier(v('unknown', ['linked_exposure_unverified']))).toBe('assets sit with funders');
+  });
+
+  it('gives a short phrase for a hedge that was never checked', () => {
+    expect(badgeQualifier(v('unknown', ['hedge_not_checked']))).toBe('hedge not checked');
+  });
+
+  it('gives no qualifier when there is nothing open', () => {
+    expect(badgeQualifier(v('unknown', ['no open positions found']))).toBeNull();
+  });
+
+  it('gives no qualifier for a historical reading', () => {
+    expect(badgeQualifier(v('unknown', ['linked_exposure_unverified']), true)).toBeNull();
+  });
+
+  it('has a phrase for every reason ruleExplanation knows about', () => {
+    const reasons = [
+      'orders', 'balanced_book', 'hedge_leg', 'over_covered', 'hedge_not_checked', 'unrecognised_assets',
+      'maker_flow_only', 'partial_offset', 'quotes_not_checked', 'positions_not_complete',
+      'directional_concentration', 'directional_portfolio', 'offset_not_measured', 'mixed_long_short_book',
+      'diversified_book_no_quotes', 'linked_exposure_unverified',
+      'signals disagree: not enough evidence for book, hedge, or bet',
+    ];
+    for (const r of reasons) {
+      expect(badgeQualifier(v('unknown', [r])), r).toEqual(expect.any(String));
+      expect(ruleExplanation(v('unknown', [r])), r).toEqual(expect.any(String));
+    }
   });
 });

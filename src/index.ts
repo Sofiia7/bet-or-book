@@ -22,7 +22,7 @@ import type { KVLike } from './kv';
 import type { SafeKV } from './safeKv';
 import { ogCardFor, ogCacheKey, OG_LAYOUT_VERSION } from './engine/ogCard';
 import { emit, readingFields, type CheckEvent, type PictureEvent, type SnapshotEvent } from './telemetry';
-import { ruleExplanation } from './engine/reasons';
+import { ruleExplanation, badgeQualifier } from './engine/reasons';
 import { openQuestion } from './engine/openQuestion';
 import { nansenContribution } from './engine/nansenContribution';
 import { renderOgPng, type OgFont } from './engine/ogRender';
@@ -36,17 +36,19 @@ import ogFallbackPng from '../assets/og-fallback.png';
 
 const gallery = galleryData as unknown as Gallery;
 
-/** A reading as it leaves the Worker, with three things worked out here from
+/** A reading as it leaves the Worker, with four things worked out here from
  * what it already holds, so the page has the words without keeping its own
  * copy of the rules: the rule behind the verdict (U06), the question it
- * leaves open, and what Nansen added to it - the last two asked for by the
- * 23.09 audit before submission. */
+ * leaves open, what Nansen added to it - the last two asked for by the
+ * 23.09 audit before submission - and the short qualifier for the Unknown
+ * badge itself (24.09 audit U02 + L10). */
 function explained<T extends CheckResponse>(r: T): T {
   return {
     ...r,
     rule: ruleExplanation(r.verdict, r.historical !== undefined),
     openQuestion: openQuestion(r),
     nansen: nansenContribution(r),
+    badgeQualifier: badgeQualifier(r.verdict, r.historical !== undefined),
   };
 }
 /** Gallery cards by snapshot id, so a shared link to one opens the card that

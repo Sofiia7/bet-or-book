@@ -84,6 +84,43 @@ const WHY: Record<Exclude<ReasonCode, 'positions' | 'trades'>, string> = {
     'No verdict: the signs point different ways, and none of them is enough for a book, a hedge or a bet.',
 };
 
+/** A short phrase for the Unknown badge itself - "Unknown · assets sit with
+ * funders" - so the badge says more than "Unknown" before anything is
+ * opened. Only ever shown when `verdict.verdict === 'unknown'`; deliberately
+ * silent on 'no open positions found' (nothing to qualify) and on the two
+ * reasons that only ever grade a Book. Typed against the same `ReasonCode`
+ * union `WHY` already is, so a new reason cannot ship without a phrase here
+ * either (24.09 audit U02 + L10: one dictionary, not one on the server and a
+ * second, drifting one on the page). */
+const BADGE_QUALIFIER: Record<Exclude<ReasonCode, 'positions' | 'trades' | 'no open positions found'>, string> = {
+  orders: 'market-making activity',
+  balanced_book: 'offsetting positions',
+  hedge_leg: 'hedge found',
+  over_covered: 'more than covered',
+  hedge_not_checked: 'hedge not checked',
+  unrecognised_assets: 'assets unverified',
+  maker_flow_only: 'busy, not proven inventory',
+  partial_offset: 'partly covered',
+  quotes_not_checked: 'orders not fully read',
+  positions_not_complete: 'positions not fully read',
+  directional_concentration: 'looks directional',
+  directional_portfolio: 'looks directional',
+  offset_not_measured: 'offset not measured',
+  mixed_long_short_book: 'mixed assets',
+  diversified_book_no_quotes: 'book-shaped, no quotes',
+  linked_exposure_unverified: 'assets sit with funders',
+  'signals disagree: not enough evidence for book, hedge, or bet': 'signals disagree',
+};
+
+/** The short badge qualifier for one verdict, or null when there is none -
+ * no reasons at all, the sole "no open positions" reason, or a historical
+ * reading (whose rules may not have a phrase here). */
+export function badgeQualifier(verdict: VerdictResult, historical = false): string | null {
+  if (historical) return null;
+  const first = verdict.reasons?.[0];
+  return first !== undefined && first in BADGE_QUALIFIER ? BADGE_QUALIFIER[first as keyof typeof BADGE_QUALIFIER] : null;
+}
+
 /** What grades a book beyond the quoting that decides it. */
 const BOOK_ALSO: Record<'positions' | 'trades', string> = {
   positions: 'a spread of positions typical of a book',
