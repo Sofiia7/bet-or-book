@@ -190,7 +190,7 @@
 </head>
 <body>
 <h1>Bet or Book</h1>
-<p class="sub">Before you copy the headline, check the position. Is it a bet, a hedge, or a market maker's book - read from Nansen and Hyperliquid data, one address at a time.</p>
+<p class="sub">Before you copy the headline, check the position. Is it a bet, a hedge, or a market maker's book (its trading inventory) - read from Nansen and Hyperliquid data, one address at a time.</p>
 
 <div class="row">
   <input id="address" type="text" placeholder="0x... or a link containing one" autocomplete="off" spellcheck="false" aria-label="Hyperliquid address">
@@ -245,12 +245,6 @@
     <figcaption id="breakdown-caption"></figcaption>
     <div id="breakdown-svg"></div>
   </figure>
-  <div class="stats" id="decisive" hidden></div>
-  <div class="box" id="coverage" hidden>
-    <p><strong>Not read this time</strong></p>
-    <ul id="coverage-list"></ul>
-  </div>
-  <p class="limit">Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address. A hedge there would not show here.</p>
   <!-- What this reading leaves open, and what Nansen added to it: the two
        things the 23.09 audit asked a card to say before submission. The
        Nansen line is readable without opening it; the list is one click. -->
@@ -260,10 +254,6 @@
     <ul id="nansen-list"></ul>
     <p class="tech" id="nansen-calls"></p>
   </details>
-  <div class="box changed" id="changed" hidden>
-    <p><strong id="changed-title"></strong> <span class="muted" id="changed-because"></span></p>
-    <ul id="changed-list"></ul>
-  </div>
   <details class="share" id="share">
     <summary>Share this reading</summary>
     <div class="actions">
@@ -273,6 +263,16 @@
       <button id="download-card">Download image</button>
     </div>
   </details>
+  <div class="stats" id="decisive" hidden></div>
+  <div class="box" id="coverage" hidden>
+    <p><strong>Not read this time</strong></p>
+    <ul id="coverage-list"></ul>
+  </div>
+  <p class="limit">Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address. A hedge there would not show here.</p>
+  <div class="box changed" id="changed" hidden>
+    <p><strong id="changed-title"></strong> <span class="muted" id="changed-because"></span></p>
+    <ul id="changed-list"></ul>
+  </div>
   <canvas id="card-canvas" width="1200" height="675" hidden></canvas>
   <p class="meta" id="meta"></p>
   <details class="fold" id="decided" hidden>
@@ -301,8 +301,11 @@
 
 <section id="gallery" hidden>
   <h2>Ranked from the same readings</h2>
-  <p class="sub" id="gallery-sub"></p>
-  <div id="boards"></div>
+  <details class="fold" id="boards-fold">
+    <summary>Show the ranked boards</summary>
+    <p class="sub" id="gallery-sub"></p>
+    <div id="boards"></div>
+  </details>
   <details id="all-readings">
     <summary id="all-readings-summary">Browse every reading</summary>
     <h3 id="gallery-title">More readings of big Hyperliquid positions</h3>
