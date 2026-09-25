@@ -28,7 +28,7 @@ Tasks 1-3 are independent backend fixes. Task 4 is independent CSS. Task 5 depen
 
 ---
 
-## Task 1: A01 - hedgeCoverage reaches the Least-covered-shorts ranking
+## Task 1: A01 - hedgeCoverage reaches the Least-covered-shorts ranking [DONE - commit 50553b1, spec+quality reviewed]
 
 **Files:**
 - Modify: `src/gallery.ts:23-44` (interface), `:79-107` (`galleryIndex`)
@@ -131,7 +131,7 @@ git commit -m "fix: the Least-covered-shorts board only ranks a hedge read that 
 
 ---
 
-## Task 2: A02 - a sixth open position gets checked instead of declared absent
+## Task 2: A02 - a sixth open position gets checked instead of declared absent [DONE - commit b9923b8, spec+quality reviewed]
 
 **Files:**
 - Modify: `src/index.ts:449-470`
@@ -267,7 +267,7 @@ git commit -m "fix: a real sixth position is checked, not declared absent from a
 
 ---
 
-## Task 3: A03 - the scale trusts a data-quality flag, not a leftover dollar amount
+## Task 3: A03 - the scale trusts a data-quality flag, not a leftover dollar amount [DONE - commit da8474c, spec+quality reviewed, one fix loop for a priority-order test]
 
 **Files:**
 - Modify: `src/engine/breakdown.ts`
@@ -459,7 +459,7 @@ git commit -m "fix: the scale trusts a data-quality flag instead of a leftover d
 
 ---
 
-## Task 4: A13 - the boards get their own grid
+## Task 4: A13 - the boards get their own grid [DONE - commit 5e8a69e, spec+quality reviewed]
 
 **Files:**
 - Modify: `web/index.html:164`
@@ -508,7 +508,7 @@ git commit -m "fix: the boards get their own grid instead of a flat list's rank 
 
 ---
 
-## Task 5: A04 + A05 - the scale's caption agrees with the hedge band, the Book bar's fill matches its own caption, and both pans are labeled
+## Task 5: A04 + A05 - the scale's caption agrees with the hedge band, the Book bar's fill matches its own caption, and both pans are labeled [DONE - commit acb3873, spec+quality reviewed, one fix loop for a drift-guard test]
 
 **Files:**
 - Modify: `web/app.js:320-369` (`drawScale`), `web/app.js:389-410` (`drawBookQuoting`)
@@ -669,7 +669,7 @@ git commit -m "fix: the scale's caption agrees with the hedge band, the Book bar
 
 ---
 
-## Task 6: A08 - the diagram keeps its color in dark mode
+## Task 6: A08 - the diagram keeps its color in dark mode [DONE - commit 8c12ea2, spec+quality reviewed]
 
 **Files:**
 - Modify: `web/app.js:6-11` (`VERDICTS`), `web/app.js:412-454` (`renderBreakdown`)
@@ -737,7 +737,7 @@ git commit -m "fix: the on-page diagram follows dark mode instead of a fixed lig
 
 ---
 
-## Task 7: share/OG parity - the downloaded image no longer crashes on a not-checked segment, and both pictures mark an unsettled read
+## Task 7: share/OG parity - the downloaded image no longer crashes on a not-checked segment, and both pictures mark an unsettled read [DONE - commit 28a7f7c, spec+quality reviewed. Note for Task 10: dataQuality is inert against the currently-bundled data/gallery.json+featured.json (predates Task 3's commit) - Task 10 must actually regenerate them AND spot-check real rendered output (dashed border), not just confirm the JSON field exists]
 
 **Files:**
 - Modify: `web/app.js:1302-1357` (canvas `drawBreakdown`)
@@ -972,7 +972,7 @@ git commit -m "fix: the downloaded image no longer crashes on a not-checked segm
 
 ---
 
-## Task 8: first screen - what's open and what Nansen added move up, the boards fold, "book" gets a one-line gloss
+## Task 8: first screen - what's open and what Nansen added move up, the boards fold, "book" gets a one-line gloss [DONE - commit b3e4ee2, spec+quality reviewed]
 
 **Files:**
 - Modify: `web/index.html`
@@ -1064,7 +1064,7 @@ git commit -m "feat: what's open and what Nansen added move up the card, the boa
 
 ---
 
-## Task 9: README + meta description stop promising a bet worth following
+## Task 9: README + meta description stop promising a bet worth following [DONE - commit faa1cb2, spec+quality reviewed]
 
 **Files:**
 - Modify: `README.md:3`
@@ -1126,7 +1126,7 @@ git commit -m "docs: the tagline stops promising a bet worth following"
 
 ---
 
-## Task 10: re-explain the gallery and featured data under the fixed rules; guard against this going stale silently again
+## Task 10: re-explain the gallery and featured data under the fixed rules; guard against this going stale silently again [DONE - commit 674c918, spec+quality reviewed. FOLLOW-UP FOUND (not fixed, not blocking): 15 frozen (historical/superseded) entries across gallery.json+featured.json have real breakdown data but no dataQuality - real, currently-reachable via old snapshot links and historical gallery rows, on all 3 render surfaces (OG/canvas/on-page SVG), affects a narrow slice not the primary live-check/boards/example-chip paths. Do NOT naively call exposureBreakdown() on reexplain.ts's historical/superseded branches - 86% of gallery.json's 100 historical entries are historical specifically because hedge.unverifiedUsd is unrecorded, and a naive recompute would stamp them "measured" (confidently wrong) rather than leaving the field absent. Reviewer's two safe fix options: (a) a distinct 'unknown' sentinel stamped structurally without running exposureBreakdown()'s arithmetic on stale inputs, or (b) a render-time-only fallback deriving uncertainty from hedgeCoverage (reliably present even on old schema) instead of defaulting missing dataQuality to 'measured'.]
 
 **Files:**
 - Modify: `data/gallery.json`, `data/featured.json` (regenerated, not hand-edited)
@@ -1187,7 +1187,7 @@ git commit -m "chore: re-explain the gallery and featured data so the bundle car
 
 ---
 
-## Task 11: the submission checklist and demo script say today's real numbers
+## Task 11: the submission checklist and demo script say today's real numbers [DONE - commit 5050f6a (576 tests, cap 600), spec+quality reviewed. NOTE: after this task, all commit SHAs from Task 3 onward were rewritten in place (git filter-branch, local-only branch, not pushed) to fix a Co-Authored-By attribution mismatch - 3 subagent-authored commits self-attributed to the model they ran on (Claude Haiku 4.5) or omitted the line, instead of this session's required "Claude Sonnet 5" trailer. Old SHAs 5e8a69e/acb3873/8c12ea2/28a7f7c/b3e4ee2/faa1cb2/674c918/74d7ebf are now 0640267/2719c2d/b62e846/aa61233/4516aa6/4ee7f31/8bef87c/5050f6a respectively (content unchanged, verified via full re-run: 576/576 tests still pass). Commits b96864d/50553b1/b9923b8/da8474c kept their original SHAs (already-correct attribution, unaffected ancestor chain).]
 
 **Files:**
 - Modify: `docs/submission-checklist.md`
@@ -1237,7 +1237,9 @@ git commit -m "docs: the checklist and demo script say today's test count and cr
 
 ---
 
-## Task 12: full verification pass
+## Task 13 (added after Task 12, from the final whole-branch review): a material unidentified share withholds confidence the same way the classifier does [DONE - commit 8d07949, spec+quality reviewed. The final holistic review below found that `dataQuality` (Task 3) mirrored only half of computeVerdict's own unrecognised_assets check (unpricedMatches, not unverifiedShare) - a real gap affecting FRESH LIVE checks, not just legacy data, unlike Tasks 7/10's follow-ups, so fixed immediately rather than deferred. Added 'unverified' as a 4th dataQuality value, computed via DEFAULT_THRESHOLDS.hedged.maxUnverifiedShare imported directly from verdict.ts (no re-derived duplicate threshold). All 3 render surfaces inherit it: SVG already generically checked dataQuality!=='measured' (zero code change there - and per Task 13's own review, drawScale was never actually at risk anyway, since it already had its own independent unverified>0&&materialGap check on segments; only canvas+OG lacked any such protection), canvas got a new specific caveat sentence, OG needed OgCardData's own separately-declared type widened by one line (necessary, minimal, reviewed). Confirmed no data regen needed this time (scanned all 312 bundled entries: max real unverifiedShare ~1e-8, nowhere near the 10% threshold, and the "reproduces every stored breakdown" test from Task 10 already passes). FOLLOW-UP FOUND (not fixed, not blocking, pre-existing tech debt not introduced by this branch): web/app.js's own MATERIAL_GAP_SHARE=0.1 (predates this whole session, commit 6f1c7e9) is a THIRD hand-duplicated copy of the same 0.1 threshold, unguarded by any test (unlike HEDGE_BAND_MIN/MAX, which Task 5 already pinned via test/web-app-verdict-sync.test.ts). Cheap fix when picked up: add one assertion to that same test file. Currently harmless (both copies agree today; only affects the SVG page for legacy pre-dataQuality readings, which already has independent protection regardless).]
+
+## Task 12: full verification pass [DONE - performed directly, not delegated, since it is controller-level synthesis. npm test 576/576 (43 files), typecheck clean, test:runtime 9/9, npm audit 0 vulnerabilities, 0 em/en dashes across all 18 branch-touched files. Live-browser verification via a local wrangler dev preview (JS-driven, screenshots were unreliable in this session - pane not foregrounded - so verification used read_page/get_page_text/javascript_tool instead, which is more precise for computed values anyway): flagship auto-opens; pan labels "the position"/"this address" render; dark-mode scale contrast measured 12.04:1 (vs audit's 1.89:1); Book bar for the market-maker chip fills to 590.8/646=91.5% matching its "91%" caption exactly; 97%-covered chip caption reads "within the hedge band"; boards render live, "Least covered shorts" shows exactly the 4 predicted hedgeCoverage=complete addresses (down from 5, the 9 partial ones correctly excluded); boards grid at 954px gives the position-name column 546px (was 34px); at 390px it collapses to one column; DOM order in #card confirmed live as breakdown->open-question->nansen->share->decisive->coverage->limit->changed, matching Task 8's intended reorder exactly; downloading the image for 0x7fdafde5... (a real not-checked-segment address) throws no error and paints real pixels, with dataQuality:"partial" confirmed present post-Task-10-regen. No server errors in preview_logs throughout.]
 
 **Files:** none (verification only)
 
