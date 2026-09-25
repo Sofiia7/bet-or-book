@@ -4,7 +4,7 @@
 
 **Goal:** Implement the items the first audit-fix cycle (`docs/superpowers/plans/2026-09-25-second-audit-fixes.md`, merged to `main` at `3df951f`) deliberately deferred, plus the two technical-debt follow-ups that cycle's own reviews surfaced, all now explicitly authorized by the user: A06 (funder-read-failure text), A07 (Unknown qualifier reaching boards/recent), A09 (a real diagram for a long instead of an empty pan), A10 (a date on every board row), the first-screen card redesign (hero numbers, reordered blocks, a "Check another" action), a refreshed set of featured readings (A11 - the one step that spends real Nansen credits), and the two documented technical debts (historical/superseded entries never getting `dataQuality`; `MATERIAL_GAP_SHARE` duplicated a third time with no drift guard).
 
-**Architecture:** Same pipeline as before - Observe -> Interpret -> Present. Two new fields travel through the same `Observation`/`GalleryRow` plumbing pattern Task 1 and Task 3 of the prior cycle already established (`linkedHedgeCoverage`, mirroring `hedgeCoverage`; a `qualifier` string, mirroring how `hedgeCoverage` reached `GalleryRow`). The card redesign reuses existing data and existing CSS classes wherever possible rather than inventing new computations, to keep the risk contained to markup/JS, not new backend logic.
+**Architecture:** Same pipeline as before - Observe -> Interpret -> Present. Two new fields travel through the same `Observation`/`GalleryRow` plumbing pattern Task 1 and Task 3 of the prior cycle already established (`linkedHedgeCoverage`, mirroring `hedgeCoverage`; a `qualifier` string, computed fresh in `galleryIndex()` from fields already on every stored entry - unlike `hedgeCoverage`, which is itself a stored field `GalleryRow` only forwards). The card redesign reuses existing data and existing CSS classes wherever possible rather than inventing new computations, to keep the risk contained to markup/JS, not new backend logic.
 
 **Tech Stack:** TypeScript, Vitest, Cloudflare Workers, plain DOM/Canvas/SVG, `scripts/prescan.ts` for the one credit-spending step.
 
@@ -18,7 +18,7 @@ Tasks 1-2 are trivial and independent - do them first. Tasks 3-4 add a new field
 
 ---
 
-## Task 1: `MATERIAL_GAP_SHARE` gets the same drift guard `HEDGE_BAND_MIN`/`MAX` already has
+## Task 1: `MATERIAL_GAP_SHARE` gets the same drift guard `HEDGE_BAND_MIN`/`MAX` already has [DONE - commit 1713984, spec+quality reviewed. Two non-blocking polish notes for later: describe-block title now undersells scope, and the bidirectional pointer comments HEDGE_BAND_MIN/MAX got were not extended to this third constant.]
 
 **Files:**
 - Modify: `test/web-app-verdict-sync.test.ts`
@@ -60,7 +60,7 @@ git commit -m "test: MATERIAL_GAP_SHARE is pinned to the same source as the othe
 
 ---
 
-## Task 2: A06 - a failed funder read no longer claims the funders hold nothing
+## Task 2: A06 - a failed funder read no longer claims the funders hold nothing [DONE - commit cf95689, spec+quality reviewed across 4 rounds (each round's adversarial testing found one more code path reproducing the same false-claim bug class: rejected balance read -> catch-all else in nansenContribution.ts -> relatedWallets enumeration failures -> malformed-body catch blocks; round 4's systematic audit of all 9 note() call sites in readLinkedHedge confirmed exactly these were the only gaps). FOLLOW-UP FOUND (not fixed, not blocking, explicitly out of this task's scope): src/engine/breakdown.ts's exposureBreakdown() only reads the account's own hedgeCoverage, never linkedHedgeCoverage - so dataQuality/elsewhere can still render falsely confident (solid scale, no "held elsewhere") when the funder search fails even though the account's OWN balance read succeeded. Real, reachable, zero test coverage, affects the live page diagram + OG card + canvas download. Worth its own follow-up task.]
 
 **Files:**
 - Modify: `src/engine/features.ts` (`LinkedHedgeFeatures` - add nothing here; coverage travels alongside it, not inside it, matching how `hedgeCoverage` sits beside `hedge: HedgeFeatures` rather than inside it)

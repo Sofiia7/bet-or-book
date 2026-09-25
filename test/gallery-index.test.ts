@@ -5,6 +5,8 @@ import { describe, expect, it, vi, afterEach } from 'vitest';
 import worker from '../src/index';
 import { testEnv, request } from './support/worker';
 import galleryData from '../data/gallery.json';
+import { badgeQualifier } from '../src/engine/reasons';
+import type { VerdictResult } from '../src/engine/verdict';
 
 const ADDRESS = '0x1111111111111111111111111111111111111111';
 
@@ -114,6 +116,47 @@ describe('the gallery list is rows, not cards', () => {
     };
     const row = list.entries[0];
     expect(['complete', 'partial', 'missing', 'not-applicable']).toContain(row.hedgeCoverage);
+  });
+
+  it('carries the badge qualifier, so a board or a recent-checks chip can say which Unknown this is (25.09 audit, A07)', async () => {
+    const list = (await (await worker.fetch(request('/api/gallery'), testEnv())).json()) as {
+      entries: Array<{ verdict: { verdict: string }; badgeQualifier?: string | null }>;
+    };
+    const unknownRow = list.entries.find((e) => e.verdict.verdict === 'unknown');
+    expect(unknownRow).toBeDefined();
+    // Not every Unknown has a qualifier (badgeQualifier can be null), but the
+    // field itself must exist on the row - `undefined` and `null` are
+    // different claims here, and a board must be able to tell them apart.
+    expect(unknownRow).toHaveProperty('badgeQualifier');
+  });
+
+  it('gives a real Unknown row the exact qualifier text the big card would show for it, not just the property (25.09 audit, A07)', async () => {
+    // A row's `verdict` only carries `{ verdict, strength }` - GalleryRow
+    // picks nothing else off it - so which reason produced it has to come
+    // from the bundled source data itself. Found here the same way
+    // galleryIndex() judges it: current (not historical, not superseded),
+    // Unknown, with a first reason the badge has words for. This proves a
+    // genuine non-null value reaches the wire, not merely that the key is
+    // present - the property-existence check above would pass even if
+    // badgeQualifier were null on every row.
+    type RawEntry = { address: string; historical?: unknown; superseded?: boolean; verdict: VerdictResult };
+    const source = (galleryData.entries as RawEntry[]).find(
+      (e) =>
+        e.verdict.verdict === 'unknown' &&
+        !e.historical &&
+        !e.superseded &&
+        badgeQualifier(e.verdict, false) !== null,
+    );
+    expect(source).toBeDefined();
+    const expected = badgeQualifier(source!.verdict, false);
+    expect(expected).toEqual(expect.any(String));
+
+    const list = (await (await worker.fetch(request('/api/gallery'), testEnv())).json()) as {
+      entries: Array<{ address: string; badgeQualifier?: string | null }>;
+    };
+    const row = list.entries.find((e) => e.address === source!.address);
+    expect(row).toBeDefined();
+    expect(row!.badgeQualifier).toBe(expected);
   });
 });
 

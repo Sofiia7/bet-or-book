@@ -1,5 +1,6 @@
 import type { CheckResponse } from './api/check';
 import type { HedgeCoverage } from './engine/features';
+import { badgeQualifier } from './engine/reasons';
 
 /** Snapshot written by scripts/prescan.ts and bundled into the Worker. Each
  * entry is exactly what /api/check returned for that address at its own
@@ -45,6 +46,16 @@ export interface GalleryRow {
    * the number the Book rule actually turns on (v5). Zero for every verdict
    * but Book, since that is the only path `computeVerdict` reaches it from. */
   headlineTwoSidedNotionalUsd: number;
+  /** The same short reason the big card's badge carries next to "Unknown"
+   * (src/engine/reasons.ts, badgeQualifier) - null when there is none to
+   * give. Computed fresh here from the stored verdict, the same way
+   * `snapshotId` above is computed by `idOf(e)`: unlike `hedgeCoverage`,
+   * the qualifier was never itself a stored field on a `CheckResponse` -
+   * `explained()` (src/index.ts) only adds it to a reading served whole,
+   * which a gallery row never is. Without this a board or a recent-checks
+   * chip could only ever say the bare word "Unknown", which the big card
+   * for the same reading never does (25.09 audit, A07). */
+  badgeQualifier: string | null;
   historical?: { reason: string };
   supersedes?: string;
 }
@@ -108,6 +119,10 @@ export function galleryIndex(gallery: Gallery, idOf: (e: CheckResponse) => strin
         // never actually sees the default; it is a safety net, not a claim
         // that a legacy entry quotes nothing.
         headlineTwoSidedNotionalUsd: e.orders.headlineTwoSidedNotionalUsd ?? 0,
+        // Not a stored field (see the doc comment on GalleryRow) - a pure
+        // function of the verdict this entry already carries, recomputed
+        // here rather than forwarded.
+        badgeQualifier: badgeQualifier(e.verdict, e.historical !== undefined),
         ...(e.historical ? { historical: { reason: e.historical.reason } } : {}),
         ...(e.supersedes ? { supersedes: e.supersedes } : {}),
       })),

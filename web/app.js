@@ -696,6 +696,7 @@ function renderResult(d, opts) {
       address: d.address,
       headline: positionText(d),
       verdict: d.verdict.verdict,
+      badgeQualifier: d.badgeQualifier ?? null,
       checkedAt: d.checkedAt,
     });
     renderRecent();
@@ -1665,7 +1666,8 @@ function renderRecent() {
   if (list.length === 0) return;
   $('recent-chips').replaceChildren(...list.map((r) => {
     const v = VERDICTS[r.verdict] || VERDICTS.unknown;
-    const b = el('button', 'chip', r.headline + ' · ' + v.label);
+    const label = r.verdict === 'unknown' && r.badgeQualifier ? v.label + ' · ' + r.badgeQualifier : v.label;
+    const b = el('button', 'chip', r.headline + ' · ' + label);
     b.title = 'Checked ' + fmtTime(r.checkedAt);
     b.addEventListener('click', () => openSnapshot(r.id));
     return b;
