@@ -5,6 +5,7 @@ import worker from '../src/index';
 import { testEnv, request, ORIGIN } from './support/worker';
 import { ogCacheKey, OG_LAYOUT_VERSION } from '../src/engine/ogCard';
 import ogFallbackPng from '../assets/og-fallback.png';
+import clearinghouseFixture from './fixtures/hyperliquid/clearinghouse-many-positions.json';
 
 const ADDRESS = '0x1111111111111111111111111111111111111111';
 
@@ -275,6 +276,37 @@ describe('asking about a particular position', () => {
     );
     expect(res.status).toBe(200);
     expect(((await res.json()) as { focus: unknown }).focus).toBeNull();
+  });
+
+  it('checks a real sixth position instead of declaring it absent from a cached top-5 (25.09 audit, A02)', async () => {
+    // routeUpstreams()'s own HL fixture (top of this file) has no positions
+    // at all; this test needs a real account with more than five, so it
+    // builds its own fetch mock around the shared many-positions fixture
+    // instead (37 positions; WLD, 6th largest by value, is a real open
+    // short that MAX_CANDIDATES = 5 leaves out of `candidates`).
+    global.fetch = vi.fn(async (url: string | URL, init?: RequestInit) => {
+      if (String(url).includes('api.nansen.ai')) {
+        return new Response(JSON.stringify({ data: [] }), { status: 200 });
+      }
+      const body = JSON.parse(String(init?.body ?? '{}'));
+      const byType: Record<string, unknown> = { ...HL, clearinghouseState: clearinghouseFixture };
+      return new Response(JSON.stringify(byType[body.type] ?? []), { status: 200 });
+    }) as unknown as typeof fetch;
+    const env = testEnv();
+
+    const first = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
+    const firstBody = (await first.json()) as { positions: { candidates: Array<{ coin: string }> } };
+    expect(firstBody.positions.candidates.map((c) => c.coin)).not.toContain('WLD');
+
+    // Asking about WLD specifically must not answer "not open" purely
+    // because it fell outside the cached top-5 - it must actually check.
+    const second = await worker.fetch(
+      request(`/api/check?address=${ADDRESS}&coin=WLD&side=short`, { method: 'POST' }),
+      env,
+    );
+    const secondBody = (await second.json()) as { positions: { headlineCoin: string }; coverage: string[] };
+    expect(secondBody.positions.headlineCoin).toBe('WLD');
+    expect(secondBody.coverage.join(' ')).not.toContain('No WLD short is open');
   });
 });
 

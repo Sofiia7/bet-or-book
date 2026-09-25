@@ -453,7 +453,14 @@ export default {
           const known = parsed.positions.candidates.some(
             (c) => c.coin.toUpperCase() === focus.coin.toUpperCase() && c.side === focus.side,
           );
-          if (!known) {
+          // `candidates` is the five largest positions, not necessarily all
+          // of them (src/engine/features.ts, MAX_CANDIDATES = 5). Absence
+          // from a truncated list proves nothing - only when nPositions is
+          // itself five or fewer is `candidates` the complete roster, and
+          // only then can "not in it" become "not open" without a fresh
+          // check (25.09 audit, A02).
+          const candidatesAreComplete = parsed.positions.nPositions <= parsed.positions.candidates.length;
+          if (!known && candidatesAreComplete) {
             const note = `No ${focus.coin} ${focus.side} is open at this address; this answer is about the largest position instead`;
             counted('not_open', readingFields(parsed));
             return Response.json({
