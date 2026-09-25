@@ -8,7 +8,7 @@ The story has changed three times, and it is better each time. The first script 
 
 No rehearsal run to warm the cache. A cached answer replayed as a fresh request is the one thing a demo must not do, and the card says "cached, N minutes old" when it is one, so it would show. Check once, for real, on camera - and if the same address was checked on the site in the last ten minutes, wait that out first.
 
-> **Credits.** The account answered with **916 credits left** on 24 September, after the four demonstration readings and a second read of the Hedged one. This check costs up to 7. The two contrast beats below open saved readings and cost nothing. The daily cap in the Worker is 300, and 40 of it is a reserve the public path cannot reach, which is what keeps a busy afternoon from leaving the demo on Hyperliquid-only data.
+> **Credits.** The account answered with **916 credits left** on 24 September, after the four demonstration readings and a second read of the Hedged one. This check costs up to 7. The two contrast beats below open saved readings and cost nothing. The daily cap in the Worker is 600 (raised from 300 for judging week - see `wrangler.toml`), and 40 of it is a reserve the public path cannot reach, which is what keeps a busy afternoon from leaving the demo on Hyperliquid-only data.
 
 | Time | Action | What the viewer reads |
 |---|---|---|
