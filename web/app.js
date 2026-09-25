@@ -1156,7 +1156,7 @@ function boardRow(e, board) {
   b.append(
     el('span', 'pos', positionText(e)),
     el('span', 'badge ' + verdictOf(e).cls, badgeText(e)),
-    el('span', 'row-meta', board.stat(e) + ' · ' + shortAddr(e.address)),
+    el('span', 'row-meta', board.stat(e) + ' · ' + shortAddr(e.address) + ' · ' + fmtTime(e.checkedAt)),
   );
   b.addEventListener('click', async () => {
     await openSnapshot(e.snapshotId);
