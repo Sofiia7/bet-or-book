@@ -431,10 +431,14 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   const funderLookupWorthIt =
     nansen !== null && hedgeMatters && hedgeFeatures.hedgeRatio < DEFAULT_THRESHOLDS.hedged.linkedLookupBelowRatio;
   let linkedHedge: LinkedHedgeFeatures | null = null;
+  let linkedHedgeCoverage: HedgeCoverage = 'not-applicable';
   if (funderLookupWorthIt && outOfTime()) {
     note('This check ran out of time before it could look at the wallets that funded the account', true);
+    linkedHedgeCoverage = 'missing';
   } else if (funderLookupWorthIt) {
-    linkedHedge = await readLinkedHedge(nansen!, address, positionFeatures, note);
+    const result = await readLinkedHedge(nansen!, address, positionFeatures, note);
+    linkedHedge = result.features;
+    linkedHedgeCoverage = result.coverage;
   }
 
   // Spot cannot hedge a long, so the funder search above never runs for one
@@ -505,6 +509,7 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
     ordersCoverage,
     positionsCoverage,
     linkedHedge,
+    linkedHedgeCoverage,
     trades: tradeFeatures,
     pnl,
     sizeVsOi,
@@ -531,30 +536,47 @@ async function readLinkedHedge(
   address: string,
   positionFeatures: PositionFeatures,
   note: (text: string, failure?: boolean) => void,
-): Promise<LinkedHedgeFeatures | null> {
+): Promise<{ features: LinkedHedgeFeatures | null; coverage: HedgeCoverage }> {
   const links: LinkedWallet[] = [];
   const related = await Promise.allSettled([
     nansen.relatedWallets(address, 'arbitrum'),
     nansen.relatedWallets(address, 'ethereum'),
   ]);
   let linksTruncated = false;
+  let chainsFailed = 0;
   for (const r of related) {
     if (r.status === 'fulfilled') {
       try {
         const read = checkRelatedWallets(r.value.rows);
         links.push(...normalizeRelatedWallets(read.rows));
-        if (!r.value.complete) linksTruncated = true;
-        // A funder left out is a funder whose holdings were never looked at.
+        // A funder left out - to a page cut short or to a row that failed
+        // validation - is a funder whose holdings were never looked at,
+        // exactly the "truncated-or-malformed" pairing the balance step
+        // below already tracks under one flag (spec review, third pass
+        // after A06).
+        if (!r.value.complete || read.malformed > 0) linksTruncated = true;
         if (read.malformed > 0) note(`${read.malformed} funding links came back malformed on one chain and were left out`, true);
       } catch (err) {
         console.error('nansen related wallets', err);
         note('Linked wallets came back in an unexpected shape on one chain', true);
+        chainsFailed++;
       }
     } else {
       note('Linked wallets unavailable on one chain', true);
+      chainsFailed++;
     }
   }
-  if (linksTruncated) note('Funding links: first 100 only, so this is not every wallet that funded the account', true);
+  if (linksTruncated) {
+    note('Funding links: first 100 only, or rows that came back malformed, so this is not every wallet that funded the account', true);
+  }
+  // How completely the search for candidates itself ran, before any
+  // candidate is even chosen: every chain failing outright leaves nothing to
+  // go on, the same as a balance read that fails outright below; one chain
+  // down, or a page cut short, still leaves something real to trust, so it
+  // ranks the same as a truncated read rather than a failed one (spec review
+  // after 25.09 audit, A06).
+  const enumerationCoverage: HedgeCoverage =
+    chainsFailed === related.length ? 'missing' : chainsFailed > 0 || linksTruncated ? 'partial' : 'complete';
 
   const firstFunders = links.filter((w) => w.relation === 'First Funder' && w.address !== address.toLowerCase());
   const skipped = firstFunders.filter((w) => w.serviceStatus === 'service').length;
@@ -563,7 +585,11 @@ async function readLinkedHedge(
     .filter((w) => w.serviceStatus !== 'service')
     .filter((w, i, all) => all.findIndex((x) => x.address === w.address) === i)
     .slice(0, MAX_FUNDERS);
-  if (candidates.length === 0) return null;
+  // No candidate worth following is not the same as no search worth
+  // trusting: a search that ran cleanly and genuinely found nothing (or
+  // found only exchanges) is `complete`, not the `not-applicable` the caller
+  // defaults to for a lookup it never even tried.
+  if (candidates.length === 0) return { features: null, coverage: enumerationCoverage };
 
   // Nansen returns address_label: null for most addresses, so "no label" is
   // the normal answer, not evidence that a wallet is private. Say so on the
@@ -579,10 +605,12 @@ async function readLinkedHedge(
 
   const balances = await Promise.allSettled(candidates.map((w) => nansen.currentBalance(w.address)));
   let truncatedFunder = false;
+  let failedFunder = false;
   const linked = candidates.flatMap((wallet, i) => {
     const b = balances[i];
     if (b.status !== 'fulfilled') {
       note('One linked wallet could not be read', true);
+      failedFunder = true;
       return [];
     }
     // The main data is already in hand at this point. A funder balance is
@@ -596,18 +624,38 @@ async function readLinkedHedge(
     } catch (err) {
       console.error('nansen funder balances', err);
       note('One funding wallet came back in an unexpected shape and was left out', true);
+      failedFunder = true;
       return [];
     }
   });
   if (truncatedFunder) {
     note('A funding wallet was not read in full - its first 100 tokens only, or rows that came back malformed - so its holdings may be understated', true);
   }
-  return computeLinkedHedge(
-    positionFeatures.headlineCoin,
-    positionFeatures.headlineSide,
-    positionFeatures.headlineNotionalUsd,
-    linked,
-  );
+  // A candidate whose balance could not be read at all can only have hidden
+  // a funder's holding, never invented one - so this coverage state follows
+  // the exact same logic hedgeCoverage already uses for the account's own
+  // holdings, just for the funder search instead (25.09 audit, A06).
+  const balanceCoverage: HedgeCoverage =
+    failedFunder && linked.length === 0 ? 'missing' : failedFunder || truncatedFunder ? 'partial' : 'complete';
+  // Either stage of the search can independently drag the whole reading
+  // down - a balance read that went perfectly cannot make up for a chain
+  // that was never enumerated in the first place - so the worse of the two
+  // stands for the search as a whole (spec review after A06).
+  const coverage: HedgeCoverage =
+    balanceCoverage === 'missing' || enumerationCoverage === 'missing'
+      ? 'missing'
+      : balanceCoverage === 'partial' || enumerationCoverage === 'partial'
+        ? 'partial'
+        : 'complete';
+  return {
+    features: computeLinkedHedge(
+      positionFeatures.headlineCoin,
+      positionFeatures.headlineSide,
+      positionFeatures.headlineNotionalUsd,
+      linked,
+    ),
+    coverage,
+  };
 }
 
 const FUNDING_CONTEXT_CHAINS = ['arbitrum', 'ethereum'] as const;

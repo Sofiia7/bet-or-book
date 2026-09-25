@@ -46,6 +46,7 @@ export function present(r: Interpreted, share: ShareCardOptions = { kind: 'live'
     ordersCoverage: r.ordersCoverage,
     positionsCoverage: r.positionsCoverage,
     linkedHedge: r.linkedHedge,
+    linkedHedgeCoverage: r.linkedHedgeCoverage,
     trades: r.trades,
     pnl: r.pnl,
     sizeVsOi: r.sizeVsOi,

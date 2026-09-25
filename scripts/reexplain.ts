@@ -76,6 +76,20 @@ function legacyHedgeCoverage(e: Gallery['entries'][number]): HedgeCoverage {
   return e.hedgeScope === 'all-chains' ? 'complete' : 'partial';
 }
 
+/** Entries scanned before linkedHedgeCoverage existed (A06, 25.09 audit) have
+ * no record of whether a funder's balance fetch failed outright - the code
+ * that ran them had no way to tell that case apart from "read, found
+ * nothing" in the first place, which is the very bug A06 fixed. So the only
+ * honest reading of an old entry's silence is the one the code before the
+ * fix always assumed: a non-null linkedHedge means the search was carried
+ * out in full. Defaulting an old entry to 'missing' or 'partial' instead
+ * would invent a doubt about the read that nothing on the entry supports -
+ * the opposite mistake from A06 itself. */
+function legacyLinkedHedgeCoverage(e: Gallery['entries'][number]): HedgeCoverage {
+  if (e.linkedHedgeCoverage) return e.linkedHedgeCoverage;
+  return e.linkedHedge ? 'complete' : 'not-applicable';
+}
+
 export interface ReexplainStats {
   alreadySuperseded: number;
   historical: number;
@@ -125,7 +139,23 @@ export function reexplainGallery(gallery: Gallery, now: string): { gallery: Gall
       // Older scans never stored the raw per-position leverage, liquidation
       // price or PnL that vitals need - only the aggregate PositionFeatures
       // survives in this file - so there is nothing to recompute here.
-      const kept = { ...e, vitals: e.vitals ?? [], historical: { reason: historicalReason(missing), missing } };
+      // hedgeCoverage genuinely is a verdict input elsewhere in this
+      // codebase (verdict.ts reads it to decide whether a hedge was even
+      // checked) - the reason backfilling it here is still safe is
+      // narrower: this branch never calls verdictInputOf/computeVerdict at
+      // all, so nothing on this path reads hedgeCoverage or
+      // linkedHedgeCoverage as a verdict input. Backfilling both only fills
+      // in the coverage state a historical entry would otherwise carry as
+      // undefined when it predates the field, and leaves the frozen verdict
+      // this branch exists to protect untouched (A06, 25.09 audit spec
+      // review).
+      const kept = {
+        ...e,
+        vitals: e.vitals ?? [],
+        hedgeCoverage: legacyHedgeCoverage(e),
+        linkedHedgeCoverage: legacyLinkedHedgeCoverage(e),
+        historical: { reason: historicalReason(missing), missing },
+      };
       return [{ ...kept, share: shareCard(kept, { kind: 'gallery', snapshotId: kept.snapshotId }) }];
     }
 
@@ -138,6 +168,7 @@ export function reexplainGallery(gallery: Gallery, now: string): { gallery: Gall
     if (dropped.length > 0) stats.serviceFunders += dropped.length;
 
     const hedgeCoverage = legacyHedgeCoverage(e);
+    const linkedHedgeCoverage = legacyLinkedHedgeCoverage(e);
     const sources = legacySourceCoverage(e);
     // The scan did not record when its sources measured what they returned,
     // so these cards can only say that they do not know.
@@ -173,6 +204,7 @@ export function reexplainGallery(gallery: Gallery, now: string): { gallery: Gall
       ...e,
       verdict,
       linkedHedge: linked,
+      linkedHedgeCoverage,
       // Same limit as the historical branch: the raw position record vitals
       // need was never stored for this scan, live or re-judged.
       vitals: e.vitals ?? [],

@@ -80,6 +80,58 @@ describe('what Nansen added to a reading', () => {
     const positionsLine = c.items.find((i) => i.startsWith('Positions on every'))!;
     expect(positionsLine).toContain("Hyperliquid's own free endpoint reads the main dex only.");
   });
+
+  it('A06 (25.09 audit): does not claim the funders hold nothing when the funder read itself failed or was incomplete', () => {
+    for (const linkedHedgeCoverage of ['missing', 'partial'] as const) {
+      const notComplete = {
+        ...book,
+        linkedHedge: { linkedHedgeUsd: 0, linkedHedgeRatio: 0, funders: [] },
+        linkedHedgeCoverage,
+      } as CheckResponse;
+      const c = nansenContribution(notComplete)!;
+      expect(c.items.join(' ')).not.toContain('Funding links: read; the wallets that funded this account hold no');
+      expect(c.items.join(' ')).toContain('Funding links: could not be read in full, so whether the funding wallets hold');
+    }
+  });
+
+  it('A06 (25.09 audit): still says the funders hold nothing when the funder read genuinely completed (regression guard)', () => {
+    const complete = {
+      ...book,
+      linkedHedge: { linkedHedgeUsd: 0, linkedHedgeRatio: 0, funders: [] },
+      linkedHedgeCoverage: 'complete',
+    } as CheckResponse;
+    const c = nansenContribution(complete)!;
+    expect(c.items.join(' ')).toContain('Funding links: read; the wallets that funded this account hold no');
+  });
+
+  it('A06 follow-up (spec review): says nothing about funding links rather than a false claim when linkedHedgeCoverage was never set', () => {
+    // A real, reachable shape: a superseded gallery entry frozen before this
+    // field existed. The fix must fail safe here the same way the sibling
+    // hedgeCoverage block already does - three positive checks, no catch-all
+    // else - rather than let an unset value fall through as "complete".
+    const { linkedHedgeCoverage: _drop, ...bookWithoutCoverage } = book;
+    const unset = {
+      ...bookWithoutCoverage,
+      linkedHedge: { linkedHedgeUsd: 0, linkedHedgeRatio: 0, funders: [] },
+    } as unknown as CheckResponse;
+    const c = nansenContribution(unset)!;
+    expect(c.items.some((i) => i.startsWith('Funding links:'))).toBe(false);
+  });
+
+  it('A06 follow-up (spec review): says the funding-links figure is a floor when the search itself was only partly complete', () => {
+    const partial = {
+      ...book,
+      linkedHedge: {
+        linkedHedgeUsd: 5_000_000,
+        linkedHedgeRatio: 0.5,
+        funders: [{ address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', relation: 'First Funder', chain: 'ethereum', matchingUsd: 5_000_000 }],
+      },
+      linkedHedgeCoverage: 'partial',
+    } as CheckResponse;
+    const c = nansenContribution(partial)!;
+    const line = c.items.find((i) => i.startsWith('Funding links:'))!;
+    expect(line).toContain('so this is a floor');
+  });
 });
 
 describe('what a reading leaves open', () => {

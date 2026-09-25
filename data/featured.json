@@ -87,7 +87,7 @@
    "observationSchemaVersion": 4,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-24T07:44:53.841Z",
-   "interpretedAt": "2026-09-25T12:06:23.481Z",
+   "interpretedAt": "2026-09-25T20:40:52.508Z",
    "degraded": false,
    "summary": "100% of the exposure is one $130.0M HYPE long. Spot cannot offset a long, and debts or other derivatives are not read here.",
    "evidence": [
@@ -204,7 +204,8 @@
    },
    "nansenCalls": 4,
    "snapshotId": "3p2dqa2fjl01r",
-   "supersedes": "082e843a-mu71i2vu"
+   "supersedes": "082e843a-mu71i2vu",
+   "linkedHedgeCoverage": "not-applicable"
   },
   {
    "address": "0xf02d16a272a842f8bac1d9a9e773aba1933454c6",
@@ -290,7 +291,7 @@
    "observationSchemaVersion": 5,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-24T12:37:07.885Z",
-   "interpretedAt": "2026-09-25T12:06:23.481Z",
+   "interpretedAt": "2026-09-25T20:40:52.508Z",
    "degraded": false,
    "summary": "The $41.8M HYPE short is 97% covered by $40.4M of spot HYPE held by this address on Hyperliquid - other Nansen-supported chains were checked and found nothing.",
    "evidence": [
@@ -424,7 +425,8 @@
    },
    "nansenCalls": 3,
    "snapshotId": "0xfy57j0e8kvu",
-   "supersedes": "0x4uv7ru4tpka"
+   "supersedes": "0x4uv7ru4tpka",
+   "linkedHedgeCoverage": "not-applicable"
   },
   {
    "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
@@ -547,7 +549,7 @@
    "observationSchemaVersion": 4,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-24T07:45:00.474Z",
-   "interpretedAt": "2026-09-25T12:06:23.481Z",
+   "interpretedAt": "2026-09-25T20:40:52.508Z",
    "degraded": false,
    "summary": "Less than 1% of the $209.1M ETH short is covered by ETH at this address. 2 wallets that funded it hold $443.7M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
@@ -679,7 +681,8 @@
    },
    "nansenCalls": 7,
    "snapshotId": "075ocy85yngsu",
-   "supersedes": "07dr4tcn26rwx"
+   "supersedes": "07dr4tcn26rwx",
+   "linkedHedgeCoverage": "complete"
   },
   {
    "address": "0xecb63caa47c7c4e77f60f1ce858cf28dc2b82b00",
@@ -785,7 +788,7 @@
    "observationSchemaVersion": 4,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-24T07:45:06.882Z",
-   "interpretedAt": "2026-09-25T12:06:23.481Z",
+   "interpretedAt": "2026-09-25T20:40:52.508Z",
    "degraded": false,
    "summary": "2,613 resting orders quote both sides of 123 markets.",
    "evidence": [
@@ -905,7 +908,8 @@
    },
    "nansenCalls": 2,
    "snapshotId": "17adm6ld3op4a",
-   "supersedes": "2b2e7wqput6yt"
+   "supersedes": "2b2e7wqput6yt",
+   "linkedHedgeCoverage": "not-applicable"
   },
   {
    "address": "0xf02d16a272a842f8bac1d9a9e773aba1933454c6",

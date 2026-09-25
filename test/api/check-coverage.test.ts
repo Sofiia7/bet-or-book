@@ -236,3 +236,196 @@ describe('L02a (22.09 audit): a long\'s own funding history is context a hedge s
     expect(result.vitals.some((v) => v.label === 'Earliest funding found')).toBe(false);
   });
 });
+
+describe('A06 (25.09 audit): a failed funder read does not claim the funders hold nothing', () => {
+  const FUNDER_ADDRESS = '0xfffffffffffffffffffffffffffffffffffffff1';
+  const FUNDER_2_ADDRESS = '0xfffffffffffffffffffffffffffffffffffffff2';
+  const funderRow = (over: Partial<NansenRelatedWallet> = {}): NansenRelatedWallet => ({
+    address: FUNDER_ADDRESS,
+    address_label: null,
+    relation: 'First Funder',
+    transaction_hash: '0xabc',
+    block_timestamp: '2026-09-13T12:00:00Z',
+    order: 1,
+    chain: 'ethereum',
+    ...over,
+  });
+
+  it('does not read the funder search as complete when a candidate balance fetch fails', async () => {
+    route();
+    const nansen: NansenClient = {
+      ...nansenWith('HYPE', 'short'),
+      relatedWallets: async (_addr, chain) => ({ rows: chain === 'ethereum' ? [funderRow()] : [], complete: true }),
+      currentBalance: async (addr) => {
+        if (addr === FUNDER_ADDRESS) throw new Error('funder balance unavailable');
+        return { rows: [] as NansenBalance[], complete: true };
+      },
+    };
+    const result = await checkAddress(ADDRESS, { nansen });
+    // The one candidate that exists could not be read at all, so nothing
+    // stands in for its holdings - this is a gap in the reading, not a
+    // finding that the funders hold nothing.
+    expect(result.linkedHedgeCoverage).toBe('missing');
+    expect(result.linkedHedge).toEqual({ linkedHedgeUsd: 0, linkedHedgeRatio: 0, funders: [] });
+    expect(result.coverage.join(' ')).toContain('One linked wallet could not be read');
+  });
+
+  it('reads the funder search as partial when only some of several candidates fail', async () => {
+    route();
+    const nansen: NansenClient = {
+      ...nansenWith('HYPE', 'short'),
+      relatedWallets: async (_addr, chain) => ({
+        rows:
+          chain === 'ethereum'
+            ? [funderRow()]
+            : chain === 'arbitrum'
+              ? [funderRow({ address: FUNDER_2_ADDRESS, chain: 'arbitrum' })]
+              : [],
+        complete: true,
+      }),
+      currentBalance: async (addr) => {
+        if (addr === FUNDER_ADDRESS) throw new Error('funder balance unavailable');
+        return { rows: [] as NansenBalance[], complete: true };
+      },
+    };
+    const result = await checkAddress(ADDRESS, { nansen });
+    // One candidate came back, one did not: the search is not complete, but
+    // it is not empty-handed either.
+    expect(result.linkedHedgeCoverage).toBe('partial');
+    expect(result.linkedHedge?.funders).toHaveLength(1);
+  });
+
+  it('still reads complete when every candidate answers, even if none holds anything', async () => {
+    route();
+    const nansen: NansenClient = {
+      ...nansenWith('HYPE', 'short'),
+      relatedWallets: async (_addr, chain) => ({ rows: chain === 'ethereum' ? [funderRow()] : [], complete: true }),
+    };
+    const result = await checkAddress(ADDRESS, { nansen });
+    expect(result.linkedHedgeCoverage).toBe('complete');
+    // The candidate itself was read in full - it just holds nothing - so it
+    // still shows up as a followed funder, at $0, rather than vanishing.
+    expect(result.linkedHedge?.linkedHedgeUsd).toBe(0);
+    expect(result.linkedHedge?.funders).toEqual([expect.objectContaining({ address: FUNDER_ADDRESS, matchingUsd: 0 })]);
+  });
+
+  // The balance-reading step above is not the only place this search can
+  // come back incomplete: the earlier step that discovers candidates in the
+  // first place (relatedWallets, on each chain) can itself fail, throw on a
+  // malformed shape, or come back truncated - and until now none of that
+  // reached the final coverage value (spec review after e9acde1/6ca1958).
+  const WETH_ETHEREUM = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
+  const weth = (valueUsd: number): NansenBalance => ({
+    chain: 'ethereum',
+    address: FUNDER_ADDRESS,
+    token_address: WETH_ETHEREUM,
+    token_symbol: 'WETH',
+    token_name: 'WETH',
+    token_amount: valueUsd / 2500,
+    price_usd: 2500,
+    value_usd: valueUsd,
+  });
+
+  it('reads partial, not complete, when one chain could not be enumerated even though the other found a real, valued candidate', async () => {
+    route();
+    const nansen: NansenClient = {
+      ...nansenWith('ETH', 'short'),
+      relatedWallets: async (_addr, chain) => {
+        if (chain === 'arbitrum') throw new Error('arbitrum related-wallets unavailable');
+        return { rows: chain === 'ethereum' ? [funderRow()] : [], complete: true };
+      },
+      currentBalance: async (addr) => {
+        if (addr === FUNDER_ADDRESS) return { rows: [weth(5_000_000)], complete: true };
+        return { rows: [] as NansenBalance[], complete: true };
+      },
+    };
+    const result = await checkAddress(ADDRESS, { nansen });
+    // Arbitrum was never actually looked at - a real, valued candidate
+    // turning up on ethereum alone must not read as a complete search.
+    expect(result.linkedHedgeCoverage).toBe('partial');
+    expect(result.linkedHedge?.linkedHedgeUsd).toBeGreaterThan(0);
+  });
+
+  it('reads missing, not not-applicable, when every chain fails to enumerate at all', async () => {
+    route();
+    const nansen: NansenClient = {
+      ...nansenWith('HYPE', 'short'),
+      relatedWallets: async () => {
+        throw new Error('related-wallets unavailable');
+      },
+    };
+    const result = await checkAddress(ADDRESS, { nansen });
+    expect(result.linkedHedgeCoverage).toBe('missing');
+    expect(result.linkedHedge).toBeNull();
+  });
+
+  it('reads partial, not complete, when a chain answers only its first page and nothing follows from it', async () => {
+    route();
+    const nansen: NansenClient = {
+      ...nansenWith('HYPE', 'short'),
+      // Nothing rejects and nothing is malformed - the chain simply says its
+      // answer was cut short, same as `bal.complete === false` elsewhere.
+      relatedWallets: async (_addr, chain) => ({ rows: [], complete: chain !== 'ethereum' }),
+    };
+    const result = await checkAddress(ADDRESS, { nansen });
+    expect(result.linkedHedgeCoverage).toBe('partial');
+    expect(result.linkedHedge).toBeNull();
+  });
+
+  it('reads complete, not not-applicable, when the search ran cleanly and found only an exchange or bridge', async () => {
+    route();
+    const nansen: NansenClient = {
+      ...nansenWith('HYPE', 'short'),
+      relatedWallets: async (_addr, chain) => ({
+        rows: chain === 'ethereum' ? [funderRow({ address_label: 'Binance: Hot Wallet' })] : [],
+        complete: true,
+      }),
+    };
+    const result = await checkAddress(ADDRESS, { nansen });
+    // A well-funded-by-exchange-only short still spent real credits on a
+    // search that genuinely ran; 'not-applicable' would claim it never
+    // tried, and 'missing'/'partial' would claim it came back incomplete.
+    expect(result.linkedHedgeCoverage).toBe('complete');
+    expect(result.linkedHedge).toBeNull();
+  });
+
+  // Third review pass: the same bug class, two more doors in this same
+  // function. Both share the pattern every prior door shared - a source read
+  // that did not fully succeed was passed to note(..., true) for display but
+  // never fed the boolean/counter the final coverage actually reads.
+  it('reads missing, not complete, when a candidate balance answers 200 with a garbage body shape', async () => {
+    route();
+    const nansen: NansenClient = {
+      ...nansenWith('HYPE', 'short'),
+      relatedWallets: async (_addr, chain) => ({ rows: chain === 'ethereum' ? [funderRow()] : [], complete: true }),
+      currentBalance: async (addr) => {
+        // A 200 with a body that is not a list at all: checkNansenBalances
+        // throws UpstreamShapeError, caught below - this is not the same
+        // thing as the row-level malformed count, and not the same thing as
+        // the promise itself rejecting.
+        if (addr === FUNDER_ADDRESS) return { rows: 'not a list' as unknown as NansenBalance[], complete: true };
+        return { rows: [] as NansenBalance[], complete: true };
+      },
+    };
+    const result = await checkAddress(ADDRESS, { nansen });
+    expect(result.linkedHedgeCoverage).toBe('missing');
+    expect(result.linkedHedge).toEqual({ linkedHedgeUsd: 0, linkedHedgeRatio: 0, funders: [] });
+  });
+
+  it('reads partial, not complete, when the only enumerated row on a chain individually fails validation', async () => {
+    route();
+    const nansen: NansenClient = {
+      ...nansenWith('HYPE', 'short'),
+      // A well-formed array (so it does not reject or throw at the outer
+      // shape level) whose one row has an address that cannot parse - the
+      // row-level malformed count, distinct from a truncated page.
+      relatedWallets: async (_addr, chain) => ({
+        rows: chain === 'ethereum' ? [funderRow({ address: 'not-a-real-address' })] : [],
+        complete: true,
+      }),
+    };
+    const result = await checkAddress(ADDRESS, { nansen });
+    expect(result.linkedHedgeCoverage).toBe('partial');
+    expect(result.linkedHedge).toBeNull();
+  });
+});

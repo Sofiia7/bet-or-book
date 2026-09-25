@@ -133,12 +133,18 @@ export function nansenContribution(r: CheckResponse): NansenContribution | null 
       items.push(
         `Funding links: ${plural(funders.length, 'wallet')} that funded this account ${hold} ${formatUsd(usd)} of ` +
           `${coin}, on ${chains}. A funding transfer is not ownership, so none of it is counted.` +
-          (without ? ` Without these links, the same numbers would read as "${named(without)}".` : ''),
+          (without ? ` Without these links, the same numbers would read as "${named(without)}".` : '') +
+          // The dollar figure found is real either way - it is a floor, not a
+          // false claim - but a funder search that did not fully run may
+          // still be hiding more of the picture (spec review after A06).
+          (r.linkedHedgeCoverage === 'partial' ? ' Another funding wallet could not be read in full, so this is a floor.' : ''),
       );
       lead = without
         ? `${plural(funders.length, 'funding wallet')} ${hold} ${formatUsd(usd)} of ${coin}; without them this would read as "${named(without)}"`
         : `${plural(funders.length, 'funding wallet')} ${hold} ${formatUsd(usd)} of ${coin}, ownership unconfirmed`;
-    } else {
+    } else if (r.linkedHedgeCoverage === 'missing' || r.linkedHedgeCoverage === 'partial') {
+      items.push(`Funding links: could not be read in full, so whether the funding wallets hold ${coin} is not known.`);
+    } else if (r.linkedHedgeCoverage === 'complete') {
       items.push(`Funding links: read; the wallets that funded this account hold no ${coin}.`);
     }
   }

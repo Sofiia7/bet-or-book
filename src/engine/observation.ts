@@ -62,6 +62,12 @@ export interface Observation {
    * answers for the main perp dex, so a fallback reading is `partial`. */
   positionsCoverage: SourceCoverage;
   linkedHedge: LinkedHedgeFeatures | null;
+  /** How completely the funder search itself was carried out, so a candidate
+   * whose balance could not be read is never served as a funder found to
+   * hold nothing (25.09 audit, A06). `not-applicable` when no funder lookup
+   * was worth running at all - a genuinely different state from having run
+   * it and found nothing. */
+  linkedHedgeCoverage: HedgeCoverage;
   trades: TradeFeatures;
   pnl: PnlSummary | null;
   sizeVsOi: number | null;
