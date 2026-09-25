@@ -14,6 +14,7 @@
  * has nothing to decide, and so the split can be tested without a canvas.
  */
 import type { PositionFeatures, HedgeFeatures, HedgeCoverage, LinkedHedgeFeatures } from './features';
+import { DEFAULT_THRESHOLDS } from './verdict';
 
 /** A band of the position bar. They are drawn in this order and always sum
  * to the headline notional. */
@@ -53,17 +54,27 @@ export interface ExposureBreakdown {
    * it now, so it is drawn beside the bar on a dashed connection. */
   elsewhere: { usd: number; wallets: number; ownership: 'unverified' } | null;
   /** Whether the segments above are a finished picture. 'measured' once the
-   * hedge search ran to completion and every matching holding had a price to
-   * weigh. 'partial' when the holdings read itself did not finish - true
+   * hedge search ran to completion, every matching holding had a price to
+   * weigh, and identified holdings explain the position well enough that
+   * computeVerdict would not withhold a verdict for unrecognised assets
+   * either. 'partial' when the holdings read itself did not finish - true
    * even when what was found already covers the position, since the next
    * page could still hold more of the same asset and a zero residual then
    * says nothing about the part never read. 'unpriced' when a holding
    * matched the position's asset but had no price, so its dollars sit in
-   * neither `covered` nor `unverified` - a renderer that only sums the
-   * segments never learns this happened. A renderer must read this field
-   * directly, never infer it from whether some segment happens to be
-   * nonzero (25.09 audit, A03). */
-  dataQuality: 'measured' | 'partial' | 'unpriced';
+   * neither `covered` nor `unverified`. 'unverified' when a material share
+   * of the position (by computeVerdict's own DEFAULT_THRESHOLDS.hedged.
+   * maxUnverifiedShare) is matched to holdings this tool could not
+   * identify - the same condition, mirrored exactly, that makes
+   * computeVerdict return 'unrecognised_assets' instead of a confident
+   * verdict (25.09 audit, A03 follow-up: this field originally only checked
+   * `unpricedMatches`, so a fresh live check with a large unverified share
+   * could read 'measured' here while the classifier itself withheld its
+   * verdict for the identical reason - a real gap found by this branch's
+   * own final review, not by the original audit). None of these can be
+   * inferred from whether some segment happens to be nonzero - a renderer
+   * must read this field directly (25.09 audit, A03). */
+  dataQuality: 'measured' | 'partial' | 'unpriced' | 'unverified';
 }
 
 /** Below this share of the position a funder's holding is dust, and "held by
@@ -78,17 +89,24 @@ export function exposureBreakdown(
 ): ExposureBreakdown {
   const headlineUsd = positions.headlineNotionalUsd;
   const applies = positions.nPositions > 0 && positions.headlineSide === 'short' && headlineUsd > 0;
+  // Mirrors computeVerdict's own unrecognised_assets check (src/engine/
+  // verdict.ts) exactly, so this field's sense of "not fully identified"
+  // never disagrees with the classifier's.
+  const unverifiedShare = headlineUsd > 0 ? (hedge.unverifiedUsd ?? 0) / headlineUsd : 0;
   // A long has nothing to measure, so it is trivially 'measured'. Otherwise
-  // an unfinished holdings read outranks a merely-unpriced match: neither
-  // can be inferred from the segments below, which is the whole point of
-  // this field (25.09 audit, A03).
+  // an unfinished holdings read outranks a merely-unpriced match, which
+  // outranks a material but priced-and-found unverified share: none of the
+  // three can be inferred from the segments below, which is the whole point
+  // of this field (25.09 audit, A03).
   const dataQuality: ExposureBreakdown['dataQuality'] = !applies
     ? 'measured'
     : hedgeCoverage === 'missing' || hedgeCoverage === 'partial'
       ? 'partial'
       : (hedge.unpricedMatches ?? 0) > 0
         ? 'unpriced'
-        : 'measured';
+        : unverifiedShare >= DEFAULT_THRESHOLDS.hedged.maxUnverifiedShare
+          ? 'unverified'
+          : 'measured';
   const empty: ExposureBreakdown = {
     applies,
     coin: positions.headlineCoin,

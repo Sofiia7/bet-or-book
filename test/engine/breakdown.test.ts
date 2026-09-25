@@ -141,4 +141,28 @@ describe('a data-quality flag the diagram can trust on its own (25.09 audit, A03
     const b = exposureBreakdown(positions(), hedge({ hedgeUsd: 100e6, hedgeRatio: 1 }), null, 'missing');
     expect(b.dataQuality).toBe('partial');
   });
+
+  it('is unverified when a material share is matched to holdings this tool could not identify, mirroring computeVerdict\'s own unrecognised_assets check', () => {
+    // 15% unverified, above DEFAULT_THRESHOLDS.hedged.maxUnverifiedShare (0.1) -
+    // verdict.ts withholds a confident verdict for exactly this reason
+    // ('unrecognised_assets'), and dataQuality must agree.
+    const b = exposureBreakdown(positions(), hedge({ hedgeUsd: 60e6, hedgeRatio: 0.6, unverifiedUsd: 15e6 }), null, 'complete');
+    expect(b.dataQuality).toBe('unverified');
+  });
+
+  it('stays measured when the unverified share is below the material threshold', () => {
+    // 5% unverified, below the 0.1 threshold - dust, not a withheld finding.
+    const b = exposureBreakdown(positions(), hedge({ hedgeUsd: 90e6, hedgeRatio: 0.9, unverifiedUsd: 5e6 }), null, 'complete');
+    expect(b.dataQuality).toBe('measured');
+  });
+
+  it('prefers partial over unverified when both are true at once', () => {
+    const b = exposureBreakdown(positions(), hedge({ hedgeUsd: 60e6, hedgeRatio: 0.6, unverifiedUsd: 15e6 }), null, 'partial');
+    expect(b.dataQuality).toBe('partial');
+  });
+
+  it('prefers unpriced over unverified when both are true at once', () => {
+    const b = exposureBreakdown(positions(), hedge({ hedgeUsd: 60e6, hedgeRatio: 0.6, unverifiedUsd: 15e6, unpricedMatches: 1 }), null, 'complete');
+    expect(b.dataQuality).toBe('unpriced');
+  });
 });

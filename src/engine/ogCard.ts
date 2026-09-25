@@ -58,9 +58,13 @@ export interface OgCardData {
    * is held elsewhere, or there is no bar to put it beside. */
   elsewhere: { amount: string; caption: string } | null;
   /** Whether the segments above are a finished picture - see
-   * ExposureBreakdown.dataQuality. 'measured' when there is no breakdown at
-   * all, the same as a card with nothing left to show a caveat about. */
-  dataQuality: 'measured' | 'partial' | 'unpriced';
+   * ExposureBreakdown.dataQuality (kept in sync with that type by hand: this
+   * field mirrors it rather than importing it, so a widening there - as
+   * 'unverified' did in the 25.09 A03 follow-up - has to be widened here
+   * too, even though no rendering code needs to change, or this assignment
+   * stops typechecking). 'measured' when there is no breakdown at all, the
+   * same as a card with nothing left to show a caveat about. */
+  dataQuality: 'measured' | 'partial' | 'unpriced' | 'unverified';
 }
 
 const ACCENT: Record<VerdictResult['verdict'], string> = {

@@ -1418,7 +1418,9 @@ function drawBreakdown(ctx, b, v, W) {
     ctx.fillText(
       b.dataQuality === 'unpriced'
         ? 'A matching holding has no price available, so it is not counted above.'
-        : "This address's holdings were not read in full - the true cover could be higher.",
+        : b.dataQuality === 'unverified'
+          ? 'A material share is matched to holdings this tool could not identify.'
+          : "This address's holdings were not read in full - the true cover could be higher.",
       left,
       legendY,
     );
