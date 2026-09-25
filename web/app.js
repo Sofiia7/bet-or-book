@@ -627,10 +627,24 @@ function renderResult(d, opts) {
   renderBreakdown(d);
 
   // The decisive number now leads the card on its own (25.09 audit, the
-  // "hero numbers" redesign) - it is no longer suppressed when the diagram
-  // also shows the same fact; the diagram is the backup, not the only copy.
+  // "hero numbers" redesign) - it is no longer suppressed just because the
+  // diagram repeats the same fact. That is a real tradeoff, not a settled
+  // one: in most cases the tile and the diagram now do say the same thing
+  // twice, and the diagram is kept anyway as the visual backup for that
+  // repetition. Scope note: drawCard() (the Copy/Download image renderer,
+  // ~line 1538) and the OG social preview are untouched by this task and
+  // still pick tile XOR diagram, never both - so a live reading and its own
+  // shareable image can now disagree structurally. That gap is this task's
+  // known boundary, left for a future task, not an oversight.
   const heroTiles = (d.evidence || []).filter((item) => item.decisive);
-  if (d.breakdown && d.breakdown.elsewhere) {
+  // A reason of linked_exposure_unverified already put the funders' figure
+  // into heroTiles above, as the "Linked wallets" evidence tile (src/engine
+  // /evidence.ts's DECISIVE_LABEL_BY_REASON) built from this same linkedHedge
+  // data. Pushing the elsewhere tile too would show the identical dollar
+  // amount and wallet count twice in a row (confirmed against the stored
+  // 075ocy85yngsu reading, $443.7M in 2 wallets, in data/featured.json).
+  const alreadyShowsFunderHoldings = d.verdict.reasons.includes('linked_exposure_unverified');
+  if (d.breakdown && d.breakdown.elsewhere && !alreadyShowsFunderHoldings) {
     heroTiles.push({
       label: 'Held elsewhere',
       value: fmtUsd(d.breakdown.elsewhere.usd) + ' in ' + plural(d.breakdown.elsewhere.wallets, 'wallet') + ' that funded this account',
@@ -1027,7 +1041,7 @@ $('check-live').addEventListener('click', () => {
   }
 });
 $('check-another').addEventListener('click', () => {
-  $('address').focus();
+  $('address').focus({ preventScroll: true });
   $('address').scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 
