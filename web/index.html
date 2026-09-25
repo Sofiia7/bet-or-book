@@ -162,6 +162,19 @@
   :focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
   .list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
   .list button { width: 100%; display: grid; grid-template-columns: 34px 1fr auto; gap: 4px 12px; align-items: center; text-align: left; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 10px 4px; }
+  /* boardRow (web/app.js) never draws a rank number - it has none to draw,
+     since a board is already ranked by its own stat, not by position in a
+     flat list. Reusing the 34px rank column above squeezed a real position
+     name ("$30.8M HYPE short") into 34px, wrapping three or four lines while
+     the badge took the stretchy auto column (25.09 audit, A13). Two columns:
+     the position name gets the room, the badge and the stat/address line
+     wrap under it on a narrow screen instead of overflowing. */
+  .board .list button { grid-template-columns: minmax(0, 1fr) auto; }
+  .board .list .row-meta { grid-column: 1 / -1; }
+  @media (max-width: 420px) {
+    .board .list button { grid-template-columns: 1fr; }
+    .board .list .badge { justify-self: start; }
+  }
   .rank { color: var(--faint); font-size: 13px; }
   .pos { font-weight: 600; }
   .row-meta { grid-column: 2 / 4; font-size: 12px; color: var(--muted); }
