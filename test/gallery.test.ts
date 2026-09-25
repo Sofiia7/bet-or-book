@@ -76,6 +76,13 @@ describe('the saved gallery against the current rules', () => {
     expect(drifted).toEqual([]);
   });
 
+  it('reproduces every stored breakdown, so a diagram fix always reaches the bundle (25.09 audit follow-up)', () => {
+    const drifted = current
+      .map((e) => ({ address: e.address, stored: e.breakdown, fresh: words(e).breakdown }))
+      .filter((r) => JSON.stringify(r.stored) !== JSON.stringify(r.fresh));
+    expect(drifted).toEqual([]);
+  });
+
   it('stamps every judged card with the rules that read it', () => {
     expect(new Set(current.map((e) => e.classifierVersion))).toEqual(new Set([CLASSIFIER_VERSION]));
   });
