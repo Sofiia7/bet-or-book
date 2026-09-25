@@ -80,3 +80,52 @@ describe('reexplainGallery does not corrupt a gallery it is run over twice (23.0
     expect(pass1.gallery.entries[0].snapshotId).toBe('fixture-wording-id');
   });
 });
+
+describe('a historical or superseded reading gets a real dataQuality instead of none at all (technical debt from the 25.09 audit follow-up)', () => {
+  // Both tests below take a real entry and strip `dataQuality` off a copy of
+  // its breakdown, rather than searching data/gallery.json for one that is
+  // still missing it outright: this file's own regeneration step
+  // (scripts/reexplain.ts, run over data/gallery.json as part of shipping
+  // this very fix) stamps every entry that lacks the field the moment it is
+  // built, so after that has run once - which it has, in this repo - no
+  // entry missing the field is left to find. Searching for one would make
+  // this test pass today and fail permanently from the next regeneration
+  // on, which is the opposite of what a regression test is for. Stripping a
+  // copy's field keeps the rest of a real, authentic entry (verdict,
+  // classifierVersion, coverage notes and all) while still exercising the
+  // exact "predates the field" case this task exists to fix.
+  it('stamps a historical entry\'s breakdown with dataQuality: unknown, without touching its frozen verdict (technical debt from the 25.09 audit follow-up)', () => {
+    const real = gallery.entries.find((e) => e.historical && e.breakdown?.applies);
+    if (!real) throw new Error('fixture needs a historical entry with breakdown.applies in data/gallery.json');
+    const entry = {
+      ...real,
+      breakdown: { ...real.breakdown, dataQuality: undefined },
+    } as unknown as Gallery['entries'][number];
+    const before = JSON.stringify(entry.verdict);
+    const singleEntryGallery: Gallery = { scannedAt: null, finishedAt: null, universe: 'test', entries: [entry] };
+    const result = reexplainGallery(singleEntryGallery, '2026-09-25T00:00:00.000Z');
+    expect(result.gallery.entries[0].breakdown?.dataQuality).toBe('unknown');
+    expect(JSON.stringify(result.gallery.entries[0].verdict)).toBe(before);
+    expect(result.gallery.entries[0].classifierVersion).toBe(entry.classifierVersion);
+    expect(result.stats.historical).toBe(1);
+    expect(result.stats.reverdicted).toBe(0);
+    expect(result.stats.forked).toBe(0);
+  });
+
+  it('stamps a superseded entry\'s frozen breakdown with dataQuality: unknown too, without reviving it into a fresh judgement', () => {
+    const real = gallery.entries.find((e) => e.superseded && e.breakdown?.applies);
+    if (!real) throw new Error('fixture needs a superseded entry with breakdown.applies in data/gallery.json');
+    const entry = {
+      ...real,
+      breakdown: { ...real.breakdown, dataQuality: undefined },
+    } as unknown as Gallery['entries'][number];
+    const before = JSON.stringify(entry.verdict);
+    const singleEntryGallery: Gallery = { scannedAt: null, finishedAt: null, universe: 'test', entries: [entry] };
+    const result = reexplainGallery(singleEntryGallery, '2026-09-25T00:00:00.000Z');
+    expect(result.gallery.entries[0].breakdown?.dataQuality).toBe('unknown');
+    expect(JSON.stringify(result.gallery.entries[0].verdict)).toBe(before);
+    expect(result.stats.alreadySuperseded).toBe(1);
+    expect(result.stats.reverdicted).toBe(0);
+    expect(result.stats.forked).toBe(0);
+  });
+});

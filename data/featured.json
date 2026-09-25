@@ -87,7 +87,7 @@
    "observationSchemaVersion": 4,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-24T07:44:53.841Z",
-   "interpretedAt": "2026-09-25T20:40:52.508Z",
+   "interpretedAt": "2026-09-25T21:40:38.167Z",
    "degraded": false,
    "summary": "100% of the exposure is one $130.0M HYPE long. Spot cannot offset a long, and debts or other derivatives are not read here.",
    "evidence": [
@@ -291,7 +291,7 @@
    "observationSchemaVersion": 5,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-24T12:37:07.885Z",
-   "interpretedAt": "2026-09-25T20:40:52.508Z",
+   "interpretedAt": "2026-09-25T21:40:38.167Z",
    "degraded": false,
    "summary": "The $41.8M HYPE short is 97% covered by $40.4M of spot HYPE held by this address on Hyperliquid - other Nansen-supported chains were checked and found nothing.",
    "evidence": [
@@ -549,7 +549,7 @@
    "observationSchemaVersion": 4,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-24T07:45:00.474Z",
-   "interpretedAt": "2026-09-25T20:40:52.508Z",
+   "interpretedAt": "2026-09-25T21:40:38.167Z",
    "degraded": false,
    "summary": "Less than 1% of the $209.1M ETH short is covered by ETH at this address. 2 wallets that funded it hold $443.7M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
@@ -788,7 +788,7 @@
    "observationSchemaVersion": 4,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-24T07:45:06.882Z",
-   "interpretedAt": "2026-09-25T20:40:52.508Z",
+   "interpretedAt": "2026-09-25T21:40:38.167Z",
    "degraded": false,
    "summary": "2,613 resting orders quote both sides of 123 markets.",
    "evidence": [
@@ -1044,7 +1044,8 @@
      }
     ],
     "excessUsd": 0,
-    "elsewhere": null
+    "elsewhere": null,
+    "dataQuality": "unknown"
    },
    "vitals": [
     {

@@ -99,6 +99,17 @@ export interface ReexplainStats {
   serviceFunders: number;
 }
 
+/** Old entries never recomputed `dataQuality` at all - not even a safe
+ * default, since the field simply did not exist yet when they were written.
+ * `exposureBreakdown()` must not be run on them (a stale `hedgeCoverage` or
+ * missing `unverifiedUsd` would produce a confidently wrong answer, not a
+ * cautious one) - so this just stamps the one honest value that makes no
+ * claim either way. */
+function withUnknownDataQuality(e: Gallery['entries'][number]): Gallery['entries'][number] {
+  if (!e.breakdown?.applies || e.breakdown.dataQuality !== undefined) return e;
+  return { ...e, breakdown: { ...e.breakdown, dataQuality: 'unknown' } };
+}
+
 /**
  * The pure transform: one gallery in, the re-judged gallery and a count of
  * what moved out. No file I/O, so a test can run it twice on the same
@@ -127,7 +138,7 @@ export function reexplainGallery(gallery: Gallery, now: string): { gallery: Gall
     // this very fix, before it ever shipped (23.09 audit, L03).
     if (e.superseded) {
       stats.alreadySuperseded++;
-      return [e];
+      return [withUnknownDataQuality(e)];
     }
     const missing = missingForCurrentRules(e);
     if (missing.length > 0) {
@@ -149,13 +160,13 @@ export function reexplainGallery(gallery: Gallery, now: string): { gallery: Gall
       // undefined when it predates the field, and leaves the frozen verdict
       // this branch exists to protect untouched (A06, 25.09 audit spec
       // review).
-      const kept = {
+      const kept = withUnknownDataQuality({
         ...e,
         vitals: e.vitals ?? [],
         hedgeCoverage: legacyHedgeCoverage(e),
         linkedHedgeCoverage: legacyLinkedHedgeCoverage(e),
         historical: { reason: historicalReason(missing), missing },
-      };
+      });
       return [{ ...kept, share: shareCard(kept, { kind: 'gallery', snapshotId: kept.snapshotId }) }];
     }
 

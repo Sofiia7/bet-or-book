@@ -73,8 +73,15 @@ export interface ExposureBreakdown {
    * verdict for the identical reason - a real gap found by this branch's
    * own final review, not by the original audit). None of these can be
    * inferred from whether some segment happens to be nonzero - a renderer
-   * must read this field directly (25.09 audit, A03). */
-  dataQuality: 'measured' | 'partial' | 'unpriced' | 'unverified';
+   * must read this field directly (25.09 audit, A03).
+   *
+   * 'unknown' is never produced by this function itself - every branch above
+   * resolves to one of the other four values. It exists only as a value
+   * scripts/reexplain.ts stamps directly onto old, frozen entries whose
+   * breakdown predates this field, meaning literally "no claim is made
+   * either way" - not a fifth kind of measured uncertainty alongside the
+   * other four (technical debt from the 25.09 audit follow-up). */
+  dataQuality: 'measured' | 'partial' | 'unpriced' | 'unverified' | 'unknown';
 }
 
 /** Below this share of the position a funder's holding is dust, and "held by

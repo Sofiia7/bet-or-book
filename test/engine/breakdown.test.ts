@@ -2,7 +2,7 @@
 // position, split by who holds it and whether this tool could identify it.
 // The arithmetic is here so the drawing has nothing to decide.
 import { describe, expect, it } from 'vitest';
-import { exposureBreakdown } from '../../src/engine/breakdown';
+import { exposureBreakdown, type ExposureBreakdown } from '../../src/engine/breakdown';
 import { EMPTY_HEDGE, type PositionFeatures, type HedgeFeatures, type LinkedHedgeFeatures } from '../../src/engine/features';
 
 const positions = (over: Partial<PositionFeatures> = {}): PositionFeatures => ({
@@ -164,5 +164,14 @@ describe('a data-quality flag the diagram can trust on its own (25.09 audit, A03
   it('prefers unpriced over unverified when both are true at once', () => {
     const b = exposureBreakdown(positions(), hedge({ hedgeUsd: 60e6, hedgeRatio: 0.6, unverifiedUsd: 15e6, unpricedMatches: 1 }), null, 'complete');
     expect(b.dataQuality).toBe('unpriced');
+  });
+
+  it('accepts unknown as a valid dataQuality value, for entries scripts/reexplain.ts stamps without recomputing (technical debt from the 25.09 audit follow-up)', () => {
+    const stamped: ExposureBreakdown = {
+      applies: true, coin: 'ETH', side: 'short', headlineUsd: 100,
+      segments: [{ kind: 'residual', usd: 100, share: 1 }],
+      excessUsd: 0, elsewhere: null, dataQuality: 'unknown',
+    };
+    expect(stamped.dataQuality).toBe('unknown');
   });
 });

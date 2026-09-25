@@ -131,6 +131,13 @@ describe('an unfinished read marks the bar itself, not only the text (25.09 audi
     expect(tree).toContain('dashed');
   });
 
+  it('draws the bar with a dashed border when dataQuality is unknown, the same as a frozen historical or superseded reading stamped by scripts/reexplain.ts (technical debt from the 25.09 audit follow-up)', () => {
+    const tree = JSON.stringify(
+      ogTree(data({ segments: [{ share: 1, color: '#e6e6e2', opacity: 1 }], dataQuality: 'unknown' })),
+    );
+    expect(tree).toContain('dashed');
+  });
+
   it('draws the bar with a solid border when the read is measured', () => {
     const tree = JSON.stringify(
       ogTree(data({ segments: [{ share: 1, color: '#e6e6e2', opacity: 1 }], dataQuality: 'measured' })),
