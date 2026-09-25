@@ -1066,8 +1066,11 @@ const BOARDS = [
   },
   {
     title: 'Least covered shorts',
-    note: 'Under 10% covered by this address - the rest is still open.',
-    filter: (e) => e.positions.headlineSide === 'short' && e.hedgeRatio < 0.1,
+    note: 'Under 10% covered by this address, on a hedge search that ran to completion - the rest is still open.',
+    // A ratio measured under a partial or missing read is a floor, not a
+    // finding: it belongs nowhere near "least covered", which claims the
+    // number is the whole story (25.09 audit, A01).
+    filter: (e) => e.positions.headlineSide === 'short' && e.hedgeCoverage === 'complete' && e.hedgeRatio < 0.1,
     sort: (a, b) => a.hedgeRatio - b.hedgeRatio,
     stat: (e) => fmtPct(e.hedgeRatio) + ' covered',
   },

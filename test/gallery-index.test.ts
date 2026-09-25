@@ -107,6 +107,14 @@ describe('the gallery list is rows, not cards', () => {
     expect(historicalRow).toBeDefined();
     expect(typeof historicalRow!.headlineTwoSidedNotionalUsd).toBe('number');
   });
+
+  it('carries hedgeCoverage, so a board can tell a real 0% from a read that never finished (25.09 audit, A01)', async () => {
+    const list = (await (await worker.fetch(request('/api/gallery'), testEnv())).json()) as {
+      entries: Array<{ hedgeCoverage: string }>;
+    };
+    const row = list.entries[0];
+    expect(['complete', 'partial', 'missing', 'not-applicable']).toContain(row.hedgeCoverage);
+  });
 });
 
 describe('every card says its rule in words', () => {

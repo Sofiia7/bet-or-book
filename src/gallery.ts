@@ -1,4 +1,5 @@
 import type { CheckResponse } from './api/check';
+import type { HedgeCoverage } from './engine/features';
 
 /** Snapshot written by scripts/prescan.ts and bundled into the Worker. Each
  * entry is exactly what /api/check returned for that address at its own
@@ -32,6 +33,11 @@ export interface GalleryRow {
    * search never ran on. Lets a ratings board rank covered/uncovered shorts
    * without opening every card (24.09 mechanic: ratings board). */
   hedgeRatio: number;
+  /** How completely the hedge search behind `hedgeRatio` actually finished.
+   * A ratio measured under `partial`/`missing` is a floor, not a finding -
+   * without this a ranking cannot tell a real 0% from a read that gave up
+   * before it started (25.09 audit, A01). */
+  hedgeCoverage: HedgeCoverage;
   /** Headline notional divided by the market's open interest, or null when
    * open interest could not be read for that reading. */
   sizeVsOi: number | null;
@@ -91,6 +97,7 @@ export function galleryIndex(gallery: Gallery, idOf: (e: CheckResponse) => strin
           nPositions: e.positions.nPositions,
         },
         hedgeRatio: e.hedge.hedgeRatio,
+        hedgeCoverage: e.hedgeCoverage,
         sizeVsOi: e.sizeVsOi,
         // Missing (not zero) on any entry scanned before the 23.09 audit's
         // L01 fix added this field to OrderFeatures - every such entry is
