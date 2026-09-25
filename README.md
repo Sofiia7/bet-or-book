@@ -20,19 +20,21 @@ Bet or Book answers one question per address, shows the numbers that decided it,
 
 ## What a check returns
 
-- **A verdict**: Book, Hedged, Looks like a bet, or Unknown, with a strength where it applies (`likely` / `strong` for a book).
+- **A verdict**: Book, Hedged, Looks like a bet, or Unknown, with a strength where it applies (`likely` / `strong` for a book). An Unknown names its kind on the badge itself, e.g. *Unknown · assets sit with funders*.
 - **One sentence built from the numbers**, e.g. *"The $41.8M HYPE short is 97% covered by $40.4M of spot HYPE held by this address on Hyperliquid - other Nansen-supported chains were checked and found nothing."*
-- **A picture of what stands against the position**: one bar for the position, split into what this address holds against it, what could not be identified, and what nothing was found against - with anything held by a wallet that merely funded this one drawn beside the bar on a dashed connection, never inside it. That distinction is the whole card, and a row of percentages is a poor way to carry it.
+- **A picture of what stands against the position**: a balance scale, the position on one pan and what this address holds against it on the other. It sits level when a short is covered, tips toward the position when it is not, and tips the other way when the account holds more of the asset than it is short. A holdings read that did not finish leaves the second pan dashed, with a question mark, rather than drawn as empty. Anything held by a wallet that merely funded this one hangs beside the scale on a dashed line, never on it. That distinction is the whole card, and a row of percentages is a poor way to carry it. A long gets an empty pan, since spot cannot offset one; a book gets a bar of how much of its own market it quotes on both sides, the number its verdict turns on. The downloaded picture and the link preview still draw the earlier single bar.
 - **A choice of position.** A post says BTC and the largest position at the address is ETH. The card offers the address's largest few and will answer about the one you came for.
 - **What changed since the last reading**, where there is one - and whether the answer moved because the account did something or because the rules did. Those look identical on a card and are not the same event.
 - **The number the verdict turned on**, first, where there is no picture to show it. The other evidence numbers, each tagged with the source that produced it (Nansen, Hyperliquid, or both), and a strip of vitals - leverage, distance to liquidation, unrealized PnL, funding since open - that never decide the verdict but are already paid for, sit one click down.
 - **How this was decided**, in words: the rule that fired, with the thresholds it used. The raw reason code and the rules version are underneath it, for anyone checking the rules themselves.
-- **What Nansen added**, on one line without opening anything, and in full one click down: positions on every dex, balances on every chain, funding links, funding history. Where the funding links are what stop a verdict, the card runs the same rules over the same numbers without them and says what those numbers would have read as - for the $209.1M ETH short above, "Looks like a bet".
+- **What Nansen added**, on one line without opening anything, and in full one click down: positions on every dex (beside the count Hyperliquid's own free main-dex endpoint shows), balances on every chain, funding links, funding history. Where the funding links are what stop a verdict, the card runs the same rules over the same numbers without them and says what those numbers would have read as - for the $209.1M ETH short above, "Looks like a bet".
 - **What is still open**: the question the reading cannot settle, in its own terms - "whether any of that HYPE is owed to someone", "who controls the wallets that funded this account".
 - **The funding wallets**, with explorer links, when they hold the matching asset. They hold it; that is not the same as this account holding it, and the card says so.
 - **What could not be read**, every time: which sources were missing or cut short, how old the numbers are, and which rules read them.
 - **What we cannot see**, always: centralized exchanges, OTC, wallets with no on-chain link. A hedge there is invisible, so a bet is only ever "looks like a bet".
 - **One Share button**: a link that reopens *this* reading rather than starting a new one, a draft post, and the card as a picture (PNG, carrying those limits) - with a matching image for the link itself when it is pasted into X, Telegram or Discord.
+- **A guess while it loads**: a live check takes a few seconds, and after the first moment the page offers an optional guess - bet, hedge, book or can't tell. When the answer arrives it says what you guessed against what the reading found, with a running count kept in your own browser only.
+- **Ranked boards** under the card, drawn from the readings already on file and free to open: the biggest bets, the biggest positions against their market's open interest, the best and the least covered shorts, and the market makers by how much of their own market they quote on both sides.
 
 ## Run it locally (about 10 minutes)
 
@@ -86,17 +88,17 @@ Hyperliquid's free API supplies resting orders (per dex, including HIP-3 markets
 
 ## The four readings at the top, and the scan below them
 
-The four chips under the address field open readings made fresh on 24 September and picked by hand, one of each kind of answer: a bet, a short covered in the same account, a short whose matching asset sits with the wallets that funded it, and a market maker's book. They are in [`data/featured.json`](data/featured.json), made by the same `checkAddress` a live check runs, and each one says what changed since the scan's reading of the same address.
+The four chips under the address field open readings made fresh on 24 September and picked by hand, one of each kind of answer: a bet, a short covered in the same account, a short whose matching asset sits with the wallets that funded it, and a market maker's book. They are in [`data/featured.json`](data/featured.json), made by the same `checkAddress` a live check runs, and each one says what changed since the scan's reading of the same address. A visitor with nothing pasted sees the third of them open on arrival. Where one of the four re-reads an account from the scan, the page lists that fresher reading instead of the scan's own, so the list shows three fewer rows than the table below counts.
 
-Below them, the same check ran once over 277 large Hyperliquid positions (the top 3,000 accounts by value, ranked by their largest main-dex position) and is re-judged offline whenever the rules change, at no cost. Of the 188 cards the current rules can read:
+Below them, the same check ran once over 277 large Hyperliquid positions (the top 3,000 accounts by value, ranked by their largest main-dex position) and is re-judged offline whenever the rules change, at no cost. Of the 177 cards the current rules can read:
 
-| Verdict | Positions | Share of the 188 judged |
+| Verdict | Positions | Share of the 177 judged |
 |---|---|---|
-| Looks like a bet | 131 | 70% |
-| Unknown | 51 | 27% |
+| Looks like a bet | 132 | 75% |
+| Unknown | 38 | 21% |
 | Book | 0 | 0% |
-| Hedged | 6 | 3% |
-| *Read by earlier rules* | *115* | *not judged by v5* |
+| Hedged | 7 | 4% |
+| *Read by earlier rules* | *100* | *not judged by v5* |
 
 Book reads zero in the scan, not because no market maker is in the set, but because the 23 September audit found the rule crediting quoting *anywhere in the account* as evidence about the one position on screen - and no scan before that fix recorded whether the headline market itself was ever quoted. The three cards that used to read Book are part of "read by earlier rules": kept exactly as v4 judged them. One of them has since been read fresh, and the current rules call it a book again, now on quoting in its own headline market - it is the fourth of the readings at the top. Read the whole table as "of the 277 read", never as "of the market" - leverage breaks the link between what an account is worth and what it holds, and the scan spent its last credits on the cheaper checks. How the set was built and what moved when the rules changed: [`docs/gallery-scan.md`](docs/gallery-scan.md).
 
