@@ -9,6 +9,17 @@ const VERDICTS = {
   looks_like_a_bet: { label: 'Looks like a bet', cls: 'bet', headline: 'This looks like a real bet.', accent: '#633806' },
   unknown: { label: 'Unknown', cls: 'unknown', headline: 'Not enough evidence either way.', accent: '#444441' },
 };
+// The on-page SVG diagram sits on the page's own background and must follow
+// dark mode; the canvas share card and the server OG picture both render on
+// a fixed white background and must not - so they keep VERDICTS[...].accent
+// (a concrete color) untouched, and only this map, reused from the badge's
+// own already-theme-aware tokens, feeds the live diagram (25.09 audit, A08).
+const SVG_ACCENT_VAR = {
+  book: '--book-fg', hedged: '--hedged-fg', looks_like_a_bet: '--bet-fg', unknown: '--unknown-fg',
+};
+function svgAccentOf(d) {
+  return 'var(' + (SVG_ACCENT_VAR[d.verdict.verdict] || SVG_ACCENT_VAR.unknown) + ')';
+}
 const PAGE_SIZE = 25;
 // The reading a visitor with nothing pasted yet sees first: the funded-short
 // demonstration reading, because its picture is the one that needs no
@@ -451,7 +462,7 @@ function renderBreakdown(d) {
     return;
   }
   box.hidden = false;
-  box.style.setProperty('--accent', verdictOf(d).accent);
+  box.style.setProperty('--accent', svgAccentOf(d));
 
   const W = box.clientWidth || 640;
   const svg = svgEl('svg', { viewBox: `0 0 ${W} 160`, role: 'img' });
@@ -474,7 +485,7 @@ function renderBreakdown(d) {
   } else if (isLong) {
     drawEmptyPan(svg, coin, side, headlineUsd, W);
   } else {
-    drawScale(svg, b, verdictOf(d).accent, W);
+    drawScale(svg, b, svgAccentOf(d), W);
   }
 
   $('breakdown-svg').replaceChildren(svg);
