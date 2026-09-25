@@ -404,17 +404,36 @@ function drawScale(svg, b, accent, W) {
   svg.setAttribute('viewBox', `0 0 ${W} ${y + 12}`);
 }
 
-/** A long: spot cannot offset it, so the right pan is empty by definition -
- * not "unknown" (dashed/suspended), a plain fact (solid outline, nothing in
- * it). Fixes audit L02: a long used to have no diagram at all. */
-function drawEmptyPan(svg, coin, side, headlineUsd, W) {
-  const g = scaleGeometry(W);
-  svg.append(svgEl('text', { x: 0, y: 14, class: 'bar-title' }, `${fmtUsd(headlineUsd)} ${coin} ${side}`));
-  const pans = drawBeamAndPivot(svg, g, -MAX_TILT_DEG * 0.6, 'var(--line)');
-  drawPan(svg, pans.leftX, pans.leftY, g, false, 'var(--line)', 1);
-  svg.append(svgEl('rect', { x: pans.rightX - g.panW / 2, y: pans.rightY, width: g.panW, height: g.panH, rx: 3, fill: 'none', stroke: 'var(--line)', 'stroke-width': 1.5 }));
-  const capY = pans.leftY + g.panH + 26;
-  const finalY = wrapSvgText(svg, 'Spot cannot offset a long. Debts and other derivatives are not read here.', 0, capY, W, 12, 17, 'seg-label');
+/** A long: spot cannot offset it, so the scale never applies - but "spot
+ * cannot offset a long" is true of every long and says nothing about this
+ * one. What is specific to this address: how much of its own gross exposure
+ * this one position is, and whether anything two-sided was found anywhere
+ * in the account. Both numbers already exist on every reading; nothing new
+ * is computed here (25.09 audit, A09). */
+function drawConcentration(svg, d, W) {
+  const p = d.positions;
+  const o = d.orders;
+  const headlineUsd = p.headlineNotionalUsd || 0;
+  const share = p.headlineShare || 0;
+  const barY = 26;
+  const barH = 30;
+  svg.append(svgEl('text', { x: 0, y: 14, class: 'bar-title' }, `${fmtUsd(headlineUsd)} ${p.headlineCoin} ${p.headlineSide}`));
+  const filledW = Math.max(2, Math.min(1, share) * W);
+  svg.append(svgEl('rect', { x: 0, y: barY, width: W, height: barH, rx: 3, fill: 'var(--accent)', 'fill-opacity': 0.25, stroke: 'var(--line)', 'stroke-width': 1 }));
+  if (filledW > 0) {
+    svg.append(svgEl('rect', { x: 0, y: barY, width: filledW, height: barH, rx: 3, fill: 'var(--accent)', 'fill-opacity': 1, stroke: 'var(--line)', 'stroke-width': 1 }));
+  }
+  const capY = barY + barH + 22;
+  const quoting = (o && o.coinsBothSides) || 0;
+  const quotingText = quoting === 0
+    ? 'No material two-sided quotes found anywhere in the account.'
+    : `Two-sided quotes exist in ${plural(quoting, 'other market')}, not material against this position.`;
+  const y1 = wrapSvgText(
+    svg,
+    `${fmtPct(share)} of the ${fmtUsd(p.grossUsd || 0)} gross exposure is this one position.`,
+    0, capY, W, 12, 17, 'seg-label',
+  );
+  const finalY = wrapSvgText(svg, quotingText, 0, y1 + 20, W, 12, 17, 'seg-label');
   svg.setAttribute('viewBox', `0 0 ${W} ${finalY + 12}`);
 }
 
@@ -468,11 +487,12 @@ function renderBreakdown(d) {
   const svg = svgEl('svg', { viewBox: `0 0 ${W} 160`, role: 'img' });
   // Sourced from `d.positions`, never from `b`, even when not isBook: an
   // ancient stored reading from before `breakdown` existed at all can have
-  // `b === undefined` while still being a long position worth an empty pan
-  // (`isLong` only requires `!b || !b.applies`) - reading `b.coin` there
-  // would throw. `positions.headlineCoin/headlineSide/headlineNotionalUsd`
-  // are always present, and equal `b.coin/side/headlineUsd` in every case
-  // where `b` does exist (breakdown.ts sets them from `positions` even when
+  // `b === undefined` while still being a long position worth a
+  // concentration bar (`isLong` only requires `!b || !b.applies`) - reading
+  // `b.coin` there would throw.
+  // `positions.headlineCoin/headlineSide/headlineNotionalUsd` are always
+  // present, and equal `b.coin/side/headlineUsd` in every case where `b`
+  // does exist (breakdown.ts sets them from `positions` even when
   // `applies` is false), so this is never a different value, only a safer
   // path to it.
   const coin = d.positions.headlineCoin;
@@ -483,7 +503,7 @@ function renderBreakdown(d) {
   if (isBook) {
     drawBookQuoting(svg, d, W);
   } else if (isLong) {
-    drawEmptyPan(svg, coin, side, headlineUsd, W);
+    drawConcentration(svg, d, W);
   } else {
     drawScale(svg, b, svgAccentOf(d), W);
   }
@@ -491,9 +511,11 @@ function renderBreakdown(d) {
   $('breakdown-svg').replaceChildren(svg);
   $('breakdown-caption').textContent = isBook
     ? `What stands behind the ${coin} ${side}`
-    : b && b.elsewhere
-      ? `What stands against the ${coin} ${side} - and what only looks like it does`
-      : `What stands against the ${coin} ${side}`;
+    : isLong
+      ? `How concentrated the ${coin} ${side} is`
+      : b && b.elsewhere
+        ? `What stands against the ${coin} ${side} - and what only looks like it does`
+        : `What stands against the ${coin} ${side}`;
 }
 
 /** What this rendering is: a live check, a saved reading or a gallery card. */
