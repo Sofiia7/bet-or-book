@@ -620,16 +620,26 @@ function renderResult(d, opts) {
     el('span', 'muted', d.focus ? 'The position asked about' : 'The position'),
     ' ',
     el('strong', null, positionText(d)),
+    ' ',
+    el('span', 'muted', '· checked ' + fmtTime(d.checkedAt)),
   );
   renderChanged(d);
   renderBreakdown(d);
 
-  // The one piece of evidence the verdict turned on, when there is no
-  // picture of it: the bar above already is that evidence for a short, and
-  // repeating it as a number underneath would say it twice.
-  const decisive = $('breakdown').hidden ? (d.evidence || []).filter((item) => item.decisive) : [];
-  $('decisive').hidden = decisive.length === 0;
-  $('decisive').replaceChildren(...decisive.map(tile));
+  // The decisive number now leads the card on its own (25.09 audit, the
+  // "hero numbers" redesign) - it is no longer suppressed when the diagram
+  // also shows the same fact; the diagram is the backup, not the only copy.
+  const heroTiles = (d.evidence || []).filter((item) => item.decisive);
+  if (d.breakdown && d.breakdown.elsewhere) {
+    heroTiles.push({
+      label: 'Held elsewhere',
+      value: fmtUsd(d.breakdown.elsewhere.usd) + ' in ' + plural(d.breakdown.elsewhere.wallets, 'wallet') + ' that funded this account',
+      source: 'Nansen · ownership unverified',
+      decisive: true,
+    });
+  }
+  $('decisive').hidden = heroTiles.length === 0;
+  $('decisive').replaceChildren(...heroTiles.map(tile));
 
   const funders = d.linkedHedge && Array.isArray(d.linkedHedge.funders) ? d.linkedHedge.funders : [];
   $('funders').hidden = funders.length === 0;
@@ -1015,6 +1025,10 @@ $('check-live').addEventListener('click', () => {
   } else {
     runCheck();
   }
+});
+$('check-another').addEventListener('click', () => {
+  $('address').focus();
+  $('address').scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 
 $('guess-chips').addEventListener('click', (e) => {

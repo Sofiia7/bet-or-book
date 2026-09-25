@@ -241,6 +241,7 @@
   <p style="margin: 10px 0 0;"><span class="badge" id="badge"></span></p>
   <p class="headline" id="headline"></p>
   <p class="summary" id="summary"></p>
+  <div class="stats" id="decisive" hidden></div>
   <figure class="breakdown" id="breakdown" hidden>
     <figcaption id="breakdown-caption"></figcaption>
     <div id="breakdown-svg"></div>
@@ -249,21 +250,23 @@
        things the 23.09 audit asked a card to say before submission. The
        Nansen line is readable without opening it; the list is one click. -->
   <p class="open-question" id="open-question" hidden></p>
+  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+    <details class="share" id="share">
+      <summary>Share this reading</summary>
+      <div class="actions">
+        <button id="copy-link">Copy link</button>
+        <button id="copy-post">Copy post text</button>
+        <button id="copy-card">Copy image</button>
+        <button id="download-card">Download image</button>
+      </div>
+    </details>
+    <button id="check-another" style="border: none; background: none; color: var(--link); cursor: pointer; padding: 10px 4px;">Check another</button>
+  </div>
   <details class="fold nansen" id="nansen" hidden>
     <summary><strong>From Nansen:</strong> <span id="nansen-lead"></span></summary>
     <ul id="nansen-list"></ul>
     <p class="tech" id="nansen-calls"></p>
   </details>
-  <details class="share" id="share">
-    <summary>Share this reading</summary>
-    <div class="actions">
-      <button id="copy-link">Copy link</button>
-      <button id="copy-post">Copy post text</button>
-      <button id="copy-card">Copy image</button>
-      <button id="download-card">Download image</button>
-    </div>
-  </details>
-  <div class="stats" id="decisive" hidden></div>
   <div class="box" id="coverage" hidden>
     <p><strong>Not read this time</strong></p>
     <ul id="coverage-list"></ul>
