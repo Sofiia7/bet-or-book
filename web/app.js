@@ -643,7 +643,7 @@ function renderResult(d, opts) {
   // data. Pushing the elsewhere tile too would show the identical dollar
   // amount and wallet count twice in a row (confirmed against the stored
   // 075ocy85yngsu reading, $443.7M in 2 wallets, in data/featured.json).
-  const alreadyShowsFunderHoldings = d.verdict.reasons.includes('linked_exposure_unverified');
+  const alreadyShowsFunderHoldings = (d.verdict.reasons || []).includes('linked_exposure_unverified');
   if (d.breakdown && d.breakdown.elsewhere && !alreadyShowsFunderHoldings) {
     heroTiles.push({
       label: 'Held elsewhere',
