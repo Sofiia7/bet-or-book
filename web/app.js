@@ -1253,7 +1253,8 @@ async function loadGallery() {
   const last = fmtTime(times[times.length - 1]);
   const when = first === last ? 'read ' + first : 'read between ' + first + ' and ' + last;
   $('gallery-sub').textContent =
-    'Saved readings from one scan, ' + when + '. Opening one costs nothing and checks nothing again.';
+    'Saved readings from one scan, ' + when + '. Opening one costs nothing and checks nothing again. ' +
+    'Boards also mix in a few saved cases sampled at other times.';
 
   const rows = gallery.currentRows;
   const counts = galleryCounts(rows);
