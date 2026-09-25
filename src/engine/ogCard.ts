@@ -57,6 +57,10 @@ export interface OgCardData {
    * the picture used to leave it to the sentence alone. Null when nothing
    * is held elsewhere, or there is no bar to put it beside. */
   elsewhere: { amount: string; caption: string } | null;
+  /** Whether the segments above are a finished picture - see
+   * ExposureBreakdown.dataQuality. 'measured' when there is no breakdown at
+   * all, the same as a card with nothing left to show a caveat about. */
+  dataQuality: 'measured' | 'partial' | 'unpriced';
 }
 
 const ACCENT: Record<VerdictResult['verdict'], string> = {
@@ -138,6 +142,7 @@ export function ogCardData(input: OgCardInput): OgCardData {
     accent,
     summary: input.summary,
     segments,
+    dataQuality: input.breakdown?.dataQuality ?? 'measured',
     footerLeft: `${shortAddress(input.address)} · rules ${input.classifierVersion}`,
     provenance: input.provenance,
     limitText: input.limitText,

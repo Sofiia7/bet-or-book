@@ -31,6 +31,12 @@ function clip(text: string, max: number): string {
 /** A plain object tree - satori's own documented JSX-free API - so this
  * file has no dependency on React. */
 export function ogTree(d: OgCardData): object {
+  // A read that never finished, or a matching holding with no price, can
+  // leave every segment looking complete - Task 3's own reproduction has a
+  // zero residual under a partial read. The border is the one cue this
+  // picture can give that the text elsewhere on it does not already carry
+  // (25.09 audit, A03 "Готово, когда").
+  const uncertain = d.dataQuality !== 'measured';
   const bar = d.segments && {
     type: 'div',
     props: {
@@ -40,7 +46,7 @@ export function ogTree(d: OgCardData): object {
         height: 28,
         borderRadius: 4,
         overflow: 'hidden',
-        border: `1px solid #d9d9d6`,
+        border: uncertain ? `2px dashed ${FAINT}` : '1px solid #d9d9d6',
       },
       children: d.segments.map((seg) => ({
         type: 'div',

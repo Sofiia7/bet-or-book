@@ -22,6 +22,7 @@ function data(overrides: Partial<OgCardData> = {}): OgCardData {
     provenance: 'Positions as of 23 Sep, 14:32 UTC · saved reading, rules v4',
     limitText: null,
     elsewhere: null,
+    dataQuality: 'measured',
     ...overrides,
   };
 }
@@ -119,5 +120,21 @@ describe('the funder box on the link picture', () => {
     expect(tree).toContain('$443.7M');
     expect(tree).toContain('dashed');
     expect(tree).toContain('ownership unverified, not counted');
+  });
+});
+
+describe('an unfinished read marks the bar itself, not only the text (25.09 audit, A03/A05 follow-up)', () => {
+  it('draws the bar with a dashed border when dataQuality is not measured', () => {
+    const tree = JSON.stringify(
+      ogTree(data({ segments: [{ share: 1, color: '#e6e6e2', opacity: 1 }], dataQuality: 'partial' })),
+    );
+    expect(tree).toContain('dashed');
+  });
+
+  it('draws the bar with a solid border when the read is measured', () => {
+    const tree = JSON.stringify(
+      ogTree(data({ segments: [{ share: 1, color: '#e6e6e2', opacity: 1 }], dataQuality: 'measured' })),
+    );
+    expect(tree).not.toContain('dashed');
   });
 });

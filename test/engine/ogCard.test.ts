@@ -81,6 +81,20 @@ describe('ogCardData', () => {
       { share: 0.9, color: '#e6e6e2', opacity: 1 },
     ]);
   });
+
+  it('carries dataQuality through, so a renderer can mark an unfinished read even when the segments alone cannot (25.09 audit, A03/A05 follow-up)', () => {
+    const breakdown: ExposureBreakdown = {
+      applies: true, coin: 'ETH', side: 'short', headlineUsd: 100,
+      segments: [{ kind: 'covered', usd: 100, share: 1 }],
+      excessUsd: 0, elsewhere: null, dataQuality: 'partial',
+    };
+    const d = ogCardData(input({ breakdown }));
+    expect(d.dataQuality).toBe('partial');
+  });
+
+  it('reports measured when the breakdown does not apply, same as a plain missing breakdown', () => {
+    expect(ogCardData(input({ breakdown: undefined })).dataQuality).toBe('measured');
+  });
 });
 
 describe('what a funder holds, on the picture as on the page', () => {

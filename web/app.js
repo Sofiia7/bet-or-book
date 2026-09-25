@@ -1361,11 +1361,18 @@ function drawBreakdown(ctx, b, v, W) {
     covered: { fill: v.accent, alpha: 1 },
     unverified: { fill: v.accent, alpha: 0.35 },
     residual: { fill: '#e6e6e2', alpha: 1 },
+    // Missing until 25.09: SegmentKind has carried 'not-checked' since the
+    // 23.09 audit (L12), and it is real, reachable data - every currently
+    // live "Least covered shorts" row Task 1 found produces one. Downloading
+    // or copying the image for any of those cards threw here (25.09 audit,
+    // found while fixing A03).
+    'not-checked': { fill: '#e6e6e2', alpha: 0.5 },
   };
   const labels = {
     covered: 'covered by this address',
     unverified: 'could not identify',
     residual: 'nothing found against it',
+    'not-checked': 'not read in full',
   };
 
   let x = left;
@@ -1392,13 +1399,28 @@ function drawBreakdown(ctx, b, v, W) {
     ctx.fillText(fmtUsd(seg.usd) + ' (' + fmtPct(seg.share) + ') ' + labels[seg.kind], left + 22, ly);
   });
 
+  let legendY = barY + barH + 26 + b.segments.length * 24;
   if (b.excessUsd > 0) {
     ctx.fillStyle = '#555555';
     ctx.font = font(400, 18);
+    ctx.fillText('and ' + fmtUsd(b.excessUsd) + ' more held beyond the position: net long, not neutral', left, legendY);
+    legendY += 24;
+  }
+  if (b.dataQuality && b.dataQuality !== 'measured') {
+    ctx.save();
+    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = '#8f8f8f';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(left + 1, barY + 1, barW - 2, barH - 2);
+    ctx.restore();
+    ctx.fillStyle = '#555555';
+    ctx.font = font(400, 18);
     ctx.fillText(
-      'and ' + fmtUsd(b.excessUsd) + ' more held beyond the position: net long, not neutral',
+      b.dataQuality === 'unpriced'
+        ? 'A matching holding has no price available, so it is not counted above.'
+        : "This address's holdings were not read in full - the true cover could be higher.",
       left,
-      barY + barH + 26 + b.segments.length * 24,
+      legendY,
     );
   }
 

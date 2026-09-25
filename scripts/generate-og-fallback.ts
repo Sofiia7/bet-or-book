@@ -18,6 +18,9 @@ const data: OgCardData = {
   provenance: '',
   limitText: null,
   elsewhere: null,
+  // No breakdown at all, same as a card with nothing left to show a caveat
+  // about - see OgCardData.dataQuality (25.09 audit, A03/A05 follow-up).
+  dataQuality: 'measured',
 };
 
 async function main() {
