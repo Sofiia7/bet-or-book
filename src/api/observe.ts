@@ -123,12 +123,20 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   // decorates the card and decides nothing, so it is read separately and
   // allowed to be missing.
   const signal = opts.signal;
-  const [rawOrders, spotBalances, spotMetaPair, rawFills, perpMetaRes] = await Promise.all([
+  const [rawOrders, spotBalances, spotMetaPair, rawFills, perpMetaRes, mainDexRes] = await Promise.all([
     getOpenOrders(address, undefined, signal),
     getSpotBalances(address, signal),
     getSpotMeta(signal),
     getUserFillsByTime(address, now - TRADES_WINDOW_HOURS * 3_600_000, now, signal),
     getPerpMetaAndAssetCtxs(signal).then(
+      (v) => ({ ok: true as const, v }),
+      () => ({ ok: false as const, v: null }),
+    ),
+    // Free, always fired, tolerant of failure - used only for the
+    // Nansen-contribution comparison line below, never as a source of
+    // positions or a fallback (that branch, further down, keeps its own
+    // separate call) (24.09 audit, L05).
+    getClearinghouseState(address, signal).then(
       (v) => ({ ok: true as const, v }),
       () => ({ ok: false as const, v: null }),
     ),
@@ -209,6 +217,16 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
     // A cheaper check is still a check with sources missing from it, and the
     // answer it produces is not worth the ten-minute cache of a whole one.
     note(`Nansen not used${why}: main-dex positions only, no other chains, no linked wallets`, true);
+  }
+  let mainDexPositionCount: number | null = null;
+  if (source === 'nansen' && mainDexRes.ok) {
+    try {
+      mainDexPositionCount = normalizePositions(mainDexRes.v).length;
+    } catch (err) {
+      console.error('main-dex comparison', err);
+      // Purely informational; a malformed answer here must not affect the
+      // check or its verdict in any way.
+    }
   }
   // Nansen reports every HIP-3 dex; Hyperliquid's own clearinghouse answers
   // for the main perp dex only. A fallback reading is therefore part of the
@@ -491,6 +509,7 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
     pnl,
     sizeVsOi,
     source,
+    mainDexPositionCount,
     focus,
     positionsAsOf: measuredAt === null ? null : new Date(measuredAt).toISOString(),
     observationSchemaVersion: OBSERVATION_SCHEMA_VERSION,

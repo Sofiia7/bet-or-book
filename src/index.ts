@@ -6,6 +6,7 @@ import { WORST_CASE_CALLS } from './budget';
 import { spendGuard, requestGate } from './coordinator';
 import { createNansenClient, meansOutOfCredits, type NansenCallMeta } from './sources/nansen';
 import { CLASSIFIER_VERSION } from './engine/verdict';
+import { ASSET_REGISTRY_VERSION } from './engine/observation';
 import type { CheckResponse } from './api/check';
 import { snapshotId, snapshotKey, isSnapshotId, SNAPSHOT_TTL_SECONDS, shortHash } from './snapshot';
 import { shareCard } from './engine/share';
@@ -21,7 +22,7 @@ import type { KVLike } from './kv';
 import type { SafeKV } from './safeKv';
 import { ogCardFor, ogCacheKey, OG_LAYOUT_VERSION } from './engine/ogCard';
 import { emit, readingFields, type CheckEvent, type PictureEvent, type SnapshotEvent } from './telemetry';
-import { ruleExplanation } from './engine/reasons';
+import { ruleExplanation, badgeQualifier } from './engine/reasons';
 import { openQuestion } from './engine/openQuestion';
 import { nansenContribution } from './engine/nansenContribution';
 import { renderOgPng, type OgFont } from './engine/ogRender';
@@ -35,17 +36,19 @@ import ogFallbackPng from '../assets/og-fallback.png';
 
 const gallery = galleryData as unknown as Gallery;
 
-/** A reading as it leaves the Worker, with three things worked out here from
+/** A reading as it leaves the Worker, with four things worked out here from
  * what it already holds, so the page has the words without keeping its own
  * copy of the rules: the rule behind the verdict (U06), the question it
- * leaves open, and what Nansen added to it - the last two asked for by the
- * 23.09 audit before submission. */
+ * leaves open, what Nansen added to it - the last two asked for by the
+ * 23.09 audit before submission - and the short qualifier for the Unknown
+ * badge itself (24.09 audit U02 + L10). */
 function explained<T extends CheckResponse>(r: T): T {
   return {
     ...r,
     rule: ruleExplanation(r.verdict, r.historical !== undefined),
     openQuestion: openQuestion(r),
     nansen: nansenContribution(r),
+    badgeQualifier: badgeQualifier(r.verdict, r.historical !== undefined),
   };
 }
 /** Gallery cards by snapshot id, so a shared link to one opens the card that
@@ -66,8 +69,18 @@ const bundledById = new Map<string, { card: CheckResponse; kind: 'gallery' | 'sa
 /** What the page lists, as one line per card. A reading that has since been
  * read again is kept - it is the other half of any comparison, and its link
  * stays good - but listing it as well would show the same account twice. */
+// A featured reading is a fresher re-read of one of these accounts. Once it
+// exists, the gallery's own (older) current row for the same address is a
+// second, staler answer about the same account shown next to the fresh one -
+// the older rules' rows in the archive are a different, intentional case and
+// are left alone (24.09 audit, L03).
+const featuredAddresses = new Set(featured.entries.filter((e) => !e.superseded).map((e) => e.address.toLowerCase()));
+const gallerySansFeatured: Gallery = {
+  ...gallery,
+  entries: gallery.entries.filter((e) => e.historical || !featuredAddresses.has(e.address.toLowerCase())),
+};
 const listedGallery: GalleryIndex & { featured: GalleryIndex['entries'] } = {
-  ...galleryIndex(gallery, galleryIdOf),
+  ...galleryIndex(gallerySansFeatured, galleryIdOf),
   featured: galleryIndex(featured, galleryIdOf).entries,
 };
 const scriptedLedger = ledgerData as unknown as LedgerSummary;
@@ -363,7 +376,12 @@ export default {
       // exist, and an answer about the ETH short is not an answer about the
       // BTC long at the same address.
       const asked = focus ? `:${focus.coin}:${focus.side}` : '';
-      const cacheKey = `check:${CLASSIFIER_VERSION}:${address}${asked}`;
+      // The rules are one axis a cached answer can go stale on; the asset
+      // registry (which contracts count as a hedge) is another. Without this,
+      // a deploy that adds a token to the registry could still answer a
+      // recognised holding as unrecognised for up to ten minutes (24.09
+      // audit, L08).
+      const cacheKey = `check:${CLASSIFIER_VERSION}:${ASSET_REGISTRY_VERSION}:${address}${asked}`;
 
       // Reading an answer that already exists and starting a new one that
       // costs money are two different acts, so they are two different
@@ -429,7 +447,7 @@ export default {
       // outside that list can be answered from it for free instead of
       // spending a new check to learn the same "not open" a second time.
       if (focus) {
-        const largestCached = await kv.get(`check:${CLASSIFIER_VERSION}:${address}`);
+        const largestCached = await kv.get(`check:${CLASSIFIER_VERSION}:${ASSET_REGISTRY_VERSION}:${address}`);
         if (largestCached !== null) {
           const parsed = JSON.parse(largestCached) as CheckResponse;
           const known = parsed.positions.candidates.some(

@@ -66,6 +66,20 @@ describe('what Nansen added to a reading', () => {
     expect(c.lead).toBe('not used for this reading');
     expect(c.items.join(' ')).toContain('main dex only');
   });
+
+  it('names the exact position-count gap against Hyperliquid\'s own main dex when it is known', () => {
+    const withGap = { ...book, mainDexPositionCount: 86 } as CheckResponse;
+    const c = nansenContribution(withGap)!;
+    const positionsLine = c.items.find((i) => i.startsWith('Positions on every'))!;
+    expect(positionsLine).toContain('86 positions on the main dex alone');
+  });
+
+  it('falls back to the general sentence when the comparison was never read', () => {
+    const noGap = { ...book, mainDexPositionCount: null } as CheckResponse;
+    const c = nansenContribution(noGap)!;
+    const positionsLine = c.items.find((i) => i.startsWith('Positions on every'))!;
+    expect(positionsLine).toContain("Hyperliquid's own free endpoint reads the main dex only.");
+  });
 });
 
 describe('what a reading leaves open', () => {

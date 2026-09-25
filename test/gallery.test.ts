@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import galleryData from '../data/gallery.json';
 import { computeVerdict, CLASSIFIER_VERSION } from '../src/engine/verdict';
 import { explain } from '../src/engine/evidence';
+import { words } from '../src/engine/interpret';
 import { missingForCurrentRules, verdictInputOf } from '../src/engine/observation';
 import type { Gallery } from '../src/gallery';
 
@@ -59,6 +60,19 @@ describe('the saved gallery against the current rules', () => {
 
   it('reproduces every stored sentence, so the page cannot contradict the rules', () => {
     const drifted = current.filter((e) => explain(e).summary !== e.summary).map((e) => e.address);
+    expect(drifted).toEqual([]);
+  });
+
+  it('reproduces every stored evidence row, so a presentation fix always reaches the bundle', () => {
+    // The sentence check above passed while the bundle still carried L06's
+    // bug - the same "Size vs open interest" tile sitting in both evidence
+    // and vitals - because a verdict or a summary matching says nothing
+    // about the rows drawn beside them. Only running scripts/reexplain.ts
+    // moves what is actually stored; this is the check that would have
+    // caught it sitting stale (24.09 audit follow-up, L06).
+    const drifted = current
+      .map((e) => ({ address: e.address, stored: e.evidence, fresh: words(e).evidence }))
+      .filter((r) => JSON.stringify(r.stored) !== JSON.stringify(r.fresh));
     expect(drifted).toEqual([]);
   });
 

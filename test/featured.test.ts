@@ -8,6 +8,7 @@ import { testEnv, request } from './support/worker';
 import featuredData from '../data/featured.json';
 import galleryData from '../data/gallery.json';
 import { computeVerdict, CLASSIFIER_VERSION } from '../src/engine/verdict';
+import { words } from '../src/engine/interpret';
 import { verdictInputOf } from '../src/engine/observation';
 import { snapshotId } from '../src/snapshot';
 import { BUILDATHON_WINDOW } from '../src/ledger';
@@ -54,6 +55,20 @@ describe('the demonstration readings', () => {
     for (const e of featured.entries) {
       const again = computeVerdict(verdictInputOf(e));
       expect(again, e.address).toEqual(e.verdict);
+    }
+  });
+
+  it('reproduce their evidence exactly under the current rules, not just their verdict', () => {
+    // A verdict match says nothing about the rows drawn beside it: these
+    // four chips still carried L06's doubled "Size vs open interest" tile
+    // after the rule that draws a card was fixed, because fixing the rule is
+    // not the same act as running scripts/reexplain.ts over what is already
+    // bundled. `shown` rather than `featured.entries`, because a superseded
+    // reading is a frozen record of an earlier interpretation on purpose and
+    // is not asked to reproduce today's wording (24.09 audit follow-up, L06).
+    for (const e of shown) {
+      const fresh = words(e).evidence;
+      expect(fresh, e.address).toEqual(e.evidence);
     }
   });
 

@@ -71,6 +71,42 @@ describe('the gallery list is rows, not cards', () => {
     expect(card.summary).toEqual(expect.any(String));
     expect(card.kind).toBe('gallery');
   });
+
+  it('drops a current row whose address a featured reading already supersedes (24.09 audit, L03)', async () => {
+    const list = (await (await worker.fetch(request('/api/gallery'), testEnv())).json()) as {
+      entries: Array<{ address: string; historical?: unknown }>;
+      featured: Array<{ address: string }>;
+    };
+    const featuredAddresses = new Set(list.featured.map((f) => f.address.toLowerCase()));
+    const staleDuplicate = list.entries.find(
+      (e) => !e.historical && featuredAddresses.has(e.address.toLowerCase()),
+    );
+    expect(staleDuplicate).toBeUndefined();
+  });
+
+  it('carries the numbers a ratings board ranks by, on every row (24.09 mechanic: ratings board)', async () => {
+    const list = (await (await worker.fetch(request('/api/gallery'), testEnv())).json()) as {
+      entries: Array<{
+        hedgeRatio: number;
+        sizeVsOi: number | null;
+        headlineTwoSidedNotionalUsd: number;
+        historical?: { reason: string };
+      }>;
+    };
+    const row = list.entries[0];
+    expect(typeof row.hedgeRatio).toBe('number');
+    expect(row.sizeVsOi === null || typeof row.sizeVsOi === 'number').toBe(true);
+    expect(typeof row.headlineTwoSidedNotionalUsd).toBe('number');
+
+    // A reading scanned before the 23.09 audit's L01 fix never recorded this
+    // number at all, not even as zero. Proving it is a number here, and not
+    // just on whichever row happens to be first, is what actually tests the
+    // `?? 0` default in galleryIndex() rather than coincidentally passing
+    // because today's first row happens to be a current one.
+    const historicalRow = list.entries.find((e) => e.historical);
+    expect(historicalRow).toBeDefined();
+    expect(typeof historicalRow!.headlineTwoSidedNotionalUsd).toBe('number');
+  });
 });
 
 describe('every card says its rule in words', () => {

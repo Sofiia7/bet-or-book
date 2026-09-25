@@ -66,6 +66,15 @@ export interface Observation {
   pnl: PnlSummary | null;
   sizeVsOi: number | null;
   source: 'nansen' | 'hyperliquid';
+  /** How many open positions Hyperliquid's own free main-dex endpoint shows
+   * for this account, read only when `source` is `'nansen'` (when it is not,
+   * this number would just restate `positions.nPositions`). Null when that
+   * source failed or was not asked, or when Nansen itself was the fallback.
+   * Presentational only - no rule reads it - so it needs no schema-version
+   * bump. Lets the Nansen-contribution line show the exact HIP-3 gap the
+   * README already claims ("134 against 86 on Hyperliquid's own main-dex
+   * endpoint") on every reading, not only in prose (24.09 audit, L05). */
+  mainDexPositionCount: number | null;
   /** The position this answer is about, when the reader chose one. Null
    * means the largest, which is what the check picks on its own. Part of
    * the reading, so it travels into the saved snapshot with it. */

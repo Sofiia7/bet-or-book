@@ -78,6 +78,11 @@ export type CheckResponse = CheckResult & {
   /** What Nansen supplied to this reading and which of it the answer needed
    * (src/engine/nansenContribution.ts). Added wherever a reading is served. */
   nansen?: NansenContribution | null;
+  /** A short phrase for the Unknown badge - "assets sit with funders" - so
+   * the badge itself says more than the bare word before anything is
+   * opened. Null when the verdict is not Unknown, or there is nothing to
+   * qualify. Added wherever a reading is served. */
+  badgeQualifier?: string | null;
 };
 
 /** Reads one address and answers about it: observe, interpret, present.

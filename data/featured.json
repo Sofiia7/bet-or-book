@@ -87,7 +87,7 @@
    "observationSchemaVersion": 4,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-24T07:44:53.841Z",
-   "interpretedAt": "2026-09-24T07:44:51.070Z",
+   "interpretedAt": "2026-09-24T21:49:12.903Z",
    "degraded": false,
    "summary": "100% of the exposure is one $130.0M HYPE long. Spot cannot offset a long, and debts or other derivatives are not read here.",
    "evidence": [
@@ -111,11 +111,6 @@
      "label": "Realized PnL, 30d",
      "value": "no closed trades",
      "source": "Nansen"
-    },
-    {
-     "label": "Size vs open interest",
-     "value": "6.5%",
-     "source": "Hyperliquid"
     }
    ],
    "breakdown": {
@@ -180,7 +175,7 @@
      "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here"
     ],
     "more": 0,
-    "provenance": "Positions as of 24 Sept, 07:44 UTC · checked live, rules v5",
+    "provenance": "Positions as of 24 Sept, 07:44 UTC · from the gallery scan, rules v5",
     "link": null,
     "evidence": [
      {
@@ -294,7 +289,7 @@
    "observationSchemaVersion": 5,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-24T12:37:07.885Z",
-   "interpretedAt": "2026-09-24T12:37:05.873Z",
+   "interpretedAt": "2026-09-24T21:49:12.903Z",
    "degraded": false,
    "summary": "The $41.8M HYPE short is 97% covered by $40.4M of spot HYPE held by this address on Hyperliquid - other Nansen-supported chains were checked and found nothing.",
    "evidence": [
@@ -399,7 +394,7 @@
      "Borrowed on Hyperliquid under portfolio margin: 18,122,869 USDC. 443,316 HYPE of the spot held against the short is supplied as collateral. Spot balances are counted net of what is borrowed, and a loan taken anywhere else would not appear here"
     ],
     "more": 0,
-    "provenance": "Positions as of 24 Sept, 12:37 UTC · checked live, rules v5",
+    "provenance": "Positions as of 24 Sept, 12:37 UTC · from the gallery scan, rules v5",
     "link": null,
     "evidence": [
      {
@@ -550,7 +545,7 @@
    "observationSchemaVersion": 4,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-24T07:45:00.474Z",
-   "interpretedAt": "2026-09-24T07:44:57.806Z",
+   "interpretedAt": "2026-09-24T21:49:12.903Z",
    "degraded": false,
    "summary": "Less than 1% of the $209.1M ETH short is covered by ETH at this address. 2 wallets that funded it hold $443.7M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
@@ -653,7 +648,7 @@
      "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here"
     ],
     "more": 0,
-    "provenance": "Positions as of 24 Sept, 07:45 UTC · checked live, rules v5",
+    "provenance": "Positions as of 24 Sept, 07:45 UTC · from the gallery scan, rules v5",
     "link": null,
     "evidence": [
      {
@@ -787,7 +782,7 @@
    "observationSchemaVersion": 4,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-24T07:45:06.882Z",
-   "interpretedAt": "2026-09-24T07:45:03.857Z",
+   "interpretedAt": "2026-09-24T21:49:12.903Z",
    "degraded": false,
    "summary": "2,613 resting orders quote both sides of 123 markets.",
    "evidence": [
@@ -878,7 +873,7 @@
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address."
     ],
     "more": 0,
-    "provenance": "Positions as of 24 Sept, 07:45 UTC · checked live, rules v5",
+    "provenance": "Positions as of 24 Sept, 07:45 UTC · from the gallery scan, rules v5",
     "link": null,
     "evidence": [
      {
