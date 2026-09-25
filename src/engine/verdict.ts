@@ -113,6 +113,9 @@ export const DEFAULT_THRESHOLDS: VerdictThresholds = {
     minFillBuyShare: 0.25,
     maxFillBuyShare: 0.75,
   },
+  // Mirrored in web/app.js as HEDGE_BAND_MIN/MAX (that file cannot import
+  // this one - see wrangler.toml's Text rule): update both together;
+  // test/web-app-verdict-sync.test.ts fails if they drift apart.
   hedged: {
     // A hedge put on at parity drifts as the price moves, so a band rather
     // than a point. Outside it the residual is the story: 59% coverage of a

@@ -314,6 +314,14 @@ function drawBeamAndPivot(svg, g, tiltDeg, accent) {
   return { leftX, leftY: leftY + panDrop, rightX, rightY: rightY + panDrop };
 }
 
+// Must equal DEFAULT_THRESHOLDS.hedged.minHedgeRatio/maxHedgeRatio in
+// src/engine/verdict.ts - the two files are not sharing one source of truth
+// yet, which is a known gap, but at least both now name the same two
+// numbers instead of three different ones across two files (25.09 audit,
+// A04).
+const HEDGE_BAND_MIN = 0.85;
+const HEDGE_BAND_MAX = 1.15;
+
 /** The short/hedge case: a scale, tilted by how much was found against the
  * position, or suspended (dashed, level, a question mark) when the read was
  * partial or left something material unidentified. */
@@ -351,16 +359,25 @@ function drawScale(svg, b, accent, W) {
     pans = drawBeamAndPivot(svg, g, tiltDeg, accent);
     drawPan(svg, pans.leftX, pans.leftY, g, false, accent, 1);
     drawPan(svg, pans.rightX, pans.rightY, g, false, accent, 1);
-    if (ratio >= 1.05) {
-      caption = `Covered, and ${fmtUsd(excess)} more besides: on ${b.coin} itself, this leans long, not neutral.`;
-    } else if (ratio >= 0.85) {
-      caption = `${fmtPct(ratio)} covered by ${b.coin} this address holds - level, in band.`;
+    if (ratio > HEDGE_BAND_MAX) {
+      caption = `${fmtPct(ratio)} covered, ${fmtUsd(excess)} more than the position: on ${b.coin} itself, this leans long, not neutral.`;
+    } else if (ratio >= HEDGE_BAND_MIN) {
+      caption = excess > 0
+        ? `${fmtPct(ratio)} covered by ${b.coin} this address holds - ${fmtUsd(excess)} more than the position, within the hedge band.`
+        : `${fmtPct(ratio)} covered by ${b.coin} this address holds - within the hedge band.`;
     } else {
       caption = `Only ${fmtPct(ratio)} covered by ${b.coin} this address holds; the rest is still open.`;
     }
   }
 
-  const capY = pans.leftY + g.panH + 26;
+  // Which pan is which, right on the diagram - the two rectangles were
+  // identical and unlabeled, leaning on the paragraph below to say which
+  // side is the position and which is this address's own holdings (25.09
+  // audit, "Подписать обе чаши весов").
+  svg.append(svgEl('text', { x: pans.leftX, y: pans.leftY + g.panH + 13, class: 'seg-label', 'text-anchor': 'middle' }, 'the position'));
+  svg.append(svgEl('text', { x: pans.rightX, y: pans.rightY + g.panH + 13, class: 'seg-label', 'text-anchor': 'middle' }, suspended ? 'unread' : 'this address'));
+
+  const capY = pans.leftY + g.panH + 40;
   const CAPTION_LINE_HEIGHT = 17;
   let y = wrapSvgText(svg, caption, 0, capY, W, 12, CAPTION_LINE_HEIGHT, 'seg-label');
 
@@ -398,20 +415,27 @@ function drawBookQuoting(svg, d, W) {
   const o = d.orders;
   const p = d.positions;
   const matched = o.headlineTwoSidedNotionalUsd || 0;
-  const quoted = Math.max(matched, o.headlineQuoteNotionalUsd || 0);
+  const headlineUsd = p.headlineNotionalUsd || 0;
   const barY = 26;
   const barH = 30;
   svg.append(svgEl('text', { x: 0, y: 14, class: 'bar-title' }, `Quoting in ${p.headlineCoin} itself`));
-  const matchedW = quoted > 0 ? Math.max(2, (matched / quoted) * W) : 0;
+  // The fill is the same fraction the caption states below it - matched
+  // against the position, not against everything quoted in that market,
+  // which used to let a small position draw as a sliver next to a deep
+  // two-sided book: two different numbers about the same shape (25.09
+  // audit, A05). Capped at 100% width since matched liquidity can honestly
+  // exceed the position's own size; the caption still states the real,
+  // uncapped percentage.
+  const share = headlineUsd > 0 ? matched / headlineUsd : 0;
+  const matchedW = Math.max(2, Math.min(1, share) * W);
   svg.append(svgEl('rect', { x: 0, y: barY, width: W, height: barH, rx: 3, fill: 'var(--accent)', 'fill-opacity': 0.25, stroke: 'var(--line)', 'stroke-width': 1 }));
   if (matchedW > 0) {
     svg.append(svgEl('rect', { x: 0, y: barY, width: matchedW, height: barH, rx: 3, fill: 'var(--accent)', 'fill-opacity': 1, stroke: 'var(--line)', 'stroke-width': 1 }));
   }
-  const share = p.headlineNotionalUsd > 0 ? matched / p.headlineNotionalUsd : 0;
   const capY = barY + barH + 22;
   const finalY = wrapSvgText(
     svg,
-    `${fmtUsd(matched)} matched both sides in ${p.headlineCoin} itself - ${fmtPct(share)} of the ${fmtUsd(p.headlineNotionalUsd)} ${p.headlineSide}`,
+    `${fmtUsd(matched)} matched both sides in ${p.headlineCoin} itself - ${fmtPct(share)} of the ${fmtUsd(headlineUsd)} ${p.headlineSide}`,
     0, capY, W, 12, 17, 'seg-label',
   );
   svg.setAttribute('viewBox', `0 0 ${W} ${finalY + 12}`);
