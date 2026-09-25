@@ -101,3 +101,44 @@ describe('a position spot cannot offset says so instead of drawing an empty bar'
     expect(b.applies).toBe(false);
   });
 });
+
+describe('a data-quality flag the diagram can trust on its own (25.09 audit, A03)', () => {
+  it('is measured once the read is complete and nothing is left unpriced', () => {
+    const b = exposureBreakdown(positions(), hedge({ hedgeUsd: 60e6, hedgeRatio: 0.6 }), null, 'complete');
+    expect(b.dataQuality).toBe('measured');
+  });
+
+  it('is partial when the read did not finish, even though what was found already covers the position', () => {
+    // Full dollar coverage and an unfinished read at once: residual is
+    // exactly zero, so a renderer reading only the segments sees nothing
+    // wrong. The flag has to say so on its own.
+    const b = exposureBreakdown(positions(), hedge({ hedgeUsd: 100e6, hedgeRatio: 1 }), null, 'partial');
+    expect(b.segments).toEqual([{ kind: 'covered', usd: 1e8, share: 1 }]);
+    expect(b.dataQuality).toBe('partial');
+  });
+
+  it('is unpriced when a matching holding has no price, even though nothing sits in the unverified segment', () => {
+    // unpricedMatches is a count with no dollar value of its own - it is not
+    // part of unverifiedUsd, and covered only sums holdings that did price -
+    // so today's segments alone say "100% residual, nothing found" for a
+    // case where a match was in fact found.
+    const b = exposureBreakdown(positions(), hedge({ unpricedMatches: 1 }), null, 'complete');
+    expect(b.segments).toEqual([{ kind: 'residual', usd: 1e8, share: 1 }]);
+    expect(b.dataQuality).toBe('unpriced');
+  });
+
+  it('is measured for a long, which has nothing left to measure', () => {
+    const b = exposureBreakdown(positions({ headlineSide: 'long' }), hedge(), null, 'partial');
+    expect(b.dataQuality).toBe('measured');
+  });
+
+  it('prefers partial over unpriced when both are true at once', () => {
+    const b = exposureBreakdown(positions(), hedge({ hedgeUsd: 60e6, hedgeRatio: 0.6, unpricedMatches: 1 }), null, 'partial');
+    expect(b.dataQuality).toBe('partial');
+  });
+
+  it('is partial when the read failed outright, same as when it was merely partial', () => {
+    const b = exposureBreakdown(positions(), hedge({ hedgeUsd: 100e6, hedgeRatio: 1 }), null, 'missing');
+    expect(b.dataQuality).toBe('partial');
+  });
+});

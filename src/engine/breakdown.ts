@@ -52,6 +52,18 @@ export interface ExposureBreakdown {
    * a segment: a funding transfer says where money came from, not who holds
    * it now, so it is drawn beside the bar on a dashed connection. */
   elsewhere: { usd: number; wallets: number; ownership: 'unverified' } | null;
+  /** Whether the segments above are a finished picture. 'measured' once the
+   * hedge search ran to completion and every matching holding had a price to
+   * weigh. 'partial' when the holdings read itself did not finish - true
+   * even when what was found already covers the position, since the next
+   * page could still hold more of the same asset and a zero residual then
+   * says nothing about the part never read. 'unpriced' when a holding
+   * matched the position's asset but had no price, so its dollars sit in
+   * neither `covered` nor `unverified` - a renderer that only sums the
+   * segments never learns this happened. A renderer must read this field
+   * directly, never infer it from whether some segment happens to be
+   * nonzero (25.09 audit, A03). */
+  dataQuality: 'measured' | 'partial' | 'unpriced';
 }
 
 /** Below this share of the position a funder's holding is dust, and "held by
@@ -66,6 +78,17 @@ export function exposureBreakdown(
 ): ExposureBreakdown {
   const headlineUsd = positions.headlineNotionalUsd;
   const applies = positions.nPositions > 0 && positions.headlineSide === 'short' && headlineUsd > 0;
+  // A long has nothing to measure, so it is trivially 'measured'. Otherwise
+  // an unfinished holdings read outranks a merely-unpriced match: neither
+  // can be inferred from the segments below, which is the whole point of
+  // this field (25.09 audit, A03).
+  const dataQuality: ExposureBreakdown['dataQuality'] = !applies
+    ? 'measured'
+    : hedgeCoverage === 'missing' || hedgeCoverage === 'partial'
+      ? 'partial'
+      : (hedge.unpricedMatches ?? 0) > 0
+        ? 'unpriced'
+        : 'measured';
   const empty: ExposureBreakdown = {
     applies,
     coin: positions.headlineCoin,
@@ -74,6 +97,7 @@ export function exposureBreakdown(
     segments: [],
     excessUsd: 0,
     elsewhere: null,
+    dataQuality,
   };
   if (!applies) return empty;
 

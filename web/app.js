@@ -323,7 +323,15 @@ function drawScale(svg, b, accent, W) {
   const notChecked = b.segments.find((s) => s.kind === 'not-checked')?.usd ?? 0;
   const unverified = b.segments.find((s) => s.kind === 'unverified')?.usd ?? 0;
   const materialGap = unverified >= MATERIAL_GAP_SHARE * b.headlineUsd;
-  const suspended = notChecked > 0 || (unverified > 0 && materialGap);
+  // dataQuality is the authority when it is there (25.09 audit, A03): a read
+  // that never finished, or a matching holding with no price, can leave the
+  // segments themselves looking complete - a zero residual and an unpriced
+  // match are both invisible to the segment-only check below them. A
+  // reading saved before this field existed has no opinion here (undefined
+  // is neither 'measured' nor anything else), so it falls back to exactly
+  // what this line already checked.
+  const suspended =
+    (b.dataQuality && b.dataQuality !== 'measured') || notChecked > 0 || (unverified > 0 && materialGap);
 
   svg.append(svgEl('text', { x: 0, y: 14, class: 'bar-title' }, `${fmtUsd(b.headlineUsd)} ${b.coin} ${b.side}`));
 

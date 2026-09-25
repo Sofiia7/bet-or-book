@@ -72,7 +72,7 @@ describe('ogCardData', () => {
         { kind: 'unverified', usd: 9, share: 0.09 },
         { kind: 'residual', usd: 90, share: 0.9 },
       ],
-      excessUsd: 0, elsewhere: null,
+      excessUsd: 0, elsewhere: null, dataQuality: 'measured',
     };
     const d = ogCardData(input({ breakdown, verdict: verdict({ verdict: 'unknown', reasons: ['linked_exposure_unverified'] }) }));
     expect(d.segments).toEqual([

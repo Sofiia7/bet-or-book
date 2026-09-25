@@ -7,6 +7,7 @@ exports[`a check, whole, on recorded real answers > a HIP-3 long whose dex will 
   "breakdown": {
     "applies": false,
     "coin": "xyz:SP500",
+    "dataQuality": "measured",
     "elsewhere": null,
     "excessUsd": 0,
     "headlineUsd": 20000000,
@@ -206,6 +207,7 @@ exports[`a check, whole, on recorded real answers > a lone long, with its fundin
   "breakdown": {
     "applies": false,
     "coin": "BTC",
+    "dataQuality": "measured",
     "elsewhere": null,
     "excessUsd": 0,
     "headlineUsd": 50000000,
@@ -409,6 +411,7 @@ exports[`a check, whole, on recorded real answers > a short 60% covered 1`] = `
   "breakdown": {
     "applies": true,
     "coin": "ETH",
+    "dataQuality": "measured",
     "elsewhere": null,
     "excessUsd": 0,
     "headlineUsd": 100000000,
@@ -623,6 +626,7 @@ exports[`a check, whole, on recorded real answers > a short covered by its own W
   "breakdown": {
     "applies": true,
     "coin": "ETH",
+    "dataQuality": "measured",
     "elsewhere": null,
     "excessUsd": 0,
     "headlineUsd": 100000000,
@@ -837,6 +841,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen answers 200 
   "breakdown": {
     "applies": true,
     "coin": "ETH",
+    "dataQuality": "measured",
     "elsewhere": null,
     "excessUsd": 0,
     "headlineUsd": 179353809.8238,
@@ -1082,6 +1087,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen not used, an
   "breakdown": {
     "applies": true,
     "coin": "ETH",
+    "dataQuality": "partial",
     "elsewhere": null,
     "excessUsd": 0,
     "headlineUsd": 179353809.8238,
@@ -1317,6 +1323,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen positions fa
   "breakdown": {
     "applies": true,
     "coin": "ETH",
+    "dataQuality": "measured",
     "elsewhere": {
       "ownership": "unverified",
       "usd": 399107867.06126976,
@@ -1593,6 +1600,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about a posit
   "breakdown": {
     "applies": true,
     "coin": "ETH",
+    "dataQuality": "measured",
     "elsewhere": {
       "ownership": "unverified",
       "usd": 399107867.06126976,
@@ -1864,6 +1872,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about its sec
   "breakdown": {
     "applies": true,
     "coin": "BTC",
+    "dataQuality": "measured",
     "elsewhere": null,
     "excessUsd": 0,
     "headlineUsd": 106495271.7675,
@@ -2124,6 +2133,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the deadline alread
   "breakdown": {
     "applies": true,
     "coin": "ETH",
+    "dataQuality": "partial",
     "elsewhere": null,
     "excessUsd": 0,
     "headlineUsd": 179353809.8238,
@@ -2369,6 +2379,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the full paid path,
   "breakdown": {
     "applies": true,
     "coin": "ETH",
+    "dataQuality": "measured",
     "elsewhere": {
       "ownership": "unverified",
       "usd": 399107867.06126976,
@@ -2635,6 +2646,7 @@ exports[`a check, whole, on recorded real answers > thirty offsetting positions 
   "breakdown": {
     "applies": false,
     "coin": "C0",
+    "dataQuality": "measured",
     "elsewhere": null,
     "excessUsd": 0,
     "headlineUsd": 1000000,
