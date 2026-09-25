@@ -24,4 +24,11 @@ describe("the page's hedge-band constants do not drift from the classifier (25.0
     expect(Number(min![1])).toBe(DEFAULT_THRESHOLDS.hedged.minHedgeRatio);
     expect(Number(max![1])).toBe(DEFAULT_THRESHOLDS.hedged.maxHedgeRatio);
   });
+
+  it('MATERIAL_GAP_SHARE in web/app.js matches DEFAULT_THRESHOLDS.hedged.maxUnverifiedShare', () => {
+    const source = readFileSync(new URL('../web/app.js', import.meta.url), 'utf8');
+    const materialGap = source.match(/const MATERIAL_GAP_SHARE = ([\d.]+);/);
+    expect(materialGap).not.toBeNull();
+    expect(Number(materialGap![1])).toBe(DEFAULT_THRESHOLDS.hedged.maxUnverifiedShare);
+  });
 });
