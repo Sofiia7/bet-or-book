@@ -52,12 +52,29 @@
   button:disabled { opacity: 0.6; cursor: default; }
   .status { font-size: 13px; color: var(--muted); min-height: 20px; margin: 0; }
   .status.error { color: var(--error); }
-  .card { border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-top: 8px; }
-  .badge { display: inline-block; font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 8px; }
-  .book { background: var(--book-bg); color: var(--book-fg); }
-  .hedged { background: var(--hedged-bg); color: var(--hedged-fg); }
-  .bet { background: var(--bet-bg); color: var(--bet-fg); }
-  .unknown { background: var(--unknown-bg); color: var(--unknown-fg); }
+  /* The result card is its own surface now, one shade up from the page
+     behind it (var(--panel), the same #0c0e13 the diagram and the player
+     card share) - it never had a background at all before this redesign,
+     only a border on the page's own color. */
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-top: 8px; }
+  /* A pill, not a filled chip: a thin border, JetBrains Mono uppercase text
+     in the verdict's own color, and a small glowing dot ahead of the text.
+     The badge no longer tints its background per verdict - the handoff's
+     own pill has none, only the border, the text color and the dot. */
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px;
+    border: 1px solid rgba(255,255,255,.1); border-radius: 999px;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; font-weight: 500;
+    letter-spacing: .1em; text-transform: uppercase;
+  }
+  .badge::before {
+    content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor; box-shadow: 0 0 8px currentColor;
+  }
+  .book { color: var(--book-fg); }
+  .hedged { color: var(--hedged-fg); }
+  .bet { color: var(--bet-fg); }
+  .unknown { color: var(--unknown-fg); }
   .headline { font-size: 20px; font-weight: 600; margin: 10px 0 4px; }
   .summary { margin: 0 0 14px; }
   /* Five equal tiles made the number that decided the verdict compete with
@@ -99,10 +116,26 @@
      somebody else's. */
   .breakdown { margin: 16px 0 4px; padding: 0; }
   .breakdown figcaption { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
-  .breakdown svg { display: block; width: 100%; height: auto; overflow: visible; }
-  .breakdown .seg-label { font-size: 12px; fill: var(--muted); }
-  .breakdown .seg-value { font-size: 13px; font-weight: 600; fill: var(--fg); }
-  .breakdown .bar-title { font-size: 13px; font-weight: 600; fill: var(--fg); }
+  /* #breakdown-svg wraps the canvas (web/app.js's renderBreakdown, Task 2)
+     and the centered stat overlay beside it, as siblings - positioned so
+     .constellation-stat below can center itself over the canvas, not over
+     the whole figure (which also carries the caption above it). The old
+     .breakdown svg/.seg-label/.seg-value/.bar-title rules are gone: dead
+     since the inline SVG diagram they targeted was replaced by that canvas,
+     confirmed by grep, nothing in web/app.js builds those classes any more. */
+  #breakdown-svg { position: relative; }
+  .constellation-stat {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    text-align: center; pointer-events: none;
+  }
+  .constellation-stat-value {
+    font-size: 44px; font-weight: 700; letter-spacing: -.03em; color: #f2f4f8;
+    text-shadow: 0 0 24px #08090c, 0 0 40px #08090c;
+  }
+  .constellation-stat-label {
+    font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--muted); text-shadow: 0 0 12px #08090c;
+  }
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 14px 0; }
   /* Leverage, distance to liquidation, unrealized PnL, funding since open:
      none of these decide bet/hedge/book, so they sit apart from the
@@ -115,6 +148,20 @@
   .stat-label { font-size: 12px; color: var(--muted); }
   .stat-value { font-size: 18px; font-weight: 600; overflow-wrap: anywhere; }
   .stat-source { font-size: 11px; color: var(--faint); margin-top: 2px; }
+  /* #decisive holds only the tile(s) that turned the verdict (renderResult's
+     heroTiles, web/app.js) - restyled as the handoff's own two-column
+     legend directly under the diagram, dropping the boxed tile look every
+     other .stat still keeps in "Everything else this reading found" and in
+     the vitals strip. Usually one tile; a second (what stands elsewhere,
+     uncounted) sits beside it, right-aligned, only when that is not already
+     the same evidence - see heroTiles in renderResult. */
+  #decisive.stats { grid-template-columns: 1fr; gap: 20px; margin: 20px 0 4px; padding-top: 18px; border-top: 1px solid var(--line); }
+  #decisive.stats:has(> :nth-child(2):last-child) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  #decisive.stats:has(> :nth-child(2):last-child) > :last-child { text-align: right; }
+  #decisive .stat.decisive { grid-column: auto; background: none; border-left: 0; padding: 0; }
+  #decisive .stat-label { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+  #decisive .stat-value { font-size: 17px; font-weight: 700; margin: 6px 0 4px; }
+  #decisive .stat-source { font-size: 13px; color: var(--muted); }
   .box { background: var(--panel); border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-top: 10px; }
   .box ul { margin: 6px 0 0; padding-left: 18px; }
   .box p { margin: 0; }
