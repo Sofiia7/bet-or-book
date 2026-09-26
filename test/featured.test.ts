@@ -108,30 +108,46 @@ describe('the demonstration readings', () => {
   });
 });
 
-describe('the chips at the top of the page', () => {
-  const chips = [...page.matchAll(/<button class="chip" data-example="([^"]+)">([^<]+)<\/button>/g)].map((m) => ({
-    id: m[1],
-    text: m[2].replace(/&middot;/g, '·'),
-  }));
+describe('the player strip at the top of the page', () => {
+  // The four example chips this block used to check were hand-typed buttons
+  // in web/index.html, so their text could silently drift from the real
+  // data (data/featured.json) - the exact risk the two removed assertions
+  // below used to guard against by reading that hand-typed text back out.
+  // The 26.09 redesign's Player (Task 4) replaced those buttons with an
+  // empty shell (id="player"/"player-queue") that web/app.js's renderPlayer
+  // fills at runtime from gallery.featured - the same /api/gallery response
+  // "served like any saved reading, for free" below already checks for
+  // order against `shown`. There is no more per-reading text in this file
+  // for a regex to read, so what is left to check here is: the old markup
+  // is really gone, the new shell really landed, and the four readings the
+  // player will show are still four different positions, not the same one
+  // four times (also true by hand-inspection before, now true because
+  // positionText is computed, not typed).
 
-  it('open exactly the demonstration readings, in order', () => {
-    expect(chips.map((c) => c.id)).toEqual(shown.map((e) => e.snapshotId));
+  it('no longer renders the four readings as plain chips - the player replaced them', () => {
+    expect(page).not.toMatch(/<button class="chip" data-example="/);
   });
 
-  it('name the position each one is actually about', () => {
-    for (const [i, e] of shown.entries()) {
-      expect(chips[i].text.startsWith(positionText(e)), chips[i].text).toBe(true);
+  it('has the empty player shell the client fills from gallery.featured', () => {
+    for (const id of [
+      'player',
+      'player-now-reading',
+      'player-title',
+      'player-addr',
+      'player-badge',
+      'player-prev',
+      'player-next',
+      'player-segments',
+      'player-open',
+      'player-queue',
+    ]) {
+      expect(page, id).toContain(`id="${id}"`);
     }
   });
 
-  it('say the day they were read, which is the day in the data', () => {
-    const days = new Set(
-      shown.map((e) =>
-        new Date(e.checkedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' }),
-      ),
-    );
-    expect(days.size).toBe(1);
-    expect(page).toContain(`readings from ${[...days][0]}`);
+  it('still has one of each kind of answer for the player to show, each a different real position', () => {
+    const texts = shown.map(positionText);
+    expect(new Set(texts).size).toBe(shown.length);
   });
 });
 

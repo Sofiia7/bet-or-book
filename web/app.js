@@ -1101,12 +1101,138 @@ $('guess-chips').addEventListener('click', (e) => {
 });
 
 // A visitor with no address in hand had nothing to click above the fold
-// until the gallery lower down the page (audit U02). These three open a
-// real saved reading the same way a shared link does - free, and exactly
-// what the reader would see if they had pasted that address themselves.
-$('examples-chips').addEventListener('click', (e) => {
-  const id = e.target.closest('button')?.dataset.example;
-  if (id) openSnapshot(id);
+// until the gallery lower down the page (audit U02). The player strip
+// (26.09 redesign, Task 4) is what that visitor sees now: a "now playing"
+// view of gallery.featured, with prev/next/segment/queue-row navigation -
+// every one of which ends up calling openSnapshot(), the exact same call an
+// old example chip made directly. Opening a reading this way is still free,
+// and exactly what the reader would see if they had pasted that address
+// themselves.
+let playerIdx = 0;
+
+function playerList() {
+  return (gallery && gallery.featured) || [];
+}
+
+/**
+ * drawConstellation/constellationInputsFor (Task 2) read a full
+ * CheckResponse - d.breakdown, d.hedge.hedgeRatio, d.orders.*. A
+ * gallery.featured entry is GalleryRow-shaped instead (src/gallery.ts): a
+ * flatter record with no breakdown/hedge/orders sub-objects at all, built
+ * for a list row rather than a full card. Calling constellationInputsFor
+ * directly on one is wrong, not merely untyped: d.breakdown is always
+ * undefined on a GalleryRow, so its isLong check (`!b || !b.applies`) reads
+ * true for every verdict except book - confirmed by tracing hedged
+ * (00dzwn0p8gh67, hedgeRatio 0.989) and unknown/funders (34stjd0gtgkz1,
+ * breakdown.elsewhere truthy) through the real function by hand, both of
+ * which would draw as a flat, uncovered bet instead of their real shape.
+ *
+ * This mirrors constellationInputsFor's own four branches exactly, sourced
+ * from GalleryRow's real (flattened) fields instead of guessing a shape:
+ *  - `breakdown.applies` is not a stored field on a GalleryRow, but
+ *    exposureBreakdown (src/engine/breakdown.ts) computes it as nothing
+ *    more than `nPositions > 0 && headlineSide === 'short' && headlineUsd
+ *    > 0` - all three already on `positions` - so it is re-derived here
+ *    rather than read.
+ *  - `hedge.hedgeRatio` and `orders.headlineTwoSidedNotionalUsd` ARE on a
+ *    GalleryRow, just flattened onto the row itself (`row.hedgeRatio`,
+ *    `row.headlineTwoSidedNotionalUsd`) instead of nested.
+ *  - `breakdown.elsewhere` has no equivalent field at all on a GalleryRow.
+ *    `badgeQualifier` (src/engine/reasons.ts) stands in for it: it reads
+ *    exactly 'assets sit with funders' when the verdict's own first reason
+ *    is linked_exposure_unverified, which is exactly the one reason that
+ *    ever sets breakdown.elsewhere - confirmed against all 4 real featured
+ *    readings in data/featured.json (only 34stjd0gtgkz1 has elsewhere set,
+ *    and it is the only one of the 4 with that reason and that qualifier).
+ *    Known, deliberately deferred gap, the same shape as
+ *    constellationInputsFor's own dataQuality gap (Task 2): a hedged or
+ *    book verdict that also happens to carry a funder-linked holding,
+ *    without linked_exposure_unverified leading its reasons, would show no
+ *    ghost mirror here even though the real #card's diagram (built from the
+ *    full CheckResponse, not this row) would show one. None of today's 4
+ *    featured readings hit this; left for later rather than fetching every
+ *    row's full snapshot just to draw a thumbnail.
+ */
+function constellationInputsForRow(row) {
+  const seed = seedFromAddress(row.address);
+  const p = row.positions;
+  const applies = p.nPositions > 0 && p.headlineSide === 'short' && p.headlineNotionalUsd > 0;
+  if (row.verdict.verdict === 'book') {
+    const headlineUsd = p.headlineNotionalUsd || 0;
+    const matched = row.headlineTwoSidedNotionalUsd || 0;
+    return { seed, coverage: headlineUsd > 0 ? Math.min(1, matched / headlineUsd) : 0, ghost: false, bookDensity: true };
+  }
+  if (!applies) {
+    return { seed, coverage: 0, ghost: false, bookDensity: false };
+  }
+  const ratio = typeof row.hedgeRatio === 'number' ? row.hedgeRatio : 0;
+  const hasElsewhere = row.badgeQualifier === 'assets sit with funders';
+  return { seed, coverage: Math.max(0, Math.min(1, ratio)), ghost: hasElsewhere, bookDensity: false };
+}
+
+function goToPlayerIndex(i) {
+  const list = playerList();
+  if (!list.length) return;
+  playerIdx = ((i % list.length) + list.length) % list.length;
+  renderPlayer();
+}
+
+function renderPlayer() {
+  const list = playerList();
+  $('player').hidden = list.length === 0;
+  $('player-queue').hidden = list.length === 0;
+  if (list.length === 0) return;
+  if (playerIdx >= list.length) playerIdx = 0;
+  const n = list.length;
+  const entry = list[playerIdx];
+  const pad2 = (x) => String(x).padStart(2, '0');
+
+  $('player-now-reading').textContent = 'NOW READING · ' + pad2(playerIdx + 1) + ' / ' + pad2(n);
+  $('player-title').textContent = positionText(entry);
+  $('player-addr').textContent = entry.address;
+  $('player-badge').textContent = badgeText(entry);
+  $('player-badge').className = 'player-badge badge ' + verdictOf(entry).cls;
+
+  $('player-segments').replaceChildren(...list.map((e, i) => {
+    const seg = el('button', 'player-segment' + (i === playerIdx ? ' active' : ''));
+    seg.setAttribute('aria-label', 'Reading ' + (i + 1) + ' of ' + n + ': ' + positionText(e));
+    if (i === playerIdx) seg.setAttribute('aria-current', 'true');
+    seg.addEventListener('click', () => goToPlayerIndex(i));
+    return seg;
+  }));
+
+  // Built as {row, canvas, entry} triples rather than appending straight
+  // away: drawConstellation reads the canvas's own clientWidth/clientHeight
+  // (Task 2), which is 0 until the element is actually attached to the
+  // document, so every row is appended first and only then drawn.
+  const rows = list.map((e, i) => {
+    const row = el('div', 'queue-row' + (i === playerIdx ? ' active' : ''));
+    row.setAttribute('role', 'button');
+    row.tabIndex = 0;
+    const canvas = document.createElement('canvas');
+    canvas.className = 'queue-thumb';
+    row.append(
+      el('span', 'queue-rank', String(i + 1)),
+      canvas,
+      el('span', 'queue-pos', positionText(e)),
+      el('span', 'badge ' + verdictOf(e).cls, badgeText(e)),
+    );
+    const open = () => openSnapshot(e.snapshotId);
+    row.addEventListener('click', open);
+    row.addEventListener('keydown', (ke) => {
+      if (ke.key === 'Enter' || ke.key === ' ') { ke.preventDefault(); open(); }
+    });
+    return { row, canvas, entry: e };
+  });
+  $('player-queue').replaceChildren(...rows.map((r) => r.row));
+  for (const r of rows) drawConstellation(r.canvas, { ...constellationInputsForRow(r.entry), mini: true });
+}
+
+$('player-prev').addEventListener('click', () => goToPlayerIndex(playerIdx - 1));
+$('player-next').addEventListener('click', () => goToPlayerIndex(playerIdx + 1));
+$('player-open').addEventListener('click', () => {
+  const entry = playerList()[playerIdx];
+  if (entry) openSnapshot(entry.snapshotId);
 });
 
 // The breakdown SVG is now built at its own real rendered width rather than
@@ -1302,6 +1428,18 @@ async function loadGallery() {
   } catch (e) {
     return;
   }
+  // The player (26.09 redesign, Task 4) is built from gallery.featured alone
+  // and does not depend on gallery.entries having anything open in it, so it
+  // renders here, before the early return below that guards the boards/
+  // gallery rendering that does. The flagship reading (FLAGSHIP_ID, above)
+  // is what a fresh visitor's #card already opens with - starting the
+  // player on that same reading keeps the strip and the open card in
+  // agreement, rather than the strip silently pointing somewhere else on
+  // first paint.
+  const featuredIdx = (gallery.featured || []).findIndex((e) => e.snapshotId === FLAGSHIP_ID);
+  if (featuredIdx !== -1) playerIdx = featuredIdx;
+  renderPlayer();
+
   // An account can close its position between the ranking and its check;
   // with nothing open it is not one of the biggest positions any more.
   const open = (gallery.entries || [])
@@ -1315,12 +1453,6 @@ async function loadGallery() {
   // current row wherever a featured reading supersedes it - so this is a
   // plain concatenation, not a merge that needs de-duplicating.
   renderBoards([...gallery.currentRows, ...gallery.featured]);
-
-  // Each demonstration chip says, on hover, exactly when it was read.
-  for (const row of gallery.featured || []) {
-    const chip = document.querySelector('#examples-chips [data-example="' + row.snapshotId + '"]');
-    if (chip) chip.title = 'Read ' + fmtTime(row.checkedAt) + ' - a saved reading; opening it costs nothing';
-  }
 
   // Cards are re-checked one at a time as credits allow, so the set can span
   // days. Showing one timestamp for all of them would be wrong.

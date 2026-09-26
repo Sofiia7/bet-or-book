@@ -104,6 +104,42 @@
   .examples-chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .examples-chips .chip { padding: 4px 10px; font-size: 12px; }
 
+  /* The Player: the four featured example readings as a "now playing" strip
+     (26.09 redesign, Task 4), replacing the row of plain .examples-chips
+     buttons that used to sit here. That CSS above stays - #recent still uses
+     .examples/.examples-label/.examples-chips for the browser's own "recent
+     checks" row. The player is a picker with a live preview, not a second
+     copy of the result card: "Open this reading" and every queue row call
+     the exact same openSnapshot() an old chip called directly (web/app.js). */
+  .player { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin: 8px 0 0; }
+  .player-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .player-head-left { min-width: 0; }
+  .player-now-reading { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); }
+  .player-title { font-size: 26px; font-weight: 700; margin: 4px 0 2px; overflow-wrap: anywhere; }
+  .player-addr { font-size: 12px; color: var(--faint); overflow-wrap: anywhere; }
+  .player-badge { flex: none; }
+  .player-transport { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; background: var(--surface-3); border-radius: 8px; padding: 8px 10px; }
+  .player-nav { width: 30px; height: 30px; flex: none; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; font-size: 12px; }
+  .player-segments { display: flex; gap: 6px; flex: 1 1 120px; min-width: 100px; }
+  .player-segment { flex: 1; height: 3px; min-width: 20px; padding: 0; border: 0; border-radius: 2px; background: rgba(255,255,255,.08); }
+  .player-segment.active { background: #4fb8ff; box-shadow: 0 0 8px rgba(140,180,255,.6); }
+  .player-open { flex: none; }
+  /* One queue row per featured reading, below the player's own transport bar
+     - rank, a mini constellation thumbnail (drawConstellation, mini: true),
+     the position, and its badge, clicking any of which opens it exactly like
+     "Open this reading" does. */
+  .queue { list-style: none; margin: 10px 0 0; padding: 0; border-top: 1px solid var(--line); }
+  .queue-row { display: grid; grid-template-columns: 28px 180px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .queue-row:hover { background: var(--hover); }
+  .queue-row.active { background: rgba(140,170,255,.05); }
+  .queue-rank { color: var(--faint); font-size: 12px; }
+  .queue-thumb { display: block; width: 180px; height: 38px; }
+  .queue-pos { font-size: 13px; overflow-wrap: anywhere; }
+  @media (max-width: 480px) {
+    .queue-row { grid-template-columns: 20px 110px minmax(0,1fr) auto; gap: 6px; }
+    .queue-thumb { width: 110px; }
+  }
+
   .guess { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 13px; }
   .guess-label { color: var(--muted); }
   .guess-chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -258,15 +294,23 @@
      answer, from data/featured.json; test/featured.test.ts holds these
      chips to that file. The scan further down is older and was read before
      the card had the position's own numbers (23.09 audit, U05). -->
-<div class="examples">
-  <span class="examples-label">No address handy? Four readings from 26 September, one of each kind:</span>
-  <span class="examples-chips" id="examples-chips">
-    <button class="chip" data-example="17n56vckzhwtr">$126.4M HYPE long &middot; looks like a bet</button>
-    <button class="chip" data-example="00dzwn0p8gh67">$42.0M HYPE short &middot; 99% covered</button>
-    <button class="chip" data-example="34stjd0gtgkz1">$208.2M ETH short &middot; the ETH sits with its funders</button>
-    <button class="chip" data-example="1a896dimxf5ba">$52.0M ETH short &middot; market maker</button>
-  </span>
-</div>
+<section class="player" id="player" hidden>
+  <div class="player-head">
+    <div class="player-head-left">
+      <div class="player-now-reading" id="player-now-reading"></div>
+      <div class="player-title" id="player-title"></div>
+      <div class="player-addr mono" id="player-addr"></div>
+    </div>
+    <div class="player-badge" id="player-badge"></div>
+  </div>
+  <div class="player-transport">
+    <button class="player-nav" id="player-prev" aria-label="Previous reading">&#9664;</button>
+    <button class="player-nav" id="player-next" aria-label="Next reading">&#9654;</button>
+    <div class="player-segments" id="player-segments"></div>
+    <button class="player-open" id="player-open">Open this reading</button>
+  </div>
+</section>
+<section class="queue" id="player-queue" hidden></section>
 <div class="examples" id="recent" hidden>
   <span class="examples-label">Your recent checks, saved in this browser only:</span>
   <span class="examples-chips" id="recent-chips"></span>
