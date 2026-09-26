@@ -15,12 +15,12 @@ const data: OgCardData = {
   // - this generic card is not about any one verdict, so it keeps the same
   // brand-ish slot the old book-blue held before the palette went dark.
   accent: '#7fa2ff',
-  summary: 'Paste a Hyperliquid address. Is that whale position a bet, a hedge, or a market maker’s book?',
+  summary: "Don't Get Rekt Copytrading. Check whether a Hyperliquid whale position is a bet, a hedge, or market-making inventory.",
   // No reading behind this card, so there is no position to draw a
   // constellation for either.
   constellation: null,
   constellationStat: null,
-  footerLeft: 'bet-or-book.sofiaseremeteva.workers.dev',
+  footerLeft: 'bet-or-book.trade',
   // No reading behind this card, so no date and no caveat to give.
   provenance: '',
   limitText: null,

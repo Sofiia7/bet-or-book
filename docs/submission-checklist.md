@@ -11,12 +11,12 @@ The current FAQ requires **100+ API calls** within September 14-27. The campaign
 | Meaningful Nansen API use | Implemented: cross-dex positions, cross-chain balances and funding links affect the verdict |
 | Public GitHub repository | Confirmed PUBLIC on 26 September: https://github.com/Sofiia7/bet-or-book |
 | 100+ qualifying calls | Local ledger: 1,136 calls, 1,128 successful; account-side confirmation still needed |
-| Working demo | Application implemented; deployed URL: https://bet-or-book.sofiaseremeteva.workers.dev |
+| Working demo | Application implemented; deployed URL: https://bet-or-book.trade |
 | 30-60 second screen recording with live Nansen data visible | Still to record; updated shot list in demo-script.md |
 | X post with recording, @nansen_ai and GitHub link | Draft prepared in demo-script.md; not posted by this task |
 | Entry form: email, X post URL, GitHub link | Still to submit after posting |
 
-A purchased domain is not listed as an entry requirement. The existing workers.dev URL can be used.
+The custom domain is optional for entry; the workers.dev URL remains available as a fallback.
 
 ## Technical release checks
 
