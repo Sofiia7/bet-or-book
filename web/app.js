@@ -783,7 +783,6 @@ function renderResult(d, opts) {
   }
 
   $('card-canvas').hidden = true;
-  $('copy-card').textContent = 'Copy image';
   if (kind === 'live' && d.snapshotId && d.positions.nPositions > 0) {
     saveRecent({
       id: d.snapshotId,
@@ -1102,12 +1101,15 @@ $('guess-chips').addEventListener('click', (e) => {
 
 // A visitor with no address in hand had nothing to click above the fold
 // until the gallery lower down the page (audit U02). The player strip
-// (26.09 redesign, Task 4) is what that visitor sees now: a "now playing"
-// view of gallery.featured, with prev/next/segment/queue-row navigation -
-// every one of which ends up calling openSnapshot(), the exact same call an
-// old example chip made directly. Opening a reading this way is still free,
-// and exactly what the reader would see if they had pasted that address
-// themselves.
+// (26.09 redesign, Task 4) is what that visitor sees now: a static
+// spotlight on gallery.featured's flagship reading, with the four of them
+// listed below it as a queue. A queue row's own click calls openSnapshot()
+// directly - the exact same call an old example chip made - so opening one
+// is still free, and exactly what the reader would see if they had pasted
+// that address themselves. playerIdx only ever names the flagship one now
+// (set once in loadGallery); nothing still changes it after that (removed
+// after the redesign shipped: prev/next and the segment bar duplicated what
+// clicking a queue row already did, in more steps, not fewer).
 let playerIdx = 0;
 
 function playerList() {
@@ -1170,13 +1172,6 @@ function constellationInputsForRow(row) {
   return { seed, coverage: Math.max(0, Math.min(1, ratio)), ghost: hasElsewhere, bookDensity: false };
 }
 
-function goToPlayerIndex(i) {
-  const list = playerList();
-  if (!list.length) return;
-  playerIdx = ((i % list.length) + list.length) % list.length;
-  renderPlayer();
-}
-
 function renderPlayer() {
   const list = playerList();
   $('player').hidden = list.length === 0;
@@ -1192,14 +1187,6 @@ function renderPlayer() {
   $('player-addr').textContent = entry.address;
   $('player-badge').textContent = badgeText(entry);
   $('player-badge').className = 'player-badge badge ' + verdictOf(entry).cls;
-
-  $('player-segments').replaceChildren(...list.map((e, i) => {
-    const seg = el('button', 'player-segment' + (i === playerIdx ? ' active' : ''));
-    seg.setAttribute('aria-label', 'Reading ' + (i + 1) + ' of ' + n + ': ' + positionText(e));
-    if (i === playerIdx) seg.setAttribute('aria-current', 'true');
-    seg.addEventListener('click', () => goToPlayerIndex(i));
-    return seg;
-  }));
 
   // A real <button> per row, the same choice galleryRow/boardRow already
   // make for a clickable row (further down this file) - free keyboard
@@ -1225,13 +1212,6 @@ function renderPlayer() {
   $('player-queue').replaceChildren(...rows.map((r) => r.row));
   for (const r of rows) drawConstellation(r.canvas, { ...constellationInputsForRow(r.entry), mini: true });
 }
-
-$('player-prev').addEventListener('click', () => goToPlayerIndex(playerIdx - 1));
-$('player-next').addEventListener('click', () => goToPlayerIndex(playerIdx + 1));
-$('player-open').addEventListener('click', () => {
-  const entry = playerList()[playerIdx];
-  if (entry) openSnapshot(entry.snapshotId);
-});
 
 // The breakdown SVG is now built at its own real rendered width rather than
 // a fixed one CSS scales uniformly (audit U01), so unlike the rest of the
@@ -1697,45 +1677,6 @@ $('share').addEventListener('toggle', () => {
   if ($('share').open && current) askForPicture(current);
 });
 
-$('copy-card').addEventListener('click', () => {
-  if (!current) return;
-  askForPicture(current);
-  drawCard();
-  const canvas = $('card-canvas');
-  const btn = $('copy-card');
-  canvas.toBlob(async (blob) => {
-    try {
-      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-      btn.textContent = 'Copied';
-      setTimeout(() => { btn.textContent = 'Copy image'; }, 1500);
-    } catch (e) {
-      // A window opened from an awaited callback is popup-blocked silently, so
-      // the fallback shows the image inline, where it cannot be blocked.
-      canvas.hidden = false;
-      btn.textContent = 'Right-click (or long-press) the image below to save it';
-    }
-  }, 'image/png');
-});
-
-// Copying to the clipboard is refused outright by some browsers and silently
-// by others, so saving the file is offered as its own button rather than as
-// a fallback nobody finds.
-$('download-card').addEventListener('click', () => {
-  if (!current) return;
-  askForPicture(current);
-  drawCard();
-  $('card-canvas').toBlob((blob) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'bet-or-book-' + shortAddr(current.address).replace(/\W/g, '') + '.png';
-    document.body.append(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 10_000);
-  }, 'image/png');
-});
-
 $('copy-link').addEventListener('click', async () => {
   if (!current) return;
   askForPicture(current);
@@ -1805,20 +1746,6 @@ $('share-x').addEventListener('click', () => {
       // did not make it to the clipboard, so there is nothing to undo here.
     }
   }, 'image/png');
-});
-
-$('copy-post').addEventListener('click', async () => {
-  if (!current) return;
-  askForPicture(current);
-  const text = postText(current);
-  const btn = $('copy-post');
-  try {
-    await navigator.clipboard.writeText(text);
-    btn.textContent = 'Copied';
-    setTimeout(() => { btn.textContent = 'Copy post text'; }, 1500);
-  } catch (e) {
-    window.prompt('Copy this text:', text);
-  }
 });
 
 // ---- recent checks, kept in this browser only ----

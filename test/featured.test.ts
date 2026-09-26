@@ -135,13 +135,19 @@ describe('the player strip at the top of the page', () => {
       'player-title',
       'player-addr',
       'player-badge',
-      'player-prev',
-      'player-next',
-      'player-segments',
-      'player-open',
       'player-queue',
     ]) {
       expect(page, id).toContain(`id="${id}"`);
+    }
+  });
+
+  // Removed after the redesign shipped: prev/next and the segment bar
+  // duplicated what clicking a queue row already did, in more steps, not
+  // fewer. The spotlight is a static header now; every row in the queue is
+  // its own, single-click way to open a reading (audit follow-up, 26.09).
+  it('does not carry the transport controls the redesign removed', () => {
+    for (const id of ['player-prev', 'player-next', 'player-segments', 'player-open']) {
+      expect(page, id).not.toContain(`id="${id}"`);
     }
   });
 
