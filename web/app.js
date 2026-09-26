@@ -1776,12 +1776,35 @@ function postText(d) {
 
 // A direct hand-off, not one more thing to copy and paste yourself: X's own
 // intent endpoint opens composer with the text already in it, in a new tab,
-// so the only step left is pressing Post.
+// so most of the way there is one click. X's intent URL has no parameter for
+// attaching an image, though - the compose box only shows one once X's own
+// crawler has fetched a link's og:image, which does not happen inside the
+// compose box itself. So the card's own picture is also put on the
+// clipboard, the same way "Copy image" does it, and the button says to
+// paste it in - a real image in the post, not a hope that the link unfurls
+// before it is read.
 $('share-x').addEventListener('click', () => {
   if (!current) return;
   askForPicture(current);
   const text = postText(current);
+  // Opened synchronously, inside the click itself - once anything here is
+  // awaited first, some browsers no longer count this as the user's own
+  // gesture and block it as a popup (the same reason "Copy image" draws the
+  // card before it awaits the clipboard write, not after).
   window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank', 'noopener,noreferrer');
+  drawCard();
+  const canvas = $('card-canvas');
+  const btn = $('share-x');
+  canvas.toBlob(async (blob) => {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      btn.textContent = 'Opened X - paste the image (Ctrl+V) before posting';
+      setTimeout(() => { btn.textContent = 'Share on X'; }, 4000);
+    } catch (e) {
+      // The tab with the text is already open either way; only the image
+      // did not make it to the clipboard, so there is nothing to undo here.
+    }
+  }, 'image/png');
 });
 
 $('copy-post').addEventListener('click', async () => {
