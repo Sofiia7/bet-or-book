@@ -31,12 +31,12 @@ const FAINT = '#8b90a0';
 /** A chunk of the 1200x630 card, inset by the same 64px padding the rest of
  * this tree uses on every side - full width minus that padding. Not as tall
  * as Task 3's on-page diagram (260px): this card also carries a badge, a
- * three-line summary and a provenance line above it, and a footer below,
- * inside a fixed 630px height with no scrolling - checked against all four
- * real featured readings by rendering them and looking, not only by
- * arithmetic (this task's own report has what that looked like). */
+ * three-line summary and a two-line provenance line above it, and a footer
+ * below, inside a fixed 630px height with no scrolling - checked against
+ * all four real featured readings by rendering them and looking, not only
+ * by arithmetic (this task's own report has what that looked like). */
 const CONSTELLATION_WIDTH = OG_WIDTH - 128;
-const CONSTELLATION_HEIGHT = 200;
+const CONSTELLATION_HEIGHT = 170;
 const CONSTELLATION_MARGIN_TOP = 16;
 
 /** satori's flex layout did not reliably reserve enough vertical space for
@@ -51,7 +51,29 @@ const CONSTELLATION_MARGIN_TOP = 16;
  * a fixed height") without actually applying it anywhere. */
 const SUMMARY_LINE_HEIGHT = 52; // fontSize 40 * lineHeight 1.3
 const SUMMARY_MAX_LINES = 3;
-const PROVENANCE_LINE_HEIGHT = 30; // fontSize 22 at its default line height
+const PROVENANCE_SINGLE_LINE_HEIGHT = 30; // fontSize 22 at its default line height
+const PROVENANCE_MAX_LINES = 2;
+
+/**
+ * Measured directly against the real font/size/width this line renders at
+ * (fontSize 22, Inter regular, a 1072px-wide box - see this task's own
+ * follow-up report): a word-wrapped line of ordinary prose holds roughly 88
+ * characters before wrapping. PROVENANCE_CLIP_CHARS is sized to keep
+ * clip()'s own output - INCLUDING the trailing "…" it adds when it
+ * truncates - inside PROVENANCE_MAX_LINES lines with real margin to spare
+ * for word-boundary slack (word wrapping does not split mid-word, so a line
+ * rarely uses its full theoretical character budget). Without this, the
+ * height+overflow fix below only stops the OVERLAP bug - a combined
+ * provenance+limitText string past this box's real visual capacity still
+ * silently loses its back half to `overflow: hidden`, with no "…" ever
+ * appearing on screen, because clip()'s own ellipsis was appended to a
+ * string that itself did not fit: a real reading's provenance+limitText
+ * this task rendered and looked at was 251 characters combined, well past
+ * both the old 180-character cap AND this box's real 2-line capacity of
+ * roughly 176 characters, and its clip()-added "…" landed on the invisible
+ * third line. This cap is picked so clip() itself is what a reader sees cut
+ * a line short, not a mid-word stop with no explanation. */
+const PROVENANCE_CLIP_CHARS = 150;
 
 /** A cap on the character count satori is asked to lay out. `lineClamp`
  * keeps the box a fixed height; this keeps satori from doing flow layout
@@ -186,15 +208,22 @@ export function ogTree(d: OgCardData): object {
               {
                 type: 'div',
                 props: {
-                  style: { display: 'flex', color: FAINT, fontSize: 22, marginTop: 14, height: `${PROVENANCE_LINE_HEIGHT}px`, overflow: 'hidden' },
-                  // Kept at 180 (unchanged): a tighter cap would keep most real
-                  // provenance+limitText combinations to a single line, but this
-                  // project's own history (23.09/25.09 audits) consistently favors
-                  // never dropping a reading's caveat over avoiding an occasional
-                  // silent second-line clip - the height+overflow fix above already
-                  // removes the actual bug (overlap with the constellation below),
-                  // which is what this line's height was originally missing.
-                  children: clip(d.limitText ? `${d.provenance} · ${d.limitText}` : d.provenance, 180),
+                  style: {
+                    display: 'flex',
+                    color: FAINT,
+                    fontSize: 22,
+                    lineHeight: 1.3,
+                    marginTop: 14,
+                    height: `${PROVENANCE_SINGLE_LINE_HEIGHT * PROVENANCE_MAX_LINES}px`,
+                    overflow: 'hidden',
+                  },
+                  // PROVENANCE_CLIP_CHARS (150), not the old 180: this box is two
+                  // lines tall now, not one, and the cap is tuned so clip()'s own
+                  // "…" is what a reader sees when a reading's caveat is genuinely
+                  // long - never a mid-word stop with nothing after it (see that
+                  // constant's own doc comment for the real-reading measurement
+                  // this number came from).
+                  children: clip(d.limitText ? `${d.provenance} · ${d.limitText}` : d.provenance, PROVENANCE_CLIP_CHARS),
                 },
               },
             ]
