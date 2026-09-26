@@ -13,6 +13,7 @@ import { shareCard } from './engine/share';
 import { compareReadings } from './engine/compare';
 import pageHtml from '../web/index.html';
 import pageScript from '../web/app.js';
+import { landingExamples } from './landing';
 import galleryData from '../data/gallery.json';
 import featuredData from '../data/featured.json';
 import ledgerData from '../data/ledger.json';
@@ -92,7 +93,8 @@ const scriptedLedger = ledgerData as unknown as LedgerSummary;
  * the query does is make the URL change when the file does.
  */
 const SCRIPT_PATH = `/app.js?v=${shortHash(pageScript)}`;
-const page = pageHtml.replace('src="/app.js"', `src="${SCRIPT_PATH}"`);
+const page = pageHtml.replace('src="/app.js"', `src="${SCRIPT_PATH}"`)
+  .replace('<!--FEATURED_EXAMPLES-->', landingExamples(listedGallery.featured));
 
 interface Env {
   KV: KVLike;

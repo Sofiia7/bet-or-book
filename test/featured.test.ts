@@ -31,6 +31,18 @@ function positionText(e: Gallery['entries'][number]): string {
 }
 
 describe('the demonstration readings', () => {
+  it('serves every featured tile and its saved-reading link in the initial HTML', async () => {
+    const response = await worker.fetch(request('/'), testEnv());
+    const html = await response.text();
+    const examples = html.split('id="player-queue">')[1]?.split('</div>')[0] ?? '';
+    expect(examples.match(/class="queue-row"/g)).toHaveLength(shown.length);
+    for (const entry of shown) {
+      expect(examples).toContain(`href="/?s=${entry.snapshotId}"`);
+      expect(examples).toContain(positionText(entry));
+    }
+    expect(html).not.toContain('<!--FEATURED_EXAMPLES-->');
+  });
+
   it('are few, fresh, and read by the rules in force', () => {
     expect(shown.length).toBeGreaterThanOrEqual(3);
     expect(shown.length).toBeLessThanOrEqual(4);
@@ -128,13 +140,11 @@ describe('the player strip at the top of the page', () => {
     expect(page).not.toMatch(/<button class="chip" data-example="/);
   });
 
-  it('has the empty player shell the client fills from gallery.featured', () => {
+  it('has the examples container and navigation into and out of a reading', () => {
     for (const id of [
-      'player',
-      'player-now-reading',
-      'player-title',
-      'player-addr',
-      'player-badge',
+      'examples',
+      'back-examples',
+      'reading-nav',
       'player-queue',
     ]) {
       expect(page, id).toContain(`id="${id}"`);
