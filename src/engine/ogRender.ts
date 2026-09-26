@@ -51,6 +51,9 @@ const CONSTELLATION_MARGIN_TOP = 16;
  * a fixed height") without actually applying it anywhere. */
 const SUMMARY_LINE_HEIGHT = 52; // fontSize 40 * lineHeight 1.3
 const SUMMARY_MAX_LINES = 3;
+// The old 210-character cap could put the ellipsis below the visible third
+// line on a real partial-read summary. 125 leaves room for word wrapping.
+const SUMMARY_CLIP_CHARS = 125;
 const PROVENANCE_SINGLE_LINE_HEIGHT = 30; // fontSize 22 at its default line height
 const PROVENANCE_MAX_LINES = 2;
 
@@ -79,7 +82,10 @@ const PROVENANCE_CLIP_CHARS = 150;
  * keeps the box a fixed height; this keeps satori from doing flow layout
  * on a paragraph twelve lines long in the first place. */
 function clip(text: string, max: number): string {
-  return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
+  if (text.length <= max) return text;
+  const prefix = text.slice(0, max - 1);
+  const wordEnd = prefix.lastIndexOf(' ');
+  return `${(wordEnd > max - 24 ? prefix.slice(0, wordEnd) : prefix).trimEnd()}…`;
 }
 
 /**
@@ -202,7 +208,7 @@ export function ogTree(d: OgCardData): object {
               height: `${SUMMARY_LINE_HEIGHT * SUMMARY_MAX_LINES}px`,
               overflow: 'hidden',
             },
-            children: clip(d.summary, 210),
+            children: clip(d.summary, SUMMARY_CLIP_CHARS),
           },
         },
         // The date and the reading's own limit travel with the badge and the

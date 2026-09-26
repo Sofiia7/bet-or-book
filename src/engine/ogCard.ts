@@ -28,9 +28,10 @@ import { constellationInputsForOg, type ConstellationInputs } from './constellat
  * themed bar, is what has to appear when a reading's link is shared. A
  * picture cached under any earlier layout version drew the old bar and
  * cannot stand in for this one. Version 5 labels incomplete coverage on
- * the share preview, so an earlier cached picture cannot hide that caveat.
+ * the share preview. Version 6 keeps the summary's ellipsis visible even
+ * when the prose wraps into three lines.
  */
-export const OG_LAYOUT_VERSION = 5;
+export const OG_LAYOUT_VERSION = 6;
 
 /** Where one reading's picture is kept, in this layout. */
 export const ogCacheKey = (id: string): string => `og:v${OG_LAYOUT_VERSION}:${id}`;
