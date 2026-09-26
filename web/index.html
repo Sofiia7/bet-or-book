@@ -16,39 +16,37 @@
 <meta name="twitter:card" content="summary">
 <!--/SOCIAL-->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230c447c'/%3E%3Ctext x='16' y='22.5' font-size='17' font-weight='700' text-anchor='middle' fill='white' font-family='sans-serif'%3EB%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    color-scheme: light dark;
-    --bg: #ffffff; --fg: #141414; --muted: #5f5f5f; --faint: #8f8f8f; --line: #d9d9d6; --panel: #f5f5f2; --hover: #ededea;
-    --book-bg: #e6f1fb; --book-fg: #0c447c;
-    --hedged-bg: #eaf3de; --hedged-fg: #27500a;
-    --bet-bg: #faeeda; --bet-fg: #633806;
-    --unknown-bg: #efede6; --unknown-fg: #444441;
-    --note-bg: #faeeda; --note-fg: #633806;
-    --link: #0c5aa6; --error: #a32d2d;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #141414; --fg: #ececec; --muted: #a9a9a9; --faint: #7d7d7d; --line: #333331; --panel: #1f1f1e; --hover: #282827;
-      --book-bg: #10304f; --book-fg: #b5d6f6;
-      --hedged-bg: #1f3812; --hedged-fg: #bfe39d;
-      --bet-bg: #43300f; --bet-fg: #f3cf96;
-      --unknown-bg: #2c2b28; --unknown-fg: #d3d1c8;
-      --note-bg: #372a12; --note-fg: #eecd98;
-      --link: #8cc0f5; --error: #f09595;
-    }
+    --bg: #08090c; --fg: #e6e8ee; --muted: #8b90a0; --faint: #5a5f6d; --line: rgba(255,255,255,.08); --panel: #0c0e13; --hover: rgba(255,255,255,.05);
+    --book-bg: rgba(127,162,255,.12); --book-fg: #7fa2ff;
+    --hedged-bg: rgba(79,224,176,.12); --hedged-fg: #4fe0b0;
+    --bet-bg: rgba(242,179,92,.12); --bet-fg: #f2b35c;
+    --unknown-bg: rgba(163,168,182,.12); --unknown-fg: #a3a8b6;
+    --note-bg: rgba(242,179,92,.12); --note-fg: #f2b35c;
+    --link: #9fb8ff; --error: #ff6b6b;
+    --surface-2: #0e1015; --surface-3: #0a0b10;
   }
   [hidden] { display: none !important; }
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, system-ui, "Segoe UI", sans-serif; background: var(--bg); color: var(--fg); max-width: 720px; margin: 40px auto; padding: 0 16px; line-height: 1.5; }
+  body {
+    font-family: "Inter", -apple-system, system-ui, "Segoe UI", sans-serif;
+    background: var(--bg);
+    background-image: radial-gradient(1200px 600px at 50% -200px, #11131b 0%, var(--bg) 60%);
+    background-attachment: fixed;
+    color: var(--fg); max-width: 720px; margin: 40px auto; padding: 0 16px; line-height: 1.5;
+  }
   h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
   h2 { font-size: 18px; font-weight: 600; margin: 48px 0 4px; }
   a { color: var(--link); }
   .sub, .muted { color: var(--muted); }
   .sub { margin: 0; }
-  .mono { font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace; }
   .row { display: flex; gap: 8px; margin: 20px 0 8px; }
-  input { flex: 1; min-width: 0; padding: 10px 12px; font-size: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); font-family: ui-monospace, Consolas, monospace; }
+  input { flex: 1; min-width: 0; padding: 10px 12px; font-size: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
   button { padding: 10px 16px; font-size: 14px; border: 1px solid var(--line); border-radius: 8px; background: none; color: var(--fg); cursor: pointer; }
   button:hover { background: var(--hover); }
   button:disabled { opacity: 0.6; cursor: default; }
@@ -127,7 +125,7 @@
   .fold > summary { cursor: pointer; color: var(--link); }
   .fold p { margin: 6px 0 0; }
   .fold .tech { font-size: 12px; color: var(--muted); }
-  .fold code { font-family: ui-monospace, Consolas, monospace; background: var(--panel); padding: 1px 5px; border-radius: 4px; }
+  .fold code { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; background: var(--panel); padding: 1px 5px; border-radius: 4px; }
   .note { background: var(--note-bg); color: var(--note-fg); }
   /* Which position the answer is about, before the answer. */
   .subject { margin: 12px 0 0; font-size: 14px; }
