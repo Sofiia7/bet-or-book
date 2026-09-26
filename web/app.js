@@ -1201,14 +1201,16 @@ function renderPlayer() {
     return seg;
   }));
 
-  // Built as {row, canvas, entry} triples rather than appending straight
-  // away: drawConstellation reads the canvas's own clientWidth/clientHeight
-  // (Task 2), which is 0 until the element is actually attached to the
-  // document, so every row is appended first and only then drawn.
+  // A real <button> per row, the same choice galleryRow/boardRow already
+  // make for a clickable row (further down this file) - free keyboard
+  // activation and focus handling, instead of a div with a hand-rolled
+  // role/tabindex/keydown. Built as {row, canvas, entry} triples rather than
+  // appending straight away: drawConstellation reads the canvas's own
+  // clientWidth/clientHeight (Task 2), which is 0 until the element is
+  // actually attached to the document, so every row is appended first and
+  // only then drawn.
   const rows = list.map((e, i) => {
-    const row = el('div', 'queue-row' + (i === playerIdx ? ' active' : ''));
-    row.setAttribute('role', 'button');
-    row.tabIndex = 0;
+    const row = el('button', 'queue-row' + (i === playerIdx ? ' active' : ''));
     const canvas = document.createElement('canvas');
     canvas.className = 'queue-thumb';
     row.append(
@@ -1217,11 +1219,7 @@ function renderPlayer() {
       el('span', 'queue-pos', positionText(e)),
       el('span', 'badge ' + verdictOf(e).cls, badgeText(e)),
     );
-    const open = () => openSnapshot(e.snapshotId);
-    row.addEventListener('click', open);
-    row.addEventListener('keydown', (ke) => {
-      if (ke.key === 'Enter' || ke.key === ' ') { ke.preventDefault(); open(); }
-    });
+    row.addEventListener('click', () => openSnapshot(e.snapshotId));
     return { row, canvas, entry: e };
   });
   $('player-queue').replaceChildren(...rows.map((r) => r.row));

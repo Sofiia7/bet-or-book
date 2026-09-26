@@ -129,7 +129,10 @@
      the position, and its badge, clicking any of which opens it exactly like
      "Open this reading" does. */
   .queue { list-style: none; margin: 10px 0 0; padding: 0; border-top: 1px solid var(--line); }
-  .queue-row { display: grid; grid-template-columns: 28px 180px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  /* A <button>, like every other clickable row this project already draws
+     (.list button, further down) - reset to a full-width grid instead of
+     the default button box. */
+  .queue-row { width: 100%; display: grid; grid-template-columns: 28px 180px minmax(0,1fr) auto; gap: 10px; align-items: center; text-align: left; border: 0; border-radius: 0; border-bottom: 1px solid var(--line); padding: 8px 4px; cursor: pointer; }
   .queue-row:hover { background: var(--hover); }
   .queue-row.active { background: rgba(140,170,255,.05); }
   .queue-rank { color: var(--faint); font-size: 12px; }
