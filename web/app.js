@@ -277,24 +277,47 @@ function drawConstellation(cv, { seed, coverage, ghost, mini, bookDensity }) {
  * each verdict's own rule already measures - it is not a new number, only a
  * new way to draw one that already exists on every reading.
  *
- * Traced by hand against every verdict type in this project (see the
- * 26.09 redesign plan, Task 2, Step 4):
+ * The right side of the constellation means exactly one thing for every
+ * verdict: coverage - what genuinely offsets or matches the position, never
+ * concentration (how large this position is relative to the rest of the
+ * account, a different question this project already answers elsewhere).
+ * Traced by hand against every verdict type in this project (see the 26.09
+ * redesign plan, Task 2, Step 4, and its correction after review):
  *  - Book: `coverage` is matched-both-sides notional over the headline
  *    notional - the same fraction the old drawBookQuoting bar filled.
  *  - Long/bet (isLong, i.e. `!b || !b.applies`, the same condition
- *    renderBreakdown already used elsewhere in this file): `coverage` is
- *    `headlineShare`, the same value drawConcentration used - not a flat 0,
- *    since a long's hedge.hedgeRatio is always exactly 0 by construction
- *    (spot cannot offset a long, see computeHedgeFeatures in
- *    src/engine/features.ts), so flattening this branch to 0 would only
- *    repeat what the verdict type already says and throw away the one
- *    number specific to this address.
+ *    renderBreakdown already used elsewhere in this file): `coverage` is a
+ *    flat 0 - spot cannot offset a long (see computeHedgeFeatures in
+ *    src/engine/features.ts, where hedgeRatio is hard-wired to 0 whenever
+ *    the headline side is not 'short'), so a long's coverage is 0 by
+ *    construction, not a number this function needs to derive. This matches
+ *    the design handoff's own mock (`right: 0` for its one bet example)
+ *    exactly. An earlier version of this function used `headlineShare`
+ *    (concentration) here instead, on the reasoning that a flat 0 would
+ *    make every bet look identical regardless of how concentrated it was -
+ *    that reasoning conflated two different axes: concentration is real and
+ *    specific to this address, but it is not what the right side of this
+ *    diagram means, and using it there drew a fully-covered-looking peak
+ *    for the one verdict type that is by definition never covered at all.
+ *    Concentration itself is not lost - it is exactly what the `#decisive`
+ *    hero tiles above this diagram already show ("Largest position: $X
+ *    HYPE long"), independent of this canvas.
  *  - Hedged / Unknown ("funders" in the handoff's naming) / any other
  *    reading whose breakdown applies: `coverage` is `hedge.hedgeRatio`,
  *    clamped to [0,1] - algebraically identical to the old drawScale's own
  *    `(covered + excess) / headlineUsd`, since covered+excess always equals
  *    hedge.hedgeUsd whether or not the hedge exceeds the position. `ghost`
  *    is true exactly when `breakdown.elsewhere` exists (the funders case).
+ *
+ * Known gap, deliberately not fixed here: unlike the old drawScale, this
+ * function never looks at `breakdown.dataQuality` or the segment-level
+ * not-checked/unverified signals, so a hedge read that was partial,
+ * unpriced or left a material share unidentified renders with the same
+ * confident-looking coverage number as a fully measured one - the old
+ * diagram's dashed "suspended" state (unread, could still tip either way)
+ * has no equivalent yet. None of the four currently-shipped examples hit
+ * this path, but a live check of an arbitrary address could. Left for a
+ * later pass rather than folded in here.
  */
 function constellationInputsFor(d) {
   const seed = seedFromAddress(d.address);
@@ -306,7 +329,7 @@ function constellationInputsFor(d) {
     return { seed, coverage: headlineUsd > 0 ? Math.min(1, matched / headlineUsd) : 0, ghost: false, bookDensity: true };
   }
   if (isLong) {
-    return { seed, coverage: Math.min(1, d.positions.headlineShare || 0), ghost: false, bookDensity: false };
+    return { seed, coverage: 0, ghost: false, bookDensity: false };
   }
   const ratio = d.hedge && typeof d.hedge.hedgeRatio === 'number' ? d.hedge.hedgeRatio : 0;
   const hasElsewhere = !!(b && b.elsewhere);
@@ -321,15 +344,14 @@ function constellationStatFor(d, inputs) {
   return fmtPct(inputs.coverage);
 }
 
-/** The short label under the big number, re-deriving in a few words what
- * each verdict's old diagram caption said about the same fraction:
- * drawBookQuoting said "matched both sides"; drawConcentration said "of the
- * gross exposure is this one position"; drawScale said "covered by <coin>
- * this address holds". */
+/** The short label under the big number. Every verdict's number is now a
+ * coverage fraction, never concentration, so a long reads the same shape of
+ * label a hedged position at 0% would ("covered") rather than a
+ * concentration-flavored phrase - book and unknown/funders keep their own
+ * old wording (old drawBookQuoting said "matched both sides"; old
+ * drawScale's funders case said "covered by <coin> this address holds"). */
 function constellationStatLabelFor(d) {
   if (d.verdict.verdict === 'book') return 'quoted both sides';
-  const b = d.breakdown;
-  if (!b || !b.applies) return 'of exposure';
   return d.verdict.verdict === 'unknown' ? 'covered by this address' : 'covered';
 }
 
