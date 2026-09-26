@@ -137,6 +137,8 @@
     font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .14em;
     text-transform: uppercase; color: var(--muted); text-shadow: 0 0 12px #08090c;
   }
+  .constellation-stat .quality-flag { color: #f2b35c; font: 600 11px "JetBrains Mono", monospace; letter-spacing: .08em; margin-top: 8px; text-transform: uppercase; text-shadow: 0 0 12px #08090c; }
+  .breakdown-quality { color: #f2b35c; font-size: 12px; line-height: 1.5; margin: 4px 0 0; }
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 14px 0; }
   /* Leverage, distance to liquidation, unrealized PnL, funding since open:
      none of these decide bet/hedge/book, so they sit apart from the
@@ -382,6 +384,7 @@
   <figure class="breakdown" id="breakdown" hidden>
     <figcaption id="breakdown-caption"></figcaption>
     <div id="breakdown-svg"></div>
+    <p id="breakdown-quality" class="breakdown-quality" hidden></p>
   </figure>
   <section class="evidence-preview" aria-label="Key evidence">
     <h3>Evidence at a glance</h3>
