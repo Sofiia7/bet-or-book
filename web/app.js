@@ -1774,6 +1774,16 @@ function postText(d) {
   return body + suffix;
 }
 
+// A direct hand-off, not one more thing to copy and paste yourself: X's own
+// intent endpoint opens composer with the text already in it, in a new tab,
+// so the only step left is pressing Post.
+$('share-x').addEventListener('click', () => {
+  if (!current) return;
+  askForPicture(current);
+  const text = postText(current);
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank', 'noopener,noreferrer');
+});
+
 $('copy-post').addEventListener('click', async () => {
   if (!current) return;
   askForPicture(current);
