@@ -23,11 +23,11 @@ function svgAccentOf(d) {
 const PAGE_SIZE = 25;
 // The reading a visitor with nothing pasted yet sees first: the funded-short
 // demonstration reading, because its picture is the one that needs no
-// explanation (a big bar, an empty solid segment, and $443.7M held in a
+// explanation (a big bar, an empty solid segment, and $395.8M held in a
 // dashed box beside it that "does not count"). Free to open - it is one of
 // the four bundled chips, opened the same way a shared link would (24.09
 // audit, U01).
-const FLAGSHIP_ID = '075ocy85yngsu';
+const FLAGSHIP_ID = '34stjd0gtgkz1';
 
 const $ = (id) => document.getElementById(id);
 let current = null;
@@ -642,7 +642,7 @@ function renderResult(d, opts) {
   // /evidence.ts's DECISIVE_LABEL_BY_REASON) built from this same linkedHedge
   // data. Pushing the elsewhere tile too would show the identical dollar
   // amount and wallet count twice in a row (confirmed against the stored
-  // 075ocy85yngsu reading, $443.7M in 2 wallets, in data/featured.json).
+  // 34stjd0gtgkz1 reading, $395.8M in 2 wallets, in data/featured.json).
   const alreadyShowsFunderHoldings = (d.verdict.reasons || []).includes('linked_exposure_unverified');
   if (d.breakdown && d.breakdown.elsewhere && !alreadyShowsFunderHoldings) {
     heroTiles.push({

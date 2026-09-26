@@ -10,11 +10,11 @@ Built for the [Nansen Meridian Buildathon](https://www.nansen.ai/campaigns/merid
 
 Every week a post goes viral: "a whale just opened a $190M short". People copy it. Often the position is not what the headline makes of it:
 
-- The account behind one of those posts is a **market-making book**: 134 open positions, 2,613 resting orders quoting both sides of 123 markets - including its own $46.9M ETH short, $42.9M of that quoting genuinely matched in ETH itself, not just activity somewhere else in the account. That is a business, not a view on price (read on 24 September, after the fix in [L01](docs/audits/2026-09-23-full-audit-ru.md) made "quoted elsewhere" stop counting as evidence about this position).
-- Another was reported as hundreds of millions in bearish shorts, and the first version of this tool agreed it was hedged. It is not that simple: **next to none of its $209.1M ETH short is covered by anything that address holds**, and $443.7M of matching ETH sits in two wallets that funded it. A funding transfer is not ownership, one such funder turned out to be an exchange, and part of that ETH is an Aave deposit with an invisible loan against it.
-- And sometimes it really is a bet: **one $130.0M HYPE long, the account's entire exposure, nothing offsetting it**.
+- The account behind one of those posts is a **market-making book**: 134 open positions, 2,730 resting orders quoting both sides of 123 markets - including its own $52.0M ETH short, $41.6M of that quoting genuinely matched in ETH itself, not just activity somewhere else in the account. That is a business, not a view on price (read on 26 September, after the fix in [L01](docs/audits/2026-09-23-full-audit-ru.md) made "quoted elsewhere" stop counting as evidence about this position).
+- Another was reported as hundreds of millions in bearish shorts, and the first version of this tool agreed it was hedged. It is not that simple: **next to none of its $208.2M ETH short is covered by anything that address holds**, and $395.8M of matching ETH sits in two wallets that funded it. A funding transfer is not ownership, one such funder turned out to be an exchange, and part of that ETH is an Aave deposit with an invisible loan against it.
+- And sometimes it really is a bet: **one $126.4M HYPE long, the account's entire exposure, nothing offsetting it**.
 
-All three are among the four readings at the top of the page, each dated 24 September and each opening for free.
+All three are among the four readings at the top of the page, each dated 26 September and each opening for free.
 
 Bet or Book answers one question per address, shows the numbers that decided it, and says what it could not read.
 
@@ -88,7 +88,7 @@ Hyperliquid's free API supplies resting orders (per dex, including HIP-3 markets
 
 ## The four readings at the top, and the scan below them
 
-The four chips under the address field open readings made fresh on 24 September and picked by hand, one of each kind of answer: a bet, a short covered in the same account, a short whose matching asset sits with the wallets that funded it, and a market maker's book. They are in [`data/featured.json`](data/featured.json), made by the same `checkAddress` a live check runs, and each one says what changed since the scan's reading of the same address. A visitor with nothing pasted sees the third of them open on arrival. Where one of the four re-reads an account from the scan, the page lists that fresher reading instead of the scan's own, so the list shows three fewer rows than the table below counts.
+The four chips under the address field open readings made fresh on 26 September and picked by hand, one of each kind of answer: a bet, a short covered in the same account, a short whose matching asset sits with the wallets that funded it, and a market maker's book. They are in [`data/featured.json`](data/featured.json), made by the same `checkAddress` a live check runs, and each one says what changed since the scan's reading of the same address. A visitor with nothing pasted sees the third of them open on arrival. Where one of the four re-reads an account from the scan, the page lists that fresher reading instead of the scan's own, so the list shows three fewer rows than the table below counts.
 
 Below them, the same check ran once over 277 large Hyperliquid positions (the top 3,000 accounts by value, ranked by their largest main-dex position) and is re-judged offline whenever the rules change, at no cost. Of the 177 cards the current rules can read:
 

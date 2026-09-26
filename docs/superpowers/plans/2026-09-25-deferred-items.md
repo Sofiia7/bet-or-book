@@ -247,7 +247,7 @@ git commit -m "fix: a failed funder read says so, instead of claiming the funder
 
 ---
 
-## Task 3: A07 - the Unknown qualifier reaches boards and recent checks, not just the big card
+## Task 3: A07 - the Unknown qualifier reaches boards and recent checks, not just the big card [DONE - commit e521214, spec+quality reviewed. Original plan's premise was wrong (badgeQualifier is never stored, only computed at serve time by explained()) - implementer caught this, escalated instead of guessing, corrected approach approved: compute fresh in galleryIndex() instead of forwarding a stored field. No data regen needed.]
 
 **Files:**
 - Modify: `src/gallery.ts`
@@ -377,7 +377,7 @@ git commit -m "fix: a board row and a recent-checks chip say which Unknown, the 
 
 ---
 
-## Task 4: Tech debt - historical and superseded entries get a real `dataQuality` instead of none at all
+## Task 4: Tech debt - historical and superseded entries get a real `dataQuality` instead of none at all [DONE - commit 79a754f, spec+quality reviewed, one fix loop for a rendering-surface test. Both technical debts from the prior cycle are now closed (Task 1 did MATERIAL_GAP_SHARE).]
 
 **Files:**
 - Modify: `src/engine/breakdown.ts`
@@ -491,7 +491,7 @@ git commit -m "fix: a frozen historical or superseded reading says its dataQuali
 
 ---
 
-## Task 5: A09 - a long's diagram shows its concentration instead of an empty pan
+## Task 5: A09 - a long's diagram shows its concentration instead of an empty pan [DONE - commit d2ae75a, spec+quality reviewed, approved as-is with no fix rounds needed.]
 
 **Files:**
 - Modify: `web/app.js` (`drawEmptyPan` - repurpose into a new function; `renderBreakdown`'s call site and caption)
@@ -607,7 +607,7 @@ git commit -m "feat: a long's diagram shows its concentration and quoting, not a
 
 ---
 
-## Task 6: A10 - every board row shows its own date
+## Task 6: A10 - every board row shows its own date [DONE - commits ca3eb4d (per-row date), cdf729e (boards' own description note, added after spec review caught a wrongly-skipped step), d497892 (wording fix from code-quality review: "readings" not "cases"). Spec+quality reviewed, approved.]
 
 **Files:**
 - Modify: `web/app.js` (`boardRow`)
@@ -664,7 +664,7 @@ git commit -m "fix: every board row shows its own date, not just the scan's over
 
 ---
 
-## Task 7: the first screen's hero numbers move up, share and check-another move together, book gets its numbers up front
+## Task 7: the first screen's hero numbers move up, share and check-another move together, book gets its numbers up front [DONE - commit 5eac25b, one fix round for a Critical duplicate-tile bug (data-proven against a real pinned example) + 3 Important issues (comment honesty, flex alignment, focus/scroll jank) in 1b3b715, re-reviewed and approved as-is, plus one optional defensive one-liner applied directly in 4a7108f. Spec+quality reviewed.]
 
 **Files:**
 - Modify: `web/index.html`
@@ -800,7 +800,7 @@ git commit -m "feat: the decisive number and the funders' number lead the card, 
 
 ---
 
-## Task 8: final verification of Tasks 1-7 in a browser, across more than one verdict type
+## Task 8: final verification of Tasks 1-7 in a browser, across more than one verdict type [DONE - npm test/typecheck/test:runtime/audit all green, em-dash scan clean across every plan-touched file, browser walkthrough across all 4 example chips (bet/hedged/unknown-funded/book) confirmed: hero tiles correct and non-duplicated (including the exact case the Task 7 Critical fix targeted), Task 5's concentration diagram live, Share+Check another anchored correctly, Task 6's per-row board dates and Task 3's per-row Unknown qualifiers both live and cross-checked against the big card. No issues found.]
 
 **Files:** none (verification only)
 
@@ -835,7 +835,7 @@ Summarize what shipped, matching how the prior cycle's own final report was stru
 
 ---
 
-## Task 9: A11 - refresh the four featured readings (spends real Nansen credits)
+## Task 9: A11 - refresh the four featured readings (spends real Nansen credits) [DONE_WITH_CONCERNS - data/featured.json regenerated via scripts/prescan.ts --refresh against all four addresses (real Nansen spend, all four verdicts confirmed unchanged: bet/hedged/unknown/book). The one non-mechanical, editorial step: the Hedged address's original pre-loan-tracking reading (observationSchemaVersion 4, real historical artifact, snapshotId 0x4uv7ru4tpka) was recovered from git history (commit 79a754f, the last commit to touch data/featured.json before this refresh) and re-linked via supersededBy to the freshly re-checked Hedged reading (00dzwn0p8gh67) - preserving the "read again" demonstration pair test/engine/nansenContribution.test.ts and test/featured.test.ts both assert on, rather than losing it to a plain overwrite. web/index.html's four chips, README.md's three stale-number/date references, and the one hardcoded $443.7M regex in test/engine/nansenContribution.test.ts were updated to match the refreshed numbers/ids. Also found and fixed, outside the plan's original file list: web/app.js's FLAGSHIP_ID hardcoded the now-retired snapshotId 075ocy85yngsu as the default reading a visitor with nothing pasted sees first - updated to 34stjd0gtgkz1 (the new third entry), since this had zero test coverage and would have silently broken the homepage's default view. npm test (600/600), typecheck, and npm run test:runtime (9/9) all green. Blocked: scripts/prerender-og.ts --upload (the live Cloudflare KV re-render of the OG social-preview images) was refused by the harness's own auto-mode classifier as a "Production Deploy" action and did not run - still outstanding, needs the user to run it directly or grant that permission.]
 
 **Files:**
 - Modify: `data/featured.json` (regenerated by `scripts/prescan.ts --refresh`, not hand-edited)

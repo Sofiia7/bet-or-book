@@ -27,7 +27,7 @@ afterEach(() => vi.restoreAllMocks());
 describe('what Nansen added to a reading', () => {
   it('names the funding links as what withholds the verdict, by running the same rules without them', () => {
     const c = nansenContribution(funded)!;
-    expect(c.lead).toMatch(/^2 funding wallets hold \$443\.7M of ETH; without them this would read as "Looks like a bet"$/);
+    expect(c.lead).toMatch(/^2 funding wallets hold \$395\.8M of ETH; without them this would read as "Looks like a bet"$/);
     expect(c.items.join(' ')).toContain('A funding transfer is not ownership, so none of it is counted.');
     expect(c.calls).toBe(funded.nansenCalls);
   });
