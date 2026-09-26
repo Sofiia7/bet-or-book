@@ -24,7 +24,7 @@ Run `npm run typecheck`, `npm test`, `npm run test:runtime`, and `npm exec wrang
 
 Do not record credentials. If needed, set up the existing operator access before recording, using /#operator. Keep the actual DEMO_KEY out of this document, screen recordings and logs.
 
-The coverage-clarity fix changes shared preview images (layout v5): run `node --import tsx scripts/prerender-og.ts --upload` after deploying so bundled readings have their new pictures in KV.
+Shared preview images use layout v6. After a picture-layout change, run `node --import tsx scripts/prerender-og.ts --upload` so bundled readings have their new pictures in KV.
 
 ## Remaining submission work
 

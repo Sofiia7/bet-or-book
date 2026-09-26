@@ -84,6 +84,14 @@ describe('ogTree', () => {
     expect(tree.length).toBeLessThan(1400);
   });
 
+  it('places an ellipsis within the visible summary for a real partial-read sentence', () => {
+    const summary = '27% of the exposure is one $45.6M ETH short, and whether it is hedged could not be established: only its Hyperliquid balances were read, and a hedge on another chain would not show.';
+    const tree = JSON.stringify(ogTree(data({ summary })));
+    expect(tree).toContain('27% of the exposure');
+    expect(tree).toContain('…');
+    expect(tree).not.toContain('and a hedge on another chain');
+  });
+
   it('carries the date and the reading\'s own caveat, not just the badge and summary (23.09 audit, U02)', () => {
     const tree = JSON.stringify(
       ogTree(data({ provenance: 'Positions as of 23 Sep, 14:32 UTC · saved reading, rules v4', limitText: 'Only its Hyperliquid balances were read.' })),
