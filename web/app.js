@@ -73,6 +73,266 @@ function fmtPct(x) {
   if (p === 0) return '0%';
   return (Math.abs(p) >= 10 ? Math.round(p) : p.toFixed(1)) + '%';
 }
+
+// A small, fast, deterministic PRNG (mulberry32) so the same reading always
+// draws the same constellation - the picture must be stable across renders
+// of the same data, not merely plausible-looking (handoff: "the waveform is
+// static: no playback and no animation").
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// A stable small integer from an address, so a given address always draws
+// the same constellation across visits and across a live check vs. a saved
+// reading of the same account - not a security hash, just a display seed.
+function seedFromAddress(address) {
+  let h = 0;
+  for (let i = 0; i < address.length; i++) h = (Math.imul(h, 31) + address.charCodeAt(i)) | 0;
+  return h >>> 0;
+}
+
+function buildConstellationModel(seed, N) {
+  const R = rng(seed);
+  const bumps = [];
+  const nb = 3 + Math.floor(R() * 3);
+  for (let i = 0; i < nb; i++) bumps.push({ c: 0.08 + R() * 0.84, w: 0.025 + R() * 0.09, h: 0.3 + R() * 0.6 });
+  bumps[0].h = 1;
+  const env = [];
+  for (let i = 0; i < N; i++) {
+    const x = i / (N - 1);
+    let v = 0.05;
+    for (const b of bumps) v = Math.max(v, b.h * Math.exp(-((x - b.c) ** 2) / (2 * b.w * b.w)));
+    env.push(Math.min(1, v * (0.5 + 0.5 * R())));
+  }
+  const jitter = [], mids = [];
+  for (let i = 0; i < N; i++) { jitter.push(0.85 + R() * 0.3); mids.push(R() < 0.5 ? 0.15 + R() * 0.7 : -1); }
+  const bokeh = [];
+  for (let i = 0; i < 9; i++) bokeh.push({ x: R(), y: 0.2 + R() * 0.7, r: 14 + R() * 46, side: R() < 0.5 ? 0 : 1 });
+  return { env, jitter, mids, bokeh };
+}
+// (This drops the handoff's unused phase/twinkle-over-time machinery - the
+// handoff's own paint() always calls draw() with t=0 and never animates in
+// practice, "no playback and no animation" per its own README, so nothing
+// here needs a per-frame time input.)
+
+const CONSTELLATION_DOTS = ['#6fd0ff', '#9a7bff', '#ff4fa8', '#ffc94d'];
+const constellationHash = (n) => { const x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x); };
+const CONSTELLATION_SPRITES = {};
+function constellationSprite(hex) {
+  if (CONSTELLATION_SPRITES[hex]) return CONSTELLATION_SPRITES[hex];
+  const S = 96;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = S;
+  const g = cv.getContext('2d');
+  const r = parseInt(hex.slice(1, 3), 16), gg = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  const R = S / 2;
+  const rg = g.createRadialGradient(R, R, 0, R, R, R);
+  rg.addColorStop(0, 'rgba(255,255,255,1)');
+  rg.addColorStop(0.06, `rgba(${Math.round((r + 510) / 3)},${Math.round((gg + 510) / 3)},${Math.round((b + 510) / 3)},1)`);
+  rg.addColorStop(0.14, `rgba(${r},${gg},${b},0.9)`);
+  rg.addColorStop(0.32, `rgba(${r},${gg},${b},0.28)`);
+  rg.addColorStop(0.6, `rgba(${r},${gg},${b},0.07)`);
+  rg.addColorStop(1, `rgba(${r},${gg},${b},0)`);
+  g.fillStyle = rg;
+  g.fillRect(0, 0, S, S);
+  return (CONSTELLATION_SPRITES[hex] = cv);
+}
+
+/**
+ * Draws one constellation: a left peak (the headline position, always full
+ * height) and a right peak scaled by `coverage` (0-1) - what stands against
+ * it, as a fraction of the same size. `ghost`, when true, mirrors the LEFT
+ * envelope on the right at a fixed dashed/hollow style, for "this exists but
+ * is not counted" (funds that sit with a funder, not this account). `mini`
+ * draws a small, static, glow-free version for the queue list.
+ */
+function drawConstellation(cv, { seed, coverage, ghost, mini, bookDensity }) {
+  if (!cv) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = cv.clientWidth, H = cv.clientHeight;
+  if (!W || !H) return;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) {
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+  }
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  const N = mini ? 24 : Math.round((bookDensity ? 32 * 1.3 : 32));
+  const model = buildConstellationModel(seed, N);
+  const padX = mini ? 2 : 24, padY = mini ? 3 : 22;
+  const gapHalf = mini ? W * 0.03 : W * 0.075;
+  const amp = W / 2 - gapHalf - padX;
+  const step = (H - 2 * padY) / (N - 1);
+  const baseL = padX, baseR = W - padX;
+
+  if (!mini) {
+    for (const bk of model.bokeh) {
+      const bx = (bk.side ? 0.55 + bk.y * 0.4 : 0.05 + bk.y * 0.4) * W, by = bk.x * H;
+      const g = ctx.createRadialGradient(bx, by, 0, bx, by, bk.r);
+      const c = bx < W / 2 ? '#3fe0ff' : '#ff4fa3';
+      g.addColorStop(0, c + '1f');
+      g.addColorStop(1, c + '00');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(bx, by, bk.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(baseL + 0.5, padY); ctx.lineTo(baseL + 0.5, H - padY);
+    ctx.moveTo(baseR - 0.5, padY); ctx.lineTo(baseR - 0.5, H - padY);
+    ctx.stroke();
+  }
+
+  const build = (isRight, ampK, floor) => {
+    const sk = (isRight ? 5000 : 0) + seed * 97;
+    const dir = isRight ? -1 : 1, base = isRight ? baseR : baseL;
+    const pts = [];
+    for (let i = 0; i < N; i++) {
+      const y = padY + i * step;
+      const e = Math.max(floor, model.env[i] * ampK * (isRight ? model.jitter[i] : 1));
+      pts.push({ x: base + dir * e * amp, y, k: sk + i * 2 + 1 });
+      if (!mini && model.mids[i] > 0 && e > 0.12) {
+        pts.push({ x: base + dir * e * amp * model.mids[i], y: y + step * 0.4, k: sk + i * 2 + 2 });
+      }
+      if (!mini && i % 4 === 0) pts.push({ x: base, y, baseline: true });
+    }
+    pts.sort((a, b) => a.y - b.y);
+    return pts;
+  };
+  const left = build(false, 1, 0.02);
+  const right = build(true, coverage, coverage > 0.05 ? 0.02 : 0.015);
+  const ghostPts = ghost ? build(true, 1, 0.02) : null;
+
+  const link = (pts, maxK, reach) => {
+    const segs = [];
+    for (let j = 0; j < pts.length; j++) {
+      for (let k = j + 1; k < Math.min(pts.length, j + maxK); k++) {
+        const a = pts[j], b = pts[k];
+        if (Math.abs(b.y - a.y) < step * reach) segs.push([a, b]);
+      }
+    }
+    return segs;
+  };
+
+  if (ghostPts) {
+    ctx.save();
+    ctx.setLineDash([2, 4]);
+    ctx.strokeStyle = 'rgba(170,176,192,0.28)';
+    ctx.lineWidth = mini ? 0.6 : 0.8;
+    ctx.beginPath();
+    for (const [a, b] of link(ghostPts, mini ? 2 : 4, 2.2)) { ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle = 'rgba(170,176,192,0.45)';
+    for (const p of ghostPts) {
+      if (p.baseline) continue;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, mini ? 0.9 : 1.8, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  for (const pts of [left, right]) {
+    const segs = link(pts, mini ? 2 : 5, mini ? 1.5 : 2.6);
+    ctx.lineWidth = mini ? 0.7 : 0.8;
+    ctx.globalAlpha = mini ? 0.75 : 0.5;
+    ctx.strokeStyle = '#3f8cff';
+    ctx.beginPath();
+    for (const [a, b] of segs) { ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    for (const p of pts) {
+      if (p.baseline) {
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.beginPath(); ctx.arc(p.x, p.y, 1, 0, Math.PI * 2); ctx.fill();
+        continue;
+      }
+      const hueSeed = constellationHash(p.k);
+      const color = CONSTELLATION_DOTS[Math.floor(hueSeed * CONSTELLATION_DOTS.length)];
+      const brightness = 0.55 + 0.45 * constellationHash(p.k + 0.2);
+      const size = (mini ? 9 : 16 + brightness * 22) * 0.4;
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = brightness;
+      ctx.drawImage(constellationSprite(color), p.x - size / 2, p.y - size / 2, size, size);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+/**
+ * What `drawConstellation` needs, derived from a real reading rather than
+ * the design handoff's four hardcoded mock numbers. `coverage` mirrors what
+ * each verdict's own rule already measures - it is not a new number, only a
+ * new way to draw one that already exists on every reading.
+ *
+ * Traced by hand against every verdict type in this project (see the
+ * 26.09 redesign plan, Task 2, Step 4):
+ *  - Book: `coverage` is matched-both-sides notional over the headline
+ *    notional - the same fraction the old drawBookQuoting bar filled.
+ *  - Long/bet (isLong, i.e. `!b || !b.applies`, the same condition
+ *    renderBreakdown already used elsewhere in this file): `coverage` is
+ *    `headlineShare`, the same value drawConcentration used - not a flat 0,
+ *    since a long's hedge.hedgeRatio is always exactly 0 by construction
+ *    (spot cannot offset a long, see computeHedgeFeatures in
+ *    src/engine/features.ts), so flattening this branch to 0 would only
+ *    repeat what the verdict type already says and throw away the one
+ *    number specific to this address.
+ *  - Hedged / Unknown ("funders" in the handoff's naming) / any other
+ *    reading whose breakdown applies: `coverage` is `hedge.hedgeRatio`,
+ *    clamped to [0,1] - algebraically identical to the old drawScale's own
+ *    `(covered + excess) / headlineUsd`, since covered+excess always equals
+ *    hedge.hedgeUsd whether or not the hedge exceeds the position. `ghost`
+ *    is true exactly when `breakdown.elsewhere` exists (the funders case).
+ */
+function constellationInputsFor(d) {
+  const seed = seedFromAddress(d.address);
+  const b = d.breakdown;
+  const isLong = !b || !b.applies;
+  if (d.verdict.verdict === 'book') {
+    const headlineUsd = d.positions.headlineNotionalUsd || 0;
+    const matched = (d.orders && d.orders.headlineTwoSidedNotionalUsd) || 0;
+    return { seed, coverage: headlineUsd > 0 ? Math.min(1, matched / headlineUsd) : 0, ghost: false, bookDensity: true };
+  }
+  if (isLong) {
+    return { seed, coverage: Math.min(1, d.positions.headlineShare || 0), ghost: false, bookDensity: false };
+  }
+  const ratio = d.hedge && typeof d.hedge.hedgeRatio === 'number' ? d.hedge.hedgeRatio : 0;
+  const hasElsewhere = !!(b && b.elsewhere);
+  return { seed, coverage: Math.max(0, Math.min(1, ratio)), ghost: hasElsewhere, bookDensity: false };
+}
+
+/** The big centered number over the diagram: every branch of
+ * constellationInputsFor already normalizes `coverage` to a 0-1 fraction,
+ * so one formatter covers hedged, unknown, long and book alike - only the
+ * label below it (constellationStatLabelFor) changes per verdict. */
+function constellationStatFor(d, inputs) {
+  return fmtPct(inputs.coverage);
+}
+
+/** The short label under the big number, re-deriving in a few words what
+ * each verdict's old diagram caption said about the same fraction:
+ * drawBookQuoting said "matched both sides"; drawConcentration said "of the
+ * gross exposure is this one position"; drawScale said "covered by <coin>
+ * this address holds". */
+function constellationStatLabelFor(d) {
+  if (d.verdict.verdict === 'book') return 'quoted both sides';
+  const b = d.breakdown;
+  if (!b || !b.applies) return 'of exposure';
+  return d.verdict.verdict === 'unknown' ? 'covered by this address' : 'covered';
+}
+
 function fmtTime(iso) {
   return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) + ' UTC';
 }
@@ -223,253 +483,18 @@ function renderPicker(d, kind) {
   );
 }
 
-// ---- the evidence diagram: a balance scale ----
-//
-// Left pan is the position; right pan is what was found against it. A level
-// beam is a hedge in band; a beam that tilts toward the position is
-// uncovered; a beam that tilts the other way is over-covered ("leans
-// long") - the same three situations the rules already distinguish
-// (hedge_leg / partial_offset / over_covered), now a single continuous
-// angle instead of three unrelated sentences (24.09 mechanic: balance
-// scale, user-approved; replaces the segmented bar, which the audit's own
-// first reader could not parse unprompted).
-//
-// A read that was partial or failed is drawn as a *suspended* pan - dashed,
-// with a question mark, beam level - never as a confident tilt: an unread
-// side of a scale has not been weighed, and drawing it as balanced or as
-// empty would both claim more than the data supports (mirrors the bar's
-// own not-checked/unverified opacity rule, audit L12).
-const svgEl = (name, attrs, text) => {
-  const node = document.createElementNS('http://www.w3.org/2000/svg', name);
-  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, String(v));
-  if (text !== undefined) node.textContent = text;
-  return node;
-};
-
-/** Wraps a caption across several <text> lines when it would not fit the
- * available width - SVG text does not wrap on its own, and putting a full
- * sentence on one line (as the scale's captions do) reintroduces the exact
- * failure mode audit U01 already fixed once in the bar's own legend text.
- * No DOM measurement is available before the SVG is attached to a visible
- * container, so this estimates an average character width for the page's
- * own sans-serif font rather than measuring exactly - wrapping one word
- * earlier than strictly necessary is a smaller failure than overflowing the
- * card, so the estimate leans conservative. Returns the y of the last line
- * drawn, matching the convention the canvas `wrapText` helper already uses
- * elsewhere in this file. */
-function wrapSvgText(svg, text, x, startY, maxWidth, fontSizePx, lineHeight, className) {
-  const avgCharWidth = fontSizePx * 0.6;
-  const maxChars = Math.max(12, Math.floor(maxWidth / avgCharWidth));
-  const words = text.split(' ');
-  const lines = [];
-  let line = '';
-  for (const word of words) {
-    const candidate = line ? line + ' ' + word : word;
-    if (candidate.length > maxChars && line) {
-      lines.push(line);
-      line = word;
-    } else {
-      line = candidate;
-    }
-  }
-  if (line) lines.push(line);
-  lines.forEach((l, i) => {
-    svg.append(svgEl('text', { x, y: startY + i * lineHeight, class: className }, l));
-  });
-  return startY + (lines.length - 1) * lineHeight;
-}
-
-const MAX_TILT_DEG = 12;
-/** Below this share of the position, an unread or unidentified segment is
- * dust and the scale still gives a resolved tilt rather than suspending. */
+// MATERIAL_GAP_SHARE, HEDGE_BAND_MIN and HEDGE_BAND_MAX no longer feed any
+// drawing code - the balance-scale SVG they were tuned for (drawScale, and
+// drawBeamAndPivot/drawPan/scaleGeometry/MAX_TILT_DEG beside it) was
+// replaced by the constellation canvas above them in this file. They stay,
+// unused but present, only because test/web-app-verdict-sync.test.ts reads
+// these exact names out of this file's own source text and checks them
+// against DEFAULT_THRESHOLDS.hedged, so a retune of the classifier's real
+// thresholds still has something in this file to disagree with, rather than
+// silently going unchecked (26.09 redesign plan, Task 2, Step 7).
 const MATERIAL_GAP_SHARE = 0.1;
-
-function scaleGeometry(W) {
-  const beamY = 46;
-  const beamHalf = Math.min(150, W * 0.32);
-  const pivotX = W / 2;
-  const panDrop = 54;
-  const panW = 30;
-  const panH = 22;
-  return { beamY, beamHalf, pivotX, panDrop, panW, panH };
-}
-
-/** One pan (a small rectangle) hanging from one end of the beam, at the
- * given vertical drop and horizontal offset the current tilt puts it at. */
-function drawPan(svg, cx, cy, g, dashed, fillColor, fillOpacity) {
-  const { panW, panH } = g;
-  svg.append(
-    svgEl('rect', {
-      x: cx - panW / 2, y: cy, width: panW, height: panH, rx: 3,
-      fill: dashed ? 'none' : fillColor, 'fill-opacity': dashed ? 1 : fillOpacity,
-      stroke: dashed ? 'var(--faint)' : 'var(--line)',
-      'stroke-width': dashed ? 1.5 : 1,
-      'stroke-dasharray': dashed ? '4 4' : 'none',
-    }),
-  );
-}
-
-function drawBeamAndPivot(svg, g, tiltDeg, accent) {
-  const { beamY, beamHalf, pivotX, panDrop } = g;
-  const rad = (tiltDeg * Math.PI) / 180;
-  const leftX = pivotX - beamHalf * Math.cos(rad);
-  const leftY = beamY - beamHalf * Math.sin(rad);
-  const rightX = pivotX + beamHalf * Math.cos(rad);
-  const rightY = beamY + beamHalf * Math.sin(rad);
-  // The post the beam pivots on.
-  svg.append(svgEl('line', { x1: pivotX, y1: beamY, x2: pivotX, y2: beamY + 8, stroke: 'var(--faint)', 'stroke-width': 2 }));
-  svg.append(svgEl('circle', { cx: pivotX, cy: beamY, r: 3, fill: accent }));
-  svg.append(svgEl('line', { x1: leftX, y1: leftY, x2: rightX, y2: rightY, stroke: accent, 'stroke-width': 3, 'stroke-linecap': 'round' }));
-  svg.append(svgEl('line', { x1: leftX, y1: leftY, x2: leftX, y2: leftY + panDrop, stroke: 'var(--faint)', 'stroke-width': 1.5 }));
-  svg.append(svgEl('line', { x1: rightX, y1: rightY, x2: rightX, y2: rightY + panDrop, stroke: 'var(--faint)', 'stroke-width': 1.5 }));
-  return { leftX, leftY: leftY + panDrop, rightX, rightY: rightY + panDrop };
-}
-
-// Must equal DEFAULT_THRESHOLDS.hedged.minHedgeRatio/maxHedgeRatio in
-// src/engine/verdict.ts - the two files are not sharing one source of truth
-// yet, which is a known gap, but at least both now name the same two
-// numbers instead of three different ones across two files (25.09 audit,
-// A04).
 const HEDGE_BAND_MIN = 0.85;
 const HEDGE_BAND_MAX = 1.15;
-
-/** The short/hedge case: a scale, tilted by how much was found against the
- * position, or suspended (dashed, level, a question mark) when the read was
- * partial or left something material unidentified. */
-function drawScale(svg, b, accent, W) {
-  const g = scaleGeometry(W);
-  const covered = b.segments.find((s) => s.kind === 'covered')?.usd ?? 0;
-  const notChecked = b.segments.find((s) => s.kind === 'not-checked')?.usd ?? 0;
-  const unverified = b.segments.find((s) => s.kind === 'unverified')?.usd ?? 0;
-  const materialGap = unverified >= MATERIAL_GAP_SHARE * b.headlineUsd;
-  // dataQuality is the authority when it is there (25.09 audit, A03): a read
-  // that never finished, or a matching holding with no price, can leave the
-  // segments themselves looking complete - a zero residual and an unpriced
-  // match are both invisible to the segment-only check below them. A
-  // reading saved before this field existed has no opinion here (undefined
-  // is neither 'measured' nor anything else), so it falls back to exactly
-  // what this line already checked.
-  const suspended =
-    (b.dataQuality && b.dataQuality !== 'measured') || notChecked > 0 || (unverified > 0 && materialGap);
-
-  svg.append(svgEl('text', { x: 0, y: 14, class: 'bar-title' }, `${fmtUsd(b.headlineUsd)} ${b.coin} ${b.side}`));
-
-  let caption;
-  let pans;
-  if (suspended) {
-    pans = drawBeamAndPivot(svg, g, 0, 'var(--faint)');
-    drawPan(svg, pans.leftX, pans.leftY, g, false, accent, 1);
-    drawPan(svg, pans.rightX, pans.rightY, g, true, accent, 1);
-    svg.append(svgEl('text', { x: pans.rightX, y: pans.rightY + 15, class: 'seg-value', 'text-anchor': 'middle' }, '?'));
-    const floor = covered > 0 ? `${fmtUsd(covered)} found so far (a floor). ` : '';
-    caption = `${floor}${notChecked > 0 ? "Part of this address's holdings" : 'Some matching holdings'} could not be read in full - the scale could still tip either way.`;
-  } else {
-    const excess = b.excessUsd ?? 0;
-    const ratio = b.headlineUsd > 0 ? (covered + excess) / b.headlineUsd : 0;
-    const tiltDeg = Math.max(-1, Math.min(1, ratio - 1)) * MAX_TILT_DEG;
-    pans = drawBeamAndPivot(svg, g, tiltDeg, accent);
-    drawPan(svg, pans.leftX, pans.leftY, g, false, accent, 1);
-    drawPan(svg, pans.rightX, pans.rightY, g, false, accent, 1);
-    if (ratio > HEDGE_BAND_MAX) {
-      caption = `${fmtPct(ratio)} covered, ${fmtUsd(excess)} more than the position: on ${b.coin} itself, this leans long, not neutral.`;
-    } else if (ratio >= HEDGE_BAND_MIN) {
-      caption = excess > 0
-        ? `${fmtPct(ratio)} covered by ${b.coin} this address holds - ${fmtUsd(excess)} more than the position, within the hedge band.`
-        : `${fmtPct(ratio)} covered by ${b.coin} this address holds - within the hedge band.`;
-    } else {
-      caption = `Only ${fmtPct(ratio)} covered by ${b.coin} this address holds; the rest is still open.`;
-    }
-  }
-
-  // Which pan is which, right on the diagram - the two rectangles were
-  // identical and unlabeled, leaning on the paragraph below to say which
-  // side is the position and which is this address's own holdings (25.09
-  // audit, "Подписать обе чаши весов").
-  svg.append(svgEl('text', { x: pans.leftX, y: pans.leftY + g.panH + 13, class: 'seg-label', 'text-anchor': 'middle' }, 'the position'));
-  svg.append(svgEl('text', { x: pans.rightX, y: pans.rightY + g.panH + 13, class: 'seg-label', 'text-anchor': 'middle' }, suspended ? 'unread' : 'this address'));
-
-  const capY = pans.leftY + g.panH + 40;
-  const CAPTION_LINE_HEIGHT = 17;
-  let y = wrapSvgText(svg, caption, 0, capY, W, 12, CAPTION_LINE_HEIGHT, 'seg-label');
-
-  if (b.elsewhere) {
-    y += 26;
-    const midX = W / 2;
-    svg.append(svgEl('path', { d: `M ${midX} ${y - 12} L ${midX} ${y + 6}`, stroke: 'var(--faint)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4', fill: 'none' }));
-    y += 22;
-    svg.append(svgEl('text', { x: 0, y, class: 'seg-value' }, `${fmtUsd(b.elsewhere.usd)} held elsewhere`));
-    y += 18;
-    y = wrapSvgText(svg, `in ${plural(b.elsewhere.wallets, 'wallet')} that funded this account - not on the scale, since funding is not ownership`, 0, y, W, 12, CAPTION_LINE_HEIGHT, 'seg-label');
-  }
-  svg.setAttribute('viewBox', `0 0 ${W} ${y + 12}`);
-}
-
-/** A long: spot cannot offset it, so the scale never applies - but "spot
- * cannot offset a long" is true of every long and says nothing about this
- * one. What is specific to this address: how much of its own gross exposure
- * this one position is, and whether anything two-sided was found anywhere
- * in the account. Both numbers already exist on every reading; nothing new
- * is computed here (25.09 audit, A09). */
-function drawConcentration(svg, d, W) {
-  const p = d.positions;
-  const o = d.orders;
-  const headlineUsd = p.headlineNotionalUsd || 0;
-  const share = p.headlineShare || 0;
-  const barY = 26;
-  const barH = 30;
-  svg.append(svgEl('text', { x: 0, y: 14, class: 'bar-title' }, `${fmtUsd(headlineUsd)} ${p.headlineCoin} ${p.headlineSide}`));
-  const filledW = Math.max(2, Math.min(1, share) * W);
-  svg.append(svgEl('rect', { x: 0, y: barY, width: W, height: barH, rx: 3, fill: 'var(--accent)', 'fill-opacity': 0.25, stroke: 'var(--line)', 'stroke-width': 1 }));
-  if (filledW > 0) {
-    svg.append(svgEl('rect', { x: 0, y: barY, width: filledW, height: barH, rx: 3, fill: 'var(--accent)', 'fill-opacity': 1, stroke: 'var(--line)', 'stroke-width': 1 }));
-  }
-  const capY = barY + barH + 22;
-  const quoting = (o && o.coinsBothSides) || 0;
-  const quotingText = quoting === 0
-    ? 'No material two-sided quotes found anywhere in the account.'
-    : `Two-sided quotes exist in ${plural(quoting, 'other market')}, not material against this position.`;
-  const y1 = wrapSvgText(
-    svg,
-    `${fmtPct(share)} of the ${fmtUsd(p.grossUsd || 0)} gross exposure is this one position.`,
-    0, capY, W, 12, 17, 'seg-label',
-  );
-  const finalY = wrapSvgText(svg, quotingText, 0, y1 + 20, W, 12, 17, 'seg-label');
-  svg.setAttribute('viewBox', `0 0 ${W} ${finalY + 12}`);
-}
-
-/** Book: not a coverage question, so no scale - a bar showing the one
- * number the v5 rule actually turns on: how much of the quoting in this
- * market alone is genuinely matched (fixes audit L01: this number was
- * previously shown on no card at all). */
-function drawBookQuoting(svg, d, W) {
-  const o = d.orders;
-  const p = d.positions;
-  const matched = o.headlineTwoSidedNotionalUsd || 0;
-  const headlineUsd = p.headlineNotionalUsd || 0;
-  const barY = 26;
-  const barH = 30;
-  svg.append(svgEl('text', { x: 0, y: 14, class: 'bar-title' }, `Quoting in ${p.headlineCoin} itself`));
-  // The fill is the same fraction the caption states below it - matched
-  // against the position, not against everything quoted in that market,
-  // which used to let a small position draw as a sliver next to a deep
-  // two-sided book: two different numbers about the same shape (25.09
-  // audit, A05). Capped at 100% width since matched liquidity can honestly
-  // exceed the position's own size; the caption still states the real,
-  // uncapped percentage.
-  const share = headlineUsd > 0 ? matched / headlineUsd : 0;
-  const matchedW = Math.max(2, Math.min(1, share) * W);
-  svg.append(svgEl('rect', { x: 0, y: barY, width: W, height: barH, rx: 3, fill: 'var(--accent)', 'fill-opacity': 0.25, stroke: 'var(--line)', 'stroke-width': 1 }));
-  if (matchedW > 0) {
-    svg.append(svgEl('rect', { x: 0, y: barY, width: matchedW, height: barH, rx: 3, fill: 'var(--accent)', 'fill-opacity': 1, stroke: 'var(--line)', 'stroke-width': 1 }));
-  }
-  const capY = barY + barH + 22;
-  const finalY = wrapSvgText(
-    svg,
-    `${fmtUsd(matched)} matched both sides in ${p.headlineCoin} itself - ${fmtPct(share)} of the ${fmtUsd(headlineUsd)} ${p.headlineSide}`,
-    0, capY, W, 12, 17, 'seg-label',
-  );
-  svg.setAttribute('viewBox', `0 0 ${W} ${finalY + 12}`);
-}
 
 function renderBreakdown(d) {
   const box = $('breakdown');
@@ -481,34 +506,32 @@ function renderBreakdown(d) {
     return;
   }
   box.hidden = false;
-  box.style.setProperty('--accent', svgAccentOf(d));
 
-  const W = box.clientWidth || 640;
-  const svg = svgEl('svg', { viewBox: `0 0 ${W} 160`, role: 'img' });
   // Sourced from `d.positions`, never from `b`, even when not isBook: an
   // ancient stored reading from before `breakdown` existed at all can have
   // `b === undefined` while still being a long position worth a
-  // concentration bar (`isLong` only requires `!b || !b.applies`) - reading
-  // `b.coin` there would throw.
-  // `positions.headlineCoin/headlineSide/headlineNotionalUsd` are always
-  // present, and equal `b.coin/side/headlineUsd` in every case where `b`
-  // does exist (breakdown.ts sets them from `positions` even when
-  // `applies` is false), so this is never a different value, only a safer
-  // path to it.
+  // constellation diagram (`isLong` only requires `!b || !b.applies`) -
+  // reading `b.coin` there would throw.
   const coin = d.positions.headlineCoin;
   const side = d.positions.headlineSide;
-  const headlineUsd = d.positions.headlineNotionalUsd;
-  svg.append(svgEl('title', {}, `${fmtUsd(headlineUsd)} ${coin} ${side}, and what was found against it`));
 
-  if (isBook) {
-    drawBookQuoting(svg, d, W);
-  } else if (isLong) {
-    drawConcentration(svg, d, W);
-  } else {
-    drawScale(svg, b, svgAccentOf(d), W);
+  const canvas = document.createElement('canvas');
+  canvas.style.width = '100%';
+  canvas.style.height = '260px';
+  canvas.style.display = 'block';
+  const inputs = constellationInputsFor(d);
+  const statBox = el('div', 'constellation-stat');
+  statBox.append(
+    el('div', 'constellation-stat-value', constellationStatFor(d, inputs)),
+    el('div', 'constellation-stat-label', constellationStatLabelFor(d)),
+  );
+  $('breakdown-svg').replaceChildren(canvas, statBox);
+  drawConstellation(canvas, { ...inputs, mini: false });
+  if (!canvas.dataset.roAttached) {
+    canvas.dataset.roAttached = '1';
+    new ResizeObserver(() => drawConstellation(canvas, { ...constellationInputsFor(d), mini: false })).observe(canvas);
   }
 
-  $('breakdown-svg').replaceChildren(svg);
   $('breakdown-caption').textContent = isBook
     ? `What stands behind the ${coin} ${side}`
     : isLong
