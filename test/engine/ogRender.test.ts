@@ -12,16 +12,21 @@ import type { OgCardData } from '../../src/engine/ogCard';
 const compileWasm = (bytes: BufferSource): Promise<WebAssembly.Module> =>
   (WebAssembly as unknown as { compile(b: BufferSource): Promise<WebAssembly.Module> }).compile(bytes);
 
+/** The base fixture carries no constellation - "nothing open right now" -
+ * the same no-diagram baseline the old `segments: null` default was, so
+ * size-budget tests calibrated against it (see 'cuts an oversized summary
+ * short' below) keep meaning the same thing. Tests about the constellation
+ * itself override `constellation`/`constellationStat` explicitly. */
 function data(overrides: Partial<OgCardData> = {}): OgCardData {
   return {
     badgeText: 'Book (strong)',
-    accent: '#0c447c',
+    accent: '#7fa2ff',
     summary: '2,685 resting orders quote both sides of 119 markets.',
-    segments: null,
+    constellation: null,
+    constellationStat: null,
     footerLeft: '0xecb6...2b00 · rules v4',
     provenance: 'Positions as of 23 Sep, 14:32 UTC · saved reading, rules v4',
     limitText: null,
-    elsewhere: null,
     dataQuality: 'measured',
     ...overrides,
   };
@@ -36,24 +41,35 @@ describe('ogTree', () => {
     expect(tree).toContain('Powered by Nansen API');
   });
 
-  it('draws no bar when there are no segments', () => {
-    const tree = JSON.stringify(ogTree(data({ segments: null })));
-    expect(tree).not.toContain('overflow');
+  it('draws no constellation block when there is none', () => {
+    const tree = JSON.stringify(ogTree(data({ constellation: null, constellationStat: null })));
+    // No embedded image and no borderRadius/relative-positioned wrapper -
+    // both unique to constellationBlockFor's own returned node (the old "no
+    // bar" test's 'overflow' proxy no longer works standalone: the summary
+    // and provenance boxes now also set overflow:hidden, to reserve a fixed
+    // line-clamped height regardless of whether a constellation follows).
+    expect(tree).not.toContain('data:image/svg+xml');
+    expect(tree).not.toContain('borderRadius');
   });
 
-  it('draws one band per segment when there are some', () => {
-    const tree = ogTree(
-      data({ segments: [{ share: 0.4, color: '#0c447c', opacity: 1 }, { share: 0.6, color: '#e6e6e2', opacity: 1 }] }),
-    ) as { props: { children: Array<{ props?: { children?: unknown } }> } };
-    const bar = tree.props.children.find((c) => Array.isArray((c.props as { children?: unknown[] })?.children) && (c.props as { children: unknown[] }).children.length === 2);
-    expect(bar).toBeDefined();
+  it('embeds the constellation as a base64 SVG data URI image, with the big stat number and its label, when there is one', () => {
+    const tree = JSON.stringify(
+      ogTree(data({ constellation: { seed: 42, coverage: 0.6, ghost: false, bookDensity: false }, constellationStat: { value: '60%', label: 'covered' } })),
+    );
+    expect(tree).toContain('data:image/svg+xml;base64,');
+    expect(tree).toContain('60%');
+    // The label is uppercased in the tree the same way the badge text is.
+    expect(tree).toContain('COVERED');
   });
 
   it('cuts an oversized summary short rather than overflowing the card', () => {
     const tree = JSON.stringify(ogTree(data({ summary: 'x'.repeat(500) })));
     expect(tree).toContain('…');
     // The cap is on the summary, not the whole tree: the provenance/caveat
-    // line added for U02 is a fixed-size addition on top of it.
+    // line added for U02 is a fixed-size addition on top of it. Calibrated
+    // against the no-constellation baseline - a constellation block adds a
+    // genuinely large base64 SVG string, covered by its own size-unbounded
+    // 'embeds the constellation' test above instead.
     expect(tree.length).toBeLessThan(1400);
   });
 
@@ -68,6 +84,29 @@ describe('ogTree', () => {
   it('shows the date alone when the reading carries no caveat beyond the permanent one', () => {
     const tree = JSON.stringify(ogTree(data({ provenance: 'Positions as of 23 Sep, 14:32 UTC · saved reading, rules v4', limitText: null })));
     expect(tree).toContain('23 Sep, 14:32 UTC');
+  });
+});
+
+describe('the constellation image actually carries what ogCardData computed (wiring, not the diagram\'s own math - that is test/engine/constellation.test.ts\'s job)', () => {
+  function decodedSvg(tree: unknown): string {
+    const json = JSON.stringify(tree);
+    const m = json.match(/data:image\/svg\+xml;base64,([A-Za-z0-9+/=]+)/);
+    if (!m) throw new Error('no data URI found in tree - test itself is broken, not the code under test');
+    return Buffer.from(m[1]!, 'base64').toString('utf8');
+  }
+
+  it('draws a dashed ghost mirror in the embedded SVG when constellation.ghost is true', () => {
+    const svg = decodedSvg(
+      ogTree(data({ constellation: { seed: 1, coverage: 0, ghost: true, bookDensity: false }, constellationStat: { value: '<1%', label: 'covered by this address' } })),
+    );
+    expect(svg).toContain('stroke-dasharray');
+  });
+
+  it('draws no dashed ghost mirror when constellation.ghost is false', () => {
+    const svg = decodedSvg(
+      ogTree(data({ constellation: { seed: 1, coverage: 0.9, ghost: false, bookDensity: false }, constellationStat: { value: '90%', label: 'covered' } })),
+    );
+    expect(svg).not.toContain('stroke-dasharray');
   });
 });
 
@@ -87,6 +126,26 @@ describe('renderOgPng (real satori + resvg, no mocks)', () => {
     expect(png.length).toBeGreaterThan(1000);
   }, 15_000);
 
+  it('renders a real PNG through the full pipeline WITH a constellation embedded - the genuinely new, higher-risk path this task added, not mocked here or anywhere else in this suite', async () => {
+    const font = readFileSync('assets/inter-regular.woff');
+    const wasmBytes = readFileSync('node_modules/@resvg/resvg-wasm/index_bg.wasm');
+    const wasmModule = await compileWasm(wasmBytes);
+    const fonts: OgFont[] = [{ name: 'Inter', data: font, weight: 400, style: 'normal' }];
+
+    const withConstellation = data({
+      constellation: { seed: 918273645, coverage: 0.42, ghost: true, bookDensity: false },
+      constellationStat: { value: '42%', label: 'covered' },
+    });
+    const png = await renderOgPng(withConstellation, fonts, wasmModule);
+
+    expect(Array.from(png.slice(0, 8))).toEqual([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    // Meaningfully bigger than the no-diagram card above: real evidence the
+    // embedded image actually rasterized into the page rather than being
+    // silently dropped (a silently-empty <img> would render close to the
+    // same size as the plain text-only card).
+    expect(png.length).toBeGreaterThan(5000);
+  }, 15_000);
+
   it('does not throw when initWasm is asked to run twice in the same module (a Worker can reuse an isolate)', async () => {
     const font = readFileSync('assets/inter-regular.woff');
     const wasmBytes = readFileSync('node_modules/@resvg/resvg-wasm/index_bg.wasm');
@@ -104,44 +163,5 @@ describe('OG image dimensions', () => {
   it('is the standard social-preview size', () => {
     expect(OG_WIDTH).toBe(1200);
     expect(OG_HEIGHT).toBe(630);
-  });
-});
-
-describe('the funder box on the link picture', () => {
-  it('puts the amount beside the bar on a dashed line, with its caption', () => {
-    const tree = JSON.stringify(
-      ogTree(
-        data({
-          segments: [{ share: 1, color: '#e6e6e2', opacity: 1 }],
-          elsewhere: { amount: '$443.7M', caption: 'held by 2 wallets that funded it, ownership unverified, not counted' },
-        }),
-      ),
-    );
-    expect(tree).toContain('$443.7M');
-    expect(tree).toContain('dashed');
-    expect(tree).toContain('ownership unverified, not counted');
-  });
-});
-
-describe('an unfinished read marks the bar itself, not only the text (25.09 audit, A03/A05 follow-up)', () => {
-  it('draws the bar with a dashed border when dataQuality is not measured', () => {
-    const tree = JSON.stringify(
-      ogTree(data({ segments: [{ share: 1, color: '#e6e6e2', opacity: 1 }], dataQuality: 'partial' })),
-    );
-    expect(tree).toContain('dashed');
-  });
-
-  it('draws the bar with a dashed border when dataQuality is unknown, the same as a frozen historical or superseded reading stamped by scripts/reexplain.ts (technical debt from the 25.09 audit follow-up)', () => {
-    const tree = JSON.stringify(
-      ogTree(data({ segments: [{ share: 1, color: '#e6e6e2', opacity: 1 }], dataQuality: 'unknown' })),
-    );
-    expect(tree).toContain('dashed');
-  });
-
-  it('draws the bar with a solid border when the read is measured', () => {
-    const tree = JSON.stringify(
-      ogTree(data({ segments: [{ share: 1, color: '#e6e6e2', opacity: 1 }], dataQuality: 'measured' })),
-    );
-    expect(tree).not.toContain('dashed');
   });
 });

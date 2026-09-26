@@ -13,13 +13,45 @@
 import satori from 'satori';
 import { Resvg, initWasm } from '@resvg/resvg-wasm';
 import type { OgCardData } from './ogCard';
+import { constellationSvg } from './constellation';
 
 export const OG_WIDTH = 1200;
 export const OG_HEIGHT = 630;
 
-const WHITE = '#ffffff';
-const INK = '#111111';
-const FAINT = '#767676';
+// The site is dark-only since Task 1 of the 26.09 redesign, and this picture
+// now embeds the constellation diagram (Task 6), which is drawn for a dark
+// backdrop (its own dot glow and ghost colors read as intended only against
+// something close to #0c0e13, the same panel tone the live page's card
+// sits on) - so this whole picture went dark too, not only the diagram
+// inside it.
+const BG = '#0c0e13';
+const FG = '#e6e8ee';
+const FAINT = '#8b90a0';
+
+/** A chunk of the 1200x630 card, inset by the same 64px padding the rest of
+ * this tree uses on every side - full width minus that padding. Not as tall
+ * as Task 3's on-page diagram (260px): this card also carries a badge, a
+ * three-line summary and a provenance line above it, and a footer below,
+ * inside a fixed 630px height with no scrolling - checked against all four
+ * real featured readings by rendering them and looking, not only by
+ * arithmetic (this task's own report has what that looked like). */
+const CONSTELLATION_WIDTH = OG_WIDTH - 128;
+const CONSTELLATION_HEIGHT = 200;
+const CONSTELLATION_MARGIN_TOP = 16;
+
+/** satori's flex layout did not reliably reserve enough vertical space for
+ * a real (not just worst-case) multi-line summary before this fix existed:
+ * a 128-character summary - well under clip()'s own 210-character cap -
+ * already wrapped to three lines and visually overlapped the provenance
+ * line below it in this task's own rendered-and-looked-at output. A fixed
+ * height plus `overflow: hidden` makes the space this box reserves in the
+ * flex column deterministic regardless of how many lines the text actually
+ * wraps to, so a sibling below it is never overlapped - the same fix this
+ * file's own `clip()` doc comment already named ("`lineClamp` keeps the box
+ * a fixed height") without actually applying it anywhere. */
+const SUMMARY_LINE_HEIGHT = 52; // fontSize 40 * lineHeight 1.3
+const SUMMARY_MAX_LINES = 3;
+const PROVENANCE_LINE_HEIGHT = 30; // fontSize 22 at its default line height
 
 /** A cap on the character count satori is asked to lay out. `lineClamp`
  * keeps the box a fixed height; this keeps satori from doing flow layout
@@ -28,89 +60,86 @@ function clip(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
 }
 
-/** A plain object tree - satori's own documented JSX-free API - so this
- * file has no dependency on React. */
-export function ogTree(d: OgCardData): object {
-  // A read that never finished, or a matching holding with no price, can
-  // leave every segment looking complete - Task 3's own reproduction has a
-  // zero residual under a partial read. The border is the one cue this
-  // picture can give that the text elsewhere on it does not already carry
-  // (25.09 audit, A03 "Готово, когда").
-  const uncertain = d.dataQuality !== 'measured';
-  const bar = d.segments && {
+/**
+ * The constellation, as a satori `<img>` node with a base64 SVG data URI
+ * `src` - the embedding technique this task's own spike (Step 4) proved
+ * renders correctly through the real satori+resvg pipeline before any of
+ * this function was written. The big stat number and its label sit in a
+ * second, absolutely-positioned div over the same box - satori supports
+ * `position: 'absolute'` within a flex tree, also confirmed in that spike -
+ * matching the on-page centered-stat treatment (Task 2/3) in spirit, not
+ * pixel-for-pixel.
+ *
+ * Returns null exactly when OgCardData.constellation is null - "nothing
+ * open right now", the one case with no diagram to draw at all.
+ */
+function constellationBlockFor(d: OgCardData): object | null {
+  if (!d.constellation || !d.constellationStat) return null;
+  const svg = constellationSvg(d.constellation, CONSTELLATION_WIDTH, CONSTELLATION_HEIGHT);
+  const dataUri = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+  return {
     type: 'div',
     props: {
       style: {
         display: 'flex',
-        width: d.elsewhere ? '58%' : '100%',
-        height: 28,
-        borderRadius: 4,
+        position: 'relative',
+        width: `${CONSTELLATION_WIDTH}px`,
+        height: `${CONSTELLATION_HEIGHT}px`,
+        marginTop: CONSTELLATION_MARGIN_TOP,
+        borderRadius: 8,
         overflow: 'hidden',
-        border: uncertain ? `2px dashed ${FAINT}` : '1px solid #d9d9d6',
       },
-      children: d.segments.map((seg) => ({
-        type: 'div',
-        props: {
-          style: {
-            display: 'flex',
-            width: `${Math.max(0.6, seg.share * 100)}%`,
-            height: '100%',
-            backgroundColor: seg.color,
-            opacity: seg.opacity,
+      children: [
+        {
+          type: 'img',
+          props: {
+            src: dataUri,
+            width: CONSTELLATION_WIDTH,
+            height: CONSTELLATION_HEIGHT,
+            style: { position: 'absolute', left: '0px', top: '0px' },
           },
         },
-      })),
-    },
-  };
-
-  // What the funders hold goes beside the bar on a dashed line, never inside
-  // it - the same drawing as the page's and the downloaded picture's, so the
-  // picture that travels with a link does not leave the card's one
-  // distinction to the sentence alone.
-  const elsewhere = bar && d.elsewhere && [
-    {
-      type: 'div',
-      props: { style: { display: 'flex', width: '6%', height: 0, margin: '0 10px', borderTop: `2px dashed ${FAINT}` } },
-    },
-    {
-      type: 'div',
-      props: {
-        style: {
-          display: 'flex',
-          flexGrow: 1,
-          height: 28,
-          alignItems: 'center',
-          paddingLeft: 10,
-          borderRadius: 4,
-          border: `2px dashed ${FAINT}`,
-          color: INK,
-          fontSize: 20,
-          fontWeight: 700,
-        },
-        children: d.elsewhere.amount,
-      },
-    },
-  ];
-  const barRow = bar && {
-    type: 'div',
-    props: {
-      style: { display: 'flex', flexDirection: 'column', width: '100%', marginTop: 30 },
-      children: [
-        { type: 'div', props: { style: { display: 'flex', alignItems: 'center', width: '100%' }, children: [bar, ...(elsewhere || [])] } },
-        ...(d.elsewhere
-          ? [
+        {
+          type: 'div',
+          props: {
+            style: {
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'absolute',
+              left: '0px',
+              top: '0px',
+              width: `${CONSTELLATION_WIDTH}px`,
+              height: `${CONSTELLATION_HEIGHT}px`,
+            },
+            children: [
               {
                 type: 'div',
                 props: {
-                  style: { display: 'flex', justifyContent: 'flex-end', color: FAINT, fontSize: 18, marginTop: 6 },
-                  children: d.elsewhere.caption,
+                  style: { display: 'flex', color: FG, fontSize: 60, fontWeight: 700, letterSpacing: '-2px' },
+                  children: d.constellationStat.value,
                 },
               },
-            ]
-          : []),
+              {
+                type: 'div',
+                props: {
+                  style: { display: 'flex', color: FAINT, fontSize: 18, marginTop: 8, letterSpacing: '2px' },
+                  children: d.constellationStat.label.toUpperCase(),
+                },
+              },
+            ],
+          },
+        },
       ],
     },
   };
+}
+
+/** A plain object tree - satori's own documented JSX-free API - so this
+ * file has no dependency on React. */
+export function ogTree(d: OgCardData): object {
+  const constellationBlock = constellationBlockFor(d);
 
   return {
     type: 'div',
@@ -120,7 +149,7 @@ export function ogTree(d: OgCardData): object {
         flexDirection: 'column',
         width: `${OG_WIDTH}px`,
         height: `${OG_HEIGHT}px`,
-        backgroundColor: WHITE,
+        backgroundColor: BG,
         padding: '64px',
         fontFamily: 'Inter',
       },
@@ -137,10 +166,12 @@ export function ogTree(d: OgCardData): object {
           props: {
             style: {
               display: 'flex',
-              color: INK,
+              color: FG,
               fontSize: 40,
               fontWeight: 700,
               lineHeight: 1.3,
+              height: `${SUMMARY_LINE_HEIGHT * SUMMARY_MAX_LINES}px`,
+              overflow: 'hidden',
             },
             children: clip(d.summary, 210),
           },
@@ -155,13 +186,20 @@ export function ogTree(d: OgCardData): object {
               {
                 type: 'div',
                 props: {
-                  style: { display: 'flex', color: FAINT, fontSize: 22, marginTop: 14 },
+                  style: { display: 'flex', color: FAINT, fontSize: 22, marginTop: 14, height: `${PROVENANCE_LINE_HEIGHT}px`, overflow: 'hidden' },
+                  // Kept at 180 (unchanged): a tighter cap would keep most real
+                  // provenance+limitText combinations to a single line, but this
+                  // project's own history (23.09/25.09 audits) consistently favors
+                  // never dropping a reading's caveat over avoiding an occasional
+                  // silent second-line clip - the height+overflow fix above already
+                  // removes the actual bug (overlap with the constellation below),
+                  // which is what this line's height was originally missing.
                   children: clip(d.limitText ? `${d.provenance} · ${d.limitText}` : d.provenance, 180),
                 },
               },
             ]
           : []),
-        ...(barRow ? [barRow] : []),
+        ...(constellationBlock ? [constellationBlock] : []),
         {
           type: 'div',
           props: {

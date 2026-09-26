@@ -4,16 +4,19 @@ const EXPLORERS = {
   ethereum: 'https://etherscan.io/address/',
 };
 const VERDICTS = {
-  book: { label: 'Book', cls: 'book', headline: 'This is a market-making book.', accent: '#0c447c' },
-  hedged: { label: 'Hedged', cls: 'hedged', headline: 'The offsetting asset is in this same account.', accent: '#27500a' },
-  looks_like_a_bet: { label: 'Looks like a bet', cls: 'bet', headline: 'This looks like a real bet.', accent: '#633806' },
-  unknown: { label: 'Unknown', cls: 'unknown', headline: 'Not enough evidence either way.', accent: '#444441' },
+  book: { label: 'Book', cls: 'book', headline: 'This is a market-making book.', accent: '#7fa2ff' },
+  hedged: { label: 'Hedged', cls: 'hedged', headline: 'The offsetting asset is in this same account.', accent: '#4fe0b0' },
+  looks_like_a_bet: { label: 'Looks like a bet', cls: 'bet', headline: 'This looks like a real bet.', accent: '#f2b35c' },
+  unknown: { label: 'Unknown', cls: 'unknown', headline: 'Not enough evidence either way.', accent: '#a3a8b6' },
 };
-// The on-page SVG diagram sits on the page's own background and must follow
-// dark mode; the canvas share card and the server OG picture both render on
-// a fixed white background and must not - so they keep VERDICTS[...].accent
-// (a concrete color) untouched, and only this map, reused from the badge's
-// own already-theme-aware tokens, feeds the live diagram (25.09 audit, A08).
+// The site is dark-only since Task 1 of the 26.09 redesign, so there is no
+// longer a second, theme-aware palette for the canvas share card and the
+// server OG picture to deliberately diverge from - all three surfaces (live
+// page, share canvas, OG picture) now read the same four fixed hex values,
+// the ones Task 1 also put in :root as --book-fg/--hedged-fg/--bet-fg/
+// --unknown-fg. Kept as concrete hex here rather than a CSS var because both
+// fixed-background renderers (this canvas, and the OG picture's satori
+// tree) have no CSS cascade to read a var() from.
 const SVG_ACCENT_VAR = {
   book: '--book-fg', hedged: '--hedged-fg', looks_like_a_bet: '--bet-fg', unknown: '--unknown-fg',
 };
@@ -1435,138 +1438,62 @@ function cardShare(d, kind) {
 }
 
 /**
- * The same shape the page draws, on the image that actually travels.
- *
- * It replaces the four evidence columns rather than joining them: for a
- * short, the bar says everything those columns said about coverage and says
- * the one thing they could not - that the matching assets are somebody
- * else's - so printing both would be printing it twice in a smaller font.
+ * The constellation, drawn onto this same fixed-size canvas by way of the
+ * real drawConstellation from Task 2 - not a second, cheaper copy of it.
+ * drawConstellation measures its target through clientWidth/clientHeight,
+ * which only resolve on an element that is actually laid out; card-canvas
+ * itself stays `hidden` for the whole of drawCard() (display:none, so its
+ * own clientWidth reads 0 - the exact trap renderBreakdown's own history
+ * already describes hitting once, on #breakdown-svg, before #card was
+ * unhidden first). A scratch canvas, sized in CSS pixels to exactly the
+ * region this card wants to fill and positioned off the visible page rather
+ * than display:none (which lays out at zero size the same as hidden), gives
+ * drawConstellation something real to measure - its result is then copied
+ * onto card-canvas with one drawImage call, scaled to fit regardless of the
+ * scratch canvas's own devicePixelRatio-scaled backing store, and the
+ * scratch canvas is removed again before this function returns.
  */
-function drawBreakdown(ctx, b, v, W) {
+function drawCardConstellation(ctx, d, x, y, w, h) {
+  const scratch = document.createElement('canvas');
+  scratch.style.position = 'fixed';
+  scratch.style.left = '-99999px';
+  scratch.style.top = '0px';
+  scratch.style.width = w + 'px';
+  scratch.style.height = h + 'px';
+  document.body.append(scratch);
+  const inputs = constellationInputsFor(d);
+  drawConstellation(scratch, { ...inputs, mini: false });
+  ctx.drawImage(scratch, x, y, w, h);
+  scratch.remove();
+
   const font = (weight, size) => weight + ' ' + size + 'px -apple-system, system-ui, "Segoe UI", sans-serif';
-  const hasElsewhere = !!b.elsewhere;
-  const left = 56;
-  const barY = 386;
-  const barH = 34;
-  const barW = (hasElsewhere ? 0.58 : 1) * (W - 112);
-
-  ctx.fillStyle = '#111111';
-  ctx.font = font(700, 20);
-  ctx.fillText(fmtUsd(b.headlineUsd) + ' ' + b.coin + ' ' + b.side, left, barY - 14);
-
-  const fills = {
-    covered: { fill: v.accent, alpha: 1 },
-    unverified: { fill: v.accent, alpha: 0.35 },
-    residual: { fill: '#e6e6e2', alpha: 1 },
-    // Missing until 25.09: SegmentKind has carried 'not-checked' since the
-    // 23.09 audit (L12), and it is real, reachable data - every currently
-    // live "Least covered shorts" row Task 1 found produces one. Downloading
-    // or copying the image for any of those cards threw here (25.09 audit,
-    // found while fixing A03).
-    'not-checked': { fill: '#e6e6e2', alpha: 0.5 },
-  };
-  const labels = {
-    covered: 'covered by this address',
-    unverified: 'could not identify',
-    residual: 'nothing found against it',
-    'not-checked': 'not read in full',
-  };
-
-  let x = left;
-  for (const seg of b.segments) {
-    const w = Math.max(2, seg.share * barW);
-    ctx.globalAlpha = fills[seg.kind].alpha;
-    ctx.fillStyle = fills[seg.kind].fill;
-    ctx.fillRect(x, barY, w, barH);
-    ctx.globalAlpha = 1;
-    ctx.strokeStyle = '#d9d9d6';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x + 0.5, barY + 0.5, w - 1, barH - 1);
-    x += w;
-  }
-
-  b.segments.forEach((seg, i) => {
-    const ly = barY + barH + 26 + i * 24;
-    ctx.globalAlpha = fills[seg.kind].alpha;
-    ctx.fillStyle = fills[seg.kind].fill;
-    ctx.fillRect(left, ly - 11, 12, 12);
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = '#555555';
-    ctx.font = font(400, 18);
-    ctx.fillText(fmtUsd(seg.usd) + ' (' + fmtPct(seg.share) + ') ' + labels[seg.kind], left + 22, ly);
-  });
-
-  let legendY = barY + barH + 26 + b.segments.length * 24;
-  if (b.excessUsd > 0) {
-    ctx.fillStyle = '#555555';
-    ctx.font = font(400, 18);
-    ctx.fillText('and ' + fmtUsd(b.excessUsd) + ' more held beyond the position: net long, not neutral', left, legendY);
-    legendY += 24;
-  }
-  if (b.dataQuality && b.dataQuality !== 'measured') {
-    ctx.save();
-    ctx.setLineDash([5, 5]);
-    ctx.strokeStyle = '#8f8f8f';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(left + 1, barY + 1, barW - 2, barH - 2);
-    ctx.restore();
-    ctx.fillStyle = '#555555';
-    ctx.font = font(400, 18);
-    ctx.fillText(
-      b.dataQuality === 'unpriced'
-        ? 'A matching holding has no price available, so it is not counted above.'
-        : b.dataQuality === 'unverified'
-          ? 'A material share is matched to holdings this tool could not identify.'
-          : "This address's holdings were not read in full - the true cover could be higher.",
-      left,
-      legendY,
-    );
-  }
-
-  if (hasElsewhere) {
-    const ex = left + barW + 40;
-    const ew = W - 56 - ex;
-    ctx.strokeStyle = '#8f8f8f';
-    ctx.setLineDash([5, 5]);
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(left + barW + 4, barY + barH / 2);
-    ctx.lineTo(ex - 6, barY + barH / 2);
-    ctx.stroke();
-    ctx.strokeRect(ex, barY, ew, barH);
-    ctx.setLineDash([]);
-
-    ctx.fillStyle = '#767676';
-    ctx.font = font(400, 16);
-    ctx.fillText('held elsewhere', ex, barY - 14);
-    ctx.fillStyle = '#111111';
-    ctx.font = font(700, 20);
-    ctx.fillText(clipText(ctx, fmtUsd(b.elsewhere.usd), ew - 16), ex + 8, barY + barH / 2 + 7);
-    ctx.fillStyle = '#555555';
-    ctx.font = font(400, 16);
-    ctx.fillText(
-      clipText(ctx, 'in ' + plural(b.elsewhere.wallets, 'wallet') + ' that funded this account', ew),
-      ex,
-      barY + barH + 26,
-    );
-    ctx.fillText(clipText(ctx, 'ownership unverified, not counted', ew), ex, barY + barH + 48);
-  }
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#e6e8ee';
+  ctx.font = font(700, 48);
+  ctx.fillText(constellationStatFor(d, inputs), x + w / 2, y + h / 2 - 4);
+  ctx.fillStyle = '#8b90a0';
+  ctx.font = font(400, 15);
+  ctx.fillText(constellationStatLabelFor(d).toUpperCase(), x + w / 2, y + h / 2 + 22);
+  ctx.textAlign = 'left';
 }
 
-/** The older layout, for a card with no bar to draw: a long, a book, an
- * account with nothing open. */
+/** The older layout, for a card with no diagram to draw. Only reached when
+ * none of drawCard's own isBook/breakdown-applies-with-segments/isLong hold
+ * - between them (the same three conditions renderBreakdown itself checks)
+ * every account with any open position at all gets a constellation instead,
+ * so this is effectively just "nothing open right now". */
 function drawEvidenceColumns(ctx, items, W, font) {
   const colW = (W - 112) / 4;
   items.forEach((item, i) => {
     const x = 56 + i * colW;
     const room = colW - 16;
-    ctx.fillStyle = '#888888';
+    ctx.fillStyle = '#8b90a0';
     ctx.font = font(400, 18);
     ctx.fillText(clipText(ctx, item.label, room), x, 432);
-    ctx.fillStyle = '#111111';
+    ctx.fillStyle = '#e6e8ee';
     ctx.font = font(700, item.value.length > 14 ? 24 : 30);
     ctx.fillText(clipText(ctx, item.value, room), x, 470);
-    ctx.fillStyle = '#aaaaaa';
+    ctx.fillStyle = '#5a5f6d';
     ctx.font = font(400, 15);
     ctx.fillText(clipText(ctx, item.source, room), x, 496);
   });
@@ -1580,7 +1507,7 @@ function drawCard() {
   const v = verdictOf(d);
   const font = (weight, size) => weight + ' ' + size + 'px -apple-system, system-ui, "Segoe UI", sans-serif';
 
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = '#0c0e13';
   ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = v.accent;
   ctx.fillRect(0, 0, 12, H);
@@ -1589,36 +1516,42 @@ function drawCard() {
   ctx.font = font(700, 28);
   ctx.fillText(badgeText(d).toUpperCase(), 56, 84);
 
-  ctx.fillStyle = '#111111';
+  ctx.fillStyle = '#e6e8ee';
   ctx.font = font(700, 44);
   wrapText(ctx, headlineFor(d), 56, 146, W - 112, 52, 2);
 
   const share = cardShare(d, (d && d.__kind) || 'live');
-  const b = d.breakdown && d.breakdown.applies && d.breakdown.segments.length ? d.breakdown : null;
+  // Mirrors renderBreakdown's own gate (Task 2) exactly, so the picture that
+  // travels never disagrees with the page it was copied from about whether
+  // there is a diagram to show at all.
+  const isBook = d.verdict.verdict === 'book' && !!d.orders;
+  const b = d.breakdown;
+  const isLong = !isBook && (!b || !b.applies) && d.positions.nPositions > 0 && d.positions.headlineSide === 'long';
+  const showConstellation = isBook || (b && b.applies && b.segments.length > 0) || isLong;
 
-  ctx.fillStyle = '#444444';
+  ctx.fillStyle = '#8b90a0';
   ctx.font = font(400, 26);
-  wrapText(ctx, d.summary || '', 56, 250, W - 112, 36, b ? 3 : 4);
+  wrapText(ctx, d.summary || '', 56, 250, W - 112, 36, showConstellation ? 3 : 4);
 
-  if (b) {
-    drawBreakdown(ctx, b, v, W);
+  if (showConstellation) {
+    drawCardConstellation(ctx, d, 56, 386, W - 112, 130);
   } else {
     drawEvidenceColumns(ctx, share.evidence, W, font);
   }
 
   // A badge alone reads as a verdict with nothing behind it. What the check
   // could not read belongs on the picture, not only on the page it came from.
-  ctx.fillStyle = '#767676';
+  ctx.fillStyle = '#8b90a0';
   ctx.font = font(400, 18);
   ctx.fillText('What this reading could not cover', 56, 532);
-  ctx.fillStyle = '#555555';
+  ctx.fillStyle = '#8b90a0';
   ctx.font = font(400, 17);
   const limitsText = share.limits.join(' ') + (share.more > 0 ? ' (+' + share.more + ' more on the page)' : '');
   wrapText(ctx, limitsText, 56, 556, W - 112, 23, 3);
 
   // When and what of, printed on the image rather than left to the post it
   // is pasted into, plus the link back to this exact reading.
-  ctx.fillStyle = '#999999';
+  ctx.fillStyle = '#5a5f6d';
   ctx.font = font(400, 17);
   ctx.fillText(clipText(ctx, 'Bet or Book · ' + shortAddr(d.address) + ' · ' + share.provenance, W - 380), 56, H - 46);
   if (share.link) ctx.fillText(clipText(ctx, share.link, W - 380), 56, H - 22);

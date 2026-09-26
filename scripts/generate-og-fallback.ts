@@ -10,14 +10,20 @@ import type { OgCardData } from '../src/engine/ogCard';
 
 const data: OgCardData = {
   badgeText: 'Bet or Book',
-  accent: '#0c447c',
+  // The same fixed book-blue web/app.js's VERDICTS.book.accent and
+  // src/engine/ogCard.ts's own ACCENT.book now use (26.09 redesign, Task 6)
+  // - this generic card is not about any one verdict, so it keeps the same
+  // brand-ish slot the old book-blue held before the palette went dark.
+  accent: '#7fa2ff',
   summary: 'Paste a Hyperliquid address. Is that whale position a bet, a hedge, or a market maker’s book?',
-  segments: null,
+  // No reading behind this card, so there is no position to draw a
+  // constellation for either.
+  constellation: null,
+  constellationStat: null,
   footerLeft: 'bet-or-book.sofiaseremeteva.workers.dev',
   // No reading behind this card, so no date and no caveat to give.
   provenance: '',
   limitText: null,
-  elsewhere: null,
   // No breakdown at all, same as a card with nothing left to show a caveat
   // about - see OgCardData.dataQuality (25.09 audit, A03/A05 follow-up).
   dataQuality: 'measured',
