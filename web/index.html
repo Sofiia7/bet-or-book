@@ -137,10 +137,19 @@
   .queue-row.active { background: rgba(140,170,255,.05); }
   .queue-rank { color: var(--faint); font-size: 12px; }
   .queue-thumb { display: block; width: 180px; height: 38px; }
-  .queue-pos { font-size: 13px; overflow-wrap: anywhere; }
+  .queue-pos { font-size: 13px; overflow-wrap: break-word; }
   @media (max-width: 480px) {
-    .queue-row { grid-template-columns: 20px 110px minmax(0,1fr) auto; gap: 6px; }
-    .queue-thumb { width: 110px; }
+    /* The badge is a fixed-height pill (Task 3) - it does not wrap
+       gracefully inside a cramped fourth column, and an "auto" column sized
+       to its longest reading ("Unknown - assets sit with funders") was
+       squeezing the title column down to nothing for every row. Its own
+       full-width row below the title, instead, costs no horizontal space
+       from anything else. */
+    .queue-row { grid-template-columns: 20px 96px minmax(0,1fr); grid-template-areas: "rank thumb pos" "rank thumb badge"; gap: 4px 6px; align-items: start; }
+    .queue-rank { grid-area: rank; }
+    .queue-thumb { grid-area: thumb; width: 96px; }
+    .queue-pos { grid-area: pos; }
+    .queue-row .badge { grid-area: badge; justify-self: start; }
   }
 
   .guess { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 13px; }
