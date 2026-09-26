@@ -2,7 +2,7 @@
 
 Updated for the landing page, constellation diagram, Full analysis and Explore on 26 September 2026.
 
-Use the deployed site: https://bet-or-book.sofiaseremeteva.workers.dev
+Use the deployed site: https://bet-or-book.trade
 
 Before recording, hide notifications and credentials. If operator access is needed, configure /#operator before starting the recording. Copy this example address: `0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36`.
 
@@ -29,6 +29,6 @@ Attach the recording. This draft avoids stale dollar amounts:
 >
 > Built with @nansen_ai
 > https://github.com/Sofiia7/bet-or-book
-> https://bet-or-book.sofiaseremeteva.workers.dev
+> https://bet-or-book.trade
 
 After posting, submit the X post URL, public GitHub URL and your email through https://nansen-ai.typeform.com/meridian-submit before 27 September 2026, 23:59 UTC.

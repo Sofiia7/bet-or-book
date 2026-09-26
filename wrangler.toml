@@ -13,6 +13,10 @@ rules = [
   { type = "Data", globs = ["**/*.woff", "**/*.png"], fallthrough = false },
 ]
 
+[[routes]]
+pattern = "bet-or-book.trade"
+custom_domain = true
+
 # Results and the per-day call counts the ledger reports. Not the spend cap:
 # KV is eventually consistent and its read-modify-write is not a transaction.
 [[kv_namespaces]]
