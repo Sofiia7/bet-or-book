@@ -24,13 +24,6 @@ function svgAccentOf(d) {
   return 'var(' + (SVG_ACCENT_VAR[d.verdict.verdict] || SVG_ACCENT_VAR.unknown) + ')';
 }
 const PAGE_SIZE = 25;
-// The reading a visitor with nothing pasted yet sees first: the funded-short
-// demonstration reading, because its picture is the one that needs no
-// explanation (a big bar, an empty solid segment, and $395.8M held in a
-// dashed box beside it that "does not count"). Free to open - it is one of
-// the four bundled chips, opened the same way a shared link would (24.09
-// audit, U01).
-const FLAGSHIP_ID = '34stjd0gtgkz1';
 
 const $ = (id) => document.getElementById(id);
 let current = null;
@@ -411,6 +404,10 @@ function setStatus(text, isError) {
   const s = $('status');
   s.textContent = text;
   s.className = 'status' + (isError ? ' error' : '');
+  const exploreStatus = $('explore-reading-status');
+  exploreStatus.textContent = text;
+  exploreStatus.className = s.className;
+  exploreStatus.hidden = !text;
 }
 
 /**
@@ -572,6 +569,8 @@ function kindOf(opts) {
 }
 
 function renderResult(d, opts) {
+  document.body.classList.remove('exploring');
+  $('gallery').hidden = true;
   current = d;
   current.__kind = kindOf(opts);
   // Unhidden first, before anything below measures a box inside it: with
@@ -581,9 +580,11 @@ function renderResult(d, opts) {
   // emulation, wrong on a real one (23.09 audit, U01). Every update below
   // runs synchronously in this same task, so there is nothing to flash.
   $('card').hidden = false;
+  document.body.classList.add('has-reading');
+  $('reading-nav').hidden = false;
   // A new card starts folded: what the last one had open says nothing about
   // what the reader wants from this one.
-  for (const id of ['share', 'nansen', 'decided', 'details']) $(id).open = false;
+  for (const id of ['share', 'full-analysis']) $(id).open = false;
   const v = verdictOf(d);
   $('guess').hidden = true;
   clearTimeout(guessRevealTimer);
@@ -630,8 +631,15 @@ function renderResult(d, opts) {
   // simply has neither.
   $('open-question').hidden = !d.openQuestion;
   $('open-question').replaceChildren(el('strong', null, 'Still open: '), d.openQuestion || '');
+  // Keep the universal limit visible unless the open question already
+  // covers all three blind spots. The full analysis then carries it.
+  const question = (d.openQuestion || '').toLowerCase();
+  const repeatsLimit = /exchange/.test(question) && /over.the.counter|otc/.test(question) && /wallet/.test(question) && /link/.test(question);
+  $('standing-limit').hidden = repeatsLimit;
+  $('analysis-limit').hidden = !repeatsLimit;
   const nz = d.nansen;
   $('nansen').hidden = !nz;
+  $('nansen-preview').hidden = !nz;
   if (nz) {
     $('nansen-lead').textContent = nz.lead;
     $('nansen-list').replaceChildren(...nz.items.map((text) => el('li', null, text)));
@@ -699,6 +707,10 @@ function renderResult(d, opts) {
       source: 'Nansen · ownership unverified',
       decisive: true,
     });
+  }
+  for (const item of (d.evidence || [])) {
+    if (heroTiles.length >= 3) break;
+    if (!heroTiles.some((shown) => shown.label === item.label)) heroTiles.push(item);
   }
   $('decisive').hidden = heroTiles.length === 0;
   $('decisive').replaceChildren(...heroTiles.map(tile));
@@ -820,7 +832,7 @@ function takeOver() {
  * wrong one. */
 function showLink(id) {
   const next = id ? '/?s=' + encodeURIComponent(id) : '/';
-  if (window.location.pathname + window.location.search !== next) {
+  if (window.location.pathname + window.location.search + window.location.hash !== next) {
     window.history.replaceState(null, '', next);
   }
 }
@@ -828,7 +840,7 @@ function showLink(id) {
 function setBusy(on) {
   busy = on;
   $('check').disabled = on;
-  $('check').textContent = on ? 'Checking...' : 'Check';
+  $('check').textContent = on ? 'Checking...' : 'Check position';
   $('check-live').disabled = on;
 }
 
@@ -1088,8 +1100,80 @@ $('check-live').addEventListener('click', () => {
   }
 });
 $('check-another').addEventListener('click', () => {
+  $('address').value = '';
   $('address').focus({ preventScroll: true });
   $('address').scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
+function showExamples() {
+  document.body.classList.remove('exploring');
+  $('gallery').hidden = true;
+  // Supersede a pending request so it cannot reopen a card after going back.
+  requestSeq++;
+  clearTimeout(guessRevealTimer);
+  $('guess').hidden = true;
+  setBusy(false);
+  current = null;
+  $('card').hidden = true;
+  $('reading-nav').hidden = true;
+  document.body.classList.remove('has-reading');
+  $('address').value = '';
+  setStatus('');
+  showLink(null);
+  renderPlayer();
+}
+$('back-examples').addEventListener('click', () => {
+  showExamples();
+  $('examples').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  $('player-queue').querySelector('button')?.focus({ preventScroll: true });
+});
+$('nav-examples').addEventListener('click', (event) => {
+  event.preventDefault();
+  showExamples();
+  $('examples').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+function openBoards(event) {
+  if (event) event.preventDefault();
+  takeOver();
+  clearTimeout(guessRevealTimer);
+  $('guess').hidden = true;
+  document.body.classList.add('exploring');
+  $('gallery').hidden = false;
+  $('explore-return').hidden = !current;
+  setStatus('');
+  if (window.location.hash !== '#explore') window.history.pushState(null, '', '/#explore');
+  window.scrollTo(0, 0);
+  $('explore-title').focus({ preventScroll: true });
+}
+$('nav-boards').addEventListener('click', openBoards);
+$('reading-boards').addEventListener('click', openBoards);
+$('explore-link').addEventListener('click', openBoards);
+$('search-explore').addEventListener('click', openBoards);
+$('explore-home').addEventListener('click', () => {
+  showExamples();
+  window.scrollTo(0, 0);
+  $('address').focus({ preventScroll: true });
+});
+$('explore-return').addEventListener('click', () => {
+  if (!current) return;
+  renderResult(current, { kind: current.__kind });
+  showLink(current.snapshotId && current.snapshotSaved !== false ? current.snapshotId : null);
+  $('card').scrollIntoView({ block: 'start' });
+  $('card').focus({ preventScroll: true });
+});
+function selectExploreView(all) {
+  $('boards-fold').hidden = all;
+  $('all-readings').hidden = !all;
+  $('explore-ranked').setAttribute('aria-pressed', String(!all));
+  $('explore-all').setAttribute('aria-pressed', String(all));
+}
+$('explore-ranked').addEventListener('click', () => selectExploreView(false));
+$('explore-all').addEventListener('click', () => selectExploreView(true));
+window.addEventListener('popstate', () => {
+  if (window.location.hash === '#explore') return openBoards();
+  const id = new URLSearchParams(window.location.search).get('s');
+  if (id) openSnapshot(id);
+  else showExamples();
 });
 
 $('guess-chips').addEventListener('click', (e) => {
@@ -1099,118 +1183,43 @@ $('guess-chips').addEventListener('click', (e) => {
   for (const b of $('guess-chips').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b === btn));
 });
 
-// A visitor with no address in hand had nothing to click above the fold
-// until the gallery lower down the page (audit U02). The player strip
-// (26.09 redesign, Task 4) is what that visitor sees now: a static
-// spotlight on gallery.featured's flagship reading, with the four of them
-// listed below it as a queue. A queue row's own click calls openSnapshot()
-// directly - the exact same call an old example chip made - so opening one
-// is still free, and exactly what the reader would see if they had pasted
-// that address themselves. playerIdx only ever names the flagship one now
-// (set once in loadGallery); nothing still changes it after that (removed
-// after the redesign shipped: prev/next and the segment bar duplicated what
-// clicking a queue row already did, in more steps, not fewer).
-let playerIdx = 0;
+// The landing examples open the same saved readings as shared links.
 
 function playerList() {
   return (gallery && gallery.featured) || [];
 }
 
-/**
- * drawConstellation/constellationInputsFor (Task 2) read a full
- * CheckResponse - d.breakdown, d.hedge.hedgeRatio, d.orders.*. A
- * gallery.featured entry is GalleryRow-shaped instead (src/gallery.ts): a
- * flatter record with no breakdown/hedge/orders sub-objects at all, built
- * for a list row rather than a full card. Calling constellationInputsFor
- * directly on one is wrong, not merely untyped: d.breakdown is always
- * undefined on a GalleryRow, so its isLong check (`!b || !b.applies`) reads
- * true for every verdict except book - confirmed by tracing hedged
- * (00dzwn0p8gh67, hedgeRatio 0.989) and unknown/funders (34stjd0gtgkz1,
- * breakdown.elsewhere truthy) through the real function by hand, both of
- * which would draw as a flat, uncovered bet instead of their real shape.
- *
- * This mirrors constellationInputsFor's own four branches exactly, sourced
- * from GalleryRow's real (flattened) fields instead of guessing a shape:
- *  - `breakdown.applies` is not a stored field on a GalleryRow, but
- *    exposureBreakdown (src/engine/breakdown.ts) computes it as nothing
- *    more than `nPositions > 0 && headlineSide === 'short' && headlineUsd
- *    > 0` - all three already on `positions` - so it is re-derived here
- *    rather than read.
- *  - `hedge.hedgeRatio` and `orders.headlineTwoSidedNotionalUsd` ARE on a
- *    GalleryRow, just flattened onto the row itself (`row.hedgeRatio`,
- *    `row.headlineTwoSidedNotionalUsd`) instead of nested.
- *  - `breakdown.elsewhere` has no equivalent field at all on a GalleryRow.
- *    `badgeQualifier` (src/engine/reasons.ts) stands in for it: it reads
- *    exactly 'assets sit with funders' when the verdict's own first reason
- *    is linked_exposure_unverified, which is exactly the one reason that
- *    ever sets breakdown.elsewhere - confirmed against all 4 real featured
- *    readings in data/featured.json (only 34stjd0gtgkz1 has elsewhere set,
- *    and it is the only one of the 4 with that reason and that qualifier).
- *    Known, deliberately deferred gap, the same shape as
- *    constellationInputsFor's own dataQuality gap (Task 2): a hedged or
- *    book verdict that also happens to carry a funder-linked holding,
- *    without linked_exposure_unverified leading its reasons, would show no
- *    ghost mirror here even though the real #card's diagram (built from the
- *    full CheckResponse, not this row) would show one. None of today's 4
- *    featured readings hit this; left for later rather than fetching every
- *    row's full snapshot just to draw a thumbnail.
- */
-function constellationInputsForRow(row) {
-  const seed = seedFromAddress(row.address);
-  const p = row.positions;
-  const applies = p.nPositions > 0 && p.headlineSide === 'short' && p.headlineNotionalUsd > 0;
-  if (row.verdict.verdict === 'book') {
-    const headlineUsd = p.headlineNotionalUsd || 0;
-    const matched = row.headlineTwoSidedNotionalUsd || 0;
-    return { seed, coverage: headlineUsd > 0 ? Math.min(1, matched / headlineUsd) : 0, ghost: false, bookDensity: true };
-  }
-  if (!applies) {
-    return { seed, coverage: 0, ghost: false, bookDensity: false };
-  }
-  const ratio = typeof row.hedgeRatio === 'number' ? row.hedgeRatio : 0;
-  const hasElsewhere = row.badgeQualifier === 'assets sit with funders';
-  return { seed, coverage: Math.max(0, Math.min(1, ratio)), ghost: hasElsewhere, bookDensity: false };
-}
-
 function renderPlayer() {
   const list = playerList();
-  $('player').hidden = list.length === 0;
-  $('player-queue').hidden = list.length === 0;
   if (list.length === 0) return;
-  if (playerIdx >= list.length) playerIdx = 0;
-  const n = list.length;
-  const entry = list[playerIdx];
-  const pad2 = (x) => String(x).padStart(2, '0');
+  const descriptions = {
+    looks_like_a_bet: 'A concentrated directional position, with no visible offset found.',
+    hedged: 'Matching holdings at this address cover the short.',
+    unknown: 'Matching assets sit with funding wallets. A transfer does not prove ownership.',
+    book: 'Orders on both sides of the market point to trading inventory.',
+  };
 
-  $('player-now-reading').textContent = 'NOW READING · ' + pad2(playerIdx + 1) + ' / ' + pad2(n);
-  $('player-title').textContent = positionText(entry);
-  $('player-addr').textContent = entry.address;
-  $('player-badge').textContent = badgeText(entry);
-  $('player-badge').className = 'player-badge badge ' + verdictOf(entry).cls;
-
-  // A real <button> per row, the same choice galleryRow/boardRow already
-  // make for a clickable row (further down this file) - free keyboard
-  // activation and focus handling, instead of a div with a hand-rolled
-  // role/tabindex/keydown. Built as {row, canvas, entry} triples rather than
-  // appending straight away: drawConstellation reads the canvas's own
-  // clientWidth/clientHeight (Task 2), which is 0 until the element is
-  // actually attached to the document, so every row is appended first and
-  // only then drawn.
-  const rows = list.map((e, i) => {
-    const row = el('button', 'queue-row' + (i === playerIdx ? ' active' : ''));
-    const canvas = document.createElement('canvas');
-    canvas.className = 'queue-thumb';
+  // Verdict and position are enough to scan an example. The full diagram
+  // belongs to the opened reading, where its labels and evidence fit.
+  const rows = list.map((e) => {
+    const row = el('button', 'queue-row');
     row.append(
-      el('span', 'queue-rank', String(i + 1)),
-      canvas,
-      el('span', 'queue-pos', positionText(e)),
       el('span', 'badge ' + verdictOf(e).cls, badgeText(e)),
+      el('span', 'queue-pos', positionText(e)),
+      el('span', 'example-note', descriptions[e.verdict.verdict]),
+      el('span', 'example-date', 'Read ' + fmtTime(e.checkedAt)),
+      el('span', 'example-open', 'Open the reading →'),
     );
-    row.addEventListener('click', () => openSnapshot(e.snapshotId));
-    return { row, canvas, entry: e };
+    row.addEventListener('click', async () => {
+      await openSnapshot(e.snapshotId);
+      if (current && current.snapshotId === e.snapshotId) {
+        $('card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        $('card').focus({ preventScroll: true });
+      }
+    });
+    return row;
   });
-  $('player-queue').replaceChildren(...rows.map((r) => r.row));
-  for (const r of rows) drawConstellation(r.canvas, { ...constellationInputsForRow(r.entry), mini: true });
+  $('player-queue').replaceChildren(...rows);
 }
 
 // The breakdown SVG is now built at its own real rendered width rather than
@@ -1364,7 +1373,8 @@ function renderBoards(rows) {
 }
 
 function renderGallery() {
-  const rows = gallery.currentRows;
+  const rows = [...gallery.currentRows, ...(gallery.featured || [])]
+    .sort((a, b) => b.positions.headlineNotionalUsd - a.positions.headlineNotionalUsd);
   const counts = galleryCounts(rows);
   const filters = [
     ['all', 'All ' + rows.length],
@@ -1401,21 +1411,13 @@ function renderArchive() {
 async function loadGallery() {
   try {
     const res = await fetch('/api/gallery');
-    if (!res.ok) return;
+    if (!res.ok) throw new Error('Gallery unavailable');
     gallery = await res.json();
   } catch (e) {
+    $('examples-status').textContent = 'The full gallery could not load. You can still open these saved examples.';
+    $('explore-status').textContent = 'Saved readings could not load. Reload the page to try again.';
     return;
   }
-  // The player (26.09 redesign, Task 4) is built from gallery.featured alone
-  // and does not depend on gallery.entries having anything open in it, so it
-  // renders here, before the early return below that guards the boards/
-  // gallery rendering that does. The flagship reading (FLAGSHIP_ID, above)
-  // is what a fresh visitor's #card already opens with - starting the
-  // player on that same reading keeps the strip and the open card in
-  // agreement, rather than the strip silently pointing somewhere else on
-  // first paint.
-  const featuredIdx = (gallery.featured || []).findIndex((e) => e.snapshotId === FLAGSHIP_ID);
-  if (featuredIdx !== -1) playerIdx = featuredIdx;
   renderPlayer();
 
   // An account can close its position between the ranking and its check;
@@ -1423,7 +1425,10 @@ async function loadGallery() {
   const open = (gallery.entries || [])
     .filter((e) => e.positions.nPositions > 0)
     .sort((a, b) => b.positions.headlineNotionalUsd - a.positions.headlineNotionalUsd);
-  if (open.length === 0) return;
+  if (open.length === 0) {
+    $('explore-status').textContent = 'No saved open positions are available yet.';
+    return;
+  }
   gallery.currentRows = open.filter((e) => !e.historical);
   gallery.historicalRows = open.filter((e) => e.historical);
   // gallery.featured (the four hand-picked demonstration readings) never
@@ -1462,7 +1467,7 @@ async function loadGallery() {
   $('archive-summary').textContent = gallery.historicalRows.length
     ? 'How these were picked, and ' + plural(gallery.historicalRows.length, 'reading') + ' made under earlier rules'
     : 'How these were picked';
-  $('gallery').hidden = false;
+  $('explore-status').hidden = true;
   renderGallery();
 }
 
@@ -1847,7 +1852,9 @@ if (window.location.hash === '#operator') setUpOperator();
 const params = new URLSearchParams(window.location.search);
 const saved = params.get('s');
 const preset = params.get('address');
-if (saved) {
+if (window.location.hash === '#explore') {
+  openBoards();
+} else if (saved) {
   // A saved reading opens as itself. No check runs, so nothing is spent and
   // nothing can have changed between the link being written and read.
   openSnapshot(saved);
@@ -1860,13 +1867,5 @@ if (saved) {
   $('address').value = preset;
   setStatus('Address filled in from the link. Press Check to run it.');
   $('check').focus();
-} else {
-  // Nothing pasted and nothing linked: the first thing on screen used to be
-  // a blank form, and the strongest picture on the whole page was one click
-  // away behind a chip nobody was told to press (24.09 audit, U01). This
-  // costs nothing - the reading is bundled with the Worker - and it renders
-  // the same way a shared link to it would, after `saveRecent`'s guard
-  // (above) so it never pollutes "recent checks".
-  openSnapshot(FLAGSHIP_ID);
 }
 renderRecent();
