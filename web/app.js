@@ -305,15 +305,9 @@ function drawConstellation(cv, { seed, coverage, ghost, mini, bookDensity }) {
  *    hedge.hedgeUsd whether or not the hedge exceeds the position. `ghost`
  *    is true exactly when `breakdown.elsewhere` exists (the funders case).
  *
- * Known gap, deliberately not fixed here: unlike the old drawScale, this
- * function never looks at `breakdown.dataQuality` or the segment-level
- * not-checked/unverified signals, so a hedge read that was partial,
- * unpriced or left a material share unidentified renders with the same
- * confident-looking coverage number as a fully measured one - the old
- * diagram's dashed "suspended" state (unread, could still tip either way)
- * has no equivalent yet. None of the four currently-shipped examples hit
- * this path, but a live check of an arbitrary address could. Left for a
- * later pass rather than folded in here.
+ * Data quality is displayed alongside the diagram and in exported images.
+ * A confirmed amount found so far is useful even when the search was partial;
+ * the label must never suggest that the remaining exposure was fully read.
  */
 function constellationInputsFor(d) {
   const seed = seedFromAddress(d.address);
@@ -337,7 +331,7 @@ function constellationInputsFor(d) {
  * so one formatter covers hedged, unknown, long and book alike - only the
  * label below it (constellationStatLabelFor) changes per verdict. */
 function constellationStatFor(d, inputs) {
-  return fmtPct(inputs.coverage);
+  return inputs.coverage > 0 && inputs.coverage < 0.001 ? '<0.1%' : fmtPct(inputs.coverage);
 }
 
 /** The short label under the big number. Every verdict's number is now a
@@ -348,7 +342,24 @@ function constellationStatFor(d, inputs) {
  * drawScale's funders case said "covered by <coin> this address holds"). */
 function constellationStatLabelFor(d) {
   if (d.verdict.verdict === 'book') return 'quoted both sides';
+  if (constellationQualityNoteFor(d)) return 'found coverage';
   return d.verdict.verdict === 'unknown' ? 'covered by this address' : 'covered';
+}
+
+function constellationQualityNoteFor(d) {
+  const quality = d.breakdown && d.breakdown.applies && d.breakdown.dataQuality;
+  if (quality === 'partial') return 'Incomplete read: not all holdings were checked. Coverage shown is only what was found.';
+  if (quality === 'unpriced') return 'Incomplete read: some matching holdings could not be priced. Coverage shown is only what was found.';
+  if (quality === 'unverified') return 'Incomplete read: some holdings could not be identified. Coverage shown is only what was found.';
+  if (quality === 'unknown' || quality === undefined && d.breakdown && d.breakdown.applies) return 'Coverage quality was not recorded for this saved reading.';
+  return null;
+}
+
+function constellationQualityFlagFor(d) {
+  if (!constellationQualityNoteFor(d)) return null;
+  return d.breakdown && (!d.breakdown.dataQuality || d.breakdown.dataQuality === 'unknown')
+    ? 'Coverage unverified'
+    : 'Incomplete data';
 }
 
 function fmtTime(iso) {
@@ -542,12 +553,16 @@ function renderBreakdown(d) {
   canvas.style.height = '260px';
   canvas.style.display = 'block';
   const inputs = constellationInputsFor(d);
+  const qualityNote = constellationQualityNoteFor(d);
   const statBox = el('div', 'constellation-stat');
   statBox.append(
     el('div', 'constellation-stat-value', constellationStatFor(d, inputs)),
     el('div', 'constellation-stat-label', constellationStatLabelFor(d)),
   );
+  if (qualityNote) statBox.append(el('div', 'quality-flag', constellationQualityFlagFor(d)));
   $('breakdown-svg').replaceChildren(canvas, statBox);
+  $('breakdown-quality').hidden = !qualityNote;
+  $('breakdown-quality').textContent = qualityNote || '';
   drawConstellation(canvas, { ...inputs, mini: false });
   if (!canvas.dataset.roAttached) {
     canvas.dataset.roAttached = '1';
@@ -557,7 +572,7 @@ function renderBreakdown(d) {
   $('breakdown-caption').textContent = isBook
     ? `What stands behind the ${coin} ${side}`
     : isLong
-      ? `How concentrated the ${coin} ${side} is`
+      ? `Spot holdings cannot offset this ${coin} ${side}`
       : b && b.elsewhere
         ? `What stands against the ${coin} ${side} - and what only looks like it does`
         : `What stands against the ${coin} ${side}`;
@@ -650,7 +665,10 @@ function renderResult(d, opts) {
     // The row the verdict turned on leads, rather than sitting fourth in a
     // line of identical tiles (audit U03).
     const box = el('div', 'stat' + (item.decisive ? ' decisive' : ''));
-    box.append(el('div', 'stat-label', item.label), el('div', 'stat-value', item.value), el('div', 'stat-source', item.source));
+    const value = item.label === 'Hedge found' && /^0\.0%/.test(item.value) && d.hedge && d.hedge.hedgeRatio > 0
+      ? item.value.replace(/^0\.0%/, '<0.1%')
+      : item.value;
+    box.append(el('div', 'stat-label', item.label), el('div', 'stat-value', value), el('div', 'stat-source', item.source));
     return box;
   };
   $('stats').replaceChildren(...(d.evidence || []).map(tile));
@@ -1589,6 +1607,11 @@ function drawCardConstellation(ctx, d, x, y, w, h) {
   ctx.fillStyle = '#8b90a0';
   ctx.font = font(400, 15);
   ctx.fillText(constellationStatLabelFor(d).toUpperCase(), x + w / 2, y + h / 2 + 22);
+  if (constellationQualityNoteFor(d)) {
+    ctx.fillStyle = '#f2b35c';
+    ctx.font = font(600, 14);
+    ctx.fillText(constellationQualityFlagFor(d).toUpperCase(), x + w / 2, y + h / 2 + 43);
+  }
   ctx.textAlign = 'left';
 }
 

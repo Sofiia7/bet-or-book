@@ -60,6 +60,17 @@ describe('ogTree', () => {
     expect(tree).toContain('60%');
     // The label is uppercased in the tree the same way the badge text is.
     expect(tree).toContain('COVERED');
+    expect(tree).not.toContain('INCOMPLETE DATA');
+  });
+
+  it('marks incomplete coverage on the social preview itself', () => {
+    const tree = JSON.stringify(ogTree(data({
+      dataQuality: 'partial',
+      constellation: { seed: 42, coverage: 0, ghost: false, bookDensity: false },
+      constellationStat: { value: '0%', label: 'found coverage' },
+    })));
+    expect(tree).toContain('FOUND COVERAGE');
+    expect(tree).toContain('INCOMPLETE DATA');
   });
 
   it('cuts an oversized summary short rather than overflowing the card', () => {

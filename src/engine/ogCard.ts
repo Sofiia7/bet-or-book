@@ -27,9 +27,10 @@ import { constellationInputsForOg, type ConstellationInputs } from './constellat
  * user, live, after Task 3 landed: the constellation itself, not a re-
  * themed bar, is what has to appear when a reading's link is shared. A
  * picture cached under any earlier layout version drew the old bar and
- * cannot stand in for this one.
+ * cannot stand in for this one. Version 5 labels incomplete coverage on
+ * the share preview, so an earlier cached picture cannot hide that caveat.
  */
-export const OG_LAYOUT_VERSION = 4;
+export const OG_LAYOUT_VERSION = 5;
 
 /** Where one reading's picture is kept, in this layout. */
 export const ogCacheKey = (id: string): string => `og:v${OG_LAYOUT_VERSION}:${id}`;
@@ -72,13 +73,8 @@ export interface OgCardData {
    * 'unverified' did in the 25.09 A03 follow-up, and 'unknown' did in that
    * follow-up's own technical-debt fix - has to be widened here too, even
    * though no rendering code needs to change, or this assignment stops
-   * typechecking). 'measured' when there is no breakdown at all, the same
-   * as a card with nothing left to show a caveat about. Not yet drawn any
-   * differently by ogTree: web/app.js's own constellationInputsFor has the
-   * identical, deliberately deferred gap (see that function's doc comment)
-   * of not giving a partial/unverified read a different look from a
-   * measured one. This field stays correct and available for whenever that
-   * gap is closed, on the page and here together. */
+   * typechecking). 'measured' when there is no breakdown at all. Every
+   * other value is marked incomplete beside the diagram. */
   dataQuality: 'measured' | 'partial' | 'unpriced' | 'unverified' | 'unknown';
 }
 
@@ -178,8 +174,9 @@ export function ogCardData(input: OgCardInput): OgCardData {
   const isLong = !isBook && (!b || !b.applies) && input.positions.nPositions > 0 && input.positions.headlineSide === 'long';
   const showConstellation = isBook || (!!b && b.applies && b.segments.length > 0) || isLong;
   const constellation = showConstellation ? constellationInputsForOg(input) : null;
+  const quality = input.breakdown?.dataQuality ?? (input.breakdown?.applies ? 'unknown' : 'measured');
   const constellationStat = constellation
-    ? { value: formatPct(constellation.coverage), label: constellationStatLabel(input.verdict.verdict) }
+    ? { value: constellation.coverage > 0 && constellation.coverage < 0.001 ? '<0.1%' : formatPct(constellation.coverage), label: quality === 'measured' ? constellationStatLabel(input.verdict.verdict) : 'found coverage' }
     : null;
 
   return {
@@ -188,7 +185,7 @@ export function ogCardData(input: OgCardInput): OgCardData {
     summary: input.summary,
     constellation,
     constellationStat,
-    dataQuality: input.breakdown?.dataQuality ?? 'measured',
+    dataQuality: quality,
     footerLeft: `${shortAddress(input.address)} · rules ${input.classifierVersion}`,
     provenance: input.provenance,
     limitText: input.limitText,

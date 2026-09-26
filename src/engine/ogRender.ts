@@ -150,6 +150,13 @@ function constellationBlockFor(d: OgCardData): object | null {
                   children: d.constellationStat.label.toUpperCase(),
                 },
               },
+              ...(d.dataQuality === 'measured' ? [] : [{
+                type: 'div',
+                props: {
+                  style: { display: 'flex', color: '#f2b35c', fontSize: 16, marginTop: 10, letterSpacing: '1px' },
+                  children: d.dataQuality === 'unknown' ? 'COVERAGE UNVERIFIED' : 'INCOMPLETE DATA',
+                },
+              }]),
             ],
           },
         },

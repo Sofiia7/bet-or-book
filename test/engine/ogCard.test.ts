@@ -113,14 +113,16 @@ describe('ogCardData', () => {
     expect(d.constellationStat).toEqual({ value: '100%', label: 'covered' });
   });
 
-  it('carries dataQuality through, so a renderer can mark an unfinished read even when the diagram alone cannot (25.09 audit, A03/A05 follow-up; still computed the same way post-26.09 redesign, even though ogTree does not draw it differently yet - see OgCardData\'s own doc comment)', () => {
+  it('labels a partial holdings read as found coverage on the share image', () => {
     const d = ogCardData(
       input({
         positions: { nPositions: 1, headlineNotionalUsd: 100, headlineShare: 1, headlineSide: 'short' as const },
-        breakdown: { applies: true, coin: 'ETH', side: 'short', headlineUsd: 100, segments: [{ kind: 'covered', usd: 100, share: 1 }], excessUsd: 0, elsewhere: null, dataQuality: 'partial' },
+        breakdown: { applies: true, coin: 'ETH', side: 'short', headlineUsd: 100, segments: [{ kind: 'covered', usd: 0.01, share: 0.0001 }, { kind: 'not-checked', usd: 99.99, share: 0.9999 }], excessUsd: 0, elsewhere: null, dataQuality: 'partial' },
+        hedge: { hedgeRatio: 0.0001 },
       }),
     );
     expect(d.dataQuality).toBe('partial');
+    expect(d.constellationStat).toEqual({ value: '<0.1%', label: 'found coverage' });
   });
 
   it('reports measured when the breakdown does not apply, same as a plain missing breakdown', () => {
