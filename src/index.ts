@@ -132,11 +132,16 @@ const LEDGER_MEMO_MS = 60_000;
 /** The script now lives in its own file, so no inline script is allowed at
  * all: an injected <script> has nothing to execute under. Inline styles
  * stay, which is a far smaller surface. The policy also buys no framing
- * (clickjacking), no requests to other origins and no plugin content. */
+ * (clickjacking), no requests to other origins and no plugin content.
+ * Google Fonts (26.09 redesign) needs its own two carve-outs: the
+ * stylesheet comes from fonts.googleapis.com, the woff2 files it points at
+ * come from fonts.gstatic.com - two different origins, so style-src and
+ * font-src each need exactly the one they serve, nothing wider. */
 const PAGE_HEADERS = {
   'content-type': 'text/html;charset=UTF-8',
   'content-security-policy':
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    "font-src 'self' https://fonts.gstatic.com; " +
     "img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'strict-origin-when-cross-origin',
