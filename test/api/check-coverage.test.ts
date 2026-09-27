@@ -79,15 +79,16 @@ describe('a failed HIP-3 order read reaches the rule that needs it', () => {
     const result = await checkAddress(ADDRESS, { nansen: nansenWith('xyz:ETH', 'long') });
     expect(result.ordersCoverage).toBe('partial');
     expect(result.verdict.verdict).toBe('unknown');
-    expect(result.verdict.reasons).toContain('quotes_not_checked');
+    expect(result.verdict.reasons).toContain('underlying_not_verified');
     expect(result.degraded).toBe(true);
   });
 
-  it('answers as usual when that dex did answer', async () => {
+  it('records complete orders but still withholds a verdict on an unverified underlying', async () => {
     route();
     const result = await checkAddress(ADDRESS, { nansen: nansenWith('xyz:ETH', 'long') });
     expect(result.ordersCoverage).toBe('complete');
-    expect(result.verdict.verdict).toBe('looks_like_a_bet');
+    expect(result.verdict.verdict).toBe('unknown');
+    expect(result.verdict.reasons).toContain('underlying_not_verified');
   });
 
   it('says quiet venues were the ones checked, not every venue there is (23.09 audit, L06)', async () => {
@@ -268,6 +269,8 @@ describe('A06 (25.09 audit): a failed funder read does not claim the funders hol
     expect(result.linkedHedgeCoverage).toBe('missing');
     expect(result.linkedHedge).toEqual({ linkedHedgeUsd: 0, linkedHedgeRatio: 0, funders: [] });
     expect(result.coverage.join(' ')).toContain('One linked wallet could not be read');
+    expect(result.verdict.verdict).toBe('unknown');
+    expect(result.verdict.reasons).toContain('linked_holdings_not_checked');
   });
 
   it('reads the funder search as partial when only some of several candidates fail', async () => {

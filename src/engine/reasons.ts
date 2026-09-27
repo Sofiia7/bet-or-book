@@ -33,6 +33,18 @@ const WHY: Record<Exclude<ReasonCode, 'positions' | 'trades'>, string> = {
   balanced_book:
     `Called hedged because the account's own positions offset each other in the same assets: at least ` +
     `${pct(T.hedged.minSameAssetOffsetShare)} of the exposure cancels within the same coins.`,
+  perp_offset_unresolved:
+    'No verdict: some perpetual positions offset each other, but this reading does not measure the selected ' +
+    'position\'s combined exposure across those legs and spot holdings.',
+  liability_not_resolved:
+    'No verdict: this account owes the position\'s own asset on Hyperliquid spot. That liability can change ' +
+    'the exposure, and the coverage ratio does not include it.',
+  underlying_not_verified:
+    'No verdict: this HIP-3 market\'s underlying has not been verified by the asset registry, so matching ' +
+    'holdings or positions on another venue cannot be ruled out.',
+  linked_holdings_not_checked:
+    'This would read as a bet, but the funding-wallet search did not finish. Unread wallets cannot count ' +
+    'as wallets found to hold nothing.',
   hedge_leg:
     `Called hedged because this same account holds the asset itself, between ${pct(T.hedged.minHedgeRatio)} and ` +
     `${pct(T.hedged.maxHedgeRatio)} of the short's size. That is coverage on this account's visible balances; ` +
@@ -42,7 +54,7 @@ const WHY: Record<Exclude<ReasonCode, 'positions' | 'trades'>, string> = {
     `Not called hedged: the account holds more of the asset than the short - over ${pct(T.hedged.maxHedgeRatio)} ` +
     `of its size - so on this asset it leans long, not neutral.`,
   hedge_not_checked:
-    'No verdict: the account\'s holdings could not be read in full, so whether the short is covered is not known. ' +
+    'No verdict: the account\'s balances could not be read in full, so whether the position is offset is not known. ' +
     'That is a gap in the reading, not a finding about the account.',
   unrecognised_assets:
     `No verdict: holdings worth ${pct(T.hedged.maxUnverifiedShare)} of the position or more could not be ` +
@@ -95,6 +107,10 @@ const WHY: Record<Exclude<ReasonCode, 'positions' | 'trades'>, string> = {
 const BADGE_QUALIFIER: Record<Exclude<ReasonCode, 'positions' | 'trades' | 'no open positions found'>, string> = {
   orders: 'market-making activity',
   balanced_book: 'offsetting positions',
+  perp_offset_unresolved: 'perp offsets unresolved',
+  liability_not_resolved: 'same-asset debt',
+  underlying_not_verified: 'underlying unverified',
+  linked_holdings_not_checked: 'funders not fully read',
   hedge_leg: 'hedge found',
   over_covered: 'more than covered',
   hedge_not_checked: 'hedge not checked',

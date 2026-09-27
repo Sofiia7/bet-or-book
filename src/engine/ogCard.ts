@@ -29,9 +29,10 @@ import { constellationInputsForOg, type ConstellationInputs } from './constellat
  * picture cached under any earlier layout version drew the old bar and
  * cannot stand in for this one. Version 5 labels incomplete coverage on
  * the share preview. Version 6 keeps the summary's ellipsis visible even
- * when the prose wraps into three lines.
+ * when the prose wraps into three lines. Version 7 refreshes historical
+ * labels and rule-version provenance after the v6 logic audit.
  */
-export const OG_LAYOUT_VERSION = 6;
+export const OG_LAYOUT_VERSION = 7;
 
 /** Where one reading's picture is kept, in this layout. */
 export const ogCacheKey = (id: string): string => `og:v${OG_LAYOUT_VERSION}:${id}`;

@@ -207,6 +207,10 @@ export function computeOrderFeatures(orders: RestingOrder[], headlineCoin: strin
 export interface HedgeFeatures {
   hedgeUsd: number;
   hedgeRatio: number;
+  /** A negative Hyperliquid spot balance in the headline asset. The spot
+   * ratio does not model that liability, so it must not settle the verdict.
+   * Optional only for observations saved before schema 6. */
+  hasUnresolvedLiability?: boolean;
   /** Holdings that carry the right ticker but whose asset this tool could
    * not establish, so they were left out. Stated rather than silently
    * dropped: a material amount of these means the coverage number is a lower
@@ -246,6 +250,7 @@ export type HedgeCoverage = 'complete' | 'partial' | 'missing' | 'not-applicable
 export const EMPTY_HEDGE: HedgeFeatures = {
   hedgeUsd: 0,
   hedgeRatio: 0,
+  hasUnresolvedLiability: false,
   unverifiedUsd: 0,
   unverifiedOnUnsupportedChainUsd: 0,
   unpricedMatches: 0,

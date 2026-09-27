@@ -6,6 +6,7 @@
 // the reading that had in fact replaced it. Two different cards, one id.
 import { describe, expect, it } from 'vitest';
 import galleryData from '../data/gallery.json';
+import featuredData from '../data/featured.json';
 import { reexplainGallery } from '../scripts/reexplain';
 import type { Gallery } from '../src/gallery';
 
@@ -14,10 +15,10 @@ const gallery = galleryData as unknown as Gallery;
 /** A real, complete entry as the base, so the fixture is a valid
  * CheckResponse without hand-declaring every one of its fields. */
 function baseEntry(): Gallery['entries'][number] {
-  const found = gallery.entries.find(
+  const found = (featuredData as unknown as Gallery).entries.find(
     (e) => !e.superseded && !e.historical && e.verdict.verdict === 'looks_like_a_bet' && e.positions.nPositions > 0,
   );
-  if (!found) throw new Error('fixture needs a judged looks_like_a_bet entry in data/gallery.json');
+  if (!found) throw new Error('fixture needs a judged looks_like_a_bet entry in data/featured.json');
   return found;
 }
 

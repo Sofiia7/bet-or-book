@@ -7,7 +7,7 @@ exports[`a check, whole, on recorded real answers > a HIP-3 long whose dex will 
   "breakdown": {
     "applies": false,
     "coin": "xyz:SP500",
-    "dataQuality": "measured",
+    "dataQuality": "unknown",
     "elsewhere": null,
     "excessUsd": 0,
     "headlineUsd": 20000000,
@@ -15,7 +15,7 @@ exports[`a check, whole, on recorded real answers > a HIP-3 long whose dex will 
     "side": "long",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v5",
+  "classifierVersion": "v6",
   "coverage": [
     "Resting orders on the xyz dex could not be read",
     "Size versus open interest not computed for a HIP-3 dex market",
@@ -56,6 +56,7 @@ exports[`a check, whole, on recorded real answers > a HIP-3 long whose dex will 
   ],
   "focus": null,
   "hedge": {
+    "hasUnresolvedLiability": false,
     "hedgeRatio": 0,
     "hedgeUsd": 0,
     "hedgeUsdBySource": {
@@ -73,7 +74,7 @@ exports[`a check, whole, on recorded real answers > a HIP-3 long whose dex will 
   "linkedHedge": null,
   "linkedHedgeCoverage": "not-applicable",
   "mainDexPositionCount": 14,
-  "observationSchemaVersion": 5,
+  "observationSchemaVersion": 6,
   "observedAt": "2026-09-18T14:59:00.000Z",
   "orders": {
     "bidShare": 0.5,
@@ -146,11 +147,11 @@ exports[`a check, whole, on recorded real answers > a HIP-3 long whose dex will 
     ],
     "link": null,
     "more": 0,
-    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v5",
+    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v6",
   },
   "sizeVsOi": null,
   "source": "nansen",
-  "summary": "100% of the exposure is one $20.0M xyz:SP500 long, but the resting orders of this account could not be read in full, so whether it quotes both sides of this market is unknown.",
+  "summary": "The underlying of the $20.0M xyz:SP500 long has not been verified against this tool's asset registry. A zero matching balance does not establish that no offset exists.",
   "trades": {
     "buyShare": 0.596,
     "cappedByApiLimit": true,
@@ -166,7 +167,7 @@ exports[`a check, whole, on recorded real answers > a HIP-3 long whose dex will 
   },
   "verdict": {
     "reasons": [
-      "quotes_not_checked",
+      "underlying_not_verified",
     ],
     "strength": null,
     "verdict": "unknown",
@@ -216,7 +217,7 @@ exports[`a check, whole, on recorded real answers > a lone long, with its fundin
     "side": "long",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v5",
+  "classifierVersion": "v6",
   "coverage": [
     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
   ],
@@ -252,6 +253,7 @@ exports[`a check, whole, on recorded real answers > a lone long, with its fundin
   ],
   "focus": null,
   "hedge": {
+    "hasUnresolvedLiability": false,
     "hedgeRatio": 0,
     "hedgeUsd": 0,
     "hedgeUsdBySource": {
@@ -269,7 +271,7 @@ exports[`a check, whole, on recorded real answers > a lone long, with its fundin
   "linkedHedge": null,
   "linkedHedgeCoverage": "not-applicable",
   "mainDexPositionCount": 14,
-  "observationSchemaVersion": 5,
+  "observationSchemaVersion": 6,
   "observedAt": "2026-09-18T14:59:00.000Z",
   "orders": {
     "bidShare": 0.5,
@@ -341,7 +343,7 @@ exports[`a check, whole, on recorded real answers > a lone long, with its fundin
     ],
     "link": null,
     "more": 0,
-    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v5",
+    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v6",
   },
   "sizeVsOi": 0.018147816861505465,
   "source": "nansen",
@@ -432,7 +434,7 @@ exports[`a check, whole, on recorded real answers > a short 60% covered 1`] = `
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v5",
+  "classifierVersion": "v6",
   "coverage": [
     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
   ],
@@ -473,6 +475,7 @@ exports[`a check, whole, on recorded real answers > a short 60% covered 1`] = `
   ],
   "focus": null,
   "hedge": {
+    "hasUnresolvedLiability": false,
     "hedgeRatio": 0.6,
     "hedgeUsd": 60000000,
     "hedgeUsdBySource": {
@@ -490,7 +493,7 @@ exports[`a check, whole, on recorded real answers > a short 60% covered 1`] = `
   "linkedHedge": null,
   "linkedHedgeCoverage": "not-applicable",
   "mainDexPositionCount": 14,
-  "observationSchemaVersion": 5,
+  "observationSchemaVersion": 6,
   "observedAt": "2026-09-18T14:59:00.000Z",
   "orders": {
     "bidShare": 0.5,
@@ -562,7 +565,7 @@ exports[`a check, whole, on recorded real answers > a short 60% covered 1`] = `
     ],
     "link": null,
     "more": 0,
-    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v5",
+    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v6",
   },
   "sizeVsOi": 0.04084778513688547,
   "source": "nansen",
@@ -648,7 +651,7 @@ exports[`a check, whole, on recorded real answers > a short covered by its own W
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v5",
+  "classifierVersion": "v6",
   "coverage": [
     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
   ],
@@ -689,6 +692,7 @@ exports[`a check, whole, on recorded real answers > a short covered by its own W
   ],
   "focus": null,
   "hedge": {
+    "hasUnresolvedLiability": false,
     "hedgeRatio": 0.95,
     "hedgeUsd": 95000000,
     "hedgeUsdBySource": {
@@ -706,7 +710,7 @@ exports[`a check, whole, on recorded real answers > a short covered by its own W
   "linkedHedge": null,
   "linkedHedgeCoverage": "not-applicable",
   "mainDexPositionCount": 14,
-  "observationSchemaVersion": 5,
+  "observationSchemaVersion": 6,
   "observedAt": "2026-09-18T14:59:00.000Z",
   "orders": {
     "bidShare": 0.5,
@@ -778,7 +782,7 @@ exports[`a check, whole, on recorded real answers > a short covered by its own W
     ],
     "link": null,
     "more": 0,
-    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v5",
+    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v6",
   },
   "sizeVsOi": 0.04084778513688547,
   "source": "nansen",
@@ -859,7 +863,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen answers 200 
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v5",
+  "classifierVersion": "v6",
   "coverage": [
     "Nansen positions came back in an unexpected shape: positions read from Hyperliquid, main dex only",
     "Positions read from Hyperliquid alone: a position on a HIP-3 dex would not appear here",
@@ -915,6 +919,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen answers 200 
   ],
   "focus": null,
   "hedge": {
+    "hasUnresolvedLiability": false,
     "hedgeRatio": 0,
     "hedgeUsd": 0,
     "hedgeUsdBySource": {
@@ -932,7 +937,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen answers 200 
   "linkedHedge": null,
   "linkedHedgeCoverage": "complete",
   "mainDexPositionCount": null,
-  "observationSchemaVersion": 5,
+  "observationSchemaVersion": 6,
   "observedAt": "2026-09-18T13:04:24.997Z",
   "orders": {
     "bidShare": 0.5,
@@ -1025,7 +1030,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen answers 200 
     ],
     "link": null,
     "more": 2,
-    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v5",
+    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v6",
   },
   "sizeVsOi": 0.07326205887164401,
   "source": "hyperliquid",
@@ -1106,7 +1111,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen not used, an
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v5",
+  "classifierVersion": "v6",
   "coverage": [
     "Nansen not used (today's Nansen credits are used up): main-dex positions only, no other chains, no linked wallets",
     "Positions read from Hyperliquid alone: a position on a HIP-3 dex would not appear here",
@@ -1157,6 +1162,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen not used, an
   ],
   "focus": null,
   "hedge": {
+    "hasUnresolvedLiability": false,
     "hedgeRatio": 0,
     "hedgeUsd": 0,
     "hedgeUsdBySource": {
@@ -1174,7 +1180,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen not used, an
   "linkedHedge": null,
   "linkedHedgeCoverage": "not-applicable",
   "mainDexPositionCount": null,
-  "observationSchemaVersion": 5,
+  "observationSchemaVersion": 6,
   "observedAt": "2026-09-18T13:04:24.997Z",
   "orders": {
     "bidShare": 0.5,
@@ -1262,7 +1268,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen not used, an
     ],
     "link": null,
     "more": 2,
-    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v5",
+    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v6",
   },
   "sizeVsOi": 0.07326205887164401,
   "source": "hyperliquid",
@@ -1352,7 +1358,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen positions fa
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v5",
+  "classifierVersion": "v6",
   "coverage": [
     "Nansen positions unavailable: positions read from Hyperliquid, main dex only",
     "Positions read from Hyperliquid alone: a position on a HIP-3 dex would not appear here",
@@ -1413,6 +1419,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen positions fa
   ],
   "focus": null,
   "hedge": {
+    "hasUnresolvedLiability": false,
     "hedgeRatio": 0.0000030696353798864233,
     "hedgeUsd": 550.5508001525576,
     "hedgeUsdBySource": {
@@ -1447,7 +1454,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen positions fa
   },
   "linkedHedgeCoverage": "complete",
   "mainDexPositionCount": null,
-  "observationSchemaVersion": 5,
+  "observationSchemaVersion": 6,
   "observedAt": "2026-09-18T13:04:24.997Z",
   "orders": {
     "bidShare": 0.5,
@@ -1540,7 +1547,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen positions fa
     ],
     "link": null,
     "more": 3,
-    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v5",
+    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v6",
   },
   "sizeVsOi": 0.07326205887164401,
   "source": "hyperliquid",
@@ -1630,7 +1637,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about a posit
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v5",
+  "classifierVersion": "v6",
   "coverage": [
     "Positions were measured 116 minutes before this check, not at the moment of it",
     "No DOGE long is open at this address; this answer is about the largest position instead",
@@ -1686,6 +1693,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about a posit
   ],
   "focus": null,
   "hedge": {
+    "hasUnresolvedLiability": false,
     "hedgeRatio": 0.0000030687754348086143,
     "hedgeUsd": 550.5508001525576,
     "hedgeUsdBySource": {
@@ -1720,7 +1728,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about a posit
   },
   "linkedHedgeCoverage": "complete",
   "mainDexPositionCount": 14,
-  "observationSchemaVersion": 5,
+  "observationSchemaVersion": 6,
   "observedAt": "2026-09-18T13:04:21.479Z",
   "orders": {
     "bidShare": 0.5,
@@ -1813,7 +1821,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about a posit
     ],
     "link": null,
     "more": 2,
-    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v5",
+    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v6",
   },
   "sizeVsOi": 0.07328258867196834,
   "source": "nansen",
@@ -1894,7 +1902,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about its sec
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v5",
+  "classifierVersion": "v6",
   "coverage": [
     "Positions were measured 116 minutes before this check, not at the moment of it",
     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
@@ -1948,6 +1956,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about its sec
     "side": "short",
   },
   "hedge": {
+    "hasUnresolvedLiability": false,
     "hedgeRatio": 0,
     "hedgeUsd": 0,
     "hedgeUsdBySource": {
@@ -1982,7 +1991,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about its sec
   },
   "linkedHedgeCoverage": "complete",
   "mainDexPositionCount": 14,
-  "observationSchemaVersion": 5,
+  "observationSchemaVersion": 6,
   "observedAt": "2026-09-18T13:04:21.479Z",
   "orders": {
     "bidShare": 0.5,
@@ -2075,7 +2084,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about its sec
     ],
     "link": null,
     "more": 1,
-    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v5",
+    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v6",
   },
   "sizeVsOi": 0.03865313377305687,
   "source": "nansen",
@@ -2156,7 +2165,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the deadline alread
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v5",
+  "classifierVersion": "v6",
   "coverage": [
     "This check ran out of time before it could read positions from Nansen",
     "Positions read from Hyperliquid alone: a position on a HIP-3 dex would not appear here",
@@ -2217,6 +2226,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the deadline alread
   ],
   "focus": null,
   "hedge": {
+    "hasUnresolvedLiability": false,
     "hedgeRatio": 0,
     "hedgeUsd": 0,
     "hedgeUsdBySource": {
@@ -2234,7 +2244,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the deadline alread
   "linkedHedge": null,
   "linkedHedgeCoverage": "missing",
   "mainDexPositionCount": null,
-  "observationSchemaVersion": 5,
+  "observationSchemaVersion": 6,
   "observedAt": "2026-09-18T13:04:24.997Z",
   "orders": {
     "bidShare": 0.5,
@@ -2322,7 +2332,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the deadline alread
     ],
     "link": null,
     "more": 4,
-    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v5",
+    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v6",
   },
   "sizeVsOi": 0.07326205887164401,
   "source": "hyperliquid",
@@ -2412,7 +2422,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the full paid path,
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v5",
+  "classifierVersion": "v6",
   "coverage": [
     "Positions were measured 116 minutes before this check, not at the moment of it",
     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
@@ -2463,6 +2473,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the full paid path,
   ],
   "focus": null,
   "hedge": {
+    "hasUnresolvedLiability": false,
     "hedgeRatio": 0.0000030687754348086143,
     "hedgeUsd": 550.5508001525576,
     "hedgeUsdBySource": {
@@ -2497,7 +2508,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the full paid path,
   },
   "linkedHedgeCoverage": "complete",
   "mainDexPositionCount": 14,
-  "observationSchemaVersion": 5,
+  "observationSchemaVersion": 6,
   "observedAt": "2026-09-18T13:04:21.479Z",
   "orders": {
     "bidShare": 0.5,
@@ -2590,7 +2601,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the full paid path,
     ],
     "link": null,
     "more": 1,
-    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v5",
+    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v6",
   },
   "sizeVsOi": 0.07328258867196834,
   "source": "nansen",
@@ -2665,7 +2676,7 @@ exports[`a check, whole, on recorded real answers > thirty offsetting positions 
     "side": "long",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v5",
+  "classifierVersion": "v6",
   "coverage": [
     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
   ],
@@ -2701,6 +2712,7 @@ exports[`a check, whole, on recorded real answers > thirty offsetting positions 
   ],
   "focus": null,
   "hedge": {
+    "hasUnresolvedLiability": false,
     "hedgeRatio": 0,
     "hedgeUsd": 0,
     "hedgeUsdBySource": {
@@ -2718,7 +2730,7 @@ exports[`a check, whole, on recorded real answers > thirty offsetting positions 
   "linkedHedge": null,
   "linkedHedgeCoverage": "not-applicable",
   "mainDexPositionCount": 14,
-  "observationSchemaVersion": 5,
+  "observationSchemaVersion": 6,
   "observedAt": "2026-09-18T14:59:00.000Z",
   "orders": {
     "bidShare": 0.5,
@@ -2810,7 +2822,7 @@ exports[`a check, whole, on recorded real answers > thirty offsetting positions 
     ],
     "link": null,
     "more": 0,
-    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v5",
+    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v6",
   },
   "sizeVsOi": null,
   "source": "nansen",

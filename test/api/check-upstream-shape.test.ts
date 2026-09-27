@@ -110,7 +110,7 @@ describe('a broken row is left out, counted, and lowers the claim', () => {
     route({}, { error: 'not a list' });
     const result = await checkAddress(ADDRESS, { nansen: nansenWith('xyz:ETH', 'long') });
     expect(result.ordersCoverage).toBe('partial');
-    expect(result.verdict.reasons).toContain('quotes_not_checked');
+    expect(result.verdict.reasons).toContain('underlying_not_verified');
     expect(failures(result)).toContain('Resting orders on the xyz dex could not be read');
   });
 
@@ -119,6 +119,13 @@ describe('a broken row is left out, counted, and lowers the claim', () => {
     const result = await checkAddress(ADDRESS, { nansen: nansenWith('HYPE', 'short') });
     expect(result.hedgeCoverage).toBe('partial');
     expect(failures(result)).toContainEqual(expect.stringContaining('1 spot balance on Hyperliquid came back malformed'));
+  });
+
+  it('withholds a bet on a long when a malformed spot row could hide an offsetting debt', async () => {
+    route({ spotClearinghouseState: { balances: [{ coin: 'HYPE', token: 150, total: 'unreadable' }] } });
+    const result = await checkAddress(ADDRESS, { nansen: nansenWith('HYPE', 'long') });
+    expect(result.verdict.reasons).toContain('hedge_not_checked');
+    expect(result.summary).toContain('liability offsetting');
   });
 });
 
@@ -164,6 +171,8 @@ describe('a loan Hyperliquid reports is said, not lost', () => {
     );
     expect(result.degraded).toBe(true);
     expect(result.coverage.join(' ')).not.toContain('Borrowed on Hyperliquid');
+    expect(result.verdict.verdict).toBe('unknown');
+    expect(result.verdict.reasons).toContain('liability_not_resolved');
   });
 
   it('says a loan in a short\'s own coin adds to the short', async () => {

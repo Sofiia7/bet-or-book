@@ -1,6 +1,7 @@
 import type { CheckResponse } from './api/check';
 import type { HedgeCoverage } from './engine/features';
 import { badgeQualifier } from './engine/reasons';
+import type { ExposureBreakdown } from './engine/breakdown';
 
 /** Snapshot written by scripts/prescan.ts and bundled into the Worker. Each
  * entry is exactly what /api/check returned for that address at its own
@@ -39,6 +40,9 @@ export interface GalleryRow {
    * without this a ranking cannot tell a real 0% from a read that gave up
    * before it started (25.09 audit, A01). */
   hedgeCoverage: HedgeCoverage;
+  /** The ratio must also resolve asset identity and known opposing legs
+   * before it is suitable for a coverage ranking. */
+  hedgeDataQuality: ExposureBreakdown['dataQuality'];
   /** Headline notional divided by the market's open interest, or null when
    * open interest could not be read for that reading. */
   sizeVsOi: number | null;
@@ -109,6 +113,7 @@ export function galleryIndex(gallery: Gallery, idOf: (e: CheckResponse) => strin
         },
         hedgeRatio: e.hedge.hedgeRatio,
         hedgeCoverage: e.hedgeCoverage,
+        hedgeDataQuality: e.breakdown?.dataQuality ?? 'unknown',
         sizeVsOi: e.sizeVsOi,
         // Missing (not zero) on any entry scanned before the 23.09 audit's
         // L01 fix added this field to OrderFeatures - every such entry is
@@ -123,7 +128,7 @@ export function galleryIndex(gallery: Gallery, idOf: (e: CheckResponse) => strin
         // function of the verdict this entry already carries, recomputed
         // here rather than forwarded.
         badgeQualifier: badgeQualifier(e.verdict, e.historical !== undefined),
-        ...(e.historical ? { historical: { reason: e.historical.reason } } : {}),
+        ...(e.historical ? { historical: { reason: 'Read by earlier rules. A fresh check is needed for a current verdict.' } } : {}),
         ...(e.supersedes ? { supersedes: e.supersedes } : {}),
       })),
   };

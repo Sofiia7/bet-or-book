@@ -117,7 +117,7 @@ function withUnknownDataQuality(e: Gallery['entries'][number]): Gallery['entries
  * is exactly the property a real bug broke (see the guard below) before this
  * was ever run for real on 2026-09-23.
  */
-export function reexplainGallery(gallery: Gallery, now: string): { gallery: Gallery; stats: ReexplainStats } {
+export function reexplainGallery(gallery: Gallery, now: string, kind: 'gallery' | 'saved' = 'gallery'): { gallery: Gallery; stats: ReexplainStats } {
   const stats: ReexplainStats = {
     alreadySuperseded: 0,
     historical: 0,
@@ -197,6 +197,7 @@ export function reexplainGallery(gallery: Gallery, now: string): { gallery: Gall
       verdictInputOf({
         ...e,
         linkedHedge: linked,
+        linkedHedgeCoverage,
         hedgeCoverage,
         ordersCoverage: sources.orders,
         positionsCoverage: sources.positions,
@@ -243,6 +244,7 @@ export function reexplainGallery(gallery: Gallery, now: string): { gallery: Gall
         ? { verdict: e.verdict.verdict, classifierVersion: e.classifierVersion, interpretedAt: e.interpretedAt ?? e.checkedAt }
         : e.previousInterpretation,
       snapshotId: newId,
+      snapshotClassifierVersion: fork ? CLASSIFIER_VERSION : (e.snapshotClassifierVersion ?? e.classifierVersion),
       ...(fork ? { supersedes: oldId } : {}),
     };
     // The same sentence, rows and diagram a live check writes
@@ -252,7 +254,7 @@ export function reexplainGallery(gallery: Gallery, now: string): { gallery: Gall
 
     if (verdictChanged) stats.reverdicted++;
     if (summary !== e.summary || JSON.stringify(evidence) !== JSON.stringify(e.evidence)) stats.reexplained++;
-    const judgedWithShare = { ...judged, share: shareCard(judged, { kind: 'gallery', snapshotId: judged.snapshotId }) };
+    const judgedWithShare = { ...judged, share: shareCard(judged, { kind, snapshotId: judged.snapshotId }) };
     if (!fork) return [judgedWithShare];
 
     stats.forked++;
@@ -272,7 +274,7 @@ export function reexplainGallery(gallery: Gallery, now: string): { gallery: Gall
 function main() {
   const path = process.argv[2] ?? 'data/gallery.json';
   const gallery = JSON.parse(readFileSync(path, 'utf-8')) as Gallery;
-  const { gallery: next, stats } = reexplainGallery(gallery, new Date().toISOString());
+  const { gallery: next, stats } = reexplainGallery(gallery, new Date().toISOString(), path.endsWith('featured.json') ? 'saved' : 'gallery');
 
   writeFileSync(`${path}.tmp`, JSON.stringify(next, null, 1) + '\n');
   renameSync(`${path}.tmp`, path);

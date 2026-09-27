@@ -75,12 +75,10 @@ export interface ExposureBreakdown {
    * inferred from whether some segment happens to be nonzero - a renderer
    * must read this field directly (25.09 audit, A03).
    *
-   * 'unknown' is never produced by this function itself - every branch above
-   * resolves to one of the other four values. It exists only as a value
-   * scripts/reexplain.ts stamps directly onto old, frozen entries whose
-   * breakdown predates this field, meaning literally "no claim is made
-   * either way" - not a fifth kind of measured uncertainty alongside the
-   * other four (technical debt from the 25.09 audit follow-up). */
+   * 'unknown' also covers unresolved same-asset debt, opposing perpetual
+   * legs and unverified HIP-3 underlyings. Spot-only segments cannot prove
+   * combined exposure in those cases. It is also used on older frozen
+   * readings which never recorded coverage quality. */
   dataQuality: 'measured' | 'partial' | 'unpriced' | 'unverified' | 'unknown';
 }
 
@@ -105,7 +103,11 @@ export function exposureBreakdown(
   // outranks a material but priced-and-found unverified share: none of the
   // three can be inferred from the segments below, which is the whole point
   // of this field (25.09 audit, A03).
-  const dataQuality: ExposureBreakdown['dataQuality'] = !applies
+  const unresolvedExposure = hedge.hasUnresolvedLiability || (positions.sameAssetOffsetShare ?? 0) > 0 ||
+    Boolean(positions.headlineCoin?.includes(':'));
+  const dataQuality: ExposureBreakdown['dataQuality'] = unresolvedExposure
+    ? 'unknown'
+    : !applies
     ? 'measured'
     : hedgeCoverage === 'missing' || hedgeCoverage === 'partial'
       ? 'partial'

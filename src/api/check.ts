@@ -57,6 +57,9 @@ export type CheckResponse = CheckResult & {
   /** Where this exact reading can be opened again. See src/snapshot.ts.
    * Absent when the write that would have made it openable failed. */
   snapshotId?: string;
+  /** Rules version used to mint the id. Re-explaining an unchanged verdict
+   * preserves its public link even when classifierVersion advances. */
+  snapshotClassifierVersion?: string;
   /** Whether that write went through. The card used to be handed an id
    * whatever KV did with it, so "Copy link" could produce a link that has
    * never pointed at anything (audit R02). */

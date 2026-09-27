@@ -386,9 +386,9 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   const spotPrices = buildSpotPriceIndex(spotMeta, spotAssetCtxs);
   const hlSpot = normalizeSpotHoldings(spotRead.rows, spotPrices, duplicateSpotTokenNames(spotMeta));
   if (spotRead.malformed > 0) {
-    // For a short these balances are part of the hedge search, and one that
-    // could not be read leaves the cover unknown rather than zero.
-    if (hedgeCoverage === 'complete') hedgeCoverage = 'partial';
+    // A malformed balance can hide spot cover for a short or a negative
+    // balance (same-asset debt) against a long.
+    if (hedgeCoverage === 'complete' || positionFeatures.headlineSide === 'long') hedgeCoverage = 'partial';
     note(
       `${spotRead.malformed} spot ${spotRead.malformed === 1 ? 'balance' : 'balances'} on Hyperliquid came back ` +
         'malformed and were left out',
@@ -407,6 +407,10 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
     positionFeatures.headlineSide,
     positionFeatures.headlineNotionalUsd,
     [...hlSpot, ...ownChain],
+  );
+  hedgeFeatures.hasUnresolvedLiability = spotRead.rows.some(
+    (b) => Number(b.total) < 0 && positionFeatures.headlineCoin !== null &&
+      spotHedgesPerp(b.coin, positionFeatures.headlineCoin, { source: 'hyperliquid-spot' }),
   );
   // Two things the hedge number cannot say on its own, mentioned only when
   // they are large enough to matter: real balances carry dust, and a $57

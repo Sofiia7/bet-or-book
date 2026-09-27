@@ -109,14 +109,14 @@ describe('computeVerdict', () => {
     expect(at(1.151)).toBe('unknown');
   });
 
-  it('calls it hedged when the offsetting legs are in the same assets', () => {
+  it('withholds a verdict when only portfolio-wide offsetting is known', () => {
     const result = computeVerdict({
       positions: positions({ nPositions: 4, netToGross: 0.1, headlineShare: 0.3, sameAssetOffsetShare: 0.95 }),
       orders: orders({}),
       hedge: hedge({}),
     });
-    expect(result.verdict).toBe('hedged');
-    expect(result.reasons).toContain('balanced_book');
+    expect(result.verdict).toBe('unknown');
+    expect(result.reasons).toContain('perp_offset_unresolved');
   });
 
   it('does not call a book hedged just because its dollars net out across different assets', () => {
@@ -237,9 +237,9 @@ describe('hedgeCanChangeVerdict', () => {
     expect(hedgeCanChangeVerdict({ positions: many, orders: orders({}) })).toBe(true);
   });
 
-  it('is false for a book whose legs already cancel within their own assets', () => {
+  it('still reads spot when some portfolio legs cancel: that says nothing about the selected short', () => {
     const balanced = positions({ ...concentratedShort, nPositions: 6, netToGross: 0.2, headlineShare: 0.3, sameAssetOffsetShare: 0.9 });
-    expect(hedgeCanChangeVerdict({ positions: balanced, orders: orders({}) })).toBe(false);
+    expect(hedgeCanChangeVerdict({ positions: balanced, orders: orders({}) })).toBe(true);
   });
 
   it('is true when the dollars net out across different assets: spot could still offset the short', () => {

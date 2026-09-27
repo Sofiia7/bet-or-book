@@ -119,7 +119,7 @@ describe('the saved gallery against the current rules', () => {
       // reclassified on a guess; they are the difference in `history`,
       // waiting on a fresh check the way any account is once a rule needs a
       // number scanned before that rule existed did not capture.
-    }).toEqual({ judged: 177, looks_like_a_bet: 132, unknown: 38, book: 0, hedged: 7, history: 100 });
+    }).toEqual({ judged: 0, looks_like_a_bet: 0, unknown: 0, book: 0, hedged: 0, history: 277 });
   });
 
   it('gives every card its own share id', () => {

@@ -36,6 +36,14 @@ const OPEN: Record<Exclude<ReasonCode, 'positions' | 'trades'>, (r: Reading) => 
     'view it chose to keep. One reading of its orders cannot tell; watching the quoting over days would.',
   balanced_book: () =>
     'whether the offsetting legs stay together. Positions that cancel now can be closed one at a time.',
+  perp_offset_unresolved: () =>
+    'the selected position\'s net exposure after combining the opposing perpetual legs and spot holdings.',
+  liability_not_resolved: () =>
+    'the exposure after subtracting the known same-asset liability. The displayed spot ratio leaves that debt out.',
+  underlying_not_verified: () =>
+    'whether this HIP-3 contract represents the same underlying as holdings or positions on another venue.',
+  linked_holdings_not_checked: () =>
+    'the funding wallets that could not be read. Checking again may complete that search.',
   // A reading taken before loans were looked for says so in its own terms:
   // "listed with the reading" would make its silence read as "none".
   hedge_leg: (r) =>

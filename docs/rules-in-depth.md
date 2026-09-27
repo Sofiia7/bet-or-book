@@ -2,7 +2,7 @@
 
 The [README](../README.md) has the rule table. This is the reasoning behind it: what each rule refuses to conclude, why asset identity is checked the way it is, and what the calibration run against three known accounts does and does not establish.
 
-## Seven things the rules refuse to do, each one an audit finding
+## What the rules refuse to do
 
 - **A funding wallet's holdings are never this account's hedge.** A transfer shows where money came from, not who holds it now, and an exchange is a common funder. Such holdings can withhold a verdict, never grant one.
 - **A dollar balance is not an offset.** $1M BTC long against $1M TRUMP short nets to zero and leaves both bets running.
@@ -11,6 +11,10 @@ The [README](../README.md) has the rule table. This is the reasoning behind it: 
 - **A count of positions is not evidence about one of them.** A spread of positions describes the account; that the position in front of the reader is a market maker's inventory is a claim about quoting, and needs quoting large enough to matter against it.
 - **An asset that could not be identified is not an absent one.** Holdings named like the position but on a chain or in a token this tool cannot verify are reported as dollars of unknown identity, and enough of them withhold the answer.
 - **A rule that asserts an absence needs the source that absence is about.** A HIP-3 dex answering 503 is not an account that quotes nothing.
+- **A balanced portfolio does not hedge every position inside it.** Since v6, opposing perpetual legs produce Unknown until their combined exposure with the selected position and spot is measured. The old portfolio-wide `balanced_book` rule no longer grants Hedged.
+- **Known same-asset debt cannot stay only in a footnote.** A negative Hyperliquid spot balance in the headline asset withholds the exposure verdict. A loan in another asset remains context. Malformed spot rows also withhold a Bet on a long because they could hide debt.
+- **An incomplete funder search cannot prove zero linked holdings.** Both Bet paths require a completed search when one was attempted.
+- **A HIP-3 market name is not verified underlying identity.** Quoting in that exact market can still support Book; the current registry cannot establish a Bet or Hedge from its name alone.
 
 ## Asset identity
 

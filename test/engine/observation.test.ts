@@ -30,6 +30,25 @@ describe('an observation is checked against what the rules now read', () => {
     expect(missingForCurrentRules(base())).toEqual([]);
   });
 
+  it('does not rejudge pre-loan observations as if no liability was found', () => {
+    const e = base({ observationSchemaVersion: 3 });
+    delete e.hedge.hasUnresolvedLiability;
+    expect(missingForCurrentRules(e)).toContain('hedge.hasUnresolvedLiability');
+  });
+
+  it('can rejudge schema 5 when the loan read was clean and funder coverage is recorded', () => {
+    const e = base({ observationSchemaVersion: 5, linkedHedgeCoverage: 'complete' });
+    delete e.hedge.hasUnresolvedLiability;
+    expect(missingForCurrentRules(e)).toEqual([]);
+    e.coverage = ['1,000 HYPE is owed on Hyperliquid spot - borrowed and not held'];
+    expect(missingForCurrentRules(e)).toContain('hedge.hasUnresolvedLiability');
+  });
+
+  it('does not invent completeness for a legacy funding-wallet search', () => {
+    const e = base({ observationSchemaVersion: 5, linkedHedgeCoverage: undefined });
+    expect(missingForCurrentRules(e)).toContain('linkedHedgeCoverage');
+  });
+
   it('flags a hedge aggregate with no record of what was left out', () => {
     const e = base({ hedge: { hedgeUsd: 5e5, hedgeRatio: 0.5 } as never, observationSchemaVersion: undefined });
     expect(missingForCurrentRules(e)).toContain('hedge.unverifiedUsd');

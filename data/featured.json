@@ -85,11 +85,11 @@
    "mainDexPositionCount": 1,
    "focus": null,
    "positionsAsOf": "2026-09-26T06:27:46.691Z",
-   "classifierVersion": "v5",
+   "classifierVersion": "v6",
    "observationSchemaVersion": 5,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-26T06:27:46.691Z",
-   "interpretedAt": "2026-09-26T06:27:44.380Z",
+   "interpretedAt": "2026-09-27T13:52:46.424Z",
    "degraded": false,
    "summary": "100% of the exposure is one $126.4M HYPE long. Spot cannot offset a long, and debts or other derivatives are not read here.",
    "evidence": [
@@ -178,7 +178,7 @@
      "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here"
     ],
     "more": 0,
-    "provenance": "Positions as of 26 Sept, 06:27 UTC · checked live, rules v5",
+    "provenance": "Positions as of 26 Sept, 06:27 UTC · saved reading, rules v6",
     "link": null,
     "evidence": [
      {
@@ -206,7 +206,8 @@
    },
    "nansenCalls": 4,
    "snapshotId": "17n56vckzhwtr",
-   "supersedes": "082e843a-mu71i2vu"
+   "supersedes": "082e843a-mu71i2vu",
+   "snapshotClassifierVersion": "v5"
   },
   {
    "address": "0xf02d16a272a842f8bac1d9a9e773aba1933454c6",
@@ -290,11 +291,11 @@
    "mainDexPositionCount": 1,
    "focus": null,
    "positionsAsOf": "2026-09-26T06:40:18.035Z",
-   "classifierVersion": "v5",
+   "classifierVersion": "v6",
    "observationSchemaVersion": 5,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-26T06:40:18.035Z",
-   "interpretedAt": "2026-09-26T06:40:15.633Z",
+   "interpretedAt": "2026-09-27T13:52:46.424Z",
    "degraded": false,
    "summary": "The $42.0M HYPE short is 99% covered by $41.6M of spot HYPE held by this address on Hyperliquid - other Nansen-supported chains were checked and found nothing.",
    "evidence": [
@@ -400,7 +401,7 @@
      "Borrowed on Hyperliquid under portfolio margin: 18,407,150 USDC. 453,316 HYPE of the spot held against the short is supplied as collateral. Spot balances are counted net of what is borrowed, and a loan taken anywhere else would not appear here"
     ],
     "more": 0,
-    "provenance": "Positions as of 26 Sept, 06:40 UTC · checked live, rules v5",
+    "provenance": "Positions as of 26 Sept, 06:40 UTC · saved reading, rules v6",
     "link": null,
     "evidence": [
      {
@@ -428,7 +429,8 @@
    },
    "nansenCalls": 3,
    "snapshotId": "00dzwn0p8gh67",
-   "supersedes": "0x4uv7ru4tpka"
+   "supersedes": "0x4uv7ru4tpka",
+   "snapshotClassifierVersion": "v5"
   },
   {
    "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
@@ -549,11 +551,11 @@
    "mainDexPositionCount": 18,
    "focus": null,
    "positionsAsOf": "2026-09-26T06:27:53.647Z",
-   "classifierVersion": "v5",
+   "classifierVersion": "v6",
    "observationSchemaVersion": 5,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-26T06:27:53.647Z",
-   "interpretedAt": "2026-09-26T06:27:51.892Z",
+   "interpretedAt": "2026-09-27T13:52:46.424Z",
    "degraded": false,
    "summary": "Less than 1% of the $208.2M ETH short is covered by ETH at this address. 2 wallets that funded it hold $395.8M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
@@ -657,7 +659,7 @@
      "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here"
     ],
     "more": 0,
-    "provenance": "Positions as of 26 Sept, 06:27 UTC · checked live, rules v5",
+    "provenance": "Positions as of 26 Sept, 06:27 UTC · saved reading, rules v6",
     "link": null,
     "evidence": [
      {
@@ -685,7 +687,8 @@
    },
    "nansenCalls": 7,
    "snapshotId": "34stjd0gtgkz1",
-   "supersedes": "07dr4tcn26rwx"
+   "supersedes": "07dr4tcn26rwx",
+   "snapshotClassifierVersion": "v5"
   },
   {
    "address": "0xecb63caa47c7c4e77f60f1ce858cf28dc2b82b00",
@@ -790,11 +793,11 @@
    "mainDexPositionCount": 86,
    "focus": null,
    "positionsAsOf": "2026-09-26T06:27:58.992Z",
-   "classifierVersion": "v5",
+   "classifierVersion": "v6",
    "observationSchemaVersion": 5,
    "assetRegistryVersion": 2,
    "observedAt": "2026-09-26T06:27:58.992Z",
-   "interpretedAt": "2026-09-26T06:27:57.378Z",
+   "interpretedAt": "2026-09-27T13:52:46.424Z",
    "degraded": false,
    "summary": "2,730 resting orders quote both sides of 123 markets; 2,000+ fills over 0.4 hours, 59% of them buys, 82% as maker.",
    "evidence": [
@@ -886,7 +889,7 @@
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address."
     ],
     "more": 0,
-    "provenance": "Positions as of 26 Sept, 06:27 UTC · checked live, rules v5",
+    "provenance": "Positions as of 26 Sept, 06:27 UTC · saved reading, rules v6",
     "link": null,
     "evidence": [
      {
@@ -914,7 +917,8 @@
    },
    "nansenCalls": 2,
    "snapshotId": "1a896dimxf5ba",
-   "supersedes": "2b2e7wqput6yt"
+   "supersedes": "2b2e7wqput6yt",
+   "snapshotClassifierVersion": "v5"
   },
   {
    "address": "0xf02d16a272a842f8bac1d9a9e773aba1933454c6",

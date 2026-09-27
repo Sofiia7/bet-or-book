@@ -348,6 +348,9 @@ function constellationStatLabelFor(d) {
 
 function constellationQualityNoteFor(d) {
   const quality = d.breakdown && d.breakdown.applies && d.breakdown.dataQuality;
+  if (quality === 'unknown' && d.hedge && d.hedge.hasUnresolvedLiability) return 'Exposure unresolved: the spot ratio does not include the known same-asset debt.';
+  if (quality === 'unknown' && (d.positions.sameAssetOffsetShare || 0) > 0) return 'Exposure unresolved: the spot ratio does not combine the opposing perpetual legs.';
+  if (quality === 'unknown' && (d.positions.headlineCoin || '').includes(':')) return 'Exposure unresolved: the underlying of this HIP-3 contract has not been verified.';
   if (quality === 'partial') return 'Incomplete read: not all holdings were checked. Coverage shown is only what was found.';
   if (quality === 'unpriced') return 'Incomplete read: some matching holdings could not be priced. Coverage shown is only what was found.';
   if (quality === 'unverified') return 'Incomplete read: some holdings could not be identified. Coverage shown is only what was found.';
@@ -1343,7 +1346,7 @@ const BOARDS = [
     // A ratio measured under a partial or missing read is a floor, not a
     // finding: it belongs nowhere near "least covered", which claims the
     // number is the whole story (25.09 audit, A01).
-    filter: (e) => e.positions.headlineSide === 'short' && e.hedgeCoverage === 'complete' && e.hedgeRatio < 0.1,
+    filter: (e) => e.positions.headlineSide === 'short' && e.hedgeCoverage === 'complete' && e.hedgeDataQuality === 'measured' && e.hedgeRatio < 0.1,
     sort: (a, b) => a.hedgeRatio - b.hedgeRatio,
     stat: (e) => fmtPct(e.hedgeRatio) + ' covered',
   },
@@ -1471,7 +1474,9 @@ async function loadGallery() {
   // "Of the N read", not "of the market": counts from one dated scan of a
   // set chosen a particular way, which is not a statistic about the market.
   $('gallery-stats').textContent =
-    gallery.universe + '. Of the ' + rows.length + ' read by the current rules, ' +
+    rows.length === 0
+    ? 'The scan predates the current rules. Its readings remain in the archive below; the four examples were reinterpreted from newer observations.'
+    : gallery.universe + '. Of the ' + rows.length + ' read by the current rules, ' +
     counts.looks_like_a_bet + ' (' + betShare + '%) look like real bets and ' +
     (counts.book + counts.hedged) + ' are books or hedges.';
   $('gallery-method').textContent =

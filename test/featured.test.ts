@@ -46,7 +46,7 @@ describe('the demonstration readings', () => {
   it('are few, fresh, and read by the rules in force', () => {
     expect(shown.length).toBeGreaterThanOrEqual(3);
     expect(shown.length).toBeLessThanOrEqual(4);
-    for (const e of featured.entries) {
+    for (const e of shown) {
       expect(e.classifierVersion).toBe(CLASSIFIER_VERSION);
       expect(e.historical).toBeUndefined();
       const day = e.checkedAt.slice(0, 10);
@@ -86,7 +86,7 @@ describe('the demonstration readings', () => {
 
   it('each have their own id, made the way a live check makes one', () => {
     for (const e of featured.entries) {
-      expect(e.snapshotId).toBe(snapshotId(e.address, e.checkedAt, e.classifierVersion, e.focus));
+      expect(e.snapshotId).toBe(snapshotId(e.address, e.checkedAt, e.snapshotClassifierVersion ?? e.classifierVersion, e.focus));
     }
   });
 

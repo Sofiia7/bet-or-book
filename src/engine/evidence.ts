@@ -398,6 +398,10 @@ function linkedItem(input: EvidenceInput): EvidenceItem | null {
  * request and a deliberately cheaper check are not the same thing. */
 function hedgeNotCheckedSummary(input: EvidenceInput): string {
   const { positions: p } = input;
+  if (p.headlineSide === 'long') {
+    return `Some Hyperliquid spot balances could not be read, so a liability offsetting the ${headlineText(p)} ` +
+      'could not be ruled out. This reading withholds a verdict.';
+  }
   const why =
     input.hedgeCoverage === 'missing'
       ? 'the read of its holdings on other chains failed'
@@ -468,6 +472,18 @@ function positionsNotCompleteSummary(input: EvidenceInput): string {
 /** Each reason a verdict can be withheld for says something specific; the
  * generic "not enough evidence" sentence is the fallback, not the rule. */
 const SUMMARY_BY_REASON: Record<string, ((input: EvidenceInput) => string) | undefined> = {
+  perp_offset_unresolved: ({ positions: p }) =>
+    `Some perpetual legs cancel within the portfolio. That does not establish the combined exposure of the ` +
+    `${headlineText(p)} and its spot holdings, so this reading withholds a verdict.`,
+  liability_not_resolved: ({ positions: p }) =>
+    `This account owes ${p.headlineCoin} on Hyperliquid spot. That liability changes the exposure of the ` +
+    `${headlineText(p)} and is not included in the displayed spot ratio, so this reading withholds a verdict.`,
+  underlying_not_verified: ({ positions: p }) =>
+    `The underlying of the ${headlineText(p)} has not been verified against this tool's asset registry. ` +
+    'A zero matching balance does not establish that no offset exists.',
+  linked_holdings_not_checked: ({ positions: p }) =>
+    `The ${headlineText(p)} looks directional, but the funding-wallet search did not finish. ` +
+    'Unread matching assets cannot be counted as zero, so this reading withholds a verdict.',
   linked_exposure_unverified: linkedSummary,
   mixed_long_short_book: mixedBookSummary,
   offset_not_measured: unmeasuredOffsetSummary,

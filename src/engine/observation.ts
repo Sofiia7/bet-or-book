@@ -126,7 +126,7 @@ export function verdictInputOf(
   o: Pick<
     Observation,
     'positions' | 'orders' | 'hedge' | 'trades' | 'linkedHedge' | 'hedgeCoverage' | 'ordersCoverage' | 'positionsCoverage'
-  >,
+  > & Partial<Pick<Observation, 'linkedHedgeCoverage'>>,
 ): VerdictInput {
   return {
     positions: o.positions,
@@ -134,6 +134,7 @@ export function verdictInputOf(
     hedge: o.hedge,
     trades: { tradesPerDay: o.trades.tradesPerDay, crossedShare: o.trades.crossedShare, buyShare: o.trades.buyShare },
     linkedHedge: o.linkedHedge ? { linkedHedgeRatio: o.linkedHedge.linkedHedgeRatio } : undefined,
+    linkedHedgeCoverage: o.linkedHedgeCoverage,
     hedgeCoverage: o.hedgeCoverage,
     ordersCoverage: o.ordersCoverage,
     positionsCoverage: o.positionsCoverage,
@@ -157,7 +158,8 @@ export function verdictInputOf(
  *    what changed is what the notes cover: in an earlier entry, no loan
  *    listed means none was looked for, not none found.
  */
-export const OBSERVATION_SCHEMA_VERSION = 5;
+// 6: the headline-asset liability flag reaches the classifier.
+export const OBSERVATION_SCHEMA_VERSION = 6;
 
 /** The first observation that looked for loans on Hyperliquid. */
 export const LOANS_READ_FROM_SCHEMA = 5;
@@ -198,6 +200,21 @@ export function legacySourceCoverage(e: Stored): { orders: SourceCoverage; posit
 export function missingForCurrentRules(e: Stored): string[] {
   if (e.observationSchemaVersion === OBSERVATION_SCHEMA_VERSION) return [];
   const missing: string[] = [];
+
+  // Schema 5 explicitly recorded same-asset debt in coverage notes. A
+  // clean read with no such note can be re-read; a debt note cannot safely
+  // be treated as a measured absence, and older schemas never looked.
+  if (e.positions.nPositions > 0 && typeof e.hedge.hasUnresolvedLiability !== 'boolean') {
+    const loansRead = (e.observationSchemaVersion ?? 0) >= LOANS_READ_FROM_SCHEMA;
+    const knownDebt = (e.coverage ?? []).some((n) => n.includes('is owed on Hyperliquid spot'));
+    const unreadSpot = (e.coverage ?? []).some((n) => /spot balances? on Hyperliquid came back malformed/.test(n));
+    if (!loansRead || knownDebt || unreadSpot) missing.push('hedge.hasUnresolvedLiability');
+  }
+  // v6 uses this source status to make a Bet absence claim. A schema stamp
+  // alone cannot recover whether an older funder lookup finished.
+  if (e.positions.headlineSide === 'short' && !e.linkedHedgeCoverage) {
+    missing.push('linkedHedgeCoverage');
+  }
 
   // Two-sided quoting decides a book now, and only its notional can say
   // whether the quoting was material. An order count below the rule's floor

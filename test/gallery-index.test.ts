@@ -5,6 +5,7 @@ import { describe, expect, it, vi, afterEach } from 'vitest';
 import worker from '../src/index';
 import { testEnv, request } from './support/worker';
 import galleryData from '../data/gallery.json';
+import featuredData from '../data/featured.json';
 import { badgeQualifier } from '../src/engine/reasons';
 import type { VerdictResult } from '../src/engine/verdict';
 
@@ -140,7 +141,7 @@ describe('the gallery list is rows, not cards', () => {
     // present - the property-existence check above would pass even if
     // badgeQualifier were null on every row.
     type RawEntry = { address: string; historical?: unknown; superseded?: boolean; verdict: VerdictResult };
-    const source = (galleryData.entries as RawEntry[]).find(
+    const source = (featuredData.entries as RawEntry[]).find(
       (e) =>
         e.verdict.verdict === 'unknown' &&
         !e.historical &&
@@ -153,8 +154,9 @@ describe('the gallery list is rows, not cards', () => {
 
     const list = (await (await worker.fetch(request('/api/gallery'), testEnv())).json()) as {
       entries: Array<{ address: string; badgeQualifier?: string | null }>;
+      featured: Array<{ address: string; badgeQualifier?: string | null }>;
     };
-    const row = list.entries.find((e) => e.address === source!.address);
+    const row = list.featured.find((e) => e.address === source!.address);
     expect(row).toBeDefined();
     expect(row!.badgeQualifier).toBe(expected);
   });

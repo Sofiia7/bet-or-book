@@ -89,7 +89,9 @@ export interface VerdictThresholds {
  * unrecognised - now outranks a busy-maker-flow reading, which used to fire
  * first and withhold a verdict the coverage had already answered.
  */
-export const CLASSIFIER_VERSION = 'v5';
+// v6 (27.09): unresolved perp offsets, liabilities, market identity and
+// failed funding-wallet reads withhold claims the available data cannot prove.
+export const CLASSIFIER_VERSION = 'v6';
 
 export const DEFAULT_THRESHOLDS: VerdictThresholds = {
   book: {
@@ -159,6 +161,7 @@ export interface VerdictInput {
   trades?: { tradesPerDay: number; crossedShare: number; buyShare: number };
   /** Hedge held by wallets linked through a funding transaction. */
   linkedHedge?: { linkedHedgeRatio: number };
+  linkedHedgeCoverage?: HedgeCoverage;
   /** How completely the hedge was looked for. Absent means complete, which
    * is what every caller inside this repo passes explicitly. */
   hedgeCoverage?: HedgeCoverage;
@@ -195,6 +198,10 @@ export type ReasonCode =
   | BookSignal
   | 'no open positions found'
   | 'balanced_book'
+  | 'perp_offset_unresolved'
+  | 'liability_not_resolved'
+  | 'underlying_not_verified'
+  | 'linked_holdings_not_checked'
   | 'over_covered'
   | 'hedge_not_checked'
   | 'unrecognised_assets'
@@ -278,17 +285,9 @@ function offsetShare(input: StructureInput): number | null {
   return typeof share === 'number' && Number.isFinite(share) ? share : null;
 }
 
-/** A balanced book whose legs really do cancel: a $1M BTC long against a $1M
- * TRUMP short nets to zero dollars and still leaves both bets running, so
- * dollar balance alone is not an offset. */
-function isSameAssetBook(input: StructureInput, thresholds: VerdictThresholds): boolean {
-  const share = offsetShare(input);
-  return share !== null && share >= thresholds.hedged.minSameAssetOffsetShare && isDollarBalanced(input, thresholds);
-}
-
 /** A hedge read costs a credit, so it is worth making only when its answer
  * could move the verdict: positions exist, the quoting has not already
- * settled the account, the book is not already balanced, and the headline is
+ * settled the account, and the headline is
  * a short - spot offsets nothing else. Mirrors the order of the rules in
  * computeVerdict, so it has to follow it when those change: a wide position
  * spread no longer decides anything on its own, so it no longer stops the
@@ -300,8 +299,7 @@ export function hedgeCanChangeVerdict(
   return (
     input.positions.nPositions > 0 &&
     input.positions.headlineSide === 'short' &&
-    !bookSignals(input, thresholds.book).includes('orders') &&
-    !isSameAssetBook(input, thresholds)
+    !bookSignals(input, thresholds.book).includes('orders')
   );
 }
 
@@ -329,10 +327,21 @@ export function computeVerdict(
   const ratio = input.hedge.hedgeRatio;
   const hedgedByLeg = ratio >= h.minHedgeRatio && ratio <= h.maxHedgeRatio;
 
-  // A balanced book is a statement about the positions themselves, so it
-  // does not wait on the holdings read.
-  if (isSameAssetBook(input, thresholds)) {
-    return decided('hedged', null, ['balanced_book']);
+  // Quoting above is an observed activity. Exposure claims below require
+  // knowing all of the relevant legs. Portfolio-wide cancellation does not
+  // prove that the selected position is offset (e.g. matched BTC legs next
+  // to an unhedged ETH short), nor does spot alone describe combined
+  // spot/perp coverage. Until that combined exposure is measured, abstain.
+  if ((offsetShare(input) ?? 0) > 0) {
+    return decided('unknown', null, ['perp_offset_unresolved']);
+  }
+  if (input.hedge.hasUnresolvedLiability) {
+    return decided('unknown', null, ['liability_not_resolved']);
+  }
+  // A HIP-3 market name is not a verified underlying-asset identity. The
+  // current registry cannot match it to spot or to other perp venues.
+  if (input.positions.headlineCoin?.includes(':')) {
+    return decided('unknown', null, ['underlying_not_verified']);
   }
 
   // Over-covered first: holdings that were missed can only add to the spot
@@ -402,6 +411,9 @@ export function computeVerdict(
     if ((input.positionsCoverage ?? 'complete') !== 'complete') {
       return decided('unknown', null, ['positions_not_complete']);
     }
+    if (input.linkedHedgeCoverage === 'partial' || input.linkedHedgeCoverage === 'missing') {
+      return decided('unknown', null, ['linked_holdings_not_checked']);
+    }
     return decided('looks_like_a_bet', null, ['directional_concentration']);
   }
 
@@ -447,6 +459,9 @@ export function computeVerdict(
     }
     if ((input.positionsCoverage ?? 'complete') !== 'complete') {
       return decided('unknown', null, ['positions_not_complete']);
+    }
+    if (input.linkedHedgeCoverage === 'partial' || input.linkedHedgeCoverage === 'missing') {
+      return decided('unknown', null, ['linked_holdings_not_checked']);
     }
     return decided('looks_like_a_bet', null, ['directional_portfolio']);
   }
