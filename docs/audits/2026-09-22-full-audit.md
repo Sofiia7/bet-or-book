@@ -8,7 +8,7 @@ Version checked: `5ec89b1` (local HEAD equals remote `main`; the deploy on worke
 
 - Read: the README, the specification, the three previous audits and both documents on choosing the direction, the demo script, the submission checklist, `web/index.html`, `web/app.js`, `src/api/check.ts`, `src/engine/verdict.ts`, `src/engine/evidence.ts`, `src/engine/features.ts` (positions and trades), the Nansen and Hyperliquid fixtures. The rest of `src/` was read in a separate pass over the code (section 5).
 - `npm run typecheck` and `npx vitest run`: 29 files, 339 tests, all green. `npm audit`: 0 vulnerabilities. CI on GitHub for `5ec89b1`: success. The offline check of the previous audit's fixes, `docs/audits/2026-09-21-verify.ts`: 19 observations, all assertions hold.
-- The live site was walked through as a user: the home page, a card from the gallery, a live check of the demo address `0xB83DE012...` (7,1 s, 7 Nansen calls, result Unknown), a check of a selected position via the chips (BTC short, 6,4 s, 7 calls), garbage input, a transaction hash, a non-existent `?s=...` link, the PNG card (taken from the canvas and viewed), a 375 px width, the meta tags of a saved link.
+- The live site was walked through as a user: the home page, a card from the gallery, a live check of the demo address `0xB83DE012...` (7.1 s, 7 Nansen calls, result Unknown), a check of a selected position via the chips (BTC short, 6.4 s, 7 calls), garbage input, a transaction hash, a non-existent `?s=...` link, the PNG card (taken from the canvas and viewed), a 375 px width, the meta tags of a saved link.
 - Gallery: recounted from `data/gallery.json` (300 records, 22 of them superseded old readings that the route filters out; 277 on the page, of which 183 were read by rules v3 and 94 are marked as history).
 - Contest terms: re-read the campaign page, the submission form, Nansen's redistribution guidelines, the endpoint documentation, the Nansen changelog on Hyperliquid, the public repositories of other participants. Links in section 3.
 
@@ -45,7 +45,7 @@ Sources: [campaign page](https://www.nansen.ai/campaigns/meridian-buildathon), [
 
 ## 4. Logic and rules
 
-**L01 · P1. A directional portfolio has no verdict.** The bet rule requires no more than 5 positions and a headline position share of at least 50%. An account with 7-20 longs, net/gross 100%, no quotes and no hedge falls into "signals disagree: not enough evidence". In the gallery this is 25 of the 47 such Unknowns (plus 12 that fail only on the 50% share). The demo address, after selecting BTC, gets "Not enough evidence either way" with 20 shorts at $580M gross and net/gross 100%; a human would say "he is shorting everything". Proposal: a reason `directional_portfolio` inside "Looks like a bet" (without a fifth verdict): net/gross at least 0,8, no two-sided quotes, coverage of the headline position below 10% (for a short) or not applicable (for a long), orders and positions read completely, and the rule stands **after** the `linked_exposure_unverified` check so as not to lose the finding about the funders. Text: "All 20 positions on this address point the same way: $580M short, the largest of them ETH $212M (36%)". This is a change of rules, hence v4, an offline `reexplain` of the gallery and an entry in the "what changed because of the rules" block; the mechanism for that already exists.
+**L01 · P1. A directional portfolio has no verdict.** The bet rule requires no more than 5 positions and a headline position share of at least 50%. An account with 7-20 longs, net/gross 100%, no quotes and no hedge falls into "signals disagree: not enough evidence". In the gallery this is 25 of the 47 such Unknowns (plus 12 that fail only on the 50% share). The demo address, after selecting BTC, gets "Not enough evidence either way" with 20 shorts at $580M gross and net/gross 100%; a human would say "he is shorting everything". Proposal: a reason `directional_portfolio` inside "Looks like a bet" (without a fifth verdict): net/gross at least 0.8, no two-sided quotes, coverage of the headline position below 10% (for a short) or not applicable (for a long), orders and positions read completely, and the rule stands **after** the `linked_exposure_unverified` check so as not to lose the finding about the funders. Text: "All 20 positions on this address point the same way: $580M short, the largest of them ETH $212M (36%)". This is a change of rules, hence v4, an offline `reexplain` of the gallery and an entry in the "what changed because of the rules" block; the mechanism for that already exists.
 
 **L02 · P1. For a long, Nansen takes no part in the answer.** `hedgeCanChangeVerdict` returns false for a long, `readLinkedHedge` is not called, and a long costs 2 calls: positions and PnL. This is right from the credits point of view, but for 87% of the cards "Nansen drives the logic" is not demonstrated. Two cheap ways for Nansen to decide for a long too: (a) **wallet age and funding source** from `related-wallets` (2 calls, the `block_timestamp` field of the first funding and the service status of the funder, which the code already determines from the label without showing the label itself): "wallet first funded from an exchange address 3 days ago, one position, 5x cross" is the classic storyline of a viral post and it is Nansen data; (b) **an opposing perp leg** on another dex for the same asset is already counted in `sameAssetOffsetShare`, but a long is never told about it. Item (a) raises the cost of a long from 2 to 4 calls; with a cap of 300 per day that is acceptable; it can be enabled only for accounts with no more than 5 positions.
 
@@ -135,7 +135,7 @@ Own observations from reading the page and `check.ts`:
 
 **J05. "What changed".** Works only on the 22 gallery cards. A live check of an address from the gallery (checked on the demo address) does not show the block, although a previous reading exists and the comparison already knows how to do everything needed. A `latest:<address>` index in KV is needed: on a live check, fill `supersedes` from it and save the new id there. Then any repeat check, including the one in the video, will show "position size: $216.7M → $211.9M, funders: $464.7M → $414.6M". This is the main reason to come back, and right now it does not exist.
 
-**J06. Position selection.** Works, 6,4 s, a new link. The "Largest position" label is wrong (L05). The chips disappear on a saved reading without explanation.
+**J06. Position selection.** Works, 6.4 s, a new link. The "Largest position" label is wrong (L05). The chips disappear on a saved reading without explanation.
 
 **J07. Sharing.** The PNG is honest and readable (checked): badge, headline, summary, diagram, limitation, time, link. The link returns exactly this reading. Missing: the preview (J01) and a ready-made text for a post (a "Copy post text" button: the summary plus the link, 280 characters; half an hour of work and a direct bridge to X).
 
@@ -176,7 +176,7 @@ User one: a person from Crypto X who saw a post "a whale opened a $200M short", 
 | 7 | `og:image` from the card PNG (J01) | A preview with the diagram in X and Telegram | Submission: the contest post itself gets an image | 3-4 h |
 | 8 | Wallet age and funding source for longs with no more than 5 positions (L02a) | "A fresh wallet from an exchange, one position" | Data Integration for longs; +2 calls per long | 3 h |
 | 9 | "How this was decided": the rule that fired, on the card | The "why" is clear | Documentation | 1 h |
-| 10 | Text for a post and a local list of checks (J07, J08) | A bridge to X, a reason to come back | Engagement | 1,5 h |
+| 10 | Text for a post and a local list of checks (J07, J08) | A bridge to X, a reason to come back | Engagement | 1.5 h |
 | 11 | README: a short header (what, three commands, a GIF, the rules table), the long sections in `docs/` | "Run it in 10 minutes" | Documentation | 2 h |
 
 The minimal strong set for the recording: 1, 2, 3, 4, 5. Then 7 and 11. Items 6, 8, 9, 10 with whatever time remains. The order matters: 2 changes the rules and requires a reexplain and re-reading the demo addresses, so it should be done first, not last.
@@ -196,12 +196,12 @@ A subjective assessment of readiness, not a jury score and not a probability of 
 
 | Criterion (25% each) | Now | What gets in the way | After items 1-5, 7, 11 |
 |---|---|---|---|
-| Data Integration | 7/10 | Nansen decides only for shorts (13% of cards); the paid-for fields are not shown | 8,5/10 |
-| Creativity & Originality | 8/10 | The question and the diagram are unique among the submissions found; but the flagship says Unknown, and the screen looks like a dashboard | 8,5/10 |
+| Data Integration | 7/10 | Nansen decides only for shorts (13% of cards); the paid-for fields are not shown | 8.5/10 |
+| Creativity & Originality | 8/10 | The question and the diagram are unique among the submissions found; but the flagship says Unknown, and the screen looks like a dashboard | 8.5/10 |
 | Functionality & Workability | 7/10 | Works, 339 tests; 47 "signals disagree", an unreadable diagram on a phone, 7 s without progress, the risk of external API failure in the recording | 8/10 |
-| Documentation & Submission | 6/10 | An essay README, internal documents in the repository, the video and the post not done | 8,5/10 |
+| Documentation & Submission | 6/10 | An essay README, internal documents in the repository, the video and the post not done | 8.5/10 |
 
-The average now is about 7/10, after the fixes about 8,5/10. Against the visible competitors (copy-trading scoring, a betting game, thesis checking) this is the submission with the rarest question and the strongest evidence base; the weak spot is not the idea but the first thirty seconds and the unfinished submission.
+The average now is about 7/10, after the fixes about 8.5/10. Against the visible competitors (copy-trading scoring, a betting game, thesis checking) this is the submission with the rarest question and the strongest evidence base; the weak spot is not the idea but the first thirty seconds and the unfinished submission.
 
 The plan by day:
 
