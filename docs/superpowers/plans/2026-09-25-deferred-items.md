@@ -14,7 +14,7 @@
 
 Tasks 1-2 are trivial and independent - do them first. Tasks 3-4 add a new field through the same plumbing pattern as the prior cycle (independent of each other, but both should land before Task 8's redesign touches the same rendering functions). Task 5 (tech debt: historical/superseded `dataQuality`) touches `scripts/reexplain.ts`, a sensitive script - independent of the others structurally, but do it after Task 3/4 so any new fields it needs to preserve already exist. Task 6 (A09, the long diagram) and Task 7 (board dates) are independent, self-contained frontend changes. **Task 8 (the card redesign) depends on Tasks 3, 4 and 6 already being in place**, since it repositions elements those tasks touch and reuses the decisive-evidence tile those tasks' data feeds. Task 9 (A11, refresh featured) must come after Task 8, since the audit's own guidance is to refresh right before final recording, once the card's presentation is settled - and it is the only task that spends real Nansen credits, so it gets its own explicit confirmation step even though the user has already authorized it in principle. Task 10 is final verification and re-deploy.
 
-**Not in this plan, still deliberately out of scope:** the full "PresentationModel" architecture; independent-sample calibration of the classifier; v6 items (material quoting, watchlist, lazy PnL). None of these were in the user's "делай" list.
+**Not in this plan, still deliberately out of scope:** the full "PresentationModel" architecture; independent-sample calibration of the classifier; v6 items (material quoting, watchlist, lazy PnL). None of these were in the user's "do it" list.
 
 ---
 
@@ -842,7 +842,7 @@ Summarize what shipped, matching how the prior cycle's own final report was stru
 - Modify: `web/index.html` (the four example chip labels, only if a refreshed reading's headline number changed enough to make the existing label stale - compare before editing, do not edit reflexively)
 - Modify: `README.md` (the "read on 24 September" / "made fresh on 24 September" references, if the refresh actually changes the effective date - see below)
 
-**Context:** This is the one task in this plan that spends real Nansen API credits - do this LAST, after Tasks 1-8 are merged, so the refreshed readings reflect the final card presentation, matching the audit's own guidance ("перед финальной записью"). **Stop and confirm the exact scope with the user before running the paid step**, even though the broader item was already authorized - the user should see the concrete addresses and an approximate credit cost, not just the general category, before real money moves. This matches this project's own established practice around costly actions.
+**Context:** This is the one task in this plan that spends real Nansen API credits - do this LAST, after Tasks 1-8 are merged, so the refreshed readings reflect the final card presentation, matching the audit's own guidance ("before the final recording"). **Stop and confirm the exact scope with the user before running the paid step**, even though the broader item was already authorized - the user should see the concrete addresses and an approximate credit cost, not just the general category, before real money moves. This matches this project's own established practice around costly actions.
 
 - [ ] **Step 1: Look up the exact addresses**
 

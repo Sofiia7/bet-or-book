@@ -548,7 +548,7 @@ git commit -m "feat: the rest of the page picks up the new dark tokens and type"
 
 ## Task 6: The share/OG images show the actual constellation, not a re-themed bar [DONE - commit a0c4ebb, one fix round (b5a9888, root-caused a provenance-line truncation bug). Independently verified twice by the coordinator directly against real dev-preview output (POST /api/og + fetch, not just trusting the report) for the bet and funders/ghost cases - constellation, stat number, badge, and now-fixed ellipsis all confirmed correct. Note: OG images are cached forever for bundled/featured readings once drawn (no TTL) - the accumulated Task 6 fixes only reach production once the already-planned final `prerender-og.ts --upload` step runs.]
 
-**REVISED after Task 3 landed** (see this plan's key decision #4, corrected in chat by the user: "обязательно именно звездная карточка должна шерится в соц сетях" - the constellation card, specifically, is what must appear when a link is shared). The original version of this task (re-theme the existing bar's colors) is superseded - do not implement the old version.
+**REVISED after Task 3 landed** (see this plan's key decision #4, corrected in chat by the user: "it must be the constellation card specifically that gets shared on social networks" - the constellation card, specifically, is what must appear when a link is shared). The original version of this task (re-theme the existing bar's colors) is superseded - do not implement the old version.
 
 **Files:**
 - Modify: `web/app.js` (`drawCard` and whatever it currently calls for the breakdown portion of the in-browser share/download canvas - Part A, low risk, reuses Task 2's work directly)

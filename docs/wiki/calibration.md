@@ -81,7 +81,7 @@ a profit-taking ladder from being misread as quoting.
 ## 2026-09-17, after adding the trades signal
 
 Same three addresses, same live endpoint, after wiring `computeTradeFeatures`
-(book rule в: `tradesPerDay >= 200`, `crossedShare <= 40%`) via Hyperliquid's
+(book rule c: `tradesPerDay >= 200`, `crossedShare <= 40%`) via Hyperliquid's
 free `userFillsByTime`, no Nansen involved. All three accounts moved in the
 few hours between runs (open positions and order counts differ slightly from
 the table above - expected for live accounts), but every verdict either held

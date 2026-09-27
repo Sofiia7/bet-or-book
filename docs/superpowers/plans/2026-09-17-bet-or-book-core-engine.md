@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript, Cloudflare Workers (`wrangler`), Vitest, `tsx` for one-off scripts. No framework, no database yet - state lives in the response only.
 
-**Relationship to the spec:** implements section 3 (verdicts and features, using Hyperliquid as the fallback source that section 4 rule 2 explicitly allows), section 6 file layout (the `sources/`, `engine/`, `api/` split), and section 10 (tests on recorded real responses) of `docs/specs/2026-09-17-bet-or-book-design.md`. It deliberately stops short of the full spec: Nansen integration, the gallery/prescan, the web page, the credit ledger, and deployment are Phase 2, planned separately once this lands and the Nansen key exists (spec section 12, days 19-27). `tradesPerDay` / `crossedShare` (spec's book rule (в), needs paginated trade history) and the cross-chain part of the hedge leg (needs Nansen's related-wallets and current-balance) are out of scope here for the same reason - Phase 1 implements book rules (а) position-spread and (б) order-book, and the same-account spot leg of the hedge check.
+**Relationship to the spec:** implements section 3 (verdicts and features, using Hyperliquid as the fallback source that section 4 rule 2 explicitly allows), section 6 file layout (the `sources/`, `engine/`, `api/` split), and section 10 (tests on recorded real responses) of `docs/specs/2026-09-17-bet-or-book-design.md`. It deliberately stops short of the full spec: Nansen integration, the gallery/prescan, the web page, the credit ledger, and deployment are Phase 2, planned separately once this lands and the Nansen key exists (spec section 12, days 19-27). `tradesPerDay` / `crossedShare` (spec's book rule (c), needs paginated trade history) and the cross-chain part of the hedge leg (needs Nansen's related-wallets and current-balance) are out of scope here for the same reason - Phase 1 implements book rules (a) position-spread and (b) order-book, and the same-account spot leg of the hedge check.
 
 ---
 
@@ -1126,7 +1126,7 @@ export interface VerdictInput {
   positions: PositionFeatures;
   orders: OrderFeatures;
   hedge: HedgeFeatures;
-  /** Trade-history signal (book rule (в)). Wired in once Phase 2 adds paginated trade history. */
+  /** Trade-history signal (book rule (c)). Wired in once Phase 2 adds paginated trade history. */
   trades?: { tradesPerDay: number; crossedShare: number };
 }
 
@@ -1557,7 +1557,7 @@ git commit -m "docs: calibrate verdict thresholds against three known real accou
 
 ## Self-review notes
 
-- **Spec coverage:** section 3 verdict table (Tasks 6-7, book rules а/б implemented, в deferred to Phase 2 per the Architecture note above), section 4 honesty rules (rule 1 "an unreachable source is not a number" is carried by `checkAddress` letting a rejected promise become a 502 rather than a fabricated feature; rule 6 "kошельки, не люди" is satisfied by never introducing a name or label field anywhere in Phase 1), section 6 file layout (Tasks 3-9 match it module-for-module), section 10 tests-on-real-data (Tasks 2-4 fixture capture and normalize tests; Task 10 live calibration).
+- **Spec coverage:** section 3 verdict table (Tasks 6-7, book rules a/b implemented, c deferred to Phase 2 per the Architecture note above), section 4 honesty rules (rule 1 "an unreachable source is not a number" is carried by `checkAddress` letting a rejected promise become a 502 rather than a fabricated feature; rule 6 "wallets, not people" is satisfied by never introducing a name or label field anywhere in Phase 1), section 6 file layout (Tasks 3-9 match it module-for-module), section 10 tests-on-real-data (Tasks 2-4 fixture capture and normalize tests; Task 10 live calibration).
 - **Placeholder scan:** no "TBD"/"TODO" left in any step; the one open item (exact real addresses for calibration) is explicitly assigned to Task 10 Step 1 as something to go find, not something skipped.
 - **Type consistency:** `PositionFeatures`/`OrderFeatures`/`HedgeFeatures` are defined once in Task 6 and imported (never redefined) in Tasks 7 and 9; `VerdictResult`/`VerdictInput` defined once in Task 7 and imported in Task 9; `Position`/`RestingOrder`/`SpotHolding` defined once in Task 4 and used by Tasks 4, 6, 9.
-- **Out of scope for this plan, by design:** Nansen client and calibration against Nansen's richer data, the trades-based book signal (в), the cross-chain part of the hedge leg, the gallery/prescan script, the shareable card, the credit ledger, KV-backed rate limiting, and the actual `wrangler deploy`. These become Phase 2, planned once this lands and the Nansen key and credits exist (spec section 13).
+- **Out of scope for this plan, by design:** Nansen client and calibration against Nansen's richer data, the trades-based book signal (c), the cross-chain part of the hedge leg, the gallery/prescan script, the shareable card, the credit ledger, KV-backed rate limiting, and the actual `wrangler deploy`. These become Phase 2, planned once this lands and the Nansen key and credits exist (spec section 13).

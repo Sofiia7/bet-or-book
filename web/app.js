@@ -347,6 +347,12 @@ function constellationStatLabelFor(d) {
 }
 
 function constellationQualityNoteFor(d) {
+  // A book's number is how much of its own market it quotes on both sides,
+  // read in full from its resting orders. The hedge search that
+  // breakdown.dataQuality describes is deliberately never run for a book
+  // (hedgeCanChangeVerdict), so its 'partial' says nothing about the number
+  // shown - and used to flag every Book short as INCOMPLETE DATA (27.09).
+  if (d.verdict.verdict === 'book') return null;
   const quality = d.breakdown && d.breakdown.applies && d.breakdown.dataQuality;
   if (quality === 'partial') return 'Incomplete read: not all holdings were checked. Coverage shown is only what was found.';
   if (quality === 'unpriced') return 'Incomplete read: some matching holdings could not be priced. Coverage shown is only what was found.';
