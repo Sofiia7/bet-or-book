@@ -1,377 +1,403 @@
-# Bet or Book - дизайн
+# Bet or Book - design
 
-Дата: 17.09.2026. Статус: одобрен устно, ждёт просмотра этого файла.
+Date: 17.09.2026. Status: approved verbally, awaiting review of this file.
 
-## 1. Цель
+## 1. Goal
 
-Публичная веб-страница для Nansen Meridian Buildathon (14-27.09.2026, дедлайн
-27.09 23:59 UTC, итоги 01.10). Человек видит вирусный пост «кит открыл шорт на
-$190M», вставляет адрес Hyperliquid и за 10 секунд получает вердикт: это
-ставка, хедж или книга маркет-мейкера, и стоит ли это копировать.
+A public web page for the Nansen Meridian Buildathon (14-27.09.2026, deadline
+27.09 23:59 UTC, results 01.10). A person sees a viral post "a whale opened a
+$190M short", pastes a Hyperliquid address and within 10 seconds gets a
+verdict: is this a bet, a hedge or a market maker's book, and is it worth
+copying.
 
-Критерии конкурса, по 25% каждый, и как мы на них отвечаем:
+The contest criteria, 25% each, and how we answer them:
 
-| Критерий | Ответ |
+| Criterion | Answer |
 |---|---|
-| Данные Nansen двигают логику, а не просто показаны | вердикт считается из позиций, сделок, связанных кошельков и балансов в других сетях - всё от Nansen |
-| Оригинальность («дашборды мы видели») | среди публичных заявок на 17.09 никто не классифицирует адрес как ставку, хедж или книгу |
-| Живые данные, без падений | живая ссылка, кэш, честный вердикт Unknown вместо падения |
-| README, запись без голоса, запуск за 10 минут | README на английском, сценарий ролика на 30-60 с |
+| Nansen data drives the logic rather than just being displayed | the verdict is computed from positions, trades, related wallets and balances on other chains - all from Nansen |
+| Originality ("we have seen dashboards") | among the public submissions as of 17.09 nobody classifies an address as a bet, a hedge or a book |
+| Live data, no crashes | a live link, a cache, an honest Unknown verdict instead of a crash |
+| README, a recording without voice, launch in 10 minutes | README in English, a script for a 30-60 s video |
 
-Условия участия: 1 000 вызовов API внутри окна конкурса с аккаунта, чей email
-указан в форме; демо в X с тегом @nansen_ai; публичный репозиторий GitHub.
+Participation requirements: 1 000 API calls within the contest window from the
+account whose email is given in the form; a demo on X tagging @nansen_ai; a
+public GitHub repository.
 
-Язык продукта и README - английский. Этот документ - рабочий, на русском.
+The language of the product and the README is English. This document was
+written as a working document in Russian and translated on 27 September.
 
-## 2. Сценарий
+## 2. Scenario
 
-1. Человек открывает страницу, вставляет адрес `0x...` или любую ссылку, в
-   которой адрес есть (HyperDash, Hypurrscan, профиль Nansen).
-2. Через 1-3 секунды видит карточку: вердикт, строка-объяснение, 3-5 улик с
-   названным источником, блок «чего мы не видим».
-3. Если история сделок ещё не прочитана (лимит 5 запросов в минуту), карточка
-   показывает вердикт по позициям и заявкам, а строки истории помечены
-   «в очереди» и догружаются сами.
-4. Кнопки «Copy card» (картинка в буфер) и «Copy link» (постоянная ссылка
-   `/a/0x...`) - чтобы ответить под постом.
-5. Вторая страница - галерея «Biggest positions right now: bet, hedge or
-   book?» с заранее посчитанными вердиктами по крупнейшим позициям.
+1. A person opens the page and pastes an address `0x...` or any link that
+   contains an address (HyperDash, Hypurrscan, a Nansen profile).
+2. Within 1-3 seconds they see a card: the verdict, a one-line explanation,
+   3-5 pieces of evidence with a named source, a "what we cannot see" block.
+3. If the trade history has not been read yet (limit of 5 requests per
+   minute), the card shows the verdict based on positions and orders, and the
+   history rows are marked "queued" and load on their own.
+4. The "Copy card" (image to clipboard) and "Copy link" (permanent link
+   `/a/0x...`) buttons - to reply under the post.
+5. The second page is a gallery "Biggest positions right now: bet, hedge or
+   book?" with pre-computed verdicts for the largest positions.
 
-Торговых кнопок, копитрейдинга и рекомендаций по размеру нет и не будет:
-инструмент только осматривает.
+There are no trading buttons, copy trading or position-size recommendations,
+and there never will be: the tool only inspects.
 
-## 3. Вердикты
+## 3. Verdicts
 
-Четыре исхода. Правила применяются по порядку, первое сработавшее побеждает.
+Four outcomes. The rules are applied in order; the first one that fires wins.
 
-| № | Вердикт | Условие (стартовые пороги) | Текст |
+| No. | Verdict | Condition (initial thresholds) | Text |
 |---|---|---|---|
-| 0 | Unknown | нет данных о позициях ни от одного источника, либо открытых позиций нет | причина названа явно |
-| 1 | Book | любое из: (а) позиций >= 20 и net/gross <= 0.35; (б) лимитных заявок >= 50, доля бидов от 25% до 75%, монет с заявками по обе стороны >= 5; (в) сделок в день >= 200 и доля пересёкших спред <= 40% | «This is a market-making book. There is nothing to copy.» |
-| 2 | Hedged | встречная нога покрывает >= 50% главной позиции; либо позиций от 2 до 19 и net/gross <= 0.35 | «The headline position is not a directional view.» |
-| 3 | Looks like a bet | позиций <= 5, net/gross >= 0.8, главная позиция >= 50% gross, встречная нога < 10%, двусторонних заявок нет | «Looks like a bet. A hedge on a centralized exchange would be invisible to us.» |
-| 4 | Unknown | признаки спорят | признаки напечатаны |
+| 0 | Unknown | no position data from any source, or there are no open positions | the reason is stated explicitly |
+| 1 | Book | any of: (a) positions >= 20 and net/gross <= 0.35; (b) resting limit orders >= 50, bid share between 25% and 75%, coins with orders on both sides >= 5; (c) trades per day >= 200 and share of spread-crossing trades <= 40% | "This is a market-making book. There is nothing to copy." |
+| 2 | Hedged | the opposing leg covers >= 50% of the headline position; or positions between 2 and 19 and net/gross <= 0.35 | "The headline position is not a directional view." |
+| 3 | Looks like a bet | positions <= 5, net/gross >= 0.8, headline position >= 50% of gross, opposing leg < 10%, no two-sided orders | "Looks like a bet. A hedge on a centralized exchange would be invisible to us." |
+| 4 | Unknown | the features disagree | the features are printed |
 
-Сила вердикта Book: один сработавший признак из трёх - «likely», два и
-больше - «strong».
+Strength of the Book verdict: one of the three features firing - "likely", two
+or more - "strong".
 
-Пороги живут в одном объекте конфигурации. Порог считается принятым только
-после того, как на живых адресах показал оба исхода: и когда срабатывает, и
-когда нет. Адреса с известным ответом для калибровки: счёт Wintermute
-(книга; есть публичный разбор на GitHub), Abraxas (хеджированная книга, по
-публикациям СМИ), счёт класса «направленный кит» из публичных саг (ставка).
-Сами адреса собираются на этапе плана из открытых источников.
+The thresholds live in a single configuration object. A threshold is
+considered accepted only after it has shown both outcomes on live addresses:
+both when it fires and when it does not. Addresses with a known answer for
+calibration: the Wintermute account (a book; there is a public breakdown on
+GitHub), Abraxas (a hedged book, according to media reports), an account of
+the "directional whale" class from public sagas (a bet). The addresses
+themselves are collected at the planning stage from open sources.
 
-### Признаки
+### Features
 
-| Признак | Как считается | Источник |
+| Feature | How it is computed | Source |
 |---|---|---|
-| `nPositions` | число открытых перп-позиций | Nansen `profiler/perp-positions` |
-| `gross`, `net`, `netToGross` | сумма модулей номиналов; модуль суммы со знаком; их отношение | там же |
-| `headline`, `headlineShare` | позиция с наибольшим номиналом; её доля в gross | там же |
-| `restingOrders`, `bidShare`, `coinsBothSides` | лимитные заявки без триггерных и reduce-only; доля бидов по числу; монеты с заявками по обе стороны | Hyperliquid `frontendOpenOrders` |
-| `tradesPerDay`, `crossedShare` | сделок в день за прочитанный период; доля сделок с `crossed = true`; рядом печатается N сделок и период | Nansen `profiler/perp-trades` |
-| `hedgeRatio` | (спот той же монеты на счёте HL + тот же актив на балансах адреса в других сетях + встречные позиции и спот у связанных кошельков) / номинал главной позиции | Hyperliquid `spotClearinghouseState`; Nansen `profiler/address/current-balance` (chain `all`), `profiler/address/related-wallets` (chain `arbitrum`, `ethereum`), затем `perp-positions` и `current-balance` по связанным, не больше трёх кошельков |
-| `fundingCarry` | знак и сумма накопленного фандинга главной позиции; вместе с `hedgeRatio >= 0.5` даёт подпись «carry trade» | Nansen `cumulative_funding_since_open_usd` |
-| `sizeVsOI` | номинал главной позиции / открытый интерес рынка | Hyperliquid `metaAndAssetCtxs` |
-| `liqDistance` | расстояние от марк-цены до цены ликвидации главной позиции | Nansen `liquidation_price_usd` |
-| `realizedPnl30`, `realizedPnl90`, `winRate` | реализованный PnL и винрейт по окнам | Nansen `profiler/perp-pnl-summary` |
+| `nPositions` | number of open perp positions | Nansen `profiler/perp-positions` |
+| `gross`, `net`, `netToGross` | sum of the absolute notionals; absolute value of the signed sum; their ratio | same |
+| `headline`, `headlineShare` | the position with the largest notional; its share of gross | same |
+| `restingOrders`, `bidShare`, `coinsBothSides` | limit orders excluding trigger and reduce-only ones; share of bids by count; coins with orders on both sides | Hyperliquid `frontendOpenOrders` |
+| `tradesPerDay`, `crossedShare` | trades per day over the period read; share of trades with `crossed = true`; N trades and the period are printed alongside | Nansen `profiler/perp-trades` |
+| `hedgeRatio` | (spot of the same coin on the HL account + the same asset in the address's balances on other chains + opposing positions and spot at related wallets) / notional of the headline position | Hyperliquid `spotClearinghouseState`; Nansen `profiler/address/current-balance` (chain `all`), `profiler/address/related-wallets` (chain `arbitrum`, `ethereum`), then `perp-positions` and `current-balance` for the related ones, no more than three wallets |
+| `fundingCarry` | sign and amount of the accumulated funding of the headline position; together with `hedgeRatio >= 0.5` yields the "carry trade" label | Nansen `cumulative_funding_since_open_usd` |
+| `sizeVsOI` | notional of the headline position / open interest of the market | Hyperliquid `metaAndAssetCtxs` |
+| `liqDistance` | distance from the mark price to the liquidation price of the headline position | Nansen `liquidation_price_usd` |
+| `realizedPnl30`, `realizedPnl90`, `winRate` | realized PnL and win rate per window | Nansen `profiler/perp-pnl-summary` |
 
-Для спот-ноги нужна таблица соответствий: BTC - UBTC, WBTC, cbBTC, tBTC, BTCB;
+The spot leg needs a mapping table: BTC - UBTC, WBTC, cbBTC, tBTC, BTCB;
 ETH - UETH, ETH, WETH, stETH, wstETH, weETH, rETH, cbETH; SOL - USOL, SOL,
-mSOL, jitoSOL; HYPE - HYPE, WHYPE; для остальных - совпадение тикера. У Nansen
-включён `hide_spam_token`. Список токенов, засчитанных в ногу, печатается в
-уликах, чтобы ошибка классификации была видна.
+mSOL, jitoSOL; HYPE - HYPE, WHYPE; for the rest - a ticker match. Nansen's
+`hide_spam_token` is enabled. The list of tokens counted into the leg is
+printed in the evidence so that a classification error is visible.
 
-Хедж парой «лонг A против шорта B» в одном счёте отдельно не распознаётся
-(нужна модель корреляций); частично его ловит `netToGross`.
+A pair hedge "long A against short B" within a single account is not
+recognized separately (a correlation model is needed); `netToGross` partially
+catches it.
 
-## 4. Правила честности
+## 4. Honesty rules
 
-1. **Отказ источника - не число.** Упавший или пустой вызов помечает признак
-   «не посчитан» с причиной. Если вердикт от него зависел - Unknown.
-2. **Один шаг - один источник, и он назван.** Позиции читает Nansen. Если он
-   недоступен, допускается чтение позиций из публичного API Hyperliquid, но
-   карточка печатает «source: Hyperliquid API (Nansen unavailable)».
-3. **Полная страница - признак продолжения.** `perp-trades` читается до трёх
-   страниц по 1 000. Если и третья полная, `tradesPerDay` печатается как
-   нижняя граница («не меньше»), а `crossedShare` - как доля по выборке с
-   названным N. История Nansen по перпам надёжна с мая 2025 - окно не уходит
-   раньше.
-4. **Размер без знаменателя не печатается.** Рядом с номиналом всегда доля в
-   открытом интересе рынка.
-5. **Блок «What we cannot see» показывается всегда:** централизованные биржи,
-   OTC, кошельки без ончейн-связи с этим адресом.
-6. **Кошельки, не люди.** Метки адресов Nansen не показываются нигде (их
-   публичный показ запрещён правилами Nansen, а вердикт строится на
-   поведении счёта). Имён в карточке нет.
-7. Подпись «Powered by Nansen API» стоит рядом с данными на каждой странице.
+1. **A source failure is not a number.** A failed or empty call marks the
+   feature as "not computed" with a reason. If the verdict depended on it -
+   Unknown.
+2. **One step - one source, and it is named.** Positions are read from
+   Nansen. If it is unavailable, reading positions from the public Hyperliquid
+   API is allowed, but the card prints "source: Hyperliquid API (Nansen
+   unavailable)".
+3. **A full page is a sign of continuation.** `perp-trades` is read up to
+   three pages of 1 000 each. If the third one is full too, `tradesPerDay` is
+   printed as a lower bound ("at least"), and `crossedShare` as a share over
+   the sample with N named. Nansen's perp history is reliable from May 2025 -
+   the window does not go earlier than that.
+4. **Size is not printed without a denominator.** Next to the notional there
+   is always the share of the market's open interest.
+5. **The "What we cannot see" block is always shown:** centralized exchanges,
+   OTC, wallets with no on-chain link to this address.
+6. **Wallets, not people.** Nansen address labels are not shown anywhere
+   (their public display is prohibited by Nansen's rules, and the verdict is
+   built on the account's behavior). There are no names on the card.
+7. The "Powered by Nansen API" attribution stands next to the data on every
+   page.
 
-## 5. Источники и лимиты
+## 5. Sources and limits
 
-Проверено чтением документации 17.09.2026, не вызовом. Первый шаг после
-получения ключа - живая проверка на адресах с известным ответом.
+Verified by reading the documentation on 17.09.2026, not by calling. The
+first step after receiving the key is a live check on addresses with a known
+answer.
 
-Nansen: база `https://api.nansen.ai/api/v1/`, заголовок `apikey`, все ручки
-POST. Лимит плана: 15 запросов в секунду и 300 в минуту (free), 75 и 1 500
-(paid). Отдельный лимит `profiler/perp-trades` - 5 запросов в минуту.
-Стоимость: большинство ручек 1 кредит, `tgm/perp-positions` 5. Фактическая
-цена читается из заголовка `X-Nansen-Credits-Cost` и пишется в журнал.
+Nansen: base `https://api.nansen.ai/api/v1/`, header `apikey`, all endpoints
+are POST. Plan limit: 15 requests per second and 300 per minute (free), 75 and
+1 500 (paid). A separate limit for `profiler/perp-trades` - 5 requests per
+minute. Cost: most endpoints 1 credit, `tgm/perp-positions` 5. The actual
+price is read from the `X-Nansen-Credits-Cost` header and written to the log.
 
-| Ручка | Зачем | Показ публично |
+| Endpoint | Purpose | Public display |
 |---|---|---|
-| `profiler/perp-positions` | счёт и позиции | разрешён |
-| `profiler/perp-trades` | история, `crossed`, `closed_pnl` | разрешён |
-| `profiler/perp-pnl-summary` | PnL по окну дат | разрешён |
-| `profiler/address/current-balance` | балансы в других сетях, chain `all` | разрешён |
-| `profiler/address/related-wallets` | связанные кошельки, chain обязателен | разрешён, с подписью |
-| `tgm/perp-positions` | крупнейшие позиции по токену для галереи | разрешён |
-| метки адресов, `perp-leaderboard`, `smart-money/*` | не используем | запрещён |
+| `profiler/perp-positions` | account and positions | allowed |
+| `profiler/perp-trades` | history, `crossed`, `closed_pnl` | allowed |
+| `profiler/perp-pnl-summary` | PnL over a date window | allowed |
+| `profiler/address/current-balance` | balances on other chains, chain `all` | allowed |
+| `profiler/address/related-wallets` | related wallets, chain is required | allowed, with attribution |
+| `tgm/perp-positions` | largest positions per token for the gallery | allowed |
+| address labels, `perp-leaderboard`, `smart-money/*` | not used | prohibited |
 
-Hyperliquid: `POST https://api.hyperliquid.xyz/info`, без ключа. Типы:
+Hyperliquid: `POST https://api.hyperliquid.xyz/info`, no key. Types:
 `frontendOpenOrders`, `spotClearinghouseState`, `spotMetaAndAssetCtxs`,
-`metaAndAssetCtxs`, запасной `clearinghouseState`. `userFills` отдаёт не
-больше 2 000 последних сделок - поэтому историю читаем у Nansen.
+`metaAndAssetCtxs`, fallback `clearinghouseState`. `userFills` returns no
+more than the 2 000 most recent trades - which is why we read the history from
+Nansen.
 
-Вызовов Nansen на одну проверку: от 7 (одна страница истории, связанных
-кошельков нет) до 15 (три страницы истории и три связанных кошелька).
+Nansen calls per check: from 7 (one page of history, no related wallets) to
+15 (three pages of history and three related wallets).
 
-## 6. Устройство
+## 6. Architecture
 
-Cloudflare Worker (TypeScript) плюс статичные файлы. Хранилище - Workers KV.
-Бесплатного тарифа достаточно.
+A Cloudflare Worker (TypeScript) plus static files. Storage is Workers KV.
+The free tier is sufficient.
 
 ```
 src/
-  sources/nansen.ts        клиент Nansen: один метод на ручку, каждый вызов в журнал
-  sources/hyperliquid.ts   клиент публичного API Hyperliquid
-  engine/features.ts       чистые функции признаков, без сети
-  engine/verdict.ts        чистые правила вердикта и конфигурация порогов
-  engine/assets.ts         таблица соответствий перп-монета - спот-токены
-  api/check.ts             оркестрация проверки, кэш, потолок кредитов
-  api/gallery.ts           отдача заранее посчитанной галереи
-  api/ledger.ts            счётчик вызовов
-  guard.ts                 проверка адреса, лимит на IP, общие ошибки
-  index.ts                 маршруты
-web/                       одна страница: ввод, карточка, галерея, журнал
-scripts/prescan.ts         локальный прогон галереи, пишет результат и журнал
-test/                      vitest: признаки, вердикт, клиенты на записанных ответах
+  sources/nansen.ts        Nansen client: one method per endpoint, every call goes to the log
+  sources/hyperliquid.ts   client for the public Hyperliquid API
+  engine/features.ts       pure feature functions, no network
+  engine/verdict.ts        pure verdict rules and threshold configuration
+  engine/assets.ts         mapping table perp coin - spot tokens
+  api/check.ts             check orchestration, cache, credit ceiling
+  api/gallery.ts           serves the pre-computed gallery
+  api/ledger.ts            call counter
+  guard.ts                 address validation, per-IP limit, common errors
+  index.ts                 routes
+web/                       one page: input, card, gallery, log
+scripts/prescan.ts         local gallery run, writes the result and the log
+test/                      vitest: features, verdict, clients on recorded responses
 ```
 
-Границы: `engine/*` не знает о сети и тестируется на фикстурах; `sources/*`
-не знает о правилах; `api/check.ts` только склеивает.
+Boundaries: `engine/*` knows nothing about the network and is tested on
+fixtures; `sources/*` knows nothing about the rules; `api/check.ts` only glues
+things together.
 
-### Маршруты
+### Routes
 
-| Маршрут | Ответ |
+| Route | Response |
 |---|---|
-| `GET /api/check?address=0x...` | вердикт, сила, признаки (значение, источник, покрытие), список невидимого, время проверки, состояние истории `ready` или `queued` |
-| `GET /api/check?address=0x...&part=history` | догрузка истории сделок, когда дошла очередь |
-| `GET /api/gallery` | заранее посчитанный список |
-| `GET /api/ledger` | всего вызовов Nansen, по ручкам, с какой даты |
-| `/`, `/a/0x...`, `/gallery`, `/ledger` | страницы |
+| `GET /api/check?address=0x...` | verdict, strength, features (value, source, coverage), the list of what is invisible, check time, history state `ready` or `queued` |
+| `GET /api/check?address=0x...&part=history` | loading of the trade history once its turn in the queue has come |
+| `GET /api/gallery` | the pre-computed list |
+| `GET /api/ledger` | total Nansen calls, per endpoint, since which date |
+| `/`, `/a/0x...`, `/gallery`, `/ledger` | pages |
 
-### Кэш, очередь, потолок
+### Cache, queue, ceiling
 
-- Вердикт по позициям и заявкам кэшируется на 10 минут, история сделок - на
-  6 часов.
-- Очередь `perp-trades`: счётчик слотов по минутам в KV; нет слота или Nansen
-  ответил 429 - строка «queued», страница сама переспрашивает.
-- Суточный потолок кредитов (по умолчанию 300, задаётся переменной): после
-  него живые проверки отдают только кэш и предлагают галерею. Счётчик в KV
-  приблизителен при гонках; превышение ограничено лимитом на IP и кэшем.
+- The verdict based on positions and orders is cached for 10 minutes, the
+  trade history for 6 hours.
+- The `perp-trades` queue: a per-minute slot counter in KV; no slot, or
+  Nansen answered 429 - the "queued" row, the page re-asks on its own.
+- The daily credit ceiling (300 by default, set by a variable): after it,
+  live checks return only the cache and suggest the gallery. The counter in
+  KV is approximate under races; overrun is bounded by the per-IP limit and
+  the cache.
 
-## 7. Галерея и 1 000 вызовов
+## 7. Gallery and 1 000 calls
 
-`scripts/prescan.ts` запускается локально: берёт `tgm/perp-positions` по 15
-токенам с наибольшим открытым интересом, собирает около 100-150 адресов с
-крупнейшими позициями и прогоняет по каждому полную проверку в темпе лимитов
-(`perp-trades` - не чаще раза в 13 секунд). Итог: 1 000-1 500 вызовов,
-1 500-2 500 кредитов вместе с отладкой. Результат кладётся в KV одним ключом;
-журнал вызовов - вторым. Страница `/ledger` показывает счётчик публично.
+`scripts/prescan.ts` runs locally: it takes `tgm/perp-positions` for the 15
+tokens with the largest open interest, collects about 100-150 addresses with
+the largest positions and runs a full check on each at the pace of the limits
+(`perp-trades` - no more than once every 13 seconds). Total: 1 000-1 500
+calls, 1 500-2 500 credits including debugging. The result is stored in KV
+under one key; the call log under a second one. The `/ledger` page shows the
+counter publicly.
 
-**Как вышло на деле, 18.09.** Кандидаты взяты бесплатно, а не через
-`tgm/perp-positions` (5 кредитов за вызов при бюджете в тысячу): публичный
-лидерборд Hyperliquid, первые 3 000 счетов по стоимости, у каждого
-бесплатный `clearinghouseState`, ранжирование по крупнейшей позиции (864
-счёта с открытыми позициями). Проверки шли сверху вниз до нуля кредитов:
-278 счетов, 898 вызовов, в среднем 3.2 на проверку. Результат лежит не в
-KV, а в `data/gallery.json`, который Worker собирает в себя и отдаёт на
-`/api/gallery`; журнал - `data/nansen-calls.jsonl` и сводка
-`data/ledger.json` на `/api/ledger`, счётчик в подвале страницы. Итог по
-окну конкурса - 1 008 вызовов, из них 1 004 с ответом 2xx.
+**How it actually went, 18.09.** The candidates were taken for free rather
+than through `tgm/perp-positions` (5 credits per call with a budget of a
+thousand): the public Hyperliquid leaderboard, the top 3 000 accounts by
+value, a free `clearinghouseState` for each, ranking by the largest position
+(864 accounts with open positions). The checks went from the top down until
+credits hit zero: 278 accounts, 898 calls, 3.2 per check on average. The
+result lives not in KV but in `data/gallery.json`, which the Worker bundles
+into itself and serves on `/api/gallery`; the log is `data/nansen-calls.jsonl`
+and the summary `data/ledger.json` on `/api/ledger`, with the counter in the
+page footer. The total for the contest window is 1 008 calls, of which 1 004
+with a 2xx response.
 
-## 8. Карточка
+## 8. Card
 
-Рисуется в браузере на canvas без сторонних библиотек: вердикт, строка-
-объяснение, до четырёх чисел, строка «cannot see», подпись источников, адрес
-в сокращённом виде, дата проверки. «Copy card» кладёт PNG в буфер, «Copy
-link» - постоянную ссылку.
+Drawn in the browser on a canvas without third-party libraries: the verdict,
+a one-line explanation, up to four numbers, a "cannot see" line, the source
+attribution, the address in shortened form, the check date. "Copy card" puts
+a PNG in the clipboard, "Copy link" - the permanent link.
 
-## 9. Безопасность (чек-лист запуска)
+## 9. Security (launch checklist)
 
-| Пункт | Вердикт |
+| Item | Verdict |
 |---|---|
-| Лимит попыток входа | не применимо: входа нет |
-| Секреты | ключ Nansen только в секрете Worker; `.dev.vars` в `.gitignore`; поиск секретов перед первым пушем |
-| IDOR | не применимо: пользовательских данных нет |
-| Админские запросы в обход | админских маршрутов нет; прескан идёт локально |
-| SQL-инъекции | SQL нет, только KV |
-| Поддельные вебхуки | вебхуков нет |
-| Версии библиотек | зависимостей минимум (wrangler, typescript, vitest); `npm audit` перед запуском |
-| Кража сессии | сессий нет |
-| SSRF и загрузки | чужие URL не запрашиваются; из ввода регуляркой берётся только адрес `0x` + 40 hex; хосты источников зашиты; загрузок нет |
-| CORS | только свой origin |
-| Гонки | счётчик потолка приблизителен, риск ограничен лимитом на IP и кэшем |
-| Утечки в ошибках | клиенту общий текст; детали только в логах Worker, ключ в логи не пишется |
+| Login attempt limit | not applicable: there is no login |
+| Secrets | the Nansen key only in a Worker secret; `.dev.vars` in `.gitignore`; a secret scan before the first push |
+| IDOR | not applicable: there is no user data |
+| Admin requests bypassing checks | there are no admin routes; the prescan runs locally |
+| SQL injection | no SQL, only KV |
+| Forged webhooks | there are no webhooks |
+| Library versions | minimal dependencies (wrangler, typescript, vitest); `npm audit` before launch |
+| Session hijacking | there are no sessions |
+| SSRF and uploads | third-party URLs are not requested; only the address `0x` + 40 hex is taken from the input by a regex; the source hosts are hardcoded; there are no uploads |
+| CORS | own origin only |
+| Races | the ceiling counter is approximate, the risk is bounded by the per-IP limit and the cache |
+| Leaks in errors | the client gets a generic text; details only in the Worker logs, the key is not written to the logs |
 
-### Повторная проверка 17.09.2026, после KV, кэша, лимита и карточки
+### Re-check 17.09.2026, after KV, cache, rate limit and card
 
-Таблица выше не правится, это её дополнение по факту кода на конец Фазы
-1.6 (`git log`, коммиты по KV-лимиту, кэшу и карточке). Ключа Nansen в
-проекте всё ещё нет - ничего ниже не про него.
+The table above is not edited; this is an addendum to it based on the actual
+code at the end of Phase 1.6 (`git log`, the commits for the KV rate limit,
+the cache and the card). There is still no Nansen key in the project -
+nothing below is about it.
 
-- **Лимит попыток входа.** Строка выше про вход остаётся верной - входа
-  как не было, так и нет. Но теперь есть смежная защита, которой не было
-  на момент первой таблицы: `KVRateLimiter` перед `/api/check`
-  (`src/guard.ts`, 20 запросов на IP за 60 секунд), проверено вживую
-  через `wrangler dev` - 25 параллельных запросов дали 23 отказа 429 и 2
-  успеха, то есть лимит реально режет, а не только объявлен в коде.
-- **Секреты.** `.dev.vars` подтверждён в `.gitignore` построчно
-  (`cat .gitignore`). Ключа Nansen в дереве по-прежнему нет - подключать
-  нечего было и негде было бы утечь.
-- **SQL-инъекции / структура ключей KV.** SQL как не было, так и нет.
-  Проверено предметно: единственные ключи, которые пишет наш код -
-  `` check:${address} `` и `` ratelimit:${key}:${windowStart} `` - и
-  `address` до этого места уже прошёл через `extractAddress`
-  (`/^0x[0-9a-fA-F]{40}$/` после `.toLowerCase()`), так что в нём
-  физически не может быть двоеточия или чего-то, ломающего структуру
-  ключа. Внедрить произвольный ключ через ввод нельзя.
-- **SSRF.** Новый путь `?address=` на странице (Задача 4) проверен
-  чтением кода, а не на словах: он просто пишет значение в то же поле
-  `#address` и вызывает тот же `runCheck()`, который читает это поле и
-  пропускает через тот же `extractAddress()` - отдельного пути к сети
-  здесь нет, это то же самое поле ввода, что и раньше.
-- **CORS.** Ни в `src/index.ts`, ни в `web/index.html` нет ни одного
-  заголовка `Access-Control-*` (проверено `grep`) - то есть заголовок
-  `Access-Control-Allow-Origin` не выставляется вовсе, и браузер по
-  умолчанию не даёт чужому origin прочитать ответ `/api/check` через
-  fetch. Это не «настроено», это отсутствие настройки, но эффект тот же:
-  только свой origin.
-- **Гонки - новое, честно.** Не только потолок кредитов теперь
-  приблизителен (потолка ещё и нет, это Фаза 2), но и сам
-  `KVRateLimiter`: чтение и запись в KV не атомарны. Прогон 25
-  параллельных запросов это подтвердил - лимит сработал, но с перекосом
-  не в ту сторону, что ожидалась (пропустил меньше, чем 20, а не больше):
-  при реальной гонке лимитер в этом прогоне ошибся в сторону строгости,
-  а не вседозволенности. Это безопаснее для нас, но не является гарантией
-  на каждый следующий прогон - природа гонки не изменилась, изменилась
-  только зафиксированная строка в коде (`src/guard.ts`, комментарий класса
-  `KVRateLimiter`), которая теперь называет это явно, а не молчит.
-- **Заголовок IP - подделываемый локально, не проверено на проде.**
-  Обнаружено при живой проверке: `wrangler dev` НЕ подчищает
-  `cf-connecting-ip`, присланный клиентом - отправка поддельного значения
-  создала свой отдельный KV-бакет лимита. В боевом Cloudflare этот
-  заголовок переписывается их периметром и не подделывается с клиента -
-  это задокументированное поведение Cloudflare, но не проверено нами
-  вживую в этой сессии, потому что для этого нужен реальный деплой.
-  Строка появится с фактом, когда деплой случится.
-- **Библиотеки.** `npm audit` прогнан 17.09.2026: 0 уязвимостей.
-- **Новое, не покрытое прежней таблицей: путь ошибки в самой странице.**
-  При живой проверке карточки для шаринга (Задача 4) нашлось два реальных
-  бага в клиентском JS, не относящихся к серверной безопасности напрямую,
-  но относящихся к честности интерфейса перед пользователем: (1)
-  запасной путь копирования карточки открывал `window.open()` из
-  `async`-колбэка после `await` - в этот момент браузер уже не считает
-  это прямым следствием клика и тихо блокирует всплывающее окно, а
-  кнопка при этом лгала «Opened in a new tab»; исправлено показом
-  картинки прямо на странице, без `window.open()` вовсе. (2) сам canvas
-  при этом мерился нулевым размером с одним `max-width: 100%` - заменено
-  на пару `width: 100%; height: auto`. Оба найдены и исправлены только
-  благодаря проверке в живом браузере, а не чтением кода - записано
-  здесь, потому что «интерфейс не врёт о том, что он сделал» - тот же
-  принцип, что и «отказ источника - не факт о мире» из правил проекта,
-  только на стороне клиента, а не источника данных.
+- **Login attempt limit.** The row above about login remains true - there
+  was no login and there still is none. But now there is an adjacent
+  protection that did not exist at the time of the first table:
+  `KVRateLimiter` in front of `/api/check` (`src/guard.ts`, 20 requests per
+  IP per 60 seconds), verified live through `wrangler dev` - 25 parallel
+  requests produced 23 rejections with 429 and 2 successes, that is, the
+  limit really cuts and is not merely declared in the code.
+- **Secrets.** `.dev.vars` is confirmed in `.gitignore` line by line
+  (`cat .gitignore`). There is still no Nansen key in the tree - there was
+  nothing to wire in and nowhere for it to leak from.
+- **SQL injection / KV key structure.** There was no SQL and there still is
+  none. Verified concretely: the only keys our code writes are
+  `` check:${address} `` and `` ratelimit:${key}:${windowStart} `` - and
+  `address` has already passed through `extractAddress`
+  (`/^0x[0-9a-fA-F]{40}$/` after `.toLowerCase()`) before reaching this
+  point, so it physically cannot contain a colon or anything else that breaks
+  the key structure. An arbitrary key cannot be injected through the input.
+- **SSRF.** The new `?address=` path on the page (Task 4) was verified by
+  reading the code, not taken on faith: it simply writes the value into the
+  same `#address` field and calls the same `runCheck()`, which reads that
+  field and passes it through the same `extractAddress()` - there is no
+  separate path to the network here, it is the same input field as before.
+- **CORS.** Neither `src/index.ts` nor `web/index.html` contains a single
+  `Access-Control-*` header (verified with `grep`) - that is, the
+  `Access-Control-Allow-Origin` header is not set at all, and by default the
+  browser does not let a foreign origin read the `/api/check` response via
+  fetch. This is not "configured", it is the absence of configuration, but
+  the effect is the same: own origin only.
+- **Races - new, honestly.** Not only is the credit ceiling now approximate
+  (and the ceiling does not exist yet either, that is Phase 2), but so is
+  `KVRateLimiter` itself: reads and writes to KV are not atomic. The run of
+  25 parallel requests confirmed this - the limit fired, but skewed in the
+  direction opposite to the one expected (it let through fewer than 20, not
+  more): under a real race the limiter in this run erred on the side of
+  strictness rather than permissiveness. That is safer for us, but it is not
+  a guarantee for every following run - the nature of the race has not
+  changed, only the recorded line in the code has changed (`src/guard.ts`,
+  the class comment of `KVRateLimiter`), which now states this explicitly
+  instead of staying silent.
+- **The IP header - spoofable locally, not verified in production.** Found
+  during the live check: `wrangler dev` does NOT strip a client-supplied
+  `cf-connecting-ip` - sending a forged value created its own separate KV
+  rate-limit bucket. On production Cloudflare this header is rewritten by
+  their perimeter and cannot be forged from the client - this is documented
+  Cloudflare behavior, but we did not verify it live in this session, because
+  that requires a real deploy. The row will appear with the fact once the
+  deploy happens.
+- **Libraries.** `npm audit` was run on 17.09.2026: 0 vulnerabilities.
+- **New, not covered by the previous table: the error path in the page
+  itself.** During the live check of the card for sharing (Task 4), two real
+  bugs were found in the client-side JS, not directly related to server-side
+  security but related to the interface's honesty towards the user: (1) the
+  fallback path for copying the card opened `window.open()` from an `async`
+  callback after an `await` - at that moment the browser no longer considers
+  this a direct consequence of the click and silently blocks the popup, while
+  the button lied "Opened in a new tab"; fixed by showing the image directly
+  on the page, without `window.open()` at all. (2) the canvas itself was
+  meanwhile measured at zero size with a lone `max-width: 100%` - replaced
+  with the pair `width: 100%; height: auto`. Both were found and fixed only
+  thanks to checking in a live browser rather than by reading the code -
+  recorded here because "the interface does not lie about what it did" is
+  the same principle as "a source failure is not a fact about the world" from
+  the project rules, only on the client side rather than the data-source
+  side.
 
-### Повторная проверка 18.09.2026, после Фазы 2b (Nansen, галерея, журнал)
+### Re-check 18.09.2026, after Phase 2b (Nansen, gallery, log)
 
-По каждому из двенадцати пунктов, по коду на коммит `deaba70` и позже.
+For each of the twelve items, based on the code at commit `deaba70` and later.
 
-| Пункт | Вердикт 18.09 | Чем проверено |
+| Item | Verdict 18.09 | Verified by |
 |---|---|---|
-| Лимит попыток входа | входа нет; `/api/check` - 20 запросов на IP за 60 с; `/api/gallery` статичен; `/api/ledger` - мемо на 60 с в памяти изолята (до 14 чтений KV за раз) | код `src/index.ts`; лимит проверен вживую 17.09 (25 параллельных - 23 отказа) |
-| Секреты | ключ только в `.dev.vars` (в `.gitignore`) и в будущем секрете Worker. Значение ключа по всей истории git - 0 вхождений, в рабочем дереве - 0, `.dev.vars` не коммитился ни разу; шаблоны `apikey/secret/token/password` в отслеживаемых файлах - 0; непустых `address_label` в фикстурах и данных - 0 | `git log --all -p` с подсчётом, без печати ключа |
-| IDOR | не применимо: пользовательских данных нет, всё отдаваемое - публичные ончейн-данные | чтение маршрутов |
-| Админские запросы в обход | админских маршрутов нет, в Worker только чтение; прескан и журнал - локальные скрипты с ключом из `.dev.vars` | чтение `src/index.ts` |
-| SQL-инъекции | SQL нет; ключи KV строятся из адреса после регулярки | как 17.09 |
-| Поддельные вебхуки | вебхуков нет | - |
-| Версии библиотек | `npm audit` 18.09 - 0 уязвимостей; зависимостей в рантайме нет | запуск |
-| Кража сессии | сессий и cookie нет | - |
-| SSRF и загрузки | Worker ходит на два зашитых хоста; из ввода берётся только `0x` + 40 hex; ссылки на обозреватели собираются на странице из проверенного адреса и таблицы сетей; загрузок нет | чтение кода |
-| CORS | заголовков `Access-Control-*` нет; плюс CSP `connect-src 'self'` | `curl -I` |
-| Гонки | счётчики KV приблизительны. **Новое:** при исчерпании квоты KV (1 000 записей в сутки на бесплатном тарифе) лимит и суточный потолок читались бы как «ничего не потрачено» и пропускали всё. Теперь `safeKv` помечает запрос как `degraded`, и такая проверка идёт без Nansen: страница работает, кредиты не тратятся | тест `test/safeKv.test.ts` |
-| Утечки в ошибках | клиенту 400/429/502 с общим текстом; подробности только в логе Worker; ошибка клиента Nansen - путь и статус, без ключа; строки покрытия - заранее написанные фразы | чтение кода |
+| Login attempt limit | there is no login; `/api/check` - 20 requests per IP per 60 s; `/api/gallery` is static; `/api/ledger` - a 60 s memo in the isolate's memory (up to 14 KV reads at a time) | code `src/index.ts`; the limit was verified live on 17.09 (25 parallel - 23 rejections) |
+| Secrets | the key only in `.dev.vars` (in `.gitignore`) and in the future Worker secret. The key's value across the whole git history - 0 occurrences, in the working tree - 0, `.dev.vars` was never committed; the patterns `apikey/secret/token/password` in tracked files - 0; non-empty `address_label` in fixtures and data - 0 | `git log --all -p` with counting, without printing the key |
+| IDOR | not applicable: there is no user data, everything served is public on-chain data | reading the routes |
+| Admin requests bypassing checks | there are no admin routes, the Worker only reads; the prescan and the log are local scripts with the key from `.dev.vars` | reading `src/index.ts` |
+| SQL injection | no SQL; KV keys are built from the address after the regex | as on 17.09 |
+| Forged webhooks | there are no webhooks | - |
+| Library versions | `npm audit` 18.09 - 0 vulnerabilities; no runtime dependencies | running it |
+| Session hijacking | there are no sessions or cookies | - |
+| SSRF and uploads | the Worker calls two hardcoded hosts; only `0x` + 40 hex is taken from the input; explorer links are built on the page from the validated address and the chain table; there are no uploads | reading the code |
+| CORS | no `Access-Control-*` headers; plus CSP `connect-src 'self'` | `curl -I` |
+| Races | KV counters are approximate. **New:** when the KV quota is exhausted (1 000 writes per day on the free tier) the rate limit and the daily ceiling would read as "nothing spent" and let everything through. Now `safeKv` marks the request as `degraded`, and such a check runs without Nansen: the page works, no credits are spent | test `test/safeKv.test.ts` |
+| Leaks in errors | the client gets 400/429/502 with a generic text; details only in the Worker log; a Nansen client error - the path and the status, without the key; the coverage rows are pre-written phrases | reading the code |
 
-Сверх списка: XSS - на странице нет ни одного `innerHTML`, `insertAdjacentHTML`, `document.write`, `eval` (проверено поиском), все данные идут через `textContent`; заголовки страницы - CSP с `frame-ancestors 'none'` и `object-src 'none'`, `nosniff`, `referrer-policy`; консоль браузера после их включения - 0 ошибок.
+Beyond the list: XSS - the page has not a single `innerHTML`, `insertAdjacentHTML`, `document.write` or `eval` (verified by search), all data goes through `textContent`; page headers - CSP with `frame-ancestors 'none'` and `object-src 'none'`, `nosniff`, `referrer-policy`; the browser console after enabling them - 0 errors.
 
-Проверено на проде 18.09 после деплоя: запрос с поддельным `cf-connecting-ip` Cloudflare отклоняет сам - 403, `error code: 1000`, `Server: cloudflare`, до Worker он не доходит (20 запросов из 20); обычный запрос с того же адреса - 200. Обойти лимит подменой заголовка нельзя.
+Verified in production on 18.09 after the deploy: a request with a forged `cf-connecting-ip` is rejected by Cloudflare itself - 403, `error code: 1000`, `Server: cloudflare`, it does not reach the Worker (20 requests out of 20); a normal request from the same address - 200. The limit cannot be bypassed by spoofing the header.
 
-## 10. Тесты
+## 10. Tests
 
-Vitest. Сначала тест, потом код. Признаки и вердикт - на записанных настоящих
-ответах обоих API (фикстуры без ключей). Клиенты - контрактные тесты на тех же
-записях. Один дымовой прогон через `wrangler dev`. Перед сдачей - три
-известных адреса дают ожидаемые вердикты на живой ссылке.
+Vitest. Test first, then code. Features and verdict - on recorded real
+responses from both APIs (fixtures without keys). Clients - contract tests on
+the same recordings. One smoke run through `wrangler dev`. Before submission -
+three known addresses produce the expected verdicts on the live link.
 
-## 11. Вне объёма
+## 11. Out of scope
 
-Разбор постов X по ссылке; торговля и копирование; метки и имена; другие
-площадки; аккаунты пользователей; Telegram-бот; серверная отрисовка OG-картинок;
-переводы интерфейса; модель корреляций для парных хеджей.
+Parsing X posts by link; trading and copying; labels and names; other venues;
+user accounts; a Telegram bot; server-side rendering of OG images; interface
+translations; a correlation model for pair hedges.
 
-## 12. План
+## 12. Plan
 
-| Дни | Что |
+| Days | What |
 |---|---|
-| 17-18.09 | спека, план, каркас, клиент Hyperliquid, признаки и вердикт на живых данных Hyperliquid (кредиты не нужны) |
-| 19-20.09 | клиент Nansen (нужны ключ и кредиты), калибровка на известных адресах, экран и карточка |
-| 21.09 | галерея, прескан, журнал |
-| 22.09 | защита, README, чек-лист запуска |
-| 23.09 | сценарий ролика; запись делает София |
-| 24.09 | пост в X и форма |
-| 25-27.09 | запас |
+| 17-18.09 | spec, plan, skeleton, Hyperliquid client, features and verdict on live Hyperliquid data (no credits needed) |
+| 19-20.09 | Nansen client (key and credits needed), calibration on known addresses, the screen and the card |
+| 21.09 | gallery, prescan, log |
+| 22.09 | security, README, launch checklist |
+| 23.09 | video script; Sofia does the recording |
+| 24.09 | the X post and the form |
+| 25-27.09 | buffer |
 
-Готово, когда: живая ссылка отдаёт ожидаемые вердикты по трём известным
-адресам; в журнале не меньше 1 000 вызовов внутри окна конкурса; README
-позволяет запустить проект за 10 минут; ролик 30-60 с понятен без голоса;
-репозиторий публичный; форма отправлена.
+Done when: the live link returns the expected verdicts for the three known
+addresses; the log has at least 1 000 calls within the contest window; the
+README allows the project to be launched in 10 minutes; the 30-60 s video is
+understandable without voice; the repository is public; the form has been
+submitted.
 
-## 13. Что делает София
+## 13. What Sofia does
 
-- Отдельный ключ Nansen под это приложение и кредиты (1 000 бесплатных в
-  Points Hub плюс пополнение около $10, в окно конкурса кредиты удваивают).
-- Ключ вписывает сама: локально в `.dev.vars`, в Worker - командой
-  `wrangler secret put`. Значение ключа в чат, в git и в логи не попадает.
-- Отдельное «да» на деплой, на публичный репозиторий и на пост.
-- Запись ролика и публикация поста со своего аккаунта; отправка формы.
+- A separate Nansen key for this application and credits (1 000 free ones in
+  the Points Hub plus a top-up of about $10; credits are doubled during the
+  contest window).
+- She enters the key herself: locally in `.dev.vars`, in the Worker with the
+  `wrangler secret put` command. The key's value does not go into the chat,
+  git or the logs.
+- A separate "yes" for the deploy, for the public repository and for the post.
+- Recording the video and publishing the post from her own account;
+  submitting the form.
 
-## 14. Риски
+## 14. Risks
 
-1. Хедж на централизованной бирже не виден: «ставку» доказать нельзя, только
-   «похоже на ставку». Ответ: четыре вердикта и постоянный блок невидимого.
-2. Уверенная ошибка по названному фонду хуже отсутствия вердикта. Ответ: имён
-   нет, пороги калибруются на известных адресах, при споре признаков Unknown.
-3. Позиции отдаёт и бесплатный API Hyperliquid - судьи могут счесть вклад
-   Nansen малым. Ответ: нога хеджа ищется только данными Nansen (связанные
-   кошельки, балансы в других сетях), история и PnL - тоже от Nansen.
-4. Лимит 5 запросов в минуту на историю сделок. Ответ: вердикт без истории
-   сразу, история очередью и кэшем, галерея посчитана заранее.
-5. Публичная страница может сжечь кредиты. Ответ: кэш, лимит на IP, суточный
-   потолок.
-6. Blacklight и Arkham частично покрывают механику. Ответ: наш продукт -
-   вердикт по вирусному заявлению и карточка для ответа, а не трекер.
+1. A hedge on a centralized exchange is not visible: a "bet" cannot be
+   proven, only "looks like a bet". Answer: four verdicts and a permanent
+   block of what is invisible.
+2. A confident mistake about a named fund is worse than no verdict. Answer:
+   no names, thresholds are calibrated on known addresses, Unknown when the
+   features disagree.
+3. The free Hyperliquid API also returns positions - the judges may consider
+   Nansen's contribution small. Answer: the hedge leg is searched for only
+   with Nansen data (related wallets, balances on other chains), history and
+   PnL also come from Nansen.
+4. The limit of 5 requests per minute on the trade history. Answer: the
+   verdict without history right away, history via the queue and the cache,
+   the gallery computed in advance.
+5. A public page can burn through the credits. Answer: cache, per-IP limit,
+   daily ceiling.
+6. Blacklight and Arkham partially cover the mechanics. Answer: our product is
+   a verdict on a viral claim and a card for replying, not a tracker.
 
-## 15. Документация, по которой сверено
+## 15. Documentation checked against
 
 - Nansen: `docs.nansen.ai/api/overview`, `.../api/hyperliquid/address-perp-positions.md`,
   `.../address-perp-trades.md`, `.../token-perp-positions.md`,
@@ -379,5 +405,5 @@ Vitest. Сначала тест, потом код. Признаки и верд
   `.../address-current-balances.md`, `.../getting-started/authentication.md`,
   `.../getting-started/rate-limits.md`, `.../guides/redistribution-guide.md`
 - Hyperliquid: `hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint`
-  и подстраницы `perpetuals`, `spot`
-- Конкурс: `nansen.ai/campaigns/meridian-buildathon`
+  and the subpages `perpetuals`, `spot`
+- Contest: `nansen.ai/campaigns/meridian-buildathon`
