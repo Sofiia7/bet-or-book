@@ -153,7 +153,7 @@ export interface VerdictInput {
   positions: PositionFeatures;
   orders: OrderFeatures;
   hedge: HedgeFeatures;
-  /** Trade-history signal (book rule (в)), from Hyperliquid's fill-level
+  /** Trade-history signal (book rule (c)), from Hyperliquid's fill-level
    * `userFillsByTime`. Its thresholds are calibrated on fills; Nansen's
    * perp-trades aggregates fills per order and must not be fed in here. */
   trades?: { tradesPerDay: number; crossedShare: number; buyShare: number };

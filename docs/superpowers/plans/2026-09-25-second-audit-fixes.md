@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Fix the three misleading-data bugs (A01-A03), the two visual-mismatch bugs (A04, A05) and the broken boards grid (A13) that `docs/audits/2026-09-25-full-audit-ru.md` found on the site that shipped this morning (commit `4b0b00d`), fix the diagram's dark-mode contrast (A08), bring the downloaded/shared pictures into line with the fixed diagram, shorten the first screen the audit measured as too long, drop the README's overclaiming tagline, and correct two stale numbers in the submission docs.
+**Goal:** Fix the three misleading-data bugs (A01-A03), the two visual-mismatch bugs (A04, A05) and the broken boards grid (A13) that `docs/audits/2026-09-25-full-audit.md` found on the site that shipped this morning (commit `4b0b00d`), fix the diagram's dark-mode contrast (A08), bring the downloaded/shared pictures into line with the fixed diagram, shorten the first screen the audit measured as too long, drop the README's overclaiming tagline, and correct two stale numbers in the submission docs.
 
 **Architecture:** No new files. Every fix lands inside the existing Observe -> Interpret -> Present pipeline: `src/engine/breakdown.ts` gets a new field the diagram can trust on its own; `src/gallery.ts` forwards a field the API already has; `src/index.ts` gets one extra guard in the focus-position lookup; `web/app.js` and `web/index.html` get the visual/text fixes; `scripts/reexplain.ts` re-derives the two bundled JSON files so the fix actually reaches the live site, not just the code.
 
@@ -12,14 +12,14 @@
 
 ## Scope: what this plan fixes and what it deliberately leaves out
 
-The user approved fixing the audit "по порядку" (in order), which was my own five-step priority list at the end of the pasted summary. That list's steps 1-3 are code; steps 4-5 are a five-person comprehension test and recording/posting/submitting the form, which only the user can do. This plan covers everything code can do from steps 1-3, plus the two doc corrections the audit called out by name, plus a crash bug I found while implementing A03 (see Task 7).
+The user approved fixing the audit "in order", which was my own five-step priority list at the end of the pasted summary. That list's steps 1-3 are code; steps 4-5 are a five-person comprehension test and recording/posting/submitting the form, which only the user can do. This plan covers everything code can do from steps 1-3, plus the two doc corrections the audit called out by name, plus a crash bug I found while implementing A03 (see Task 7).
 
 **Deliberately not in this plan**, matching the audit's own "if time remains" / "after the hackathon" lists, so nothing here is a silent drop:
 
-- A06 (a failed funder read can claim "holds no ETH") and A07 (the Unknown qualifier is lost in boards/recent) - the audit itself lists these under "если останется время", not the mandatory pre-submission set.
+- A06 (a failed funder read can claim "holds no ETH") and A07 (the Unknown qualifier is lost in boards/recent) - the audit itself lists these under "if time remains", not the mandatory pre-submission set.
 - A09 (a long's diagram shows a generic empty pan instead of concentration) - no exact design was specified for a concentration/quoting view, and inventing one two days before the deadline is a real design task, not a bug fix. Flagged at the end of this doc as a follow-up.
 - A10 (board rows don't show their own date) and A11 (four featured readings lack `mainDexPositionCount`) - A11 specifically needs a fresh, paid Nansen read of four accounts before final recording, which is a credit-spending decision for the user to make, not something to do silently inside a fix branch.
-- The full "PresentationModel" architecture (`Код, архитектура` section) - explicitly framed as the next technical project, not a pre-submission fix.
+- The full "PresentationModel" architecture (`Code, architecture` section) - explicitly framed as the next technical project, not a pre-submission fix.
 - The audit's aspirational seven-block card redesign (hero stat tiles, etc.) - Task 8 below does the safer, explicitly-mandatory version (reorder + collapse + two short copy edits), not a new visual hierarchy.
 
 ## Task order and why
@@ -564,7 +564,7 @@ Add the two named constants right above `drawScale` (before line 320, next to th
 ```js
 // Must equal DEFAULT_THRESHOLDS.hedged.minHedgeRatio/maxHedgeRatio in
 // src/engine/verdict.ts - the two files are not sharing one source of truth
-// yet, which is a known gap (25.09 audit, "Код, архитектура"), but at least
+// yet, which is a known gap (25.09 audit, "Code, architecture"), but at least
 // both now name the same two numbers instead of three different ones across
 // two files (25.09 audit, A04).
 const HEDGE_BAND_MIN = 0.85;
@@ -579,7 +579,7 @@ Still in `drawScale`, right after the `if (suspended) {...} else {...}` block an
   // Which pan is which, right on the diagram - the audit found the two
   // rectangles identical and unlabeled, leaning on the paragraph below to
   // say which side is the position and which is this address's own holdings
-  // (25.09 audit, "Подписать обе чаши весов").
+  // (25.09 audit, "Label both pans of the scale").
   svg.append(svgEl('text', { x: pans.leftX, y: pans.leftY + g.panH + 13, class: 'seg-label', 'text-anchor': 'middle' }, 'the position'));
   svg.append(svgEl('text', { x: pans.rightX, y: pans.rightY + g.panH + 13, class: 'seg-label', 'text-anchor': 'middle' }, suspended ? 'unread' : 'this address'));
 
@@ -745,7 +745,7 @@ git commit -m "fix: the on-page diagram follows dark mode instead of a fixed lig
 - Modify: `src/engine/ogRender.ts`
 - Test: `test/engine/ogCard.test.ts`, `test/engine/ogRender.test.ts`
 
-**Context:** While implementing Task 3, a real, previously-unflagged crash bug turned up in the canvas share/download path: `drawBreakdown`'s `fills`/`labels` lookup objects (`web/app.js:1314-1323`) only have keys for `covered`/`unverified`/`residual` - not `not-checked`, even though `SegmentKind` includes it and it is real, reachable data (every one of the four `hedgeCoverage: 'partial'` gallery rows Task 1 found produces a `not-checked` segment today). Clicking "Copy image" or "Download image" on any of those cards throws `TypeError: Cannot read properties of undefined (reading 'fill')` today, in production, before this fix. `src/engine/ogCard.ts`'s `segmentColor` already handles `not-checked` correctly (line 87) - only the canvas path is broken. Separately, per the audit's own "Готово, когда" for A03 ("text, badge, SVG, downloaded PNG and OG all convey the uncertainty the same way on both scenarios"), this task also gives both pictures a visual cue for `dataQuality !== 'measured'` - a case the segments alone cannot show (see Task 3's scenario 1: full dollar coverage, unfinished read, zero residual, so there is no `not-checked` segment to color at all).
+**Context:** While implementing Task 3, a real, previously-unflagged crash bug turned up in the canvas share/download path: `drawBreakdown`'s `fills`/`labels` lookup objects (`web/app.js:1314-1323`) only have keys for `covered`/`unverified`/`residual` - not `not-checked`, even though `SegmentKind` includes it and it is real, reachable data (every one of the four `hedgeCoverage: 'partial'` gallery rows Task 1 found produces a `not-checked` segment today). Clicking "Copy image" or "Download image" on any of those cards throws `TypeError: Cannot read properties of undefined (reading 'fill')` today, in production, before this fix. `src/engine/ogCard.ts`'s `segmentColor` already handles `not-checked` correctly (line 87) - only the canvas path is broken. Separately, per the audit's own "Done when" for A03 ("text, badge, SVG, downloaded PNG and OG all convey the uncertainty the same way on both scenarios"), this task also gives both pictures a visual cue for `dataQuality !== 'measured'` - a case the segments alone cannot show (see Task 3's scenario 1: full dollar coverage, unfinished read, zero residual, so there is no `not-checked` segment to color at all).
 
 - [ ] **Step 1: Write the failing test for the crash bug**
 
@@ -937,7 +937,7 @@ export function ogTree(d: OgCardData): object {
   // leave every segment looking complete - Task 3's own reproduction has a
   // zero residual under a partial read. The border is the one cue this
   // picture can give that the text elsewhere on it does not already carry
-  // (25.09 audit, A03 "Готово, когда").
+  // (25.09 audit, A03 "Done when").
   const uncertain = d.dataQuality !== 'measured';
   const bar = d.segments && {
     type: 'div',

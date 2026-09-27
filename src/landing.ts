@@ -13,7 +13,12 @@ const verdicts = {
 export function landingExamples(rows: GalleryRow[]): string {
   return rows.map((row) => {
     const [cls, label, description] = verdicts[row.verdict.verdict];
-    const badge = label + (row.badgeQualifier ? ' · ' + row.badgeQualifier : row.verdict.strength ? ' (' + row.verdict.strength + ')' : '');
+    // The same text web/app.js's badgeText() draws once the gallery loads:
+    // the strength on any verdict, the qualifier only on an Unknown. Anything
+    // else here is rewritten in front of the reader a moment after the page
+    // shows (27.09).
+    const badge = label + (row.verdict.strength ? ' (' + row.verdict.strength + ')' : '') +
+      (row.verdict.verdict === 'unknown' && row.badgeQualifier ? ' · ' + row.badgeQualifier : '');
     const p = row.positions;
     const title = `${formatUsd(p.headlineNotionalUsd)} ${p.headlineCoin} ${p.headlineSide}`;
     const date = new Date(row.checkedAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) + ' UTC';
