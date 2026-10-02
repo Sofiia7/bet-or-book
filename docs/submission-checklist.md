@@ -4,13 +4,13 @@ Deadline: **27 September 2026, 23:59 UTC**, or **28 September, 01:59 in Budapest
 
 Sources: [official FAQ](https://release.nansen.ai/help/articles/3540155-nansen-meridian-buildathon-sep-14-27), [campaign](https://nansen.ai/campaigns/meridian-buildathon), [submission form](https://nansen-ai.typeform.com/meridian-submit).
 
-The current FAQ requires **100+ API calls** within September 14-27. The campaign landing page still says 1,000; the project's recorded 1,136 calls exceed both. Confirm the qualifying count in the Nansen account before submitting.
+The current FAQ requires **100+ API calls** within September 14-27. The campaign landing page still says 1,000; the project's recorded 1,155 calls exceed both. Confirm the qualifying count in the Nansen account before submitting.
 
 | Requirement | Status |
 | --- | --- |
 | Meaningful Nansen API use | Implemented: cross-dex positions, cross-chain balances and funding links affect the verdict |
 | Public GitHub repository | Confirmed PUBLIC on 26 September: https://github.com/Sofiia7/bet-or-book |
-| 100+ qualifying calls | Local ledger: 1,136 calls, 1,128 successful; account-side confirmation still needed |
+| 100+ qualifying calls | Local ledger: 1,155 calls, 1,147 successful; account-side confirmation still needed |
 | Working demo | Application implemented; deployed URL: https://bet-or-book.trade |
 | 30-60 second screen recording with live Nansen data visible | Still to record; updated shot list in demo-script.md |
 | X post with recording, @nansen_ai and GitHub link | Draft prepared in demo-script.md; not posted by this task |

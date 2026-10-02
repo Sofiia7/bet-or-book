@@ -604,9 +604,9 @@ row against the code as it stands after Tasks 1-4 (new KV binding, new rate
 limiter, new cache, new client-side clipboard/URL handling). Append a dated
 note directly under the existing table (do not edit the original table)
 recording anything that changed, in particular:
-- Гонки: still approximate (KV read-then-write is not atomic) - state this
+- Races: still approximate (KV read-then-write is not atomic) - state this
   plainly, do not claim it is fixed.
-- SSRF и загрузки: the new `?address=` query param on page load goes
+- SSRF and uploads: the new `?address=` query param on page load goes
   through the same `extractAddress` regex as the form input, not a new
   path - confirm this by reading the code, not by assumption.
 - CORS: unchanged, no new origin was introduced.
@@ -623,8 +623,8 @@ git commit -m "docs: re-check the security checklist after KV, cache, and the ca
 
 ## Self-review notes
 
-- **Spec coverage:** closes design section 9 rows "стоит ли лимит попыток
-  входа" (now KV-backed, shared, not per-isolate) and the caching part of
+- **Spec coverage:** closes design section 9 rows "is there a limit on
+  login attempts" (now KV-backed, shared, not per-isolate) and the caching part of
   section 6, and delivers section 8 (the card) for the first time.
 - **Placeholder scan:** none - every step has runnable code; the one
   explicit "if this turns out to be wrong, do X instead" (Task 3 Step 5's
@@ -633,7 +633,7 @@ git commit -m "docs: re-check the security checklist after KV, cache, and the ca
 - **Type consistency:** `KVLike` defined once (Task 1) and consumed by
   `KVRateLimiter` (Task 2), `withCache` (Task 3), and `Env` in `index.ts`
   (Task 3) without redefinition.
-- **Out of scope, still needs the Nansen key:** everything under "Что
-  делает София" in the design doc, plus the gallery/prescan, the credit
+- **Out of scope, still needs the Nansen key:** everything under "What
+  Sofiia does" in the design doc, plus the gallery/prescan, the credit
   ledger, and `wrangler deploy` itself (a KV namespace existing locally is
   not the same as the Worker being live).

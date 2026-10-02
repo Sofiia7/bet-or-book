@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Close book rule (в) - the trades-based book signal that Phase 1 deferred - using Hyperliquid's own free `userFillsByTime`, no Nansen key required. Then build the actual web page against the already-working `/api/check` endpoint, so there is a demoable product today instead of waiting on Nansen credentials.
+**Goal:** Close book rule (c) - the trades-based book signal that Phase 1 deferred - using Hyperliquid's own free `userFillsByTime`, no Nansen key required. Then build the actual web page against the already-working `/api/check` endpoint, so there is a demoable product today instead of waiting on Nansen credentials.
 
 **Architecture:** Same three-layer split as Phase 1. One new source call (`getUserFillsByTime`), one new pure feature function (`computeTradeFeatures`), one new field wired into `checkAddress`, and a static page served by the same Worker.
 
@@ -126,7 +126,7 @@ git commit -m "feat: fetch recent fills from Hyperliquid's free userFillsByTime"
 
 ---
 
-## Task 2: Trade features - the deferred book signal (в)
+## Task 2: Trade features - the deferred book signal (c)
 
 **Files:**
 - Modify: `src/sources/normalize.ts` (add `normalizeTrades`)
@@ -261,7 +261,7 @@ Expected: exits 0.
 
 ```bash
 git add src/sources/normalize.ts src/engine/features.ts test/engine/features.test.ts test/sources/normalize.test.ts
-git commit -m "feat: trades-per-day and crossed-share feature (book rule в), capped honestly at Hyperliquid's 2000-fill limit"
+git commit -m "feat: trades-per-day and crossed-share feature (book rule c), capped honestly at Hyperliquid's 2000-fill limit"
 ```
 
 ---
@@ -630,7 +630,7 @@ git commit -m "feat: serve a single-page UI for /api/check"
 
 ## Self-review notes
 
-- **Spec coverage:** closes book rule (в) from `docs/specs/2026-09-17-bet-or-book-design.md` section 3 (deferred by the Phase 1 plan), and delivers a first cut of section 2's UI scenario and section 4 rule 5 ("what we cannot see" shown always) and rule 3 (a capped page is flagged, never silently truncated).
+- **Spec coverage:** closes book rule (c) from `docs/specs/2026-09-17-bet-or-book-design.md` section 3 (deferred by the Phase 1 plan), and delivers a first cut of section 2's UI scenario and section 4 rule 5 ("what we cannot see" shown always) and rule 3 (a capped page is flagged, never silently truncated).
 - **Placeholder scan:** none - every step has runnable code or an exact command.
 - **Type consistency:** `Trade` defined once in `src/types.ts` (Task 1) and consumed by `src/sources/normalize.ts` and `src/engine/features.ts` (Task 2) without redefinition; `TradeFeatures` defined once in `src/engine/features.ts` and imported into `src/api/check.ts` (Task 3); `CheckResult` gains a `trades` field additively, nothing existing renamed.
 - **Out of scope, still Phase 2:** Nansen client, the gallery/prescan and its 1,000-call requirement, the credit ledger, KV-backed rate limiting and caching, the shareable card image, and `wrangler deploy`. These need the Nansen key and credits and are planned separately once available.

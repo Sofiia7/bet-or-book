@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
-**Goal:** Close the correctness/UI findings from `docs/audits/2026-09-24-full-audit-ru.md` and ship the three mechanics the user approved on 24.09 (guess-the-verdict, a ratings board, and a balance-scale diagram replacing the coverage bar), without changing the verdict rules (`CLASSIFIER_VERSION` stays `v5`) or `OBSERVATION_SCHEMA_VERSION`.
+**Goal:** Close the correctness/UI findings from `docs/audits/2026-09-24-full-audit.md` and ship the three mechanics the user approved on 24.09 (guess-the-verdict, a ratings board, and a balance-scale diagram replacing the coverage bar), without changing the verdict rules (`CLASSIFIER_VERSION` stays `v5`) or `OBSERVATION_SCHEMA_VERSION`.
 
 **Architecture:** Every task is additive or purely presentational. No task touches `src/engine/verdict.ts`'s rule logic. The scale diagram in this round is the page's own SVG only (`web/app.js`); the canvas share-card and the satori OG picture keep drawing the existing bar against the same, unchanged `breakdown`/`orders` data, so nothing breaks - the visual parity between all three is a documented follow-up, not part of this plan. The ratings board and the guess mechanic reuse data already computed server-side; the board needs three new numbers added to the existing gallery row payload, nothing else server-side.
 
@@ -41,7 +41,7 @@ Each task below is self-contained: its own files, its own tests, its own commit(
 
 This task bundles seven small, independent fixes. Do them **in this order**, one commit each - later ones read more cleanly once earlier ones are in, and the auto-open fix (step 4) depends on the recent-checks guard (step 3) already being in place.
 
-- [x] **Step 1: Л03 - stop showing a gallery row for an account a featured reading already supersedes**
+- [x] **Step 1: L03 - stop showing a gallery row for an account a featured reading already supersedes**
 
 Read `src/index.ts` around line 60-73 first (`const gallery = ...`, `const featured = ...`, `const listedGallery = ...`). The featured demonstration readings (`data/featured.json`) are fresher re-reads of specific accounts that also appear as older rows in `data/gallery.json`'s scan. Three of the four currently show up twice on the page with different numbers (verified live on 24.09: `0xb83de012...` reads $209.1M on the chip and $216.7M on gallery row #2; `0x082e843a...` reads $130.0M vs $125.9M; `0xf02d16a2...` reads $41.8M vs $42.7M). Historical gallery rows (kept in the archive, not the main list) are not part of this complaint and must stay untouched.
 
@@ -100,7 +100,7 @@ git add src/index.ts test/gallery-index.test.ts
 git commit -m "fix: a featured re-read's account does not also stand as an older gallery row"
 ```
 
-- [x] **Step 4: Л08 - version the check cache key by the same things the observation is versioned by**
+- [x] **Step 4: L08 - version the check cache key by the same things the observation is versioned by**
 
 In `src/index.ts`, find:
 
@@ -139,7 +139,7 @@ git add src/index.ts
 git commit -m "fix: a cached answer cannot outlive the asset registry that read it"
 ```
 
-- [x] **Step 6: Л04 - only checks the reader actually ran go into \"Your recent checks\"**
+- [x] **Step 6: L04 - only checks the reader actually ran go into \"Your recent checks\"**
 
 Read `web/app.js` around line 441-460 (`function renderResult(d, opts) {`) and around line 610-619 (the `saveRecent`/`renderRecent` call at the end of `renderResult`). Currently:
 
@@ -269,7 +269,7 @@ git add web/index.html
 git commit -m "docs: the heading on the page matches the product's own name"
 ```
 
-- [x] **Step 13: Л06 - stop showing \"Size vs open interest\" twice on one card**
+- [x] **Step 13: L06 - stop showing \"Size vs open interest\" twice on one card**
 
 Read `src/engine/vitals.ts`'s `computeVitals` (it already pushes a `'Size vs open interest'` item whenever `input.sizeVsOi !== null`, sourced identically) and `src/engine/evidence.ts`'s `explain()` final return block. In `explain()`, find:
 
@@ -1182,7 +1182,7 @@ Read the file's existing `WHY` map and `ruleExplanation()` function first. Add, 
  * silent on 'no open positions found' (nothing to qualify) and on the two
  * reasons that only ever grade a Book. Typed against the same `ReasonCode`
  * union `WHY` already is, so a new reason cannot ship without a phrase here
- * either (24.09 audit U02 + Л10: one dictionary, not one on the server and a
+ * either (24.09 audit U02 + L10: one dictionary, not one on the server and a
  * second, drifting one on the page). */
 const BADGE_QUALIFIER: Record<Exclude<ReasonCode, 'positions' | 'trades' | 'no open positions found'>, string> = {
   orders: 'market-making activity',
@@ -1573,7 +1573,7 @@ git commit -m "feat: every Nansen-sourced reading names Hyperliquid's own main-d
 
 **Files:**
 - Modify: `README.md`
-- Move: `docs/audits/2026-09-19-pivot-ideas-ru.md`, `docs/audits/2026-09-19-useful-ideas-ru.md`, `docs/audits/2026-09-20-competition-decision-ru.md`, `docs/audits/2026-09-20-retail-actions-ru.md` -> `docs/internal/`
+- Move: `docs/audits/2026-09-19-pivot-ideas.md`, `docs/audits/2026-09-19-useful-ideas.md`, `docs/audits/2026-09-20-competition-decision.md`, `docs/audits/2026-09-20-retail-actions.md` -> `docs/internal/`
 - Remove or document: `data/rescan-offset.json`, `data/rescan-offset2.json`, `data/rescan-offset3.json`
 
 Run this task **last**, after Tasks 1-7 have landed, since it refreshes numbers that those tasks change (the gallery row count, most directly, from Task 1's dedupe).
@@ -1584,10 +1584,10 @@ These are already confirmed (grep run 25.09) to have no inbound links from `READ
 
 ```bash
 mkdir -p docs/internal
-git mv docs/audits/2026-09-19-pivot-ideas-ru.md docs/internal/
-git mv docs/audits/2026-09-19-useful-ideas-ru.md docs/internal/
-git mv docs/audits/2026-09-20-competition-decision-ru.md docs/internal/
-git mv docs/audits/2026-09-20-retail-actions-ru.md docs/internal/
+git mv docs/audits/2026-09-19-pivot-ideas.md docs/internal/
+git mv docs/audits/2026-09-19-useful-ideas.md docs/internal/
+git mv docs/audits/2026-09-20-competition-decision.md docs/internal/
+git mv docs/audits/2026-09-20-retail-actions.md docs/internal/
 ```
 
 Then replace the long dash in each moved file. Run this once per file (it is idempotent - a file with none is left unchanged):
@@ -1596,10 +1596,10 @@ Then replace the long dash in each moved file. Run this once per file (it is ide
 node -e "
 const fs = require('fs');
 for (const f of [
-  'docs/internal/2026-09-19-pivot-ideas-ru.md',
-  'docs/internal/2026-09-19-useful-ideas-ru.md',
-  'docs/internal/2026-09-20-competition-decision-ru.md',
-  'docs/internal/2026-09-20-retail-actions-ru.md',
+  'docs/internal/2026-09-19-pivot-ideas.md',
+  'docs/internal/2026-09-19-useful-ideas.md',
+  'docs/internal/2026-09-20-competition-decision.md',
+  'docs/internal/2026-09-20-retail-actions.md',
 ]) {
   const before = fs.readFileSync(f, 'utf8');
   const after = before.replace(/\u2014/g, '-').replace(/ \u2013 /g, ' - ');
@@ -1701,7 +1701,7 @@ State these plainly in the final report; do not start them:
 
 1. **Canvas share-card and OG-picture parity with the Task 5 scale.** Needs `drawCard()` in `web/app.js` and `ogTree()`/`ogCardData()` in `src/engine/ogCard.ts`/`ogRender.ts` to draw the same three states, a new `OG_LAYOUT_VERSION` (4), and a local (never `--upload` without a separate go-ahead) re-render.
 2. **A daily scripted re-scan feeding the ratings board.** The board works today from the ~190 readings already on file; a `prescan.ts`-driven daily top-up of the highest-ranking candidates is a real but separate, credit-spending addition.
-3. **Rules threshold change for `coinsBothSides` materiality on the bet path (audit Л07).** A `v6` rules change three days before the deadline, needing a full gallery re-judge - explicitly out of scope per the audit's own recommendation.
+3. **Rules threshold change for `coinsBothSides` materiality on the bet path (audit L07).** A `v6` rules change three days before the deadline, needing a full gallery re-judge - explicitly out of scope per the audit's own recommendation.
 4. **Dead-code removal (`looksLikeButUnverified`, the budget `sync` action).** Left as judged-intentional, low-priority plumbing; not touched.
 5. **Deploying** (`wrangler deploy`) **and uploading OG pictures to the live KV namespace** (`prerender-og.ts --upload`). Both commit-worthy config/code lands in this plan; neither runs the production-affecting command. Say so explicitly when the plan finishes.
 
