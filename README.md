@@ -4,13 +4,13 @@
 
 **Live: [bet-or-book.trade](https://bet-or-book.trade)**
 
-Built for the [Nansen Meridian Buildathon](https://www.nansen.ai/campaigns/meridian-buildathon) (14-27 September 2026). Powered by Nansen API.
+Built for the [Nansen Meridian Buildathon](https://www.nansen.ai/campaigns/meridian-buildathon) (14-27 September 2026). Powered by [Nansen API](https://app.nansen.ai/r/36RkYL4jJsy); orders and fills from [Hyperliquid](https://app.hyperliquid.xyz).
 
 ## Why
 
 Every week a post goes viral: "a whale just opened a $190M short". People copy it. Often the position is not what the headline makes of it:
 
-- The account behind one of those posts is a **market-making book**: 134 open positions, 2,730 resting orders quoting both sides of 123 markets - including its own $52.0M ETH short, $41.6M of that quoting genuinely matched in ETH itself, not just activity somewhere else in the account. That is a business, not a view on price (read on 26 September, after the fix in [L01](docs/audits/2026-09-23-full-audit-ru.md) made "quoted elsewhere" stop counting as evidence about this position).
+- The account behind one of those posts is a **market-making book**: 134 open positions, 2,730 resting orders quoting both sides of 123 markets - including its own $52.0M ETH short, $41.6M of that quoting genuinely matched in ETH itself, not just activity somewhere else in the account. That is a business, not a view on price (read on 26 September, after the fix in [L01](docs/audits/2026-09-23-full-audit.md) made "quoted elsewhere" stop counting as evidence about this position).
 - Another was reported as hundreds of millions in bearish shorts, and the first version of this tool agreed it was hedged. It is not that simple: **next to none of its $208.2M ETH short is covered by anything that address holds**, and $395.8M of matching ETH sits in two wallets that funded it. A funding transfer is not ownership, one such funder turned out to be an exchange, and part of that ETH is an Aave deposit with an invisible loan against it.
 - And sometimes it really is a bet: **one $126.4M HYPE long, the account's entire exposure, nothing offsetting it**.
 
@@ -21,13 +21,13 @@ Bet or Book answers one question per address, shows the numbers that decided it,
 ## What a check returns
 
 - **A verdict**: Book, Hedged, Looks like a bet, or Unknown, with a strength where it applies (`likely` / `strong` for a book). An Unknown names its kind on the badge itself, e.g. *Unknown · assets sit with funders*.
-- **One sentence built from the numbers**, e.g. *"The $41.8M HYPE short is 97% covered by $40.4M of spot HYPE held by this address on Hyperliquid - other Nansen-supported chains were checked and found nothing."*
-- **A picture of what stands against the position**: a balance scale, the position on one pan and what this address holds against it on the other. It sits level when a short is covered, tips toward the position when it is not, and tips the other way when the account holds more of the asset than it is short. A holdings read that did not finish leaves the second pan dashed, with a question mark, rather than drawn as empty. Anything held by a wallet that merely funded this one hangs beside the scale on a dashed line, never on it. That distinction is the whole card, and a row of percentages is a poor way to carry it. A long gets an empty pan, since spot cannot offset one; a book gets a bar of how much of its own market it quotes on both sides, the number its verdict turns on. The downloaded picture and the link preview still draw the earlier single bar.
+- **One sentence built from the numbers**, e.g. *"The $42.0M HYPE short is 99% covered by $41.6M of spot HYPE held by this address on Hyperliquid - other Nansen-supported chains were checked and found nothing."*
+- **A picture of what stands against the position**: a constellation diagram, the position drawn on the left and what this address holds against it on the right, with the share it covers as the one number in the middle. A short that is covered fills the right side; one that is not leaves it nearly empty. A holdings read that did not finish is flagged as incomplete next to the number rather than drawn as an absence. Anything held by a wallet that merely funded this one is drawn as a dashed ghost of a constellation, never as this account's own. That distinction is the whole card, and a row of percentages is a poor way to carry it. A long shows 0% covered, since spot cannot offset one; a book shows how much of its own market it quotes on both sides, the number its verdict turns on. The share picture and the link preview draw the same constellation.
 - **A choice of position.** A post says BTC and the largest position at the address is ETH. The card offers the address's largest few and will answer about the one you came for.
 - **What changed since the last reading**, where there is one - and whether the answer moved because the account did something or because the rules did. Those look identical on a card and are not the same event.
 - **The number the verdict turned on**, first, where there is no picture to show it. The other evidence numbers, each tagged with the source that produced it (Nansen, Hyperliquid, or both), and a strip of vitals - leverage, distance to liquidation, unrealized PnL, funding since open - that never decide the verdict but are already paid for, sit one click down.
 - **How this was decided**, in words: the rule that fired, with the thresholds it used. The raw reason code and the rules version are underneath it, for anyone checking the rules themselves.
-- **What Nansen added**, on one line without opening anything, and in full one click down: positions on every dex (beside the count Hyperliquid's own free main-dex endpoint shows), balances on every chain, funding links, funding history. Where the funding links are what stop a verdict, the card runs the same rules over the same numbers without them and says what those numbers would have read as - for the $209.1M ETH short above, "Looks like a bet".
+- **What Nansen added**, on one line without opening anything, and in full one click down: positions on every dex (beside the count Hyperliquid's own free main-dex endpoint shows), balances on every chain, funding links, funding history. Where the funding links are what stop a verdict, the card runs the same rules over the same numbers without them and says what those numbers would have read as - for the $208.2M ETH short above, "Looks like a bet".
 - **What is still open**: the question the reading cannot settle, in its own terms - "whether any of that HYPE is owed to someone", "who controls the wallets that funded this account".
 - **The funding wallets**, with explorer links, when they hold the matching asset. They hold it; that is not the same as this account holding it, and the card says so.
 - **What could not be read**, every time: which sources were missing or cut short, how old the numbers are, and which rules read them.
@@ -147,7 +147,7 @@ npx wrangler deploy
 
 ## Nansen API usage
 
-**1,136 calls between 14 and 27 September, 1,128 answered 2xx** ([full breakdown by endpoint and purpose, and what each of the eight failed calls taught](docs/nansen-api-usage.md)). The deployed page adds its own calls from the budget Durable Object and serves the running total, endpoint by endpoint, at `/api/ledger`.
+**1,155 calls between 14 and 27 September, 1,147 answered 2xx** ([full breakdown by endpoint and purpose, and what each of the eight failed calls taught](docs/nansen-api-usage.md)). The deployed page adds its own calls from the budget Durable Object and serves the running total, endpoint by endpoint, at `/api/ledger`.
 
 ## Security
 
@@ -155,7 +155,11 @@ No logins, sessions, uploads, webhooks or SQL; the only user input is an address
 
 ## Stack
 
-Cloudflare Workers, Workers KV and two Durable Objects (the spend cap with its call ledger, and the rate limiter - both need an atomic read-modify-write that KV cannot promise), TypeScript, Vitest (631 tests on recorded real responses, including the Worker's own routes driven through real Requests and the real image renderer with no mocks, plus 9 that run the built Worker inside workerd through Miniflare). No frontend framework: one HTML page, one script file and a canvas for the share card. Two runtime dependencies, both for the one thing this Worker cannot do without them: [`satori`](https://github.com/vercel/satori) lays out a reading's social-preview picture and [`@resvg/resvg-wasm`](https://github.com/yisibl/resvg-js) rasterizes it to PNG - see [`docs/architecture.md`](docs/architecture.md) for why that render never runs on a crawler's request.
+Cloudflare Workers, Workers KV and two Durable Objects (the spend cap with its call ledger, and the rate limiter - both need an atomic read-modify-write that KV cannot promise), TypeScript, Vitest (634 tests on recorded real responses, including the Worker's own routes driven through real Requests and the real image renderer with no mocks, plus 9 that run the built Worker inside workerd through Miniflare). No frontend framework: one HTML page, one script file and a canvas for the share card. Two runtime dependencies, both for the one thing this Worker cannot do without them: [`satori`](https://github.com/vercel/satori) lays out a reading's social-preview picture and [`@resvg/resvg-wasm`](https://github.com/yisibl/resvg-js) rasterizes it to PNG - see [`docs/architecture.md`](docs/architecture.md) for why that render never runs on a crawler's request.
+
+## License
+
+[MIT](LICENSE).
 
 ## Further reading
 
@@ -166,4 +170,4 @@ Cloudflare Workers, Workers KV and two Durable Objects (the spend cap with its c
 - [`docs/architecture.md`](docs/architecture.md) - the credit-reservation and rate-limiting design, the link-preview picture on the free plan, what the Worker counts, the runtime tests, and the security checklist
 - [`docs/wiki/calibration.md`](docs/wiki/calibration.md) - the original three-account smoke test (superseded; kept as a record)
 - [`docs/specs/2026-09-17-bet-or-book-design.md`](docs/specs/2026-09-17-bet-or-book-design.md) - the original design spec (historical; routes and timings in it predate later audits)
-- [`docs/audits/`](docs/audits/) - the 19, 21, 22 and 23 September audits, each with an offline reproduction of the defects it found
+- [`docs/audits/`](docs/audits/) - the seven audits from 19 to 27 September; the 19, 21 and 23 September ones each come with an offline reproduction of the defects they found, and the 27 September one records the v6 rule changes
