@@ -4,7 +4,7 @@
 
 **Live: [bet-or-book.trade](https://bet-or-book.trade)**
 
-Built for the [Nansen Meridian Buildathon](https://www.nansen.ai/campaigns/meridian-buildathon) (14-27 September 2026). Powered by [Nansen API](https://nansen.ai); orders and fills from [Hyperliquid](https://app.hyperliquid.xyz).
+Built for the [Nansen Meridian Buildathon](https://www.nansen.ai/campaigns/meridian-buildathon) (14-27 September 2026). Powered by [Nansen API](https://app.nansen.ai/r/36RkYL4jJsy); orders and fills from [Hyperliquid](https://app.hyperliquid.xyz).
 
 ## Why
 
