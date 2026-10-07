@@ -323,7 +323,8 @@ describe('a reading this region has not seen yet', () => {
     expect(early.headers.get('cache-control')).toBe('no-store');
     const { error } = (await early.json()) as { error: string };
     expect(error).not.toMatch(/never existed/);
-    expect(error).toMatch(/last minute/);
+    expect(error).toMatch(/may still be saving/);
+    expect(error).toMatch(/Try again shortly/);
 
     const picture = await mf.dispatchFetch(`http://localhost/api/og?id=${id}`);
     expect(picture.headers.get('cache-control')).toBe('public, max-age=60');
