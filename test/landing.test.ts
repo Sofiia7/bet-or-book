@@ -6,7 +6,7 @@
 // front of the reader a moment after the page showed (27.09).
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import featuredData from '../data/featured.json';
+import featuredData from './fixtures/featured-september.json';
 import { galleryIndex, type Gallery } from '../src/gallery';
 import { landingExamples } from '../src/landing';
 import { snapshotId } from '../src/snapshot';

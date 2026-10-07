@@ -1,6 +1,7 @@
 import type { CheckResponse } from './api/check';
 import type { HedgeCoverage } from './engine/features';
 import { badgeQualifier } from './engine/reasons';
+import { exampleDescription } from './engine/presentation';
 import type { ExposureBreakdown } from './engine/breakdown';
 
 /** Snapshot written by scripts/prescan.ts and bundled into the Worker. Each
@@ -25,6 +26,7 @@ export interface Gallery {
  */
 export interface GalleryRow {
   snapshotId: string;
+  description?: string;
   address: string;
   checkedAt: string;
   classifierVersion: string;
@@ -101,6 +103,7 @@ export function galleryIndex(gallery: Gallery, idOf: (e: CheckResponse) => strin
       .filter((e) => !e.superseded)
       .map((e) => ({
         snapshotId: idOf(e),
+        description: exampleDescription(e),
         address: e.address,
         checkedAt: e.checkedAt,
         classifierVersion: e.classifierVersion,
@@ -128,7 +131,7 @@ export function galleryIndex(gallery: Gallery, idOf: (e: CheckResponse) => strin
         // function of the verdict this entry already carries, recomputed
         // here rather than forwarded.
         badgeQualifier: badgeQualifier(e.verdict, e.historical !== undefined),
-        ...(e.historical ? { historical: { reason: 'Read by earlier rules. A fresh check is needed for a current verdict.' } } : {}),
+        ...(e.historical ? { historical: { reason: 'Earlier rules; fresh check needed.' } } : {}),
         ...(e.supersedes ? { supersedes: e.supersedes } : {}),
       })),
   };

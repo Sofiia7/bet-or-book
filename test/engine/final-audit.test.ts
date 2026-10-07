@@ -44,7 +44,7 @@ describe('27 September: a portfolio aggregate must not prove a selected position
     expect(positions.sameAssetOffsetShare).toBeGreaterThan(0.95);
     const input = { positions, orders: EMPTY_ORDERS, hedge: EMPTY_HEDGE };
     expect(computeVerdict(input).verdict).toBe('unknown');
-    expect(hedgeCanChangeVerdict(input)).toBe(true);
+    expect(hedgeCanChangeVerdict(input)).toBe(false);
     expect(computeVerdict({ ...input, positionsCoverage: 'partial' }).verdict).toBe('unknown');
   });
 

@@ -573,6 +573,8 @@ export function explain(input: EvidenceInput): Explanation {
       { label: input.focus ? 'Selected position' : 'Largest position', value: headlineText(p), source: posSource },
       { label: 'Share of exposure', value: formatPct(p.headlineShare), source: posSource },
       { label: 'Net / gross exposure', value: formatPct(p.netToGross), source: posSource },
+      ...(input.verdict.reasons.includes('maker_flow_only')
+        ? [{ label: 'Fills, last 24h', value: fillsText(input.trades), source: 'Hyperliquid' as const }] : []),
       hedgeItem(input),
       linkedItem(input),
       pnlItem(input.pnl),

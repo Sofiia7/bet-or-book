@@ -4,7 +4,6 @@
 // request does; and a loan Hyperliquid reports is said rather than lost.
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { checkAddress } from '../../src/api/check';
-import { UpstreamShapeError } from '../../src/sources/normalize';
 import type { NansenClient, NansenPerpPositions, NansenBalance, NansenRelatedWallet, NansenPnlSummary } from '../../src/sources/nansen';
 import marginSpot from '../fixtures/hyperliquid/spot-balances-portfolio-margin.json';
 
@@ -132,7 +131,9 @@ describe('a broken row is left out, counted, and lowers the claim', () => {
 describe('a broken envelope', () => {
   it('fails the check, the way a source that is down does', async () => {
     route({ userFillsByTime: { error: 'rate limited' } });
-    await expect(checkAddress(ADDRESS, { nansen: nansenWith('ETH', 'long') })).rejects.toBeInstanceOf(UpstreamShapeError);
+    const result = await checkAddress(ADDRESS, { nansen: nansenWith('ETH', 'long') });
+    expect(result.degraded).toBe(true);
+    expect(result.coverage.join(' ')).toContain('Recent fills unavailable');
   });
 
   it('except where nothing is decided: perp metadata of the wrong shape only hides open interest', async () => {

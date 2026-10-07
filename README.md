@@ -4,7 +4,9 @@
 
 **Live: [bet-or-book.trade](https://bet-or-book.trade)**
 
-Built for the [Nansen Meridian Buildathon](https://www.nansen.ai/campaigns/meridian-buildathon) (14-27 September 2026). Powered by [Nansen API](https://app.nansen.ai/r/36RkYL4jJsy); orders and fills from [Hyperliquid](https://app.hyperliquid.xyz).
+Hyperliquid position intelligence: reads HyperCore positions, spot balances, orders and fills, with [Nansen API](https://app.nansen.ai/r/36RkYL4jJsy) for cross-dex positions, cross-chain holdings and funding links. Built on Cloudflare Workers, Durable Objects and KV.
+
+Development began on 17 September 2026. The project was previously submitted to the Nansen Meridian Buildathon (14-27 September); it was not a winner or honourable mention and was listed among Nansen's Examples of API Builds. The dated readings and historical audits preserve that work.
 
 ## Why
 
@@ -64,7 +66,7 @@ Rules run in order; the first one that fires wins ([`src/engine/verdict.ts`](src
 | # | Verdict | Rule |
 |---|---|---|
 | 0 | Unknown | no open positions |
-| 1 | Book | **The headline position's own market quoted on both sides**, worth at least 10% of the headline position there (floor $10K, `2 x min(bid, ask)` so a large bid against a token ask does not count as matched) - plus the account-wide shape: 50+ resting orders, 25-75% bids, 5+ markets touched. A wide spread of positions and a busy fill count corroborate and raise it to `strong`; none of them decides alone, and quoting elsewhere is the account's activity, not evidence about this position |
+| 1 | Book | **The headline position's own market quoted on both sides**, worth at least 10% of the headline position there (floor $10K, `2 x min(bid, ask)` so a large bid against a token ask does not count as matched) - plus the account-wide shape: 50+ non-trigger, non-reduce-only resting orders, 25-75% bids, 5+ markets quoted on both sides. A wide spread of positions and a busy fill count corroborate and raise it to `strong`; none of them decides alone, and quoting elsewhere is the account's activity, not evidence about this position |
 | 2 | Unknown, unresolved exposure | Opposing perpetual legs, a known same-asset Hyperliquid spot liability, or an unverified HIP-3 underlying. The spot-only ratio cannot settle combined exposure in these cases |
 | 3 | Unknown, `over_covered` | the spot leg is larger than the short: the account is long the asset it is short. The one conclusion an incomplete read still supports, since missed holdings can only add to it |
 | 4 | Unknown, `hedge_not_checked` | the holdings could not be read in full, so neither their absence nor a ratio measured over part of them proves anything. What was found is reported as a floor |
@@ -89,9 +91,9 @@ Hyperliquid's free API supplies resting orders (per dex, including HIP-3 markets
 
 ## The four readings at the top, and the scan below them
 
-The four example cards on the landing page open readings made fresh on 26 September and picked by hand, one of each kind of answer: a bet, a short covered in the same account, a short whose matching asset sits with the wallets that funded it, and a market maker's book. They are in [`data/featured.json`](data/featured.json), made by the same `checkAddress` a live check runs, and each one says what changed since the scan's reading of the same address. A visitor with nothing pasted sees an introduction, an address field and four dated examples. Opening an example shows its reading under the search field; All examples returns to the landing page. Shared reading links still open their own saved result directly. A reading shows its key evidence and open question; one Full analysis disclosure holds the remaining metrics, rules and sources. Explore (`/#explore`) has Ranked boards and All readings views, with a return to the current reading. The four newer readings lead the list; the earlier scan remains accessible in the archive.
+The four example cards were refreshed on 7 October through the same `checkAddress` used for live checks, spending 21 Nansen credits. The current answers are a HYPE bet, a covered HYPE short, an ETH short whose matching assets sit with funders, and a busy ETH account without enough quoting evidence to establish inventory. The former Book example now reads Unknown; examples follow the evidence rather than preserving a desired set of badges. [`data/featured.json`](data/featured.json) keeps earlier IDs and comparisons. Opening a saved example is free. The card shows its verdict, evidence, position risks, comparison and missing sources; Full analysis contains rules and details. Share supports a link and downloadable PNG. A browser-local watchlist never runs a check automatically.
 
-The earlier scan checked 277 open accounts selected from the top 3,000 by account value and ranked by their largest main-dex position. All 277 remain accessible as historical readings: they predate the liability and funding-search evidence required by v6, so they retain their original verdicts rather than receiving an unsupported current-rules stamp. The four newer examples can be reinterpreted from their stored observations; their verdicts and public links remain unchanged. The rankings use those newer examples. A fresh check can produce a current reading for any archived address. How the scan was built: [`docs/gallery-scan.md`](docs/gallery-scan.md). Final logic audit: [`docs/audits/2026-09-27-logic-audit.md`](docs/audits/2026-09-27-logic-audit.md).
+The earlier scan checked 277 open accounts selected from the top 3,000 by account value and ranked by their largest main-dex position. These remain historical: they predate evidence required by the current rules and keep their original verdicts. Explore boards include those readings with explicit rule-version labels; the archive remains separate in All readings. A fresh check produces a current reading. How the scan was built: [`docs/gallery-scan.md`](docs/gallery-scan.md). October fixes: [`docs/audits/2026-10-07-fixes.md`](docs/audits/2026-10-07-fixes.md).
 
 ## Honest limits
 
@@ -151,7 +153,7 @@ npx wrangler deploy
 
 ## Security
 
-No logins, sessions, uploads, webhooks or SQL; the only user input is an address, a coin and a side; the Worker calls two fixed hosts; the key lives in a Worker secret and a git-ignored `.dev.vars`, absent from the whole history; `npm audit` reports 0 vulnerabilities. Starting a check spends money, so it is a POST from this site only; the page's script is a file of its own so its CSP forbids inline script outright. Full checklist and what the 21 September audit changed: [`docs/architecture.md`](docs/architecture.md).
+No logins, sessions, uploads, webhooks or SQL; the only user input is an address, a coin and a side; the Worker calls two fixed hosts; the key lives in a Worker secret and a git-ignored `.dev.vars`, absent from the whole history; `npm audit --omit=dev` reports 0 production vulnerabilities. Starting a check spends money, so it is a POST from this site only; the page's script is a file of its own so its CSP forbids inline script outright. Full checklist and what the 21 September audit changed: [`docs/architecture.md`](docs/architecture.md).
 
 ## Stack
 

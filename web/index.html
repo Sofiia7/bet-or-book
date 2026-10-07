@@ -13,20 +13,20 @@
 <meta property="og:site_name" content="Bet or Book">
 <meta property="og:title" content="Bet or Book">
 <meta property="og:description" content="Paste a Hyperliquid address: see what actually stands behind that whale position - a bet, a hedge, or a market maker's book.">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://bet-or-book.trade/og-fallback.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://bet-or-book.trade/og-fallback.png">
 <!--/SOCIAL-->
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237fa2ff'/%3E%3Ctext x='16' y='22.5' font-size='17' font-weight='700' text-anchor='middle' fill='%2308090c' font-family='sans-serif'%3EB%3C/text%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="/logo.png" type="image/png">
 <style>
+  @font-face { font-family: Inter; src: url('/fonts/inter-regular.woff') format('woff'); font-weight: 400; font-display: swap; }
+  @font-face { font-family: Inter; src: url('/fonts/inter-bold.woff') format('woff'); font-weight: 600 700; font-display: swap; }
   :root {
-    --bg: #08090c; --fg: #e6e8ee; --muted: #8b90a0; --faint: #5a5f6d; --line: rgba(255,255,255,.08); --panel: #0c0e13; --hover: rgba(255,255,255,.05);
+    --bg: #08090c; --fg: #e6e8ee; --muted: #8b90a0; --faint: #858a99; --line: rgba(255,255,255,.08); --panel: #0c0e13; --hover: rgba(255,255,255,.05);
     --book-bg: rgba(127,162,255,.12); --book-fg: #7fa2ff;
     --hedged-bg: rgba(79,224,176,.12); --hedged-fg: #4fe0b0;
     --bet-bg: rgba(242,179,92,.12); --bet-fg: #f2b35c;
     --unknown-bg: rgba(163,168,182,.12); --unknown-fg: #a3a8b6;
-    --note-bg: rgba(242,179,92,.12); --note-fg: #f2b35c;
     --link: #9fb8ff; --error: #ff6b6b;
     --surface-2: #0e1015; --surface-3: #0a0b10;
   }
@@ -36,7 +36,6 @@
     font-family: "Inter", -apple-system, system-ui, "Segoe UI", sans-serif;
     background: var(--bg);
     background-image: radial-gradient(1200px 600px at 50% -200px, #11131b 0%, var(--bg) 60%);
-    background-attachment: fixed;
     color: var(--fg); max-width: 1080px; margin: 40px auto; padding: 0 28px; line-height: 1.5;
   }
   h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
@@ -62,7 +61,7 @@
      The badge no longer tints its background per verdict - the handoff's
      own pill has none, only the border, the text color and the dot. */
   .badge {
-    display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px;
+    display: inline-flex; align-items: center; gap: 8px; min-height: 30px; height: auto; padding: 4px 12px;
     border: 1px solid rgba(255,255,255,.1); border-radius: 999px;
     font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; font-weight: 500;
     letter-spacing: .1em; text-transform: uppercase;
@@ -176,7 +175,6 @@
   .fold p { margin: 6px 0 0; }
   .fold .tech { font-size: 12px; color: var(--muted); }
   .fold code { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; background: var(--panel); padding: 1px 5px; border-radius: 4px; }
-  .note { background: var(--note-bg); color: var(--note-fg); }
   /* Which position the answer is about, before the answer. */
   .subject { margin: 12px 0 0; font-size: 14px; }
   .subject .muted { margin-right: 6px; }
@@ -203,14 +201,14 @@
   .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
   /* A verdict the current rules never produced is shown as what it is:
      an earlier reading, not a present finding. */
-  .badge.historical { opacity: 0.6; border-style: dashed; }
+  .badge.historical { border-style: dashed; }
   #card-canvas { display: block; width: 100%; height: auto; border-radius: 8px; margin-top: 12px; border: 1px solid var(--line); }
   .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0; }
   .chip { padding: 6px 12px; font-size: 13px; border-radius: 999px; }
   .chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
   /* Keyboard users need to see where they are. aria attributes alone say
      nothing about that. */
-  :focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+  :focus-visible { outline: 3px solid var(--link); outline-offset: 3px; }
   .list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
   .list button { width: 100%; display: grid; grid-template-columns: 34px 1fr auto; gap: 4px 12px; align-items: center; text-align: left; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 10px 4px; }
   /* boardRow (web/app.js) never draws a rank number - it has none to draw,
@@ -318,9 +316,17 @@
     #all-readings .list .badge { grid-column: 2; justify-self: start; height: auto; min-height: 30px; padding-top: 6px; padding-bottom: 6px; }
     #all-readings .list .row-meta { grid-column: 2; }
   }
-  .explore-shortcut { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--book-fg); border-radius: 8px; padding: 14px 20px; font-size: 14px; font-weight: 700; color: var(--book-fg); text-decoration: none; white-space: nowrap; }
+  .explore-shortcut { display: inline-flex; align-items: center; justify-content: center; padding: 10px 8px; font-size: 14px; color: var(--link); text-decoration: underline; white-space: nowrap; }
   .explore-shortcut:hover { background: var(--book-bg); }
   .site-nav #nav-boards { color: var(--book-fg); font-weight: 700; }
+  .status, .search-help, .limit, .still-open, .tech { font-size: 14px; }
+  summary, nav a { min-height: 32px; padding-top: 5px; padding-bottom: 5px; }
+  .chip { min-height: 36px; }
+  .glossary { margin: 18px 0; font-size: 14px; color: var(--muted); }
+  .glossary dt { color: var(--fg); font-weight: 600; }
+  .glossary dd { margin: 0 0 12px; }
+  #check-progress { width: 100%; height: 5px; accent-color: var(--link); }
+  @media (max-width: 600px) { .board .list button { grid-template-columns: minmax(0,1fr); } .hero .sub { font-size: 16px; } }
 </style>
 </head>
 <body>
@@ -338,20 +344,22 @@
 
 <label class="search-label" for="address">Check a Hyperliquid wallet</label>
 <div class="row search-row">
-  <input id="address" type="text" placeholder="Paste a Hyperliquid wallet address" autocomplete="off" spellcheck="false" aria-label="Hyperliquid address" aria-describedby="address-help">
+  <input id="address" type="text" placeholder="Paste a Hyperliquid wallet address" autocomplete="off" spellcheck="false" aria-describedby="address-help">
   <button id="check">Check position</button>
   <a class="explore-shortcut" href="#explore" id="search-explore">Explore positions →</a>
 </div>
-<p class="search-help" id="address-help">Links containing a wallet address work too. No wallet connection needed.</p>
+<p class="search-help" id="address-help">Paste an address, Hypurrscan or Hyperliquid link. No wallet connection needed.</p>
+<p class="search-help"><button class="chip" id="use-example">Try a saved example · free</button></p>
 <p class="data-sources"><span>Powered by <a class="partner" href="https://app.nansen.ai/r/36RkYL4jJsy" rel="noopener noreferrer">Nansen API</a></span><span>Orders and fills from <a class="partner" href="https://app.hyperliquid.xyz" rel="noopener noreferrer">Hyperliquid</a></span></p>
 <p class="status" id="status" role="status"></p>
+<progress id="check-progress" aria-label="Reading the wallet" hidden></progress>
 <div class="guess" id="guess" hidden>
-  <span class="guess-label">Guess before it loads:</span>
-  <span class="guess-chips" id="guess-chips">
-    <button class="chip" data-guess="looks_like_a_bet">Bet</button>
-    <button class="chip" data-guess="hedged">Hedge</button>
-    <button class="chip" data-guess="book">Book</button>
-    <button class="chip" data-guess="cant_tell">Can't tell</button>
+  <span class="guess-label" id="guess-label">Guess before it loads:</span>
+  <span class="guess-chips" id="guess-chips" role="group" aria-labelledby="guess-label">
+    <button class="chip" aria-pressed="false" data-guess="looks_like_a_bet">Bet</button>
+    <button class="chip" aria-pressed="false" data-guess="hedged">Hedge</button>
+    <button class="chip" aria-pressed="false" data-guess="book">Book</button>
+    <button class="chip" aria-pressed="false" data-guess="cant_tell">Can't tell</button>
   </span>
 </div>
 <!-- Read fresh on 26 September and picked by hand, one of each kind of
@@ -384,11 +392,13 @@
     <span class="picker-chips" id="picker-chips"></span>
   </div>
   <p style="margin: 10px 0 0;"><span class="badge" id="badge"></span></p>
+  <div class="box" id="source-warning" role="status" hidden><strong id="source-warning-text"></strong> <button id="try-again">Try again</button></div>
   <p class="headline" id="headline"></p>
   <p class="summary" id="summary"></p>
   <figure class="breakdown" id="breakdown" hidden>
     <figcaption id="breakdown-caption"></figcaption>
     <div id="breakdown-svg"></div>
+    <p class="search-help">Left: the position. Right: this address's matching holdings. Dashed: held by funding wallets; ownership unverified.</p>
     <p id="breakdown-quality" class="breakdown-quality" hidden></p>
   </figure>
   <section class="evidence-preview" aria-label="Key evidence">
@@ -406,16 +416,19 @@
       <div class="actions">
         <button id="share-x">Share on X</button>
         <button id="copy-link">Copy link</button>
+        <button id="download-image">Download PNG</button>
       </div>
     </details>
     <button id="check-another" style="border: none; background: none; color: var(--link); cursor: pointer; padding: 10px 4px;">Check another</button>
+    <button id="watch-address">Watch this address</button>
   </div>
   <div class="box" id="coverage" hidden>
     <p><strong>Not read this time</strong></p>
     <ul id="coverage-list"></ul>
   </div>
   <p class="limit" id="standing-limit">Not visible to this tool: centralized exchanges, OTC deals and wallets with no on-chain link to this address.</p>
-  <canvas id="card-canvas" width="1200" height="675" hidden></canvas>
+  <p class="open-question" id="what-changes" hidden></p>
+  <canvas id="card-canvas" aria-hidden="true" width="1200" height="675" hidden></canvas>
   <details class="fold full-analysis" id="full-analysis">
     <summary>Full analysis <span class="muted">· metrics, rules and sources</span></summary>
   <div class="box changed" id="changed" hidden>
@@ -432,7 +445,7 @@
     <h3>All evidence</h3>
     <div class="stats" id="stats"></div>
     <figure class="vitals" id="vitals" hidden>
-      <figcaption>The position itself, not the verdict</figcaption>
+      <figcaption>Position risk and activity</figcaption>
       <div class="stats" id="vitals-stats"></div>
     </figure>
     <div class="box" id="funders" hidden>
@@ -450,6 +463,16 @@
     <ul id="nansen-list"></ul>
     <p class="tech" id="nansen-calls"></p>
   </section>
+  <details class="glossary"><summary>What these terms mean</summary><dl>
+    <dt>Perp / spot</dt><dd>A perpetual contract tracks an asset's price; spot is the asset held directly.</dd>
+    <dt>Net / gross exposure</dt><dd>Net subtracts short dollars from long dollars; gross adds both. Different assets can still move independently.</dd>
+    <dt>Resting orders / two-sided quoting</dt><dd>Unfilled limit orders waiting to trade; bids and asks in the same market. Reduce-only exit orders do not count here.</dd>
+    <dt>Fills / maker</dt><dd>Executed trades. A maker supplies the resting order that another trader takes.</dd>
+    <dt>Open interest</dt><dd>The total value of outstanding perpetual contracts in a market.</dd>
+    <dt>Main dex / HIP-3</dt><dd>Hyperliquid's main perpetual exchange and independently deployed perpetual markets on Hyperliquid.</dd>
+    <dt>Funding / cross leverage</dt><dd>Periodic payments between longs and shorts; cross margin shares collateral between positions.</dd>
+    <dt>First funder</dt><dd>A wallet that transferred funds to this address. A transfer alone does not establish common ownership.</dd>
+  </dl></details>
   <p class="limit" id="analysis-limit" hidden>Not visible to this tool: centralized exchanges, OTC deals and wallets with no on-chain link to this address.</p>
   </details>
 </div>
@@ -498,7 +521,6 @@
 </main>
 <footer>
   <p>Positions, realized PnL, balances on other chains and linked wallets: <strong>Powered by <a class="partner" href="https://app.nansen.ai/r/36RkYL4jJsy" rel="noopener noreferrer">Nansen API</a></strong>. Resting orders and fills: <a class="partner" href="https://app.hyperliquid.xyz" rel="noopener noreferrer">Hyperliquid API</a>.</p>
-  <p id="ledger" hidden></p>
   <p>This tool only inspects. It is not financial advice and never trades. <a href="https://github.com/Sofiia7/bet-or-book" rel="noopener noreferrer">Source code</a></p>
 </footer>
 

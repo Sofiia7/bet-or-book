@@ -328,7 +328,7 @@ describe('checkAddress (offline, real fixtures)', () => {
     const result = await checkAddress(ABRAXAS, { nansen });
     expect(result.source).toBe('hyperliquid');
     expect(result.positions.nPositions).toBe(14);
-    expect(result.coverage.some((c) => c.includes('unexpected shape'))).toBe(true);
+    expect(result.coverage.some((c) => c.includes('Nansen did not answer'))).toBe(true);
   });
 
   it('falls back when a number in the Nansen answer is not a number', async () => {
@@ -338,7 +338,7 @@ describe('checkAddress (offline, real fixtures)', () => {
     const nansen = { ...fakeNansen({ positions: syntheticPositions([]) }), perpPositions: vi.fn(async () => broken) };
     const result = await checkAddress(ABRAXAS, { nansen });
     expect(result.source).toBe('hyperliquid');
-    expect(result.coverage.some((c) => c.includes('unexpected shape'))).toBe(true);
+    expect(result.coverage.some((c) => c.includes('Nansen did not answer'))).toBe(true);
   });
 
   it('reads resting orders on every dex the account has a position on', async () => {

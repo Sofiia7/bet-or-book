@@ -1,5 +1,5 @@
 import type { Position, PositionSide, RestingOrder, SpotHolding, Trade, LinkedWallet } from '../types';
-import { classifyHolding, isLendingReceipt, type AssetMatch } from './assets';
+import { classifyHolding, isLendingReceipt, canonicalAsset, type AssetMatch } from './assets';
 
 export interface PositionFeatures {
   nPositions: number;
@@ -30,6 +30,7 @@ export interface PositionFeatures {
    * says BTC and the largest position at the address is ETH; until this
    * existed the answer was always about the ETH. */
   candidates: PositionRef[];
+  headlineUnderlyingVerified?: boolean;
 }
 
 /** One position, named the way a reader would ask for it. */
@@ -104,10 +105,15 @@ export function computePositionFeatures(
   // the gross that cancels. Summed over coins this separates a real offset
   // from a book that merely adds up to zero dollars across unrelated assets.
   const byCoin = new Map<string, { long: number; short: number }>();
+  const mainCoins = new Set([
+    ...positions.filter(p => !p.coin.includes(':')).map(p => p.coin.toUpperCase()),
+    ...[...(markPxByCoin?.keys() ?? [])].filter(c => !c.includes(':')).map(c => c.toUpperCase()),
+  ]);
   for (const p of positions) {
-    const e = byCoin.get(p.coin) ?? { long: 0, short: 0 };
+    const coin = canonicalAsset(p.coin, mainCoins);
+    const e = byCoin.get(coin) ?? { long: 0, short: 0 };
     e[p.side] += p.sizeUsd;
-    byCoin.set(p.coin, e);
+    byCoin.set(coin, e);
   }
   const offsetGrossUsd = [...byCoin.values()].reduce((sum, e) => sum + 2 * Math.min(e.long, e.short), 0);
 
@@ -117,6 +123,7 @@ export function computePositionFeatures(
     netUsd,
     netToGross,
     headlineCoin: headline.coin,
+    headlineUnderlyingVerified: !headline.coin.includes(':') || /:(AAPL|BRENTOIL|SP500|NVDA|TSLA|MSFT|GOOGL|AMZN|META|GOLD|SILVER)$/i.test(headline.coin),
     headlineSide: headline.side,
     headlineNotionalUsd: headline.sizeUsd,
     headlineShare,
@@ -132,6 +139,7 @@ export function computePositionFeatures(
 }
 
 export interface OrderFeatures {
+  quoteEligibilityVersion?: number;
   restingOrders: number;
   bidShare: number;
   coinsBothSides: number;
@@ -175,7 +183,7 @@ export const EMPTY_ORDERS: OrderFeatures = {
 };
 
 export function computeOrderFeatures(orders: RestingOrder[], headlineCoin: string | null = null): OrderFeatures {
-  if (orders.length === 0) return { ...EMPTY_ORDERS };
+  if (orders.length === 0) return { ...EMPTY_ORDERS, quoteEligibilityVersion: 1 };
   const bids = orders.filter((o) => o.side === 'bid').length;
   const bidShare = bids / orders.length;
 
@@ -193,6 +201,7 @@ export function computeOrderFeatures(orders: RestingOrder[], headlineCoin: strin
   const headline = headlineCoin === null ? undefined : byCoin.get(headlineCoin);
 
   return {
+    quoteEligibilityVersion: 1,
     restingOrders: orders.length,
     bidShare,
     coinsBothSides: twoSided.length,

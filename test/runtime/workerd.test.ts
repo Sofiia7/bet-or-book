@@ -10,12 +10,13 @@
 // rather than the path taken to it.
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { Response } from 'miniflare';
+import { WORST_CASE_CALLS } from '../../src/budget';
 import type { Miniflare } from 'miniflare';
 import { buildWorker, budgetStub, removeBuild, startWorker, tempDir, type Upstream } from './harness';
 
 /** Four worst-case checks' worth: WORST_CASE_CALLS is 7. */
-const CAP = 28;
-const WORST_CASE = 7;
+const CAP = 4 * WORST_CASE_CALLS;
+const WORST_CASE = WORST_CASE_CALLS;
 const OPERATOR = 'operator-key-for-tests';
 
 const HL: Record<string, unknown> = {

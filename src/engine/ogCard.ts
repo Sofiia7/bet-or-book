@@ -11,6 +11,7 @@ import type { CheckResult } from '../api/check';
 import { shareCard } from './share';
 import { formatPct } from './evidence';
 import { constellationInputsForOg, type ConstellationInputs } from './constellation';
+import { VERDICT_STYLES } from './presentation';
 
 /**
  * The picture's own layout, as part of where it is kept.
@@ -86,17 +87,17 @@ export interface OgCardData {
  * reads from one palette instead of two. Concrete hex, not a CSS var: this
  * card has no cascade to read a var() from. */
 const ACCENT: Record<VerdictResult['verdict'], string> = {
-  book: '#7fa2ff',
-  hedged: '#4fe0b0',
-  looks_like_a_bet: '#f2b35c',
-  unknown: '#a3a8b6',
+  book: VERDICT_STYLES.book.accent,
+  hedged: VERDICT_STYLES.hedged.accent,
+  looks_like_a_bet: VERDICT_STYLES.looks_like_a_bet.accent,
+  unknown: VERDICT_STYLES.unknown.accent,
 };
 
 const BADGE_LABEL: Record<VerdictResult['verdict'], string> = {
-  book: 'Book',
-  hedged: 'Hedged',
-  looks_like_a_bet: 'Looks like a bet',
-  unknown: 'Unknown',
+  book: VERDICT_STYLES.book.label,
+  hedged: VERDICT_STYLES.hedged.label,
+  looks_like_a_bet: VERDICT_STYLES.looks_like_a_bet.label,
+  unknown: VERDICT_STYLES.unknown.label,
 };
 
 function shortAddress(address: string): string {

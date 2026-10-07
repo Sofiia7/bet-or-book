@@ -53,7 +53,7 @@ export function removeBuild(): void {
 function moduleType(file: string): ModuleType {
   if (file.endsWith('.wasm')) return 'CompiledWasm';
   if (file.endsWith('.woff') || file.endsWith('.png')) return 'Data';
-  if (file.endsWith('.html') || file.endsWith('app.js')) return 'Text';
+  if (file.endsWith('.html') || file.endsWith('app.min.js')) return 'Text';
   throw new Error(`no module rule for ${file}`);
 }
 

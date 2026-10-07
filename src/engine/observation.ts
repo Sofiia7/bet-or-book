@@ -159,7 +159,7 @@ export function verdictInputOf(
  *    listed means none was looked for, not none found.
  */
 // 6: the headline-asset liability flag reaches the classifier.
-export const OBSERVATION_SCHEMA_VERSION = 6;
+export const OBSERVATION_SCHEMA_VERSION = 7;
 
 /** The first observation that looked for loans on Hyperliquid. */
 export const LOANS_READ_FROM_SCHEMA = 5;
@@ -167,7 +167,7 @@ export const LOANS_READ_FROM_SCHEMA = 5;
 /** The contract allowlist and alias table that read the holdings. Bumped
  * whenever a token is added, because "not recognised" is a statement about
  * this list and the list changes. */
-export const ASSET_REGISTRY_VERSION = 2;
+export const ASSET_REGISTRY_VERSION = 3;
 
 type Stored = Partial<CheckResponse> & Pick<CheckResponse, 'positions' | 'orders' | 'hedge'>;
 
@@ -200,6 +200,12 @@ export function legacySourceCoverage(e: Stored): { orders: SourceCoverage; posit
 export function missingForCurrentRules(e: Stored): string[] {
   if (e.observationSchemaVersion === OBSERVATION_SCHEMA_VERSION) return [];
   const missing: string[] = [];
+  if (e.orders.restingOrders >= DEFAULT_THRESHOLDS.book.minRestingOrders && e.orders.quoteEligibilityVersion !== 1) {
+    missing.push('orders.quoteEligibilityVersion');
+  }
+  if (e.positions.headlineCoin?.includes(':') && typeof e.positions.headlineUnderlyingVerified !== 'boolean') {
+    missing.push('positions.headlineUnderlyingVerified');
+  }
 
   // Schema 5 explicitly recorded same-asset debt in coverage notes. A
   // clean read with no such note can be re-read; a debt note cannot safely

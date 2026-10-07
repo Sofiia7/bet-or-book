@@ -21,6 +21,8 @@ export interface RestingOrder {
   coin: string;
   side: 'bid' | 'ask';
   sizeUsd: number;
+  limitPx?: number;
+  timestamp?: number;
 }
 
 /** Which namespace a holding's ticker belongs to. Read from the endpoint

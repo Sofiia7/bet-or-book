@@ -12,7 +12,7 @@ import { snapshotId, snapshotKey, isSnapshotId, SNAPSHOT_TTL_SECONDS, shortHash 
 import { shareCard } from './engine/share';
 import { compareReadings } from './engine/compare';
 import pageHtml from '../web/index.html';
-import pageScript from '../web/app.js';
+import pageScriptSource from '../web/app.min.js';
 import { landingExamples } from './landing';
 import galleryData from '../data/gallery.json';
 import featuredData from '../data/featured.json';
@@ -25,6 +25,7 @@ import { ogCardFor, ogCacheKey, OG_LAYOUT_VERSION } from './engine/ogCard';
 import { emit, readingFields, type CheckEvent, type PictureEvent, type SnapshotEvent } from './telemetry';
 import { ruleExplanation, badgeQualifier } from './engine/reasons';
 import { openQuestion } from './engine/openQuestion';
+import { readingHeadline, whatWouldChange, exampleDescription, VERDICT_STYLES } from './engine/presentation';
 import { nansenContribution } from './engine/nansenContribution';
 import { renderOgPng, type OgFont } from './engine/ogRender';
 import interRegular from '../assets/inter-regular.woff';
@@ -34,8 +35,10 @@ import interBold from '../assets/inter-bold.woff';
 // resvg-wasm's initWasm accepts.
 import resvgWasmModule from '../node_modules/@resvg/resvg-wasm/index_bg.wasm';
 import ogFallbackPng from '../assets/og-fallback.png';
+import logoPng from '../assets/logo.png';
 
 const gallery = galleryData as unknown as Gallery;
+const pageScript = pageScriptSource.replace('__VERDICT_STYLES__', JSON.stringify(VERDICT_STYLES));
 
 /** A reading as it leaves the Worker, with four things worked out here from
  * what it already holds, so the page has the words without keeping its own
@@ -50,6 +53,8 @@ function explained<T extends CheckResponse>(r: T): T {
     openQuestion: openQuestion(r),
     nansen: nansenContribution(r),
     badgeQualifier: badgeQualifier(r.verdict, r.historical !== undefined),
+    headline: readingHeadline(r),
+    whatChanges: whatWouldChange(r),
   };
 }
 /** Gallery cards by snapshot id, so a shared link to one opens the card that
@@ -82,7 +87,7 @@ const gallerySansFeatured: Gallery = {
 };
 const listedGallery: GalleryIndex & { featured: GalleryIndex['entries'] } = {
   ...galleryIndex(gallerySansFeatured, galleryIdOf),
-  featured: galleryIndex(featured, galleryIdOf).entries,
+  featured: galleryIndex(featured, galleryIdOf).entries.map(row => ({ ...row, description: exampleDescription(featured.entries.find(e => galleryIdOf(e) === row.snapshotId)!) })),
 };
 const scriptedLedger = ledgerData as unknown as LedgerSummary;
 
@@ -135,18 +140,16 @@ const LEDGER_MEMO_MS = 60_000;
  * all: an injected <script> has nothing to execute under. Inline styles
  * stay, which is a far smaller surface. The policy also buys no framing
  * (clickjacking), no requests to other origins and no plugin content.
- * Google Fonts (26.09 redesign) needs its own two carve-outs: the
- * stylesheet comes from fonts.googleapis.com, the woff2 files it points at
- * come from fonts.gstatic.com - two different origins, so style-src and
- * font-src each need exactly the one they serve, nothing wider. */
+ * Fonts are self-hosted, so no third-party style or font origin is needed. */
 const PAGE_HEADERS = {
+  'strict-transport-security': 'max-age=15552000',
   'content-type': 'text/html;charset=UTF-8',
   'content-security-policy':
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-    "font-src 'self' https://fonts.gstatic.com; " +
-    "img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; " +
+    "img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'strict-origin-when-cross-origin',
+  'permissions-policy': 'camera=(), microphone=(), geolocation=()',
 };
 
 const SCRIPT_HEADERS = {
@@ -230,8 +233,7 @@ const notFoundYet = () =>
   Response.json(
     {
       error:
-        'that reading could not be found here: it may have expired, or, if it was saved in the last minute, ' +
-        'it may not have reached this region yet',
+        'That reading could not be found. It may have expired or may still be saving. Try again shortly.',
     },
     { status: 404, headers: { 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } },
   );
@@ -355,7 +357,24 @@ export default {
 
     if (url.pathname === '/app.js') {
       if (method === 'POST') return Response.json({ error: 'no such endpoint' }, { status: 405 });
-      const res = new Response(pageScript, { headers: SCRIPT_HEADERS });
+      const res = new Response(pageScript, { headers: {
+        ...SCRIPT_HEADERS,
+        'cache-control': url.searchParams.get('v') === shortHash(pageScript)
+          ? 'public, max-age=31536000, immutable' : 'public, max-age=300',
+      } });
+      return method === 'HEAD' ? headOf(res) : res;
+    }
+
+    if (url.pathname === '/og-fallback.png' || url.pathname === '/logo.png' || url.pathname.startsWith('/fonts/')) {
+      if (method === 'POST') return new Response('method not allowed', { status: 405, headers: { allow: 'GET, HEAD' } });
+      const font = url.pathname === '/fonts/inter-regular.woff' ? interRegular
+        : url.pathname === '/fonts/inter-bold.woff' ? interBold : null;
+      if (!font && url.pathname !== '/og-fallback.png' && url.pathname !== '/logo.png') return new Response('not found', { status: 404 });
+      const res = new Response(font ?? (url.pathname === '/logo.png' ? logoPng : ogFallbackPng), { headers: {
+        'content-type': font ? 'font/woff' : 'image/png',
+        'cache-control': 'public, max-age=86400',
+        'x-content-type-options': 'nosniff',
+      } });
       return method === 'HEAD' ? headOf(res) : res;
     }
 
@@ -365,7 +384,7 @@ export default {
       if (!address) {
         return Response.json(
           { error: 'no valid Hyperliquid address found in the address parameter' },
-          { status: 400 },
+          { status: 400, headers: { 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } },
         );
       }
       // Which position the reader asked about, if any. A coin is a short
@@ -401,9 +420,9 @@ export default {
           cached === null
             ? Response.json(
                 { error: 'no recent reading of this address; POST to /api/check to run one' },
-                { status: 404 },
+                { status: 404, headers: { 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } },
               )
-            : new Response(cached, { headers: { 'content-type': 'application/json' } });
+            : new Response(cached, { headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } });
         return method === 'HEAD' ? headOf(res) : res;
       }
 
@@ -441,7 +460,7 @@ export default {
       // it should not spend a place in the rate limiter meant to bound how
       // often a new, expensive check may start (23.09 audit, S02).
       const alreadyCached = await kv.get(cacheKey);
-      if (alreadyCached !== null) {
+      if (alreadyCached !== null && !(url.searchParams.get('retry') === '1' && (JSON.parse(alreadyCached) as CheckResponse).degraded)) {
         counted('cached', readingFields(JSON.parse(alreadyCached) as CheckResponse));
         return new Response(alreadyCached, { headers: { 'content-type': 'application/json' } });
       }
@@ -495,7 +514,7 @@ export default {
         if (!(await limiter.allow(ip))) {
           counted('rate_limited');
           return Response.json(
-            { error: 'too many checks from this address, try again shortly' },
+            { error: 'Too many checks from your connection. Try again in about a minute.' },
             { status: 429, headers: { 'retry-after': String(RATE_LIMIT_WINDOW_SECONDS) } },
           );
         }
@@ -605,7 +624,7 @@ export default {
             // The pointer only moves once this reading is durably the
             // newest one: a save that failed above already returned, so it
             // can never bump a real reading off the position of "latest".
-            await kv.put(latestKey, id, { expirationTtl: SNAPSHOT_TTL_SECONDS });
+            if (!result.degraded) await kv.put(latestKey, id, { expirationTtl: SNAPSHOT_TTL_SECONDS });
             // The link goes on the picture, so it can only be added once the
             // reading it points at is really there.
             return {
@@ -636,7 +655,7 @@ export default {
             // the number the buildathon submission rests on.
             await budget.record(day, calls);
           }
-        });
+        }, url.searchParams.get('retry') === '1' ? r => r.degraded : undefined);
         counted(
           fresh ? 'fresh' : 'cached',
           fresh ? { ...readingFields(result), ...fresh, saved: result.snapshotSaved === true } : readingFields(result),
@@ -718,7 +737,7 @@ export default {
         if (!(await limiter.allow(`og:${extractIp(request)}`))) {
           counted('rate_limited');
           return Response.json(
-            { error: 'too many pictures from this address, try again shortly' },
+            { error: 'Too many pictures from your connection. Try again in about a minute.' },
             { status: 429, headers: { 'retry-after': String(RATE_LIMIT_WINDOW_SECONDS) } },
           );
         }
@@ -785,6 +804,8 @@ export default {
     if (url.pathname === '/api/demo-access') {
       if (method !== 'POST') return Response.json({ error: 'POST only' }, { status: 405, headers: { allow: 'POST' } });
       if (!fromThisSite(request, url)) return Response.json({ error: 'from this site only' }, { status: 403 });
+      const gate = requestGate(env.REQUEST_GATE, 5, 60);
+      if (!(await gate.allow(`demo:${extractIp(request)}`))) return new Response(null, { status: 429, headers: { 'retry-after': '60', 'cache-control': 'no-store' } });
       return new Response(null, { status: (await isOperator(request, env)) ? 204 : 403 });
     }
 

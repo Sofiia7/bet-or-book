@@ -86,6 +86,8 @@ export type CheckResponse = CheckResult & {
    * opened. Null when the verdict is not Unknown, or there is nothing to
    * qualify. Added wherever a reading is served. */
   badgeQualifier?: string | null;
+  headline?: string;
+  whatChanges?: string | null;
 };
 
 /** Reads one address and answers about it: observe, interpret, present.

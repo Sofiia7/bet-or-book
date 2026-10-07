@@ -12,7 +12,7 @@ const textAssets: Plugin = {
   name: 'bet-or-book-text-assets',
   enforce: 'pre',
   load(id) {
-    if (!/[\\/]web[\\/](index\.html|app\.js)$/.test(id)) return null;
+    if (!/[\\/]web[\\/](index\.html|app(?:\.min)?\.js)$/.test(id)) return null;
     return `export default ${JSON.stringify(readFileSync(id, 'utf8'))};`;
   },
 };

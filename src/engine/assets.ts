@@ -45,6 +45,16 @@ interface KnownToken {
 const NATIVE_PLACEHOLDER = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 
 const KNOWN_CONTRACTS: Record<string, Record<string, KnownToken>> = {
+  hyperevm: {
+    [NATIVE_PLACEHOLDER]: { underlying: 'HYPE' },
+    // Hyperliquid's immutable canonical WHYPE system contract.
+    '0x5555555555555555555555555555555555555555': { underlying: 'HYPE' },
+  },
+  solana: {
+    // Nansen's native placeholder and the canonical wrapped SOL mint.
+    [NATIVE_PLACEHOLDER]: { underlying: 'SOL' },
+    'So11111111111111111111111111111111111111112': { underlying: 'SOL' },
+  },
   ethereum: {
     [NATIVE_PLACEHOLDER]: { underlying: 'ETH' },
     // observed, Abraxas funder, 18.09: Aave v3 aEthWETH, $117.5M of the
@@ -72,7 +82,10 @@ const KNOWN_CONTRACTS: Record<string, Record<string, KnownToken>> = {
 
 const known = (chain: string | undefined, tokenAddress: string | undefined): KnownToken | null => {
   if (chain === undefined || tokenAddress === undefined) return null;
-  return KNOWN_CONTRACTS[chain.toLowerCase()]?.[tokenAddress.toLowerCase()] ?? null;
+  const network = chain.toLowerCase();
+  // Base58 mint addresses are case-sensitive; EVM hexadecimal addresses are not.
+  const address = network === 'solana' ? tokenAddress : tokenAddress.toLowerCase();
+  return KNOWN_CONTRACTS[network]?.[address] ?? null;
 };
 
 /** True when this balance is a lending-market deposit receipt, so any loan
@@ -90,7 +103,7 @@ function nameMatches(spotCoin: string, perp: string): boolean {
 }
 
 /** True when the registry knows this chain at all. `chain: all` asks Nansen
- * for every chain, and the registry covers two of them, so "no match here"
+ * for every chain, and the registry covers only a few of them, so "no match here"
  * is often a gap in this list rather than a fact about the account. */
 const chainCovered = (chain: string | undefined): boolean =>
   chain !== undefined && KNOWN_CONTRACTS[chain.toLowerCase()] !== undefined;
@@ -114,7 +127,7 @@ export interface HoldingLike {
 }
 
 export function classifyHolding(holding: HoldingLike, perpCoin: string): AssetMatch {
-  const perp = perpCoin.toUpperCase();
+  const perp = canonicalAsset(perpCoin);
   if (!nameMatches(holding.coin, perp) && !spotHedgesPerp(holding.coin, perp, holding)) return 'unrelated';
   if (spotHedgesPerp(holding.coin, perp, holding)) {
     // A name this tool would otherwise trust outright, except Hyperliquid's
@@ -149,7 +162,7 @@ export function spotHedgesPerp(
   perpCoin: string,
   on?: { source?: HoldingSource; chain?: string; tokenAddress?: string },
 ): boolean {
-  const perp = perpCoin.toUpperCase();
+  const perp = canonicalAsset(perpCoin);
   const onchain = on?.source === 'onchain' || (on?.source === undefined && on?.tokenAddress !== undefined);
   if (onchain) {
     return known(on!.chain, on!.tokenAddress)?.underlying === perp;
@@ -157,9 +170,9 @@ export function spotHedgesPerp(
   return nameMatches(spotCoin, perp);
 }
 
-/** True when a holding claims to be the perp's asset by name but this tool
- * could not establish that it is, so it was left out of the hedge. */
-export function looksLikeButUnverified(holding: HoldingLike, perpCoin: string): boolean {
-  const state = classifyHolding(holding, perpCoin);
-  return state === 'unknown-contract' || state === 'unsupported-chain';
+/** Group known crypto underlyings across perp dexes; retain opaque names. */
+export function canonicalAsset(coin: string, mainCoins?: Set<string>): string {
+  const name = coin.toUpperCase();
+  const suffix = name.split(':').at(-1)!;
+  return suffix in SPOT_ALIASES || mainCoins?.has(suffix) ? suffix : name;
 }

@@ -23,3 +23,6 @@ data/og-prerendered.json
 screenshots/
 submission/
 docs/internal/2026-10-0*
+
+# Local audit reports.
+.audit-*.json

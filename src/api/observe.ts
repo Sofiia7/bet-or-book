@@ -58,7 +58,7 @@ import {
 } from '../engine/features';
 import { hedgeCanChangeVerdict, DEFAULT_THRESHOLDS, type SourceCoverage } from '../engine/verdict';
 import { spotHedgesPerp } from '../engine/assets';
-import { formatUsd } from '../engine/evidence';
+import { formatUsd, formatPct } from '../engine/evidence';
 import { computeVitals, type VitalsItem } from '../engine/vitals';
 import { OBSERVATION_SCHEMA_VERSION, ASSET_REGISTRY_VERSION, type Observation } from '../engine/observation';
 import type { Position, SpotHolding, LinkedWallet, PnlSummary } from '../types';
@@ -118,24 +118,22 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
 
   // The free reads go first: if Hyperliquid is down, the check fails before a
   // single credit is spent.
-  // These four decide things, so losing one has to fail the check rather
-  // than quietly answer from less. Open interest is the exception: it
-  // decorates the card and decides nothing, so it is read separately and
-  // allowed to be missing.
+  // Orders and spot balances must answer. Fills and spot prices may fail,
+  // but then their coverage is explicitly incomplete. Perp metadata only
+  // decorates the card and may be unavailable.
   const signal = opts.signal;
   const [rawOrders, spotBalances, spotMetaPair, rawFills, perpMetaRes, mainDexRes] = await Promise.all([
     getOpenOrders(address, undefined, signal),
     getSpotBalances(address, signal),
-    getSpotMeta(signal),
-    getUserFillsByTime(address, now - TRADES_WINDOW_HOURS * 3_600_000, now, signal),
+    getSpotMeta(signal).then(v => ({ ok: true as const, v }), () => ({ ok: false as const, v: null })),
+    getUserFillsByTime(address, now - TRADES_WINDOW_HOURS * 3_600_000, now, signal)
+      .then(v => ({ ok: true as const, v }), () => ({ ok: false as const, v: null })),
     getPerpMetaAndAssetCtxs(signal).then(
       (v) => ({ ok: true as const, v }),
       () => ({ ok: false as const, v: null }),
     ),
     // Free, always fired, tolerant of failure - used only for the
-    // Nansen-contribution comparison line below, never as a source of
-    // positions or a fallback (that branch, further down, keeps its own
-    // separate call) (24.09 audit, L05).
+    // Nansen-contribution comparison line and, if Nansen fails, the fallback.
     getClearinghouseState(address, signal).then(
       (v) => ({ ok: true as const, v }),
       () => ({ ok: false as const, v: null }),
@@ -147,8 +145,10 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   // counted, and the count is said below where it lowers a claim.
   const ordersRead = checkOrders(rawOrders);
   const spotRead = checkSpotBalances(spotBalances);
-  const spotMetaRead = checkSpotMeta(spotMetaPair);
-  const fillsRead = checkFills(rawFills);
+  let spotMetaMissing = !spotMetaPair.ok;
+  let fillsMissing = !rawFills.ok;
+  const spotMetaRead = (() => { try { if (spotMetaPair.ok) return checkSpotMeta(spotMetaPair.v); } catch { spotMetaMissing = true; } return checkSpotMeta([{ tokens: [], universe: [] }, []]); })();
+  const fillsRead = (() => { try { if (rawFills.ok) return checkFills(rawFills.v); } catch { fillsMissing = true; } return checkFills([]); })();
   // Open interest decides nothing, so perp metadata that is the wrong shape
   // is the same as perp metadata that never came: not shown.
   let perpMeta: [HlPerpMeta, HlPerpAssetCtx[]] | null = null;
@@ -174,6 +174,8 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
     coverageNotes.push({ text, failure });
     if (failure) degraded = true;
   };
+  if (spotMetaMissing) note('Spot prices unavailable: balances are kept as unpriced; coverage cannot be established from them', true);
+  if (fillsMissing) note('Recent fills unavailable: trading activity and position flow could not be read', true);
 
   if (nansen && outOfTime()) {
     // The free reads alone can use up the budget when Hyperliquid is slow,
@@ -233,7 +235,7 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   // portfolio, not the portfolio, and no rule may treat it as the whole.
   let positionsCoverage: SourceCoverage = 'complete';
   if (positions === null) {
-    const state = await getClearinghouseState(address, signal);
+    const state = mainDexRes.ok ? mainDexRes.v : await getClearinghouseState(address, signal);
     positions = normalizePositions(state);
     measuredAt = Number.isFinite(state.time) && state.time > 0 ? state.time : null;
     positionsCoverage = 'partial';
@@ -254,11 +256,19 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   // Mark prices, so distance to liquidation is measured from where the price
   // is rather than from where the position was opened.
   const markPxByCoin = new Map<string, number>();
-  if (perpMeta) {
-    const [perpUniverse, perpAssetCtxs] = perpMeta;
+  const contextByCoin = new Map<string, HlPerpAssetCtx>();
+  const dexes = [...new Set(positions.map(p => dexOf(p.coin)).filter((d): d is string => d !== null))];
+  const dexMetadata = await Promise.allSettled(dexes.map(dex => getPerpMetaAndAssetCtxs(signal, dex)));
+  const metadata = perpMeta ? [perpMeta] : [];
+  for (const result of dexMetadata) {
+    if (result.status !== 'fulfilled') continue;
+    try { metadata.push(checkPerpMeta(result.value)); } catch { /* risk metrics stay unavailable */ }
+  }
+  for (const [perpUniverse, perpAssetCtxs] of metadata) {
     perpUniverse.universe.forEach((asset, i) => {
       const markPx = Number(perpAssetCtxs[i]?.markPx);
       if (Number.isFinite(markPx) && markPx > 0) markPxByCoin.set(asset.name, markPx);
+      if (perpAssetCtxs[i]) contextByCoin.set(asset.name, perpAssetCtxs[i]);
     });
   }
   const positionFeatures = computePositionFeatures(positions, markPxByCoin, opts.focus);
@@ -352,7 +362,8 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
     crossedShare: tradeFeatures.crossedShare,
     buyShare: tradeFeatures.buyShare,
   };
-  const hedgeMatters = hedgeCanChangeVerdict({ positions: positionFeatures, orders: orderFeatures, trades: tradeSignal });
+  const hasLiability = spotRead.rows.some(b => Number(b.total) < 0 && positionFeatures.headlineCoin !== null && spotHedgesPerp(b.coin, positionFeatures.headlineCoin, { source: 'hyperliquid-spot' }));
+  const hedgeMatters = hedgeCanChangeVerdict({ positions: positionFeatures, orders: orderFeatures, trades: tradeSignal, hedge: { hasUnresolvedLiability: hasLiability } });
 
   let ownChain: SpotHolding[] = [];
   let otherChainsRead = false;
@@ -364,12 +375,12 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
     note('This check ran out of time before it could read holdings on other chains', true);
   } else if (nansen && hedgeMatters) {
     try {
-      const bal = await nansen.currentBalance(address);
+      const bal = await nansen.currentBalance(address, 3);
       const read = checkNansenBalances(bal.rows);
       ownChain = normalizeNansenBalances(read.rows);
       otherChainsRead = true;
       hedgeCoverage = bal.complete && read.malformed === 0 ? 'complete' : 'partial';
-      if (!bal.complete) note('Holdings on other chains: first 100 tokens only', true);
+      if (!bal.complete) note('Holdings on other chains: first 300 tokens only', true);
       if (read.malformed > 0) {
         note(
           `${read.malformed} of the account's balances on other chains came back malformed and were left out, ` +
@@ -461,18 +472,8 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
     fundingContext = await readFundingContext(nansen!, address, now, note);
   }
 
-  let openInterestUsd = 0;
-  if (perpMeta) {
-    const [perpUniverse, perpAssetCtxs] = perpMeta;
-    const headlineIndex = perpUniverse.universe.findIndex((a) => a.name === positionFeatures.headlineCoin);
-    openInterestUsd =
-      headlineIndex >= 0
-        ? Number(perpAssetCtxs[headlineIndex].openInterest) * Number(perpAssetCtxs[headlineIndex].markPx)
-        : 0;
-    if (headlineIndex < 0 && positionFeatures.headlineCoin?.includes(':')) {
-      coverage.push('Size versus open interest not computed for a HIP-3 dex market');
-    }
-  }
+  const headlineContext = contextByCoin.get(positionFeatures.headlineCoin ?? '');
+  const openInterestUsd = headlineContext ? Number(headlineContext.openInterest) * Number(headlineContext.markPx) : 0;
 
   const sizeVsOi = computeSizeVsOi(positionFeatures.headlineNotionalUsd, openInterestUsd);
   // The same object computePositionFeatures picked as the headline, found
@@ -496,6 +497,61 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
     tradesSpanHours: tradeFeatures.spanHours,
   });
   if (fundingContext) vitals.push(fundingContext);
+  // Optional risk/activity data; none of these numbers can grant a verdict.
+  const finiteField = (value: unknown) => typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value)) ? Number(value) : null;
+  if (headlineContext) {
+    const funding = finiteField(headlineContext.funding);
+    const oracle = finiteField(headlineContext.oraclePx);
+    const mark = finiteField(headlineContext.markPx);
+    if (funding !== null && oracle !== null && oracle > 0 && mark !== null && mark > 0) {
+      // Funding settles hourly on oracle-valued size, rather than mark notional.
+      const hourly = (positionFeatures.headlineSide === 'short' ? 1 : -1) * funding * positionFeatures.headlineNotionalUsd * oracle / mark;
+      vitals.push({ label: 'Estimated funding / day', value: `${hourly * 24 >= 0 ? 'Receive' : 'Pay'} ${formatUsd(Math.abs(hourly * 24))} at current hourly rate`, source: 'Hyperliquid' });
+    }
+    const volume = finiteField(headlineContext.dayNtlVlm);
+    if (volume !== null && volume > 0) vitals.push({ label: 'Size vs market volume, 24h', value: formatPct(positionFeatures.headlineNotionalUsd / volume), source: 'Hyperliquid' });
+    const premium = finiteField(headlineContext.premium);
+    if (premium !== null) vitals.push({ label: 'Perp premium', value: formatPct(premium), source: 'Hyperliquid' });
+  }
+  if (!fillsMissing && fillsRead.malformed === 0 && fillsRead.rows.length > 0) {
+    const span = tradeFeatures.spanHours.toFixed(1) + 'h sample';
+    for (const [field, label] of [['closedPnl', 'Realized PnL'], ['fee', 'Trading fees']] as const) {
+      const values = fillsRead.rows.map(row => finiteField(row[field]));
+      if (values.every((value): value is number => value !== null)) vitals.push({ label: `${label}, ${span}`, value: formatUsd(values.reduce((sum, value) => sum + value, 0)), source: 'Hyperliquid' });
+    }
+  }
+  if (mainDexRes.ok) {
+    const main = mainDexRes.v as { marginSummary?: { accountValue?: unknown; totalNtlPos?: unknown; totalMarginUsed?: unknown }; withdrawable?: unknown };
+    const equity = finiteField(main.marginSummary?.accountValue);
+    const notional = finiteField(main.marginSummary?.totalNtlPos);
+    if (equity !== null && equity > 0 && notional !== null) vitals.push({ label: 'Main-dex account leverage', value: (notional / equity).toFixed(1) + 'x', source: 'Hyperliquid' });
+    const withdrawable = finiteField(main.withdrawable);
+    if (withdrawable !== null) vitals.push({ label: 'Main-dex withdrawable', value: formatUsd(withdrawable), source: 'Hyperliquid' });
+    const margin = finiteField(main.marginSummary?.totalMarginUsed);
+    if (margin !== null) vitals.push({ label: 'Main-dex margin used', value: formatUsd(margin), source: 'Hyperliquid' });
+  }
+  if (fillsMissing) {
+    const flow = vitals.find(v => v.label === 'Position flow');
+    if (flow) flow.value = 'Unavailable this time';
+  }
+
+  // One source outage should make one readable note, with the exact gaps
+  // still represented by the source-coverage fields used by the classifier.
+  const nansenFailures = coverage.filter(text => /Nansen positions|Realized PnL|Holdings on other chains unavailable|Funding history unavailable|funding wallets.*unavailable|linked wallets.*unavailable/i.test(text));
+  if (nansen && nansenFailures.length) {
+    const text = source === 'hyperliquid'
+      ? 'Nansen did not answer this time. This reading is Hyperliquid-only; cross-dex positions, PnL and funding links may be missing. Try again in a minute.'
+      : 'Nansen could not complete every read this time. Some PnL, holdings or funding links may be missing. Try again in a minute.';
+    const remove = new Set(nansenFailures);
+    if (source === 'hyperliquid') coverage.filter(c => c.startsWith('Positions read from Hyperliquid alone')).forEach(c => remove.add(c));
+    for (let i = coverage.length - 1; i >= 0; i--) if (remove.has(coverage[i])) coverage.splice(i, 1);
+    for (let i = coverageNotes.length - 1; i >= 0; i--) if (remove.has(coverageNotes[i].text)) coverageNotes.splice(i, 1);
+    note(text, true);
+  }
+  for (let i = coverage.length - 1; i >= 0; i--) if (coverage.indexOf(coverage[i]) !== i) coverage.splice(i, 1);
+    for (let i = coverageNotes.length - 1; i >= 0; i--) {
+      if (coverageNotes.findIndex(n => n.text === coverageNotes[i].text) !== i) coverageNotes.splice(i, 1);
+    }
 
   // Notes pushed straight onto `coverage` before `note` existed describe
   // what was found rather than what failed, so they default to that.

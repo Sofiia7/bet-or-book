@@ -91,6 +91,7 @@ describe('nansen client', () => {
     // and charged it; leaving no record was the only certainly wrong answer.
     expect(calls).toMatchObject([
       { path: 'profiler/perp-positions', status: 0, creditsCost: null, creditsRemaining: null },
+      { path: 'profiler/perp-positions', status: 0, creditsCost: null, creditsRemaining: null },
     ]);
   });
 

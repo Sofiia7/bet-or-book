@@ -41,6 +41,31 @@ function routeUpstreams() {
 afterEach(() => vi.restoreAllMocks());
 
 describe('starting a check is a POST, and everything else is a lookup', () => {
+  it('marks GET check responses private to the request, including invalid input', async () => {
+    for (const path of ['/api/check', `/api/check?address=${ADDRESS}`]) {
+      const res = await worker.fetch(request(path), testEnv());
+      expect(res.headers.get('cache-control')).toBe('no-store');
+      expect(res.headers.get('x-robots-tag')).toBe('noindex');
+    }
+  });
+  it('does not replace the latest complete pointer with an incomplete reading', async () => {
+    routeUpstreams();
+    const env = testEnv();
+    await env.KV.put(`latest:${ADDRESS}:largest`, 'previous-complete');
+    const res = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
+    expect((await res.json() as { degraded: boolean }).degraded).toBe(true);
+    expect(await env.KV.get(`latest:${ADDRESS}:largest`)).toBe('previous-complete');
+  });
+  it('limits operator key guessing before any upstream work', async () => {
+    const seen = routeUpstreams();
+    const env = testEnv({ DEMO_KEY: 'operator-secret' });
+    const attempt = () => worker.fetch(request('/api/demo-access', { method: 'POST', headers: { 'x-demo-key': 'wrong' } }), env);
+    for (let i = 0; i < 5; i++) expect((await attempt()).status).toBe(403);
+    const refused = await attempt();
+    expect(refused.status).toBe(429);
+    expect(refused.headers.get('retry-after')).toBe('60');
+    expect(seen).toEqual([]);
+  });
   it('runs a check on POST from this origin', async () => {
     routeUpstreams();
     const res = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), testEnv());
@@ -105,7 +130,7 @@ describe('a burst is bounded for everyone at once, not only per address', () => 
 describe('the demo keeps a reserve the public path cannot reach', () => {
   it('stops public checks at the public cap while the demo key still works', async () => {
     routeUpstreams();
-    const env = testEnv({ NANSEN_API_KEY: 'k', NANSEN_DAILY_CREDIT_CAP: '14', NANSEN_DEMO_RESERVE: '7', DEMO_KEY: 'secret' });
+    const env = testEnv({ NANSEN_API_KEY: 'k', NANSEN_DAILY_CREDIT_CAP: '36', NANSEN_DEMO_RESERVE: '18', DEMO_KEY: 'secret' });
     const first = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
     expect(((await first.json()) as { coverage: string[] }).coverage.join(' ')).not.toContain('Nansen not used');
 
@@ -372,7 +397,8 @@ describe('a live check remembers the reading it replaces (22.09 audit, J05)', ()
     const second = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
     const secondBody = (await second.json()) as { snapshotId: string; supersedes?: string };
     expect(secondBody.snapshotId).not.toBe(firstBody.snapshotId);
-    expect(secondBody.supersedes).toBe(firstBody.snapshotId);
+    expect(secondBody.supersedes).toBeUndefined();
+    expect(await env.KV.get(`latest:${ADDRESS}:largest`)).toBeNull();
 
     const cmp = await worker.fetch(request(`/api/compare?a=${firstBody.snapshotId}&b=${secondBody.snapshotId}`), env);
     expect(cmp.status).toBe(200);
@@ -464,7 +490,8 @@ describe('a live check remembers the reading it replaces (22.09 audit, J05)', ()
       env,
     );
     const ethAgainBody = (await ethAgain.json()) as { snapshotId: string; supersedes?: string };
-    expect(ethAgainBody.supersedes).toBe(ethBody.snapshotId);
+    expect(ethAgainBody.supersedes).toBeUndefined();
+    expect(await env.KV.get(`latest:${ADDRESS}:ETH:short`)).toBeNull();
   });
 });
 

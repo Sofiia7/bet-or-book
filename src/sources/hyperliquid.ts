@@ -161,8 +161,8 @@ export async function getSpotMeta(signal?: AbortSignal): Promise<[HlSpotMeta, Hl
   return postInfo<[HlSpotMeta, HlSpotAssetCtx[]]>({ type: 'spotMetaAndAssetCtxs' }, signal);
 }
 
-export async function getPerpMetaAndAssetCtxs(signal?: AbortSignal): Promise<[HlPerpMeta, HlPerpAssetCtx[]]> {
-  return postInfo<[HlPerpMeta, HlPerpAssetCtx[]]>({ type: 'metaAndAssetCtxs' }, signal);
+export async function getPerpMetaAndAssetCtxs(signal?: AbortSignal, dex?: string): Promise<[HlPerpMeta, HlPerpAssetCtx[]]> {
+  return postInfo<[HlPerpMeta, HlPerpAssetCtx[]]>({ type: 'metaAndAssetCtxs', ...(dex ? { dex } : {}) }, signal);
 }
 
 export async function getUserFillsByTime(
