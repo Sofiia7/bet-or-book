@@ -352,7 +352,7 @@ function constellationQualityNoteFor(d) {
   const quality = d.breakdown && d.breakdown.applies && d.breakdown.dataQuality;
   if (quality === 'unknown' && d.hedge && d.hedge.hasUnresolvedLiability) return 'Exposure unresolved: the spot ratio does not include the known same-asset debt.';
   if (quality === 'unknown' && (d.positions.sameAssetOffsetShare || 0) > 0) return 'Exposure unresolved: the spot ratio does not combine the opposing perpetual legs.';
-  if (quality === 'unknown' && (d.positions.headlineCoin || '').includes(':')) return 'Exposure unresolved: the underlying of this HIP-3 contract has not been verified.';
+  if (quality === 'unknown' && (d.positions.headlineCoin || '').includes(':') && d.positions.headlineUnderlyingVerified !== true) return 'Exposure unresolved: the underlying of this HIP-3 contract has not been verified.';
   if (quality === 'partial') return 'Incomplete read: not all holdings were checked. Coverage shown is only what was found.';
   if (quality === 'unpriced') return 'Incomplete read: some matching holdings could not be priced. Coverage shown is only what was found.';
   if (quality === 'unverified') return 'Incomplete read: some holdings could not be identified. Coverage shown is only what was found.';
@@ -709,11 +709,8 @@ function renderResult(d, opts) {
   // diagram repeats the same fact. That is a real tradeoff, not a settled
   // one: in most cases the tile and the diagram now do say the same thing
   // twice, and the diagram is kept anyway as the visual backup for that
-  // repetition. Scope note: drawCard() (the Copy/Download image renderer,
-  // ~line 1538) and the OG social preview are untouched by this task and
-  // still pick tile XOR diagram, never both - so a live reading and its own
-  // shareable image can now disagree structurally. That gap is this task's
-  // known boundary, left for a future task, not an oversight.
+  // repetition. drawCard() and the OG preview use the diagram or a decisive
+  // tile, while the interactive card can show both.
   const heroTiles = (d.evidence || []).filter((item) => item.decisive);
   // A reason of linked_exposure_unverified already put the funders' figure
   // into heroTiles above, as the "Linked wallets" evidence tile (src/engine
@@ -1782,7 +1779,7 @@ function postText(d) {
 // attaching an image, though - the compose box only shows one once X's own
 // crawler has fetched a link's og:image, which does not happen inside the
 // compose box itself. So the card's own picture is also put on the
-// clipboard, the same way "Copy image" does it, and the button says to
+// clipboard, and the button says to
 // paste it in - a real image in the post, not a hope that the link unfurls
 // before it is read.
 $('share-x').addEventListener('click', () => {
@@ -1791,8 +1788,7 @@ $('share-x').addEventListener('click', () => {
   const text = postText(current);
   // Opened synchronously, inside the click itself - once anything here is
   // awaited first, some browsers no longer count this as the user's own
-  // gesture and block it as a popup (the same reason "Copy image" draws the
-  // card before it awaits the clipboard write, not after).
+  // gesture and block it as a popup.
   window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank', 'noopener,noreferrer');
   drawCard();
   const canvas = $('card-canvas');
@@ -1805,7 +1801,7 @@ $('share-x').addEventListener('click', () => {
     } catch (e) {
       // The tab with the text is already open either way; only the image
       // did not make it to the clipboard, so there is nothing to undo here.
-      btn.textContent = 'Opened X · use Download image to attach the card';
+      btn.textContent = 'Opened X · use Download PNG to attach the card';
       setTimeout(() => { btn.textContent = 'Share on X'; }, 5000);
     }
   }, 'image/png');

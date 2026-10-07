@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { spotHedgesPerp, canonicalAsset } from '../src/engine/assets';
-import { computePositionFeatures } from '../src/engine/features';
+import { computePositionFeatures, EMPTY_HEDGE } from '../src/engine/features';
+import { exposureBreakdown } from '../src/engine/breakdown';
 import { normalizeOrders } from '../src/sources/normalize';
 import { createNansenClient, type NansenCallMeta } from '../src/sources/nansen';
 import type { Position } from '../src/types';
@@ -28,6 +29,11 @@ describe('October audit regressions', () => {
     const base: Position = { coin: 'ETH', side: 'long', sizeUsd: 100, entryPx: 1, leverage: 1, leverageType: 'cross', liquidationPx: null, unrealizedPnlUsd: 0, cumFundingUsd: 0 };
     expect(computePositionFeatures([base, { ...base, coin: 'xyz:ETH', side: 'short' }]).sameAssetOffsetShare).toBe(1);
     expect(canonicalAsset('xyz:ACME')).toBe('XYZ:ACME');
+  });
+  it('does not describe a known stock market as an unidentified crypto underlying', () => {
+    const base: Position = { coin: 'xyz:AAPL', side: 'long', sizeUsd: 100, entryPx: 1, leverage: 1, leverageType: 'cross', liquidationPx: null, unrealizedPnlUsd: 0, cumFundingUsd: 0 };
+    expect(exposureBreakdown(computePositionFeatures([base]), EMPTY_HEDGE, null).dataQuality).toBe('measured');
+    expect(exposureBreakdown(computePositionFeatures([{ ...base, coin: 'xyz:ETH' }]), EMPTY_HEDGE, null).dataQuality).toBe('unknown');
   });
   it('retries a transient Nansen refusal once and accounts for both attempts', async () => {
     const fetch = vi.fn().mockResolvedValueOnce(new Response('{}', { status: 429, headers: { 'retry-after': '0' } }))

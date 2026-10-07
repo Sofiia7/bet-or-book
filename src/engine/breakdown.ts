@@ -104,7 +104,7 @@ export function exposureBreakdown(
   // three can be inferred from the segments below, which is the whole point
   // of this field (25.09 audit, A03).
   const unresolvedExposure = hedge.hasUnresolvedLiability || (positions.sameAssetOffsetShare ?? 0) > 0 ||
-    Boolean(positions.headlineCoin?.includes(':'));
+    (Boolean(positions.headlineCoin?.includes(':')) && positions.headlineUnderlyingVerified !== true);
   const dataQuality: ExposureBreakdown['dataQuality'] = unresolvedExposure
     ? 'unknown'
     : !applies
