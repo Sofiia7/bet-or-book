@@ -1159,6 +1159,12 @@ $('nav-examples').addEventListener('click', (event) => {
   showExamples();
   $('examples').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
+$('nav-how-it-works').addEventListener('click', (event) => {
+  // A native fragment navigation emits popstate, whose page routing resets
+  // the address. This section only needs scrolling, with no history change.
+  event.preventDefault();
+  $('how-it-works').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 function openBoards(event) {
   if (event) event.preventDefault();
   takeOver();

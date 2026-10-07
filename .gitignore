@@ -16,3 +16,10 @@ data/og-prerendered.json
 
 # Scratch replays of recorded upstream answers, never committed.
 .replay/
+
+# Local recordings, submission media and private working notes.
+*.mp4
+*.zip
+screenshots/
+submission/
+docs/internal/2026-10-0*
