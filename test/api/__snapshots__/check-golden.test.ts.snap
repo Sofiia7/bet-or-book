@@ -7,7 +7,7 @@ exports[`a check, whole, on recorded real answers > a HIP-3 long whose dex will 
   "breakdown": {
     "applies": false,
     "coin": "xyz:SP500",
-    "dataQuality": "unknown",
+    "dataQuality": "measured",
     "elsewhere": null,
     "excessUsd": 0,
     "headlineUsd": 20000000,
