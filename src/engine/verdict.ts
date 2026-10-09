@@ -94,7 +94,8 @@ export interface VerdictThresholds {
 // v7 (07.10): reduce-only exits do not establish quoting, partial coverage
 // precedes maker flow, and known same-asset legs group across perp dexes.
 // v8 (09.10): incomplete positions cannot establish combined exposure.
-export const CLASSIFIER_VERSION = 'v8';
+// v9: relevant perp legs are scoped to the selected asset when measured.
+export const CLASSIFIER_VERSION = 'v9';
 
 export const DEFAULT_THRESHOLDS: VerdictThresholds = {
   book: {
@@ -289,6 +290,11 @@ function offsetShare(input: StructureInput): number | null {
   const share = input.positions.sameAssetOffsetShare;
   return typeof share === 'number' && Number.isFinite(share) ? share : null;
 }
+function selectedOffset(input: StructureInput): boolean {
+  const legs = input.positions.selectedPerpLegs;
+  // Old aggregate snapshots cannot resolve which asset had an offset.
+  return legs ? legs.opposingUsd > 0 || legs.sameSideOtherUsd > 0 : (offsetShare(input) ?? 0) > 0;
+}
 
 /** A hedge read costs a credit, so it is worth making only when its answer
  * could move the verdict: positions exist, the quoting has not already
@@ -304,7 +310,7 @@ export function hedgeCanChangeVerdict(
   return (
     input.positions.nPositions > 0 &&
     input.positions.headlineSide === 'short' &&
-    (input.positions.sameAssetOffsetShare ?? 0) === 0 &&
+    !selectedOffset(input) &&
     !input.hedge?.hasUnresolvedLiability &&
     (!input.positions.headlineCoin?.includes(':') || input.positions.headlineUnderlyingVerified === true) &&
     !bookSignals(input, thresholds.book).includes('orders')
@@ -341,7 +347,7 @@ export function computeVerdict(
   // prove that the selected position is offset (e.g. matched BTC legs next
   // to an unhedged ETH short), nor does spot alone describe combined
   // spot/perp coverage. Until that combined exposure is measured, abstain.
-  if ((offsetShare(input) ?? 0) > 0) {
+  if (selectedOffset(input)) {
     return decided('unknown', null, ['perp_offset_unresolved']);
   }
   if (input.hedge.hasUnresolvedLiability) {

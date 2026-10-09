@@ -89,6 +89,7 @@ export async function startWorker(opts: WorkerOptions): Promise<Miniflare> {
     durableObjects: {
       NANSEN_BUDGET: { className: 'NansenBudget', useSQLite: true },
       REQUEST_GATE: { className: 'RequestGate', useSQLite: true },
+      PILOT_WATCH: { className: 'PilotWatch', useSQLite: true },
     },
     bindings: {
       NANSEN_DAILY_CREDIT_CAP: '300',

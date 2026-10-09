@@ -35,10 +35,21 @@ class_name = "NansenBudget"
 name = "REQUEST_GATE"
 class_name = "RequestGate"
 
+[[durable_objects.bindings]]
+name = "PILOT_WATCH"
+class_name = "PilotWatch"
+
 # SQLite-backed classes, which is what the Workers free plan supports.
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["NansenBudget", "RequestGate"]
+
+[[migrations]]
+tag = "v2-pilot-watch"
+new_sqlite_classes = ["PilotWatch"]
+
+[triggers]
+crons = ["0 * * * *"]
 
 # Logs, and the measurements built on them. Every check, picture and saved
 # reading leaves one JSON line (src/telemetry.ts): latency, cache hit or

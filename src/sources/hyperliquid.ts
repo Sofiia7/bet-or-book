@@ -2,6 +2,12 @@ const BASE_URL = 'https://api.hyperliquid.xyz/info';
 /** Without a timeout a hanging response holds the check open for minutes;
  * failing fast lets the page say "try again shortly". */
 const TIMEOUT_MS = 10_000;
+export async function getQuoteMid(coin: string, signal?: AbortSignal): Promise<number | null> {
+  const raw = await postInfo<{ coin: string; time: number; levels: Array<Array<{ px: string }>> }>({ type: 'l2Book', coin }, signal);
+  if (raw.coin !== coin || !Number.isFinite(raw.time) || Math.abs(Date.now() - raw.time) > 60_000) return null;
+  const bid = Number(raw.levels?.[0]?.[0]?.px), ask = Number(raw.levels?.[1]?.[0]?.px);
+  return Number.isFinite(bid) && Number.isFinite(ask) && bid > 0 && ask >= bid ? (bid + ask) / 2 : null;
+}
 
 export interface HlPosition {
   coin: string;
@@ -163,6 +169,10 @@ export async function getSpotMeta(signal?: AbortSignal): Promise<[HlSpotMeta, Hl
 
 export async function getPerpMetaAndAssetCtxs(signal?: AbortSignal, dex?: string): Promise<[HlPerpMeta, HlPerpAssetCtx[]]> {
   return postInfo<[HlPerpMeta, HlPerpAssetCtx[]]>({ type: 'metaAndAssetCtxs', ...(dex ? { dex } : {}) }, signal);
+}
+
+export async function getPerpDexRegistry(signal?: AbortSignal): Promise<unknown> {
+  return postInfo<unknown>({ type: 'perpDexs' }, signal);
 }
 
 export async function getUserFillsByTime(

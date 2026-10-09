@@ -123,6 +123,16 @@ afterEach(async () => {
 });
 
 describe('the spend cap, in a real Durable Object', () => {
+  it('core checks reserve per stage under contention and leave no unsettled successful holds', async () => {
+    const up = upstreams({ nansenDelayMs: 100 });
+    const mf = await start({ vars: { NANSEN_API_KEY: 'test-key', NANSEN_DAILY_CREDIT_CAP: '8', DEMO_KEY: OPERATOR }, upstream: up.handler });
+    const results = await Promise.all(Array.from({ length: 12 }, (_, i) => mf.dispatchFetch(`http://localhost/api/check?context=0&address=${address(i + 100)}`, { method: 'POST', headers: { 'x-demo-key': OPERATOR } })));
+    expect(results.every(r => r.status === 200)).toBe(true);
+    expect(up.seen.nansen).toBeGreaterThan(0); expect(up.seen.nansen).toBeLessThanOrEqual(8);
+    const budget = await budgetStub(mf);
+    expect(await budget.available(8)).toBe(8 - up.seen.nansen);
+    expect((await budget.report()).calls.attempted).toBe(up.seen.nansen);
+  });
   it('never lets overlapping checks hold or spend more than the cap, and charges exactly what was called', async () => {
     const up = upstreams({ nansenDelayMs: 400 });
     const mf = await start({

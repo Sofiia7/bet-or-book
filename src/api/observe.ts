@@ -18,6 +18,8 @@ import {
   getSpotMeta,
   getPerpMetaAndAssetCtxs,
   getUserFillsByTime,
+  getPerpDexRegistry,
+  getQuoteMid,
   dexOf,
 } from '../sources/hyperliquid';
 import {
@@ -58,6 +60,8 @@ import {
 } from '../engine/features';
 import { hedgeCanChangeVerdict, DEFAULT_THRESHOLDS, type SourceCoverage } from '../engine/verdict';
 import { spotHedgesPerp } from '../engine/assets';
+import { parsePerpVenues } from '../marketRegistry';
+import { quoteGeometry } from '../engine/quoteDiagnostics';
 import { formatUsd, formatPct } from '../engine/evidence';
 import { computeVitals, type VitalsItem } from '../engine/vitals';
 import { OBSERVATION_SCHEMA_VERSION, ASSET_REGISTRY_VERSION, type Observation } from '../engine/observation';
@@ -83,6 +87,8 @@ export const CHECK_DEADLINE_MS = 45_000;
 const STALE_DATA_MS = 15 * 60_000;
 
 export interface ObserveOptions {
+  /** Optional PnL/funding context is paid only when explicitly requested. */
+  includeContext?: boolean;
   /** null runs Hyperliquid-only: no key, credit cap reached, or a test. */
   nansen: NansenClient | null;
   /** Why `nansen` is null, in words for the card. */
@@ -184,7 +190,7 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   } else if (nansen) {
     const [pos, pnlRes] = await Promise.allSettled([
       nansen.perpPositions(address),
-      nansen.perpPnlSummary(address, day(PNL_WINDOW_DAYS), day(0)),
+      opts.includeContext === false ? Promise.resolve(null) : nansen.perpPnlSummary(address, day(PNL_WINDOW_DAYS), day(0)),
     ]);
     // A 200 with the wrong body has to end up in the same place as a failed
     // request, not in a TypeError that skips the fallback entirely.
@@ -204,7 +210,9 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
       degraded = true;
       coverage.push('Nansen positions unavailable: positions read from Hyperliquid, main dex only');
     }
-    if (pnlRes.status === 'fulfilled') {
+    if (opts.includeContext === false) {
+      note('Optional PnL and funding-age context not requested; this does not affect exposure evidence');
+    } else if (pnlRes.status === 'fulfilled' && pnlRes.value !== null) {
       try {
         pnl = normalizeNansenPnl(pnlRes.value, PNL_WINDOW_DAYS);
       } catch (err) {
@@ -275,6 +283,18 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
     });
   }
   const positionFeatures = computePositionFeatures(positions, markPxByCoin, opts.focus);
+  const venue = dexOf(positionFeatures.headlineCoin || '');
+  let marketProvenance: Observation['marketProvenance'];
+  if (venue) {
+    try {
+      const entry = parsePerpVenues(await getPerpDexRegistry(signal)).find(v => v.name === venue);
+      marketProvenance = { venue, status: 'complete', listed: !!entry, deployer: entry?.deployer || null, oracleUpdater: entry?.oracleUpdater || null,
+        underlyingVerified: positionFeatures.headlineUnderlyingVerified === true, at: new Date(now).toISOString() };
+    } catch {
+      marketProvenance = { venue, status: 'missing', listed: null, deployer: null, oracleUpdater: null, underlyingVerified: false, at: new Date(now).toISOString() };
+      note('HIP-3 venue registry unavailable; deployer and oracle updater are not established');
+    }
+  }
   // Asking about a position that is not open is worth saying out loud: the
   // answer below is about a different position from the one requested. Coin
   // alone used to decide this, so an ETH long asked for against an ETH short
@@ -340,6 +360,10 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
     );
   }
   const orderFeatures = computeOrderFeatures(resting, positionFeatures.headlineCoin);
+  let quoteMid: number | null = null;
+  if (orderFeatures.headlineTwoSided && positionFeatures.headlineCoin && !outOfTime()) {
+    try { quoteMid = await getQuoteMid(positionFeatures.headlineCoin, signal); } catch { /* descriptive fallback to mark, never changes verdict */ }
+  }
   // A HIP-3 dex this account merely quotes on, with no open position, is not
   // in `hip3Dexes` at all - nothing here asks Hyperliquid to name every dex
   // that exists, only the ones a position points at. "Complete" is therefore
@@ -466,6 +490,7 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   // accounts a viral post usually highlights (audit L02a).
   const fundingContextWorthIt =
     nansen !== null &&
+    opts.includeContext !== false &&
     positionFeatures.headlineSide === 'long' &&
     positionFeatures.nPositions > 0 &&
     positionFeatures.nPositions <= MAX_POSITIONS_FOR_FUNDING_CONTEXT;
@@ -565,6 +590,8 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
 
   return {
     address,
+    ...(marketProvenance ? { marketProvenance } : {}),
+    quoteGeometry: quoteGeometry(resting, positionFeatures.headlineCoin, quoteMid ?? markPxByCoin.get(positionFeatures.headlineCoin || ''), quoteMid === null ? 'mark' : 'mid'),
     positions: positionFeatures,
     orders: orderFeatures,
     hedge: hedgeFeatures,

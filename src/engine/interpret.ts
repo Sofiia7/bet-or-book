@@ -40,6 +40,8 @@ export function words(r: EvidenceInput) {
 export function present(r: Interpreted, share: ShareCardOptions = { kind: 'live' }): CheckResult {
   const judged = {
     verdict: r.verdict,
+    ...(r.marketProvenance ? { marketProvenance: r.marketProvenance } : {}),
+    ...(r.quoteGeometry ? { quoteGeometry: r.quoteGeometry } : {}),
     positions: r.positions,
     orders: r.orders,
     hedge: r.hedge,

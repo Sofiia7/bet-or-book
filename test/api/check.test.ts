@@ -123,6 +123,21 @@ function syntheticPositions(list: Array<{ coin: string; size: number; valueUsd: 
   };
 }
 
+it('core exposure mode skips optional PnL and long funding context without changing the verdict', async () => {
+  route();
+  const at = abxClearinghouse.time;
+  const positions = syntheticPositions([{ coin: 'ETH', size: 10, valueUsd: 1000000 }]); positions.timestamp = at;
+  const core = fakeNansen({ positions });
+  const full = fakeNansen({ positions });
+  const reading = await checkAddress(ABRAXAS, { nansen: core, includeContext: false, now: () => at + 60000 });
+  const context = await checkAddress(ABRAXAS, { nansen: full, now: () => at + 60000 });
+  expect(core.perpPnlSummary).not.toHaveBeenCalled();
+  expect(core.relatedWallets).not.toHaveBeenCalled();
+  expect(full.perpPnlSummary).toHaveBeenCalledTimes(1);
+  expect(reading.verdict).toEqual(context.verdict);
+  expect(reading.pnl).toBeNull();
+});
+
 /** Canonical WETH on Ethereum: the holdings model judges a balance by its
  * contract, so a placeholder address is now correctly not counted as ETH. */
 const WETH_ETHEREUM = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';

@@ -47,6 +47,8 @@ import type { PnlSummary } from '../types';
  * stored observation without pretending to have checked the account again.
  */
 export interface Observation {
+  marketProvenance?: { venue: string; status: 'complete' | 'missing'; listed: boolean | null; deployer: string | null; oracleUpdater: string | null; underlyingVerified: boolean; at: string };
+  quoteGeometry?: { reference: 'mark' | 'mid'; markPx: number; pricedQuoteUsd: number; weightedDistanceBps: number; nearestDistanceBps: number; farthestDistanceBps: number } | null;
   address: string;
   positions: PositionFeatures;
   orders: OrderFeatures;

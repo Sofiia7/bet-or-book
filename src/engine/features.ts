@@ -31,6 +31,8 @@ export interface PositionFeatures {
    * existed the answer was always about the ETH. */
   candidates: PositionRef[];
   headlineUnderlyingVerified?: boolean;
+  /** Same-underlying perp legs for the selected asset, not unrelated pairs. */
+  selectedPerpLegs?: { longUsd: number; shortUsd: number; opposingUsd: number; sameSideOtherUsd: number; netUsd: number };
 }
 
 /** One position, named the way a reader would ask for it. */
@@ -113,6 +115,7 @@ export function computePositionFeatures(
     byCoin.set(coin, e);
   }
   const offsetGrossUsd = [...byCoin.values()].reduce((sum, e) => sum + 2 * Math.min(e.long, e.short), 0);
+  const selected = byCoin.get(canonicalAsset(headline.coin, mainCoins))!;
 
   return {
     nPositions: positions.length,
@@ -122,6 +125,10 @@ export function computePositionFeatures(
     headlineCoin: headline.coin,
     headlineUnderlyingVerified: !headline.coin.includes(':') || /:(AAPL|BRENTOIL|SP500|NVDA|TSLA|MSFT|GOOGL|AMZN|META|GOLD|SILVER)$/i.test(headline.coin),
     headlineSide: headline.side,
+    selectedPerpLegs: { longUsd: selected.long, shortUsd: selected.short,
+      opposingUsd: selected[headline.side === 'short' ? 'long' : 'short'],
+      sameSideOtherUsd: Math.max(0, selected[headline.side] - headline.sizeUsd),
+      netUsd: selected.long - selected.short },
     headlineNotionalUsd: headline.sizeUsd,
     headlineShare,
     headlineLiqDistancePct,

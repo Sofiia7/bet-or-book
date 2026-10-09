@@ -33,7 +33,7 @@ import { VERDICT_STYLES } from './presentation';
  * when the prose wraps into three lines. Version 7 refreshes historical
  * labels and rule-version provenance after the v6 logic audit.
  */
-export const OG_LAYOUT_VERSION = 8;
+export const OG_LAYOUT_VERSION = 9;
 
 /** Where one reading's picture is kept, in this layout. */
 export const ogCacheKey = (id: string): string => `og:v${OG_LAYOUT_VERSION}:${id}`;

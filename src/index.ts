@@ -5,6 +5,8 @@ import { safeKv } from './safeKv';
 import { WORST_CASE_CALLS } from './budget';
 import { spendGuard, requestGate } from './coordinator';
 import { createNansenClient, meansOutOfCredits, type NansenCallMeta } from './sources/nansen';
+import { reusePositions } from './sources/reusePositions';
+import { stagedNansen } from './sources/stagedNansen';
 import { CLASSIFIER_VERSION } from './engine/verdict';
 import { ASSET_REGISTRY_VERSION } from './engine/observation';
 import type { CheckResponse } from './api/check';
@@ -24,6 +26,9 @@ import type { SafeKV } from './safeKv';
 import { ogCardFor, ogCacheKey, OG_LAYOUT_VERSION } from './engine/ogCard';
 import { emit, readingFields, type CheckEvent, type PictureEvent, type SnapshotEvent } from './telemetry';
 import { readUsage } from './usage';
+import { publisherReading, publisherEmbed } from './publisher';
+import { readSmallJson } from './readSmallJson';
+import { nextQuoteSample, type QuoteSample } from './engine/quoteDiagnostics';
 import { ruleExplanation, badgeQualifier } from './engine/reasons';
 import { openQuestion } from './engine/openQuestion';
 import { readingHeadline, evidenceTakeaway, caseQuestion, whatWouldChange, exampleDescription, VERDICT_STYLES } from './engine/presentation';
@@ -123,9 +128,11 @@ interface Env {
    * be atomic, which is the one thing KV cannot promise. */
   NANSEN_BUDGET: DurableObjectNamespace;
   REQUEST_GATE: DurableObjectNamespace;
+  PILOT_WATCH?: DurableObjectNamespace;
 }
 
 export { NansenBudget, RequestGate } from './coordinator';
+export { PilotWatch } from './pilotWatch';
 
 const CHECK_CACHE_TTL_SECONDS = 600;
 /** An answer assembled from sources that were missing or cut short is worth
@@ -348,7 +355,22 @@ const VERDICT_WORDS: Record<string, string> = {
  * are a daily quota too. */
 let ledgerMemo: { at: number; body: unknown } | null = null;
 
-export default {
+const worker = {
+  async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
+    if (!env.PILOT_WATCH) return;
+    const stub = env.PILOT_WATCH.get(env.PILOT_WATCH.idFromName('pilot'));
+    const call = (body: unknown) => stub.fetch('https://watch.internal', { method: 'POST', body: JSON.stringify(body) });
+    const job = await (await call({ action: 'claim' })).json() as { id: string; address: string; focus?: { coin: string; side: string }; lease: number } | null;
+    if (!job) return;
+    const url = new URL('https://bet-or-book.trade/api/check');
+    url.searchParams.set('address', job.address); url.searchParams.set('context', '0');
+    if (job.focus) { url.searchParams.set('coin', job.focus.coin); url.searchParams.set('side', job.focus.side); }
+    try {
+      // Same guarded public path: no operator key and no demo reserve access.
+      const res = await worker.fetch(new Request(url, { method: 'POST', headers: { origin: url.origin } }), env);
+      await call({ action: 'complete', ...job, ...(res.ok ? { result: await res.json() } : { error: 'Check unavailable' }) });
+    } catch { await call({ action: 'complete', ...job, error: 'Check unavailable' }); }
+  },
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const method = request.method;
@@ -359,6 +381,41 @@ export default {
       });
     }
     const kv = safeKv(env.KV);
+    if (url.pathname === '/api/watch') {
+      if (method !== 'POST') return Response.json({ error: 'POST required' }, { status: 405 });
+      if (!fromThisSite(request, url)) return Response.json({ error: 'Same-origin request required' }, { status: 403 });
+      if (!env.PILOT_WATCH) return Response.json({ error: 'Monitoring unavailable' }, { status: 503 });
+      const limiter = requestGate(env.REQUEST_GATE, 30, 60);
+      if (!(await limiter.allow('watch:' + extractIp(request)))) return Response.json({ error: 'Try again in a minute' }, { status: 429 });
+      const parsed = await readSmallJson(request, 512);
+      if (!parsed.ok) return Response.json({ error: 'Invalid or oversized request' }, { status: parsed.status });
+      const body = parsed.value as { action?: string; snapshotId?: string; token?: string } | null;
+      if (!body || !['subscribe', 'status', 'unsubscribe'].includes(body.action || '')) return Response.json({ error: 'Unknown action' }, { status: 400 });
+      const stub = env.PILOT_WATCH.get(env.PILOT_WATCH.idFromName('pilot'));
+      let baseline: CheckResponse | undefined;
+      if (body.action === 'subscribe') {
+        if (!isSnapshotId(body.snapshotId || '')) return Response.json({ error: 'A saved reading is required' }, { status: 400 });
+        baseline = bundledById.get(body.snapshotId!)?.card ?? await readSnapshot(kv, body.snapshotId!) ?? undefined;
+        if (!baseline || baseline.historical || baseline.degraded) return Response.json({ error: 'Choose a complete current saved reading' }, { status: 400 });
+        const subscriptions = requestGate(env.REQUEST_GATE, 1, 86_400);
+        if (!(await subscriptions.allow('watch-subscribe:' + extractIp(request)))) return Response.json({ error: 'One pilot subscription per connection per day' }, { status: 429 });
+      } else if (typeof body.token !== 'string' || !/^[0-9a-f-]{72}$/.test(body.token)) return Response.json({ error: 'Invalid monitoring token' }, { status: 400 });
+      const res = await stub.fetch('https://watch.internal', { method: 'POST', body: JSON.stringify({ action: body.action, token: body.token, baseline }) });
+      return new Response(res.body, { status: res.status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+    }
+    if (url.pathname === '/embed' || url.pathname.startsWith('/api/v1/readings/')) {
+      const api = url.pathname.startsWith('/api/v1/readings/');
+      const headers: Record<string, string> = api ? { 'access-control-allow-origin': '*', 'cache-control': 'public, max-age=60', 'x-content-type-options': 'nosniff' }
+        : { ...PAGE_HEADERS, 'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors *; base-uri 'none'; form-action 'none'", 'cache-control': 'public, max-age=60' };
+      if (method === 'POST') return Response.json({ error: 'Saved readings are read-only' }, { status: 405, headers: { ...headers, allow: 'GET, HEAD' } });
+      const id = api ? url.pathname.slice('/api/v1/readings/'.length) : url.searchParams.get('s') || '';
+      if (!isSnapshotId(id)) return Response.json({ error: 'not a snapshot id' }, { status: 400, headers });
+      const card = bundledById.get(id)?.card ?? await readSnapshot(kv, id);
+      if (!card) return Response.json({ error: 'saved reading not found' }, { status: 404, headers: { ...headers, 'cache-control': 'no-store' } });
+      const res = api ? Response.json(publisherReading(card, id, url.origin, url.searchParams.get('claim')), { headers })
+        : new Response(publisherEmbed(card, id, url.origin, url.searchParams.get('claim')), { headers });
+      return method === 'HEAD' ? headOf(res) : res;
+    }
 
     if (url.pathname === '/api/events') {
       if (method !== 'POST') return new Response(null, { status: 405, headers: { allow: 'POST' } });
@@ -426,7 +483,8 @@ export default {
       // a deploy that adds a token to the registry could still answer a
       // recognised holding as unrecognised for up to ten minutes (24.09
       // audit, L08).
-      const cacheKey = `check:${CLASSIFIER_VERSION}:${ASSET_REGISTRY_VERSION}:${address}${asked}`;
+      const includeContext = url.searchParams.get('context') !== '0';
+      const cacheKey = `check:${CLASSIFIER_VERSION}:${ASSET_REGISTRY_VERSION}:${address}${asked}${includeContext ? '' : ':core'}`;
 
       // Reading an answer that already exists and starting a new one that
       // costs money are two different acts, so they are two different
@@ -570,7 +628,7 @@ export default {
           let hold: string | null = null;
           if (!env.NANSEN_API_KEY) {
             nansenOffReason = 'no API key configured';
-          } else {
+          } else if (includeContext) {
             const reservation = await budget.reserve(day, WORST_CASE_CALLS);
             if (reservation.ok) hold = reservation.id;
             else nansenOffReason = reservation.reason;
@@ -581,23 +639,35 @@ export default {
           const timeout = AbortSignal.timeout(CHECK_DEADLINE_MS);
           const nansen =
             nansenOffReason === undefined
-              ? createNansenClient(
+              ? reusePositions(includeContext ? createNansenClient(
                   env.NANSEN_API_KEY!,
                   (m) => {
                     calls.push(m);
                   },
                   timeout,
-                )
+                ) : stagedNansen(env.NANSEN_API_KEY!, budget, day, m => { calls.push(m); }, timeout), kv)
               : null;
           try {
             const result = await checkAddress(address, {
               nansen,
               nansenOffReason,
               focus,
+              includeContext,
               deadline: startedAt + CHECK_DEADLINE_MS,
               signal: timeout,
             });
             const id = snapshotId(address, result.checkedAt, result.classifierVersion, result.focus);
+            const quoteKey = `quote-samples:${address}:${result.focus?.coin || 'largest'}:${result.focus?.side || ''}`;
+            if (result.orders.headlineTwoSided && result.ordersCoverage === 'complete') {
+              const rawPrevious = await kv.get(quoteKey);
+              let previous: QuoteSample | null = null;
+              try { previous = rawPrevious ? JSON.parse(rawPrevious) as QuoteSample : null; } catch { /* discard corrupt history */ }
+              const sample = nextQuoteSample(previous, { ...result, nansenCalls: calls.length });
+              if (sample) {
+                result.quoteSamples = { samples: sample.samples, firstAt: sample.firstAt, lastAt: sample.at, continuityConfirmed: false };
+                await kv.put(quoteKey, JSON.stringify(sample), { expirationTtl: 1800 });
+              }
+            }
             // The "what changed" comparison used to fire only for the 22
             // gallery cards a script had re-read by hand; a reader who just
             // checks the same address twice never saw it (audit J05). This
@@ -870,3 +940,4 @@ export default {
     return new Response('not found', { status: 404, headers: { 'content-type': 'text/plain;charset=UTF-8' } });
   },
 };
+export default worker;

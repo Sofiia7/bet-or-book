@@ -288,6 +288,8 @@
   #save-confirmation { margin: 0; }
   #save-confirmation p { margin: 0 0 10px; }
   #saved-position-name { width: 100%; max-width: 320px; }
+  #claim-choice { display:block; width:100%; max-width:100%; min-width:0; margin-top:8px; padding:8px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; }
+  .monitor-notices { width:100%; overflow-wrap:anywhere; }
   #reading-actions .share > summary { font-size: 12px; }
   #card, #examples, #gallery, #how-it-works { scroll-margin-top: 24px; }
 
@@ -425,6 +427,19 @@
        Nansen line is readable without opening it; the list is one click. -->
   <p class="open-question" id="open-question" hidden></p>
   <p class="search-help" id="risk-preview" hidden></p>
+  <details class="fold" id="claim-checker">
+    <summary>Check an assertion from the alert</summary>
+    <label for="claim-choice">What does the alert claim?</label>
+    <select id="claim-choice">
+      <option value="">Choose an assertion</option>
+      <option value="directional">This position is a directional bet</option>
+      <option value="spot">Own spot holdings cover this short</option>
+      <option value="ownership">Funding-wallet holdings belong to this account</option>
+      <option value="inventory">This position is market-maker inventory</option>
+    </select>
+    <p id="claim-result" role="status" hidden></p>
+    <p class="search-help">Uses this dated reading only. Evidence supports an interpretation, not the owner’s intent. No extra provider calls.</p>
+  </details>
   <section id="reading-actions" aria-label="Save and share this reading">
     <div class="save-share-controls">
     <button id="watch-address">Save this position</button>
@@ -433,6 +448,7 @@
       <div class="actions">
         <button id="copy-link">Copy link</button>
         <button id="copy-reading">Copy reading</button>
+        <button id="copy-embed">Copy embed</button>
         <button id="share-x">Share on X</button>
         <button id="download-image">Download PNG</button>
       </div>
@@ -462,6 +478,8 @@
   <details class="fold full-analysis" id="full-analysis">
     <summary>Full analysis <span class="muted">· metrics, rules and sources</span></summary>
   <p class="meta" id="meta"></p>
+  <section class="analysis-section" id="market-diagnostics" hidden><h3>Market and quote observations</h3><ul id="market-diagnostics-list"></ul></section>
+  <p><button id="load-context">Load optional PnL context · new check</button><span class="muted"> Uses the shared data budget. Exposure checks work without this context.</span></p>
   <section class="analysis-section" id="decided" hidden>
     <h3>How this was decided</h3>
     <p id="decided-rule"></p>

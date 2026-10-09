@@ -1,9 +1,10 @@
 import { savedReadingLink, readingCopyText, readingPostText } from '../src/engine/shareText.ts';
 import { advanceSavedReading } from '../src/engine/savedReading.ts';
+import { CLAIMS, checkClaim, isClaim } from '../src/engine/claims.ts';
+import { createMonitoring } from './monitor.js';
+import { formatUsd as usd } from '../src/engine/evidence.ts';
+import { timedFetch } from './transport.js';
 const ADDRESS_RE = /^0x[0-9a-f]{40}$/;
-async function timedFetch(url, options = {}, timeout = 15000) {
-  return fetch(url, { ...options, signal: AbortSignal.timeout(timeout) });
-}
 const usageEntry = new URLSearchParams(window.location.search).has('s') ? 'shared_link' : 'home';
 const usageReadings = new Set();
 let returningReader = false;
@@ -464,6 +465,29 @@ function setStatus(text, isError) {
  * different pieces of news and a card cannot leave the reader to guess.
  */
 const compareCache = new Map();
+let pendingClaim = new URLSearchParams(window.location.search).get('claim');
+function renderClaim(d) {
+  const params = new URLSearchParams(window.location.search);
+  const choice = pendingClaim || (params.get('s') === d.snapshotId ? params.get('claim') : null);
+  pendingClaim = null;
+  $('claim-choice').value = isClaim(choice) ? choice : '';
+  $('claim-checker').open = isClaim(choice);
+  $('claim-result').hidden = !isClaim(choice);
+  if (isClaim(choice)) {
+    const result = checkClaim(d, choice);
+    $('claim-result').textContent = result.status + ': ' + result.explanation;
+  }
+}
+$('claim-choice').addEventListener('change', () => {
+  if (!current) return;
+  const choice = $('claim-choice').value;
+  $('claim-result').hidden = !isClaim(choice);
+  if (isClaim(choice)) {
+    const result = checkClaim(current, choice);
+    $('claim-result').textContent = result.status + ': ' + result.explanation;
+  }
+  if (current.snapshotId) showLink(current.snapshotId);
+});
 async function renderChanged(d) {
   const box = $('changed');
   box.hidden = true;
@@ -641,6 +665,7 @@ function renderResult(d, opts) {
   $('gallery').hidden = true;
   current = d;
   current.__kind = kindOf(opts);
+  renderClaim(d);
   if (current.__kind === 'live') updateSavedPosition(d);
   const readingKey = d.snapshotId || d.address + ':' + d.checkedAt;
   if (!usageReadings.has(readingKey)) {
@@ -663,6 +688,7 @@ function renderResult(d, opts) {
   for (const id of ['full-analysis']) $(id).open = false;
   $('share').open = true;
   $('save-confirmation').hidden = true;
+  $('copy-embed').hidden = !savedReadingLink(d, window.location.origin);
   $('share-note').textContent = savedReadingLink(d, window.location.origin)
     ? 'Shares this dated reading and its evidence. Opening the link is free.'
     : 'No saved reading link is available. You can copy the evidence or export the card.';
@@ -756,6 +782,15 @@ function renderResult(d, opts) {
     return box;
   };
   $('stats').replaceChildren(...(d.evidence || []).map(item => tile({ ...item, decisive: false })));
+  const diagnostics = [];
+  const legs = d.positions.selectedPerpLegs;
+  if (legs && (legs.opposingUsd || legs.sameSideOtherUsd)) diagnostics.push('Selected asset contracts: long ' + usd(legs.longUsd) + ', short ' + usd(legs.shortUsd) + ', net ' + usd(legs.netUsd) + '. These legs do not establish spot ownership.');
+  const market = d.marketProvenance;
+  if (market) diagnostics.push('HIP-3 venue ' + market.venue + ': ' + (market.status === 'missing' ? 'registry unavailable' : market.listed ? 'listed in the venue registry; deployer ' + market.deployer + '; oracle updater ' + (market.oracleUpdater || 'not published') : 'not found in the venue registry') + '. Venue membership does not verify the underlying asset.');
+  if (d.quoteGeometry) diagnostics.push('Priced orders: weighted distance ' + d.quoteGeometry.weightedDistanceBps.toFixed(1) + ' bps from the ' + (d.quoteGeometry.reference === 'mid' ? 'order-book midpoint' : 'mark price') + '; nearest ' + d.quoteGeometry.nearestDistanceBps.toFixed(1) + ' bps.' + (d.quoteGeometry.reference === 'mid' ? '' : ' Midpoint unavailable; mark is a fallback.'));
+  if (d.quoteSamples) diagnostics.push('Two-sided quotes seen in ' + d.quoteSamples.samples + ' separate observed sample(s), from ' + d.quoteSamples.firstAt + ' to ' + d.quoteSamples.lastAt + '. Best-effort samples do not prove continuous quoting or fill probability.');
+  $('market-diagnostics').hidden = !diagnostics.length;
+  $('market-diagnostics-list').replaceChildren(...diagnostics.map(text => el('li', null, text)));
 
   // Leverage, distance to liquidation, unrealized PnL, funding since open:
   // numbers about the position itself rather than about the verdict, so
@@ -942,7 +977,8 @@ function takeOver() {
  * to leave the previous reading's link in the bar, so copying it shared the
  * wrong one. */
 function showLink(id) {
-  const next = id ? '/?s=' + encodeURIComponent(id) : '/';
+  const claim = current?.snapshotId === id && isClaim($('claim-choice').value) ? '&claim=' + $('claim-choice').value : '';
+  const next = id ? '/?s=' + encodeURIComponent(id) + claim : '/';
   if (window.location.pathname + window.location.search + window.location.hash !== next) {
     window.history.replaceState(null, '', next);
   }
@@ -1155,7 +1191,7 @@ function runCheck(selectedAddress) {
   $('address-choices').hidden = true;
   const notice = 'Checking wallet ' + addr + '.';
   return load(
-    '/api/check?address=' + encodeURIComponent(addr),
+    '/api/check?context=0&address=' + encodeURIComponent(addr),
     (data) => {
       renderResult(data, { kind: 'live' });
       // A live reading is worth linking to, so the address in the bar
@@ -1180,7 +1216,7 @@ function runCheck(selectedAddress) {
 function checkPosition(address, position) {
   if (busy) return;
   const query =
-    '/api/check?address=' + encodeURIComponent(address) +
+    '/api/check?context=0&address=' + encodeURIComponent(address) +
     '&coin=' + encodeURIComponent(position.coin) +
     '&side=' + encodeURIComponent(position.side);
   return load(
@@ -1868,7 +1904,8 @@ async function copyReadingLink(btn) {
   // snapshot id there is nothing saved to point at, so it falls back to the
   // address and the button says which one it gave.
   const savedLink = savedReadingLink(current, window.location.origin);
-  const link = savedLink || window.location.origin + '/?address=' + encodeURIComponent(current.address);
+  const claim = $('claim-choice').value;
+  const link = savedLink ? savedLink + (isClaim(claim) ? '&claim=' + claim : '') : window.location.origin + '/?address=' + encodeURIComponent(current.address);
   try {
     await navigator.clipboard.writeText(link);
     recordUsage('share_copy', current);
@@ -1892,10 +1929,14 @@ function shareTextData(d, compact) {
     : d.verdict.verdict === 'hedged' ? 'Spot coverage is not a safety rating.'
     : d.verdict.verdict === 'book' ? 'Quotes show activity, not trading intent.'
     : 'Off-chain and unlinked hedges are not visible.';
-  return { position: positionText(d), verdict: compact ? verdictOf(d).label : badgeText(d), headline: headlineFor(d),
+  const claim = $('claim-choice').value;
+  const claimReading = isClaim(claim) ? checkClaim(d, claim) : null;
+  const link = savedReadingLink(d, window.location.origin);
+  return { position: positionText(d), verdict: compact ? verdictOf(d).label : badgeText(d),
+    headline: claimReading ? CLAIMS[claim] + ': ' + claimReading.status + '. ' + claimReading.explanation : headlineFor(d),
     readAt: fmtTime(d.checkedAt), limitation: compact ? limit : d.openQuestion ? 'Still open: ' + d.openQuestion : d.takeaway || limit,
     attribution: d.source === 'nansen' ? 'Powered by @nansen_ai' : 'Data: Hyperliquid',
-    link: savedReadingLink(d, window.location.origin) };
+    link: link && isClaim(claim) ? link + '&claim=' + encodeURIComponent(claim) : link };
 }
 function postText(d) {
   return readingPostText(shareTextData(d, true));
@@ -1910,6 +1951,14 @@ $('copy-reading').addEventListener('click', async () => {
   } catch { window.prompt('Copy this reading:', text); }
 });
 $('copy-link').addEventListener('click', () => copyReadingLink($('copy-link')));
+$('copy-embed').addEventListener('click', async () => {
+  if (!current || !savedReadingLink(current, window.location.origin)) return;
+  const claim = $('claim-choice').value;
+  const url = window.location.origin + '/embed?s=' + encodeURIComponent(current.snapshotId) + (isClaim(claim) ? '&claim=' + claim : '');
+  const code = '<iframe src="' + url + '" title="Bet or Book dated position evidence" width="100%" height="600" loading="lazy" style="border:0;border-radius:12px"></iframe>';
+  try { await navigator.clipboard.writeText(code); $('copy-embed').textContent = 'Embed copied'; setTimeout(() => { $('copy-embed').textContent = 'Copy embed'; }, 1500); }
+  catch { window.prompt('Copy this embed code:', code); }
+});
 
 // A direct hand-off, not one more thing to copy and paste yourself: X's own
 // intent endpoint opens composer with the text already in it, in a new tab,
@@ -2052,12 +2101,19 @@ document.querySelector('.evidence-preview').insertAdjacentElement('afterend', $(
 $('reading-actions').insertAdjacentElement('afterend', $('risk-preview'));
 $('risk-preview').insertAdjacentElement('afterend', $('changed'));
 $('changed').insertAdjacentElement('afterend', $('open-question'));
+$('open-question').insertAdjacentElement('afterend', $('claim-checker'));
 $('full-analysis').querySelector('summary').insertAdjacentElement('afterend', $('summary'));
 $('try-again').addEventListener('click', () => {
   if (!current || busy) return;
-  let url = '/api/check?address=' + encodeURIComponent(current.address) + '&retry=1';
+  let url = '/api/check?context=0&address=' + encodeURIComponent(current.address) + '&retry=1';
   if (current.focus) url += '&coin=' + encodeURIComponent(current.focus.coin) + '&side=' + current.focus.side;
   load(url, data => { renderResult(data, { kind: 'live' }); showLink(data.snapshotSaved !== false ? data.snapshotId : null); askForPicture(data); }, 'Could not complete the reading. Try again shortly.', 'POST');
+});
+$('load-context').addEventListener('click', () => {
+  if (!current || busy) return;
+  let url = '/api/check?context=1&address=' + encodeURIComponent(current.address);
+  if (current.focus) url += '&coin=' + encodeURIComponent(current.focus.coin) + '&side=' + current.focus.side;
+  load(url, data => { renderResult(data, { kind: 'live' }); showLink(data.snapshotSaved !== false ? data.snapshotId : null); askForPicture(data); }, 'Optional context could not be loaded.', 'POST');
 });
 $('source-free-examples').addEventListener('click', () => { showExamples(); $('examples').scrollIntoView({ block: 'start' }); });
 $('use-example').addEventListener('click', () => {
@@ -2089,12 +2145,17 @@ function watched() {
         side: ['long', 'short'].includes(row.side) ? row.side : null,
         snapshotId: typeof row.snapshotId === 'string' ? row.snapshotId : null,
         previousSnapshotId: typeof row.previousSnapshotId === 'string' ? row.previousSnapshotId : null,
+        monitorToken: typeof row.monitorToken === 'string' && /^[0-9a-f-]{72}$/.test(row.monitorToken) ? row.monitorToken : null,
+        monitorStatus: typeof row.monitorStatus === 'string' ? row.monitorStatus : '',
+        monitorExpires: typeof row.monitorExpires === 'string' ? row.monitorExpires : null,
+        monitorEvents: Array.isArray(row.monitorEvents) ? row.monitorEvents.slice(0, 5).filter(e => e && typeof e.snapshotId === 'string' && typeof e.at === 'string' && Array.isArray(e.changes) && e.changes.every(c => typeof c === 'string')) : [],
         checkedAt: typeof row.checkedAt === 'string' ? row.checkedAt : null,
         label: typeof row.label === 'string' ? row.label.trim().slice(0, 80) : '' }))
       .slice(0, 12) : [];
   } catch { return []; }
 }
 const watchIdentity = row => row.address + ':' + (row.coin || '') + ':' + (row.side || '');
+const monitoring = createMonitoring({ read: watched, write: rows => localStorage.setItem(WATCH_KEY, JSON.stringify(rows)), render: renderWatched, status: setStatus, fetchJson: timedFetch });
 function updateSavedPosition(d) {
   if (!d.snapshotId || d.snapshotSaved === false) return;
   const identity = watchIdentity({ address: d.address.toLowerCase(), coin: d.positions.headlineCoin, side: d.positions.headlineSide });
@@ -2114,6 +2175,7 @@ function renderWatched() {
   const rows = watched(); box.hidden = rows.length === 0; box.replaceChildren();
   if (!rows.length) return;
   box.append(el('p', 'search-help', 'Saved positions · this browser only. Open a saved reading free; Refresh runs a new check.'));
+  box.append(el('p', 'search-help', 'Optional monitoring: 4 pilot slots, about every 4 hours for 72 hours. Stores the public wallet and reading question on the server; alerts appear here. The shared budget can pause checks.'));
   rows.forEach(row => {
     const label = (row.label ? row.label + ' · ' : '') + (row.coin ? row.coin + ' ' + row.side + ' · ' : '') + shortAddr(row.address);
     const group = el('div', 'watch-row');
@@ -2125,7 +2187,7 @@ function renderWatched() {
     const refresh = el('button', 'chip', 'Refresh'); refresh.setAttribute('aria-label', 'Refresh ' + label + ' with a new check');
     refresh.addEventListener('click', () => { if (busy) return; if (row.coin && row.side) checkPosition(row.address, row); else { $('address').value = row.address; runCheck(); } });
     const remove = el('button', 'chip', 'Remove'); remove.setAttribute('aria-label', 'Remove ' + label);
-    remove.addEventListener('click', () => { try { localStorage.setItem(WATCH_KEY, JSON.stringify(watched().filter(a => watchIdentity(a) !== watchIdentity(row)))); } catch {} renderWatched(); });
+    remove.addEventListener('click', () => { if (row.monitorToken) { setStatus('Stop monitoring before removing this saved position.', true); return; } try { localStorage.setItem(WATCH_KEY, JSON.stringify(watched().filter(a => watchIdentity(a) !== watchIdentity(row)))); } catch {} renderWatched(); });
     const name = el('input', 'watch-label'); name.type = 'text'; name.maxLength = 80;
     name.value = row.label || ''; name.placeholder = 'Name this position'; name.setAttribute('aria-label', 'Name saved position ' + label);
     name.addEventListener('input', () => {
@@ -2135,7 +2197,7 @@ function renderWatched() {
       try { localStorage.setItem(WATCH_KEY, JSON.stringify(rows)); b.textContent = (saved.label ? saved.label + ' · ' : '') + (row.coin ? row.coin + ' ' + row.side + ' · ' : '') + shortAddr(row.address) + (row.snapshotId ? ' · Open saved' : ' · Check address'); }
       catch { setStatus('This browser could not save the position name.', true); }
     });
-    group.append(b, refresh, name, remove);
+    group.append(b, refresh, name, monitoring.button(row), remove, monitoring.notices(row));
     if (row.checkedAt) group.append(el('span', 'search-help', ' Read ' + fmtTime(row.checkedAt)));
     box.append(group);
   });
@@ -2147,6 +2209,7 @@ $('watch-address').addEventListener('click', () => {
   const existing = watched().find(saved => watchIdentity(saved) === watchIdentity(row));
   row.label = existing?.label || '';
   row.previousSnapshotId = existing?.snapshotId === row.snapshotId ? existing.previousSnapshotId : null;
+  if (existing?.monitorToken) Object.assign(row, { monitorToken: existing.monitorToken, monitorStatus: existing.monitorStatus, monitorExpires: existing.monitorExpires, monitorEvents: existing.monitorEvents });
   try {
     localStorage.setItem(WATCH_KEY, JSON.stringify([row, ...watched().filter(a => watchIdentity(a) !== watchIdentity(row))].slice(0, 12)));
     recordUsage('watch_save', current); renderWatched(); $('watch-address').textContent = 'Saved to your watchlist';
@@ -2159,6 +2222,7 @@ $('watch-address').addEventListener('click', () => {
   catch { setStatus('This browser cannot save a watchlist.', true); }
 });
 renderWatched();
+monitoring.poll();
 $('saved-position-name').addEventListener('input', () => {
   if (!current) return;
   const identity = watchIdentity({ address: current.address.toLowerCase(), coin: current.positions.headlineCoin, side: current.positions.headlineSide });

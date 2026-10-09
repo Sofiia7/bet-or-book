@@ -68,6 +68,7 @@ const workerAssets: Plugin = {
 };
 
 export default defineConfig({
+  resolve: { alias: { 'cloudflare:workers': resolve('test/support/durableObjectBase.ts') } },
   plugins: [textAssets, workerAssets],
   test: {
     environment: 'node',

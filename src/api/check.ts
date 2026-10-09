@@ -26,6 +26,7 @@ export type CheckOptions = ObserveOptions;
 
 /** An observation with one interpretation of it: what a check returns. */
 export interface CheckResult extends Observation {
+  quoteSamples?: { samples: number; firstAt: string; lastAt: string; continuityConfirmed: false };
   verdict: VerdictResult;
   /** The rules that read all of this. See CLASSIFIER_VERSION. */
   classifierVersion: string;
