@@ -66,3 +66,9 @@
 - Production-проверка 9 октября в 17:23 UTC: 13/13, возраст наблюдений около 49.4 часов; это сохранённые данные 7 октября, а не live market state.
 - `refresh-featured.ts` фиксирует прежний asset/side и не заменяет пример другой крупнейшей позицией, закрытой позицией, older/partial/stale reading. Три regression tests прошли без платного refresh.
 - Сценарий ролика до 2:55 обновлён под Save, claim checker и widget; есть бесплатный путь при недоступном provider/KV. Чеклист и application draft согласованы с текущим пилотом. Запись, загрузка видео и отправка заявки ещё не выполнены.
+
+## Save: защита сохранённой записи
+
+Исправлен дополнительный дефект ручного Save: старая карточка или новый результат с `snapshotSaved=false` могли заменить более новый bookmark и потерять ссылку/previous baseline. Ручной Save теперь использует тот же `advanceSavedReading`, что automatic update; label и monitoring capability сохраняются. Подтверждение показывает дату удержанной записи и копирует именно её ссылку. При 12 записях новый Save отклоняется явно, без удаления последнего bookmark и monitor control. Stop доступен по capability даже без snapshot ID.
+
+Проверки: typecheck, 713 unit/API tests; 14 saved-reading и 4 capacity browser checks на local replay без paid forwarding; 12 Save/Share локально; 25 core + 12 Save/Share на production. Production-карточка 7 октября не заменила сохранённое чтение 9 октября: Copy saved reading link открыл дату 9 октября бесплатно. Новый Worker `f643fd52-78b5-492c-bb3c-4e86291caf19`; rules остаются v10, лимиты бюджета прежние. Тест отказа записи воспроизведён локально; production live write не проверен этим релизом.

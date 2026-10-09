@@ -33,6 +33,9 @@ const server = createServer(async (req, res) => {
   if (req.method === 'POST' && url.pathname === '/api/check') {
     if (url.searchParams.get('address') === baseline.address) {
       res.writeHead(200, { 'content-type': 'application/json', 'x-browser-replay': '1' });
+      if (url.searchParams.get('context') === '1') {
+        res.end(JSON.stringify({ ...focusedReading, snapshotId: undefined, snapshotSaved: false, checkedAt: '2026-10-09T11:00:00Z' })); return;
+      }
       res.end(JSON.stringify(url.searchParams.has('coin') ? focusedReading : changedReading)); return;
     }
     // Address ending in 1 exercises the slow path; other addresses return

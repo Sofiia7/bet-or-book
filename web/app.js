@@ -1110,13 +1110,13 @@ $('share').addEventListener('toggle', () => {
   if ($('share').open && current) askForPicture(current);
 });
 
-async function copyReadingLink(btn) {
+async function copyReadingLink(btn, savedId) {
   if (!current) return;
-  askForPicture(current);
+  if (!savedId || savedId === current.snapshotId) askForPicture(current);
   // The link opens this reading, not a new check of this account. Without a
   // snapshot id there is nothing saved to point at, so it falls back to the
   // address and the button says which one it gave.
-  const savedLink = savedReadingLink(current, window.location.origin);
+  const savedLink = savedReadingLink(savedId ? { snapshotId: savedId } : current, window.location.origin);
   const claim = $('claim-choice').value;
   const link = savedLink ? savedLink + (isClaim(claim) ? '&claim=' + claim : '') : window.location.origin + '/?address=' + encodeURIComponent(current.address);
   try {
@@ -1421,20 +1421,23 @@ function renderWatched() {
 }
 $('watch-address').addEventListener('click', () => {
   if (!current || !ADDRESS_RE.test(current.address)) return;
-  const row = { address: current.address.toLowerCase(), coin: current.positions.headlineCoin, side: current.positions.headlineSide,
+  const candidate = { address: current.address.toLowerCase(), coin: current.positions.headlineCoin, side: current.positions.headlineSide,
     snapshotId: current.snapshotSaved !== false ? current.snapshotId : null, checkedAt: current.checkedAt };
-  const existing = watched().find(saved => watchIdentity(saved) === watchIdentity(row));
-  row.label = existing?.label || '';
-  row.previousSnapshotId = existing?.snapshotId === row.snapshotId ? existing.previousSnapshotId : null;
-  if (existing?.monitorToken) Object.assign(row, { monitorToken: existing.monitorToken, monitorStatus: existing.monitorStatus, monitorExpires: existing.monitorExpires, monitorEvents: existing.monitorEvents });
+  const rows = watched();
+  const existing = rows.find(saved => watchIdentity(saved) === watchIdentity(candidate));
+  if (!existing && rows.length >= 12) { setStatus('Your 12 saved-position slots are full. Remove one before saving another; existing readings and monitor controls are kept.', true); return; }
+  const row = advanceSavedReading(existing || { ...candidate, snapshotId: null, label: '', previousSnapshotId: null }, current);
   try {
-    localStorage.setItem(WATCH_KEY, JSON.stringify([row, ...watched().filter(a => watchIdentity(a) !== watchIdentity(row))].slice(0, 12)));
+    localStorage.setItem(WATCH_KEY, JSON.stringify([row, ...rows.filter(a => watchIdentity(a) !== watchIdentity(row))]));
     recordUsage('watch_save', current); renderWatched(); $('watch-address').textContent = 'Saved to your watchlist';
     $('save-confirmation').hidden = false; $('saved-position-name').value = row.label;
     $('save-confirmation-text').textContent = row.snapshotId
-      ? 'Saved in this browser. Open the dated reading again free; Refresh runs a new check.'
+      ? row.snapshotId !== current.snapshotId || current.snapshotSaved === false
+        ? 'Kept your previously saved reading from ' + fmtTime(row.checkedAt) + '. This older or unsaved reading did not replace it. The link below opens the retained reading.'
+        : 'Saved in this browser. Open the dated reading again free; Refresh runs a new check.'
       : 'Position saved in this browser. This reading has no saved link; reopening fills in the wallet for a new check.';
     $('save-copy-link').hidden = !row.snapshotId;
+    $('save-copy-link').dataset.snapshotId = row.snapshotId || '';
   }
   catch { setStatus('This browser cannot save a watchlist.', true); }
 });
@@ -1449,7 +1452,7 @@ $('saved-position-name').addEventListener('input', () => {
   try { localStorage.setItem(WATCH_KEY, JSON.stringify(rows)); renderWatched(); }
   catch { setStatus('This browser could not save the position name.', true); }
 });
-$('save-copy-link').addEventListener('click', () => copyReadingLink($('save-copy-link')));
+$('save-copy-link').addEventListener('click', () => copyReadingLink($('save-copy-link'), $('save-copy-link').dataset.snapshotId));
 $('open-saved-positions').addEventListener('click', () => {
   showExamples(); $('watched').scrollIntoView({ block: 'center' }); $('watched').focus({ preventScroll: true });
 });

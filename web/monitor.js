@@ -30,7 +30,7 @@ export function createMonitoring({ read, write, render, status, fetchJson }) {
   const button = row => {
     const b = document.createElement('button'); b.className = 'chip';
     b.textContent = row.monitorToken ? 'Stop monitoring' : 'Monitor changes · pilot';
-    b.disabled = !row.snapshotId;
+    b.disabled = !row.monitorToken && !row.snapshotId;
     b.setAttribute('aria-label', b.textContent + ' ' + (row.label || row.coin || row.address));
     b.addEventListener('click', async () => {
       b.disabled = true;
