@@ -32,6 +32,7 @@ import type {
 } from './features';
 import type { VitalsItem } from './vitals';
 import type { PnlSummary } from '../types';
+import type { MarketDefinition } from './marketIdentity';
 
 /**
  * What one check saw, before any rule has read it: every number the rules
@@ -47,6 +48,7 @@ import type { PnlSummary } from '../types';
  * stored observation without pretending to have checked the account again.
  */
 export interface Observation {
+  marketDefinition?: MarketDefinition;
   marketProvenance?: { venue: string; status: 'complete' | 'missing'; listed: boolean | null; deployer: string | null; oracleUpdater: string | null; underlyingVerified: boolean; at: string };
   quoteGeometry?: { reference: 'mark' | 'mid'; markPx: number; pricedQuoteUsd: number; weightedDistanceBps: number; nearestDistanceBps: number; farthestDistanceBps: number } | null;
   address: string;
@@ -167,7 +169,7 @@ export function verdictInputOf(
  *    listed means none was looked for, not none found.
  */
 // 6: the headline-asset liability flag reaches the classifier.
-export const OBSERVATION_SCHEMA_VERSION = 7;
+export const OBSERVATION_SCHEMA_VERSION = 8;
 
 /** The first observation that looked for loans on Hyperliquid. */
 export const LOANS_READ_FROM_SCHEMA = 5;
@@ -206,6 +208,7 @@ export function legacySourceCoverage(e: Stored): { orders: SourceCoverage; posit
  * entry may be re-judged; anything in it means the entry is history.
  */
 export function missingForCurrentRules(e: Stored): string[] {
+  if (e.positions.headlineCoin?.includes(':') && e.positions.headlineUnderlyingVerified === true && !e.marketDefinition) return ['marketDefinition'];
   if (e.observationSchemaVersion === OBSERVATION_SCHEMA_VERSION) return [];
   const missing: string[] = [];
   if (e.orders.restingOrders >= DEFAULT_THRESHOLDS.book.minRestingOrders && e.orders.quoteEligibilityVersion !== 1) {

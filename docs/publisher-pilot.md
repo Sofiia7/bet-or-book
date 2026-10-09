@@ -33,3 +33,11 @@ Quote distance uses a fresh L2 midpoint when available, otherwise explicitly lab
 `node --import tsx scripts/calibrate-book.ts data/book-labels.json` evaluates independent labels. The checked-in file is empty: there are no independent labels and no measured precision/recall. Supply rows with `reading`, `label` (`book`, `not-book`, `unresolved`), `labelledBy` and independent `basis`. Do not use the classifier's own verdict as ground truth.
 
 HIP-3 provenance comes from the [official venue registry](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint/perpetuals). Registry membership and oracle-updater addresses do not verify underlying identity. Quote reference uses the [official L2 book response](https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint).
+
+# Definition review and preview availability
+
+The publisher DTO includes `market.definition` and `market.provenance`. The exact eleven noncrypto `xyz:` contracts in `src/engine/marketIdentity.ts` use the [publisher specification](https://docs.trade.xyz/perpetuals/specifications-and-schedules/specification-index), reviewed 9 October and expiring 16 October 2026, and require the pinned live deployer/oracle updater. Missing registry, changed operator, unknown deployment or expired review withholds identity. This documents the published definition, not the live oracle implementation. No crypto alias or spot equivalence is established. Older observations lacking that evidence stay historical.
+
+Monitoring pins the initial selected asset/side; a repeated or older saved reading pauses the cycle without an unchanged-position claim. The scheduler's public-budget behavior is verified in real workerd with outbound provider fixtures, not a production paid scan.
+
+The four current demonstration preview PNGs ship inside the Worker and require no KV access. Unchanged historical readings reuse v9 previews. On 9 October the KV daily write quota was exhausted; v10 bulk upload failed. Until quota reset, new live snapshots may not persist, while existing reading links and bundled previews remain readable. `prerender-og.ts` defaults to current readings; `--all` explicitly rebuilds the archive.

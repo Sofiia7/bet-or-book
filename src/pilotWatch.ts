@@ -26,9 +26,22 @@ export class PilotWatch extends DurableObject {
     return this.ctx.blockConcurrencyWhile(async () => {
       const now = this.now();
       const state = await this.ctx.storage.get<WatchState>('pilot') ?? { watches: [], claimedAt: 0 };
+      // Pin pre-v10 subscriptions to their original question before another job.
+      let migrated = false;
+      for (const watch of state.watches) {
+        if (!watch.focus && watch.baseline.positions.headlineCoin && watch.baseline.positions.headlineSide) {
+          watch.focus = { coin: watch.baseline.positions.headlineCoin, side: watch.baseline.positions.headlineSide };
+          watch.baseline = { ...watch.baseline, focus: watch.focus };
+          migrated = true;
+        }
+      }
+      if (migrated) await this.ctx.storage.put('pilot', state);
       const active = state.watches.filter(w => w.expiresAt > now);
       if (active.length !== state.watches.length) { state.watches = active; await this.ctx.storage.put('pilot', state); }
       if (body.action === 'subscribe' && body.baseline?.snapshotId) {
+        const focus = body.baseline.focus ?? (body.baseline.positions.headlineCoin && body.baseline.positions.headlineSide ? { coin: body.baseline.positions.headlineCoin, side: body.baseline.positions.headlineSide } : null);
+        if (!focus) return Response.json({ error: 'Choose an open position to monitor' }, { status: 400 });
+        body.baseline = { ...body.baseline, focus };
         if (state.watches.some(w => w.address === body.baseline!.address && JSON.stringify(w.focus) === JSON.stringify(body.baseline!.focus))) return Response.json({ error: 'This position already has a pilot monitor. Save it and refresh manually until that monitor expires.' }, { status: 409 });
         if (state.watches.length >= MAX_WATCHES) return Response.json({ error: 'The four pilot monitoring slots are full. Save this position and refresh manually.' }, { status: 409 });
         const watch: Watch = { id: crypto.randomUUID(), token: crypto.randomUUID() + crypto.randomUUID(),
@@ -50,8 +63,10 @@ export class PilotWatch extends DurableObject {
         const watch = state.watches.find(w => w.id === body.id);
         if (!watch || watch.lease !== body.lease || body.lease === undefined) return Response.json({ ok: false });
         delete watch.lease;
-        if (!body.result?.snapshotId || body.result.snapshotSaved === false || body.result.degraded || body.result.address !== watch.address || JSON.stringify(body.result.focus ?? null) !== JSON.stringify(watch.focus ?? null)) {
+        if (!body.result?.snapshotId || body.result.snapshotSaved === false || body.result.degraded || body.result.verdict.reasons.includes('positions_stale') || body.result.address !== watch.address || JSON.stringify(body.result.focus ?? null) !== JSON.stringify(watch.focus ?? null)) {
           watch.status = 'Paused for this cycle: complete saved data unavailable. No unchanged-position claim.';
+        } else if (body.result.snapshotId === watch.baseline.snapshotId || Date.parse(body.result.checkedAt) <= Date.parse(watch.baseline.checkedAt)) {
+          watch.status = 'Paused for this cycle: no newer saved reading available. The previous evidence remains the baseline.';
         } else {
           const changes = meaningfulChanges(watch.baseline, body.result);
           if (changes.length) watch.events = [{ at: body.result.checkedAt, snapshotId: body.result.snapshotId, changes }, ...watch.events].slice(0, 5);

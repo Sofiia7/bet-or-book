@@ -18,6 +18,7 @@ import pageScriptSource from '../web/app.min.js';
 import { landingExamples } from './landing';
 import galleryData from '../data/gallery.json';
 import featuredData from '../data/featured.json';
+import featuredOg from '../data/og-featured.json';
 import ledgerData from '../data/ledger.json';
 import { galleryIndex, previousReadingId, type Gallery, type GalleryIndex } from './gallery';
 import { BUILDATHON_WINDOW, type LedgerSummary } from './ledger';
@@ -206,7 +207,13 @@ const OG_FONTS: OgFont[] = [
  * only reads, and drawing happens in a request of its own - see drawOgPng.
  */
 async function storedOgPng(kv: SafeKV, id: string): Promise<Uint8Array | null> {
-  const cached = await kv.get(ogCacheKey(id));
+  const embedded = featuredOg.layoutVersion === OG_LAYOUT_VERSION ? (featuredOg.readings as Record<string, string>)[id] : undefined;
+  if (embedded) return new Uint8Array(Buffer.from(embedded, 'base64'));
+  let cached = await kv.get(ogCacheKey(id));
+  // v9 and v10 have the same picture layout; these frozen historical
+  // readings did not change. Keep their existing images without reupload.
+  const bundled = bundledById.get(id)?.card;
+  if (cached === null && bundled && bundled.classifierVersion !== 'v10') cached = await kv.get(`og:v9:${id}`);
   return cached === null ? null : new Uint8Array(Buffer.from(cached, 'base64'));
 }
 
@@ -396,7 +403,7 @@ const worker = {
       if (body.action === 'subscribe') {
         if (!isSnapshotId(body.snapshotId || '')) return Response.json({ error: 'A saved reading is required' }, { status: 400 });
         baseline = bundledById.get(body.snapshotId!)?.card ?? await readSnapshot(kv, body.snapshotId!) ?? undefined;
-        if (!baseline || baseline.historical || baseline.degraded) return Response.json({ error: 'Choose a complete current saved reading' }, { status: 400 });
+        if (!baseline || baseline.historical || baseline.degraded || baseline.positionsCoverage !== 'complete' || !baseline.positions.nPositions || baseline.verdict.reasons.includes('positions_stale')) return Response.json({ error: 'Choose a complete current saved reading with an open position' }, { status: 400 });
         const subscriptions = requestGate(env.REQUEST_GATE, 1, 86_400);
         if (!(await subscriptions.allow('watch-subscribe:' + extractIp(request)))) return Response.json({ error: 'One pilot subscription per connection per day' }, { status: 429 });
       } else if (typeof body.token !== 'string' || !/^[0-9a-f-]{72}$/.test(body.token)) return Response.json({ error: 'Invalid monitoring token' }, { status: 400 });
@@ -807,7 +814,7 @@ const worker = {
           return Response.json({ error: 'pictures are drawn for this site' }, { status: 403 });
         }
         if (!isSnapshotId(id)) return Response.json({ error: 'not a snapshot id' }, { status: 400 });
-        if ((await kv.get(ogCacheKey(id))) !== null) {
+        if ((await storedOgPng(kv, id)) !== null) {
           counted('already_drawn');
           return new Response(null, { status: 204 });
         }

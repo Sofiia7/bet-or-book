@@ -132,7 +132,7 @@ describe('the spend cap, in a real Durable Object', () => {
     const budget = await budgetStub(mf);
     expect(await budget.available(8)).toBe(8 - up.seen.nansen);
     expect((await budget.report()).calls.attempted).toBe(up.seen.nansen);
-  });
+  }, 60_000); // Includes cold workerd startup, like the adjacent contention test.
   it('never lets overlapping checks hold or spend more than the cap, and charges exactly what was called', async () => {
     const up = upstreams({ nansenDelayMs: 400 });
     const mf = await start({

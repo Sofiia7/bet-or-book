@@ -148,7 +148,7 @@ npx wrangler deploy
 | `scripts/ledger.ts` | Sums `data/nansen-calls.jsonl` into `data/ledger.json`, served at `/api/ledger` |
 | `scripts/reexplain.ts` | Re-judges and re-explains the gallery cards whose stored observation carries what the current rules read, and marks the rest as history. No network: a rules fix never needs the credits the scan cost |
 | `scripts/fetch-fixtures.ts`, `scripts/fetch-nansen-fixtures.ts` | Capture real API responses for the tests (labels redacted) |
-| `scripts/prerender-og.ts` | Renders every gallery card's and demonstration reading's social-preview picture offline and uploads it to KV, so a shared link to one of them has its own picture from the start (see [`docs/architecture.md`](docs/architecture.md)) |
+| `scripts/prerender-og.ts` | Renders current demonstration previews offline and bundles them with the Worker; optional `--upload` writes KV, and `--all` rebuilds the archive, so a shared link to one of them has its own picture from the start (see [`docs/architecture.md`](docs/architecture.md)) |
 
 ## Nansen API usage
 
@@ -160,7 +160,7 @@ No logins, sessions, uploads, webhooks or SQL; the only user input is an address
 
 ## Stack
 
-Cloudflare Workers, Workers KV and three Durable Objects (the spend cap with its call ledger, the pilot watch coordinator, and the rate limiter - these need an atomic read-modify-write that KV cannot promise), TypeScript, Vitest (706 tests on recorded real responses, including the Worker's own routes driven through real Requests and the real image renderer with no mocks, plus 11 that run the built Worker inside workerd through Miniflare). No frontend framework: one HTML page, bundled script modules and a canvas for the share card. Two runtime dependencies, both for the one thing this Worker cannot do without them: [`satori`](https://github.com/vercel/satori) lays out a reading's social-preview picture and [`@resvg/resvg-wasm`](https://github.com/yisibl/resvg-js) rasterizes it to PNG - see [`docs/architecture.md`](docs/architecture.md) for why that render never runs on a crawler's request.
+Cloudflare Workers, Workers KV and three Durable Objects (the spend cap with its call ledger, the pilot watch coordinator, and the rate limiter - these need an atomic read-modify-write that KV cannot promise), TypeScript, Vitest (710 tests on recorded real responses, including the Worker's own routes driven through real Requests and the real image renderer with no mocks, plus 12 that run the built Worker inside workerd through Miniflare). No frontend framework: one HTML page, bundled script modules and a canvas for the share card. Two runtime dependencies, both for the one thing this Worker cannot do without them: [`satori`](https://github.com/vercel/satori) lays out a reading's social-preview picture and [`@resvg/resvg-wasm`](https://github.com/yisibl/resvg-js) rasterizes it to PNG - see [`docs/architecture.md`](docs/architecture.md) for why that render never runs on a crawler's request.
 
 ## License
 

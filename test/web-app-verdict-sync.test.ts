@@ -7,7 +7,8 @@ describe("the live board filter uses the classifier coverage boundary", () => {
     const source = readFileSync(new URL('../web/app.js', import.meta.url), 'utf8');
     const materialGap = source.match(/const MATERIAL_GAP_SHARE = ([\d.]+);/);
     expect(materialGap).not.toBeNull();
-    expect(source).toContain("e.hedgeRatio < MATERIAL_GAP_SHARE");
+    const explore = readFileSync(new URL('../web/explore.js', import.meta.url), 'utf8');
+    expect(explore).toContain("e.hedgeRatio < MATERIAL_GAP_SHARE");
     expect(Number(materialGap![1])).toBe(DEFAULT_THRESHOLDS.hedged.maxUnverifiedShare);
   });
 });

@@ -12,11 +12,13 @@ export function publisherReading(r: CheckResponse, id: string, origin: string, a
     position: { coin: r.positions.headlineCoin, side: r.positions.headlineSide, notionalUsd: r.positions.headlineNotionalUsd },
     conclusion: VERDICT_STYLES[r.verdict.verdict].label, headline: readingHeadline(r),
     takeaway: evidenceTakeaway(r), historical: !!r.historical, incomplete: r.degraded,
+    market: { definition: r.marketDefinition ?? null, provenance: r.marketProvenance ?? null },
     evidence: r.evidence, limits: [PERMANENT_LIMIT, ...(r.coverageNotes ?? []).filter(n => n.failure).map(n => n.text)],
     attribution: r.source === 'nansen' ? 'Powered by Nansen API' : 'Hyperliquid API',
     claim: claim ? { assertion: CLAIMS[claim], ...checkClaim(r, claim) } : null,
     link: origin + '/?s=' + encodeURIComponent(id) + (claim ? '&claim=' + claim : '') };
 }
+export type PublisherReading = ReturnType<typeof publisherReading>;
 export function publisherEmbed(r: CheckResponse, id: string, origin: string, assertion?: unknown): string {
   const data = publisherReading(r, id, origin, assertion);
   const position = data.position.coin ? `${formatUsd(data.position.notionalUsd)} ${data.position.coin} ${data.position.side}` : 'No position found';

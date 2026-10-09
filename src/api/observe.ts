@@ -62,6 +62,7 @@ import { hedgeCanChangeVerdict, DEFAULT_THRESHOLDS, type SourceCoverage } from '
 import { spotHedgesPerp } from '../engine/assets';
 import { parsePerpVenues } from '../marketRegistry';
 import { quoteGeometry } from '../engine/quoteDiagnostics';
+import { marketDefinition } from '../engine/marketIdentity';
 import { formatUsd, formatPct } from '../engine/evidence';
 import { computeVitals, type VitalsItem } from '../engine/vitals';
 import { OBSERVATION_SCHEMA_VERSION, ASSET_REGISTRY_VERSION, type Observation } from '../engine/observation';
@@ -285,12 +286,16 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   const positionFeatures = computePositionFeatures(positions, markPxByCoin, opts.focus);
   const venue = dexOf(positionFeatures.headlineCoin || '');
   let marketProvenance: Observation['marketProvenance'];
+  let definition: Observation['marketDefinition'];
   if (venue) {
     try {
       const entry = parsePerpVenues(await getPerpDexRegistry(signal)).find(v => v.name === venue);
+      definition = marketDefinition(positionFeatures.headlineCoin!, entry ?? null, now);
+      positionFeatures.headlineUnderlyingVerified = definition.status === 'documented';
       marketProvenance = { venue, status: 'complete', listed: !!entry, deployer: entry?.deployer || null, oracleUpdater: entry?.oracleUpdater || null,
         underlyingVerified: positionFeatures.headlineUnderlyingVerified === true, at: new Date(now).toISOString() };
     } catch {
+      definition = marketDefinition(positionFeatures.headlineCoin!, null, now);
       marketProvenance = { venue, status: 'missing', listed: null, deployer: null, oracleUpdater: null, underlyingVerified: false, at: new Date(now).toISOString() };
       note('HIP-3 venue registry unavailable; deployer and oracle updater are not established');
     }
@@ -591,6 +596,7 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   return {
     address,
     ...(marketProvenance ? { marketProvenance } : {}),
+    ...(definition ? { marketDefinition: definition } : {}),
     quoteGeometry: quoteGeometry(resting, positionFeatures.headlineCoin, quoteMid ?? markPxByCoin.get(positionFeatures.headlineCoin || ''), quoteMid === null ? 'mark' : 'mid'),
     positions: positionFeatures,
     orders: orderFeatures,

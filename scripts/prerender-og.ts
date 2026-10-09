@@ -1,20 +1,17 @@
-// Renders every gallery card's and demonstration reading's social-preview
-// picture offline and uploads the results to the live KV namespace. The
-// deployed Worker never draws on a crawler's request (see docs/architecture.md
-// for why that render does not fit the Workers free plan's 10ms budget), so
-// without this a bundled card's link shows the standing picture until
-// someone opens its Share button; with it, /api/og is a cache read for every
-// one of these ids from the day this runs.
-//
-// No TTL: a bundled card's picture is as permanent as the data/gallery.json
-// or data/featured.json entry it was built from, not a 30-day live snapshot.
-//
+// Renders current demonstration previews offline and bundles their PNGs with
+// the Worker, so those four shared links require no KV access or runtime render.
+// Historical readings reuse unchanged v9 KV images. --all explicitly rebuilds
+// the archive; --upload is optional and consumes the namespace write quota.
+// No TTL: bundled reading previews are permanent.
 // Usage:
-//   node --import tsx scripts/prerender-og.ts               (write data/og-prerendered.json only)
-//   node --import tsx scripts/prerender-og.ts --upload       (also run `wrangler kv bulk put`)
+//   node --import tsx scripts/prerender-og.ts
+//   node --import tsx scripts/prerender-og.ts --upload
+//   node --import tsx scripts/prerender-og.ts --all --upload
 import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { ogCardFor, ogCacheKey } from '../src/engine/ogCard';
+import { OG_LAYOUT_VERSION } from '../src/engine/ogCard';
+import { CLASSIFIER_VERSION } from '../src/engine/verdict';
 import { renderOgPng, type OgFont } from '../src/engine/ogRender';
 import type { Gallery } from '../src/gallery';
 
@@ -36,7 +33,7 @@ async function main() {
   const candidates = [
     ...featured.entries.map((e) => ({ e, kind: 'saved' as const })),
     ...gallery.entries.map((e) => ({ e, kind: 'gallery' as const })),
-  ].filter(({ e }) => e.snapshotId && e.positions.nPositions > 0);
+  ].filter(({ e }) => e.snapshotId && e.positions.nPositions > 0 && (process.argv.includes('--all') || (!e.historical && !e.superseded && e.classifierVersion === CLASSIFIER_VERSION)));
   const seen = new Set<string>();
   // No `base64: true` here: that flag tells `wrangler kv bulk put` to
   // *decode* `value` and store the raw bytes, so a later `kv.get()` (which
@@ -69,6 +66,8 @@ async function main() {
   }
 
   writeFileSync(OUT_FILE, JSON.stringify(bulk, null, 1));
+  const featuredIds = new Set(featured.entries.filter(e => !e.superseded && !e.historical).map(e => e.snapshotId));
+  writeFileSync('data/og-featured.json', JSON.stringify({ layoutVersion: OG_LAYOUT_VERSION, readings: Object.fromEntries(bulk.filter(row => featuredIds.has(row.key.split(':').at(-1)!)).map(row => [row.key.split(':').at(-1)!, row.value])) }));
   console.log(`${rendered} rendered, ${skipped} skipped, ${candidates.length - seen.size} duplicate ids. Wrote ${OUT_FILE}.`);
 
   if (process.argv.includes('--upload')) {

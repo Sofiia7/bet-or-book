@@ -41,6 +41,7 @@ export function present(r: Interpreted, share: ShareCardOptions = { kind: 'live'
   const judged = {
     verdict: r.verdict,
     ...(r.marketProvenance ? { marketProvenance: r.marketProvenance } : {}),
+    ...(r.marketDefinition ? { marketDefinition: r.marketDefinition } : {}),
     ...(r.quoteGeometry ? { quoteGeometry: r.quoteGeometry } : {}),
     positions: r.positions,
     orders: r.orders,

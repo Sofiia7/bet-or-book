@@ -95,7 +95,8 @@ export interface VerdictThresholds {
 // precedes maker flow, and known same-asset legs group across perp dexes.
 // v8 (09.10): incomplete positions cannot establish combined exposure.
 // v9: relevant perp legs are scoped to the selected asset when measured.
-export const CLASSIFIER_VERSION = 'v9';
+// v10: HIP-3 definitions require an exact reviewed deployment and live operator.
+export const CLASSIFIER_VERSION = 'v10';
 
 export const DEFAULT_THRESHOLDS: VerdictThresholds = {
   book: {

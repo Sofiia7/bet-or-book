@@ -30,9 +30,9 @@ describe('October audit regressions', () => {
     expect(computePositionFeatures([base, { ...base, coin: 'xyz:ETH', side: 'short' }]).sameAssetOffsetShare).toBe(1);
     expect(canonicalAsset('xyz:ACME')).toBe('XYZ:ACME');
   });
-  it('does not describe a known stock market as an unidentified crypto underlying', () => {
+  it('does not establish a HIP-3 underlying from a familiar ticker alone', () => {
     const base: Position = { coin: 'xyz:AAPL', side: 'long', sizeUsd: 100, entryPx: 1, leverage: 1, leverageType: 'cross', liquidationPx: null, unrealizedPnlUsd: 0, cumFundingUsd: 0 };
-    expect(exposureBreakdown(computePositionFeatures([base]), EMPTY_HEDGE, null).dataQuality).toBe('measured');
+    expect(exposureBreakdown(computePositionFeatures([base]), EMPTY_HEDGE, null).dataQuality).toBe('unknown');
     expect(exposureBreakdown(computePositionFeatures([{ ...base, coin: 'xyz:ETH' }]), EMPTY_HEDGE, null).dataQuality).toBe('unknown');
   });
   it('retries a transient Nansen refusal once and accounts for both attempts', async () => {

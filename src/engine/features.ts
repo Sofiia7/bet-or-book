@@ -123,7 +123,7 @@ export function computePositionFeatures(
     netUsd,
     netToGross,
     headlineCoin: headline.coin,
-    headlineUnderlyingVerified: !headline.coin.includes(':') || /:(AAPL|BRENTOIL|SP500|NVDA|TSLA|MSFT|GOOGL|AMZN|META|GOLD|SILVER)$/i.test(headline.coin),
+    headlineUnderlyingVerified: !headline.coin.includes(':'),
     headlineSide: headline.side,
     selectedPerpLegs: { longUsd: selected.long, shortUsd: selected.short,
       opposingUsd: selected[headline.side === 'short' ? 'long' : 'short'],
