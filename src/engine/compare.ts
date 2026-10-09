@@ -15,6 +15,8 @@
 import type { CheckResponse } from '../api/check';
 import type { VerdictStrength } from './verdict';
 import { formatUsd, formatPct } from './evidence';
+import { verdictInputOf } from './observation';
+import { badgeQualifier } from './reasons';
 
 export interface FieldChange {
   field: string;
@@ -30,6 +32,8 @@ export interface VerdictChange {
    * the badge changing, even though the verdict itself did not. */
   fromStrength: VerdictStrength;
   toStrength: VerdictStrength;
+  fromQualifier: string | null;
+  toQualifier: string | null;
   fromRules: string;
   toRules: string;
   because:
@@ -142,6 +146,18 @@ export function compareReadings(x: CheckResponse, y: CheckResponse): Comparison 
     to.linkedHedge?.linkedHedgeUsd ?? 0,
     formatUsd,
   );
+  const coverageWords: Record<string, string> = {
+    complete: 'read in full', partial: 'read in part', missing: 'not read',
+    'not-applicable': 'not needed for this position',
+  };
+  for (const [key, field] of [
+    ['positionsCoverage', 'position sources'], ['ordersCoverage', 'order sources'],
+    ['hedgeCoverage', 'holdings search'], ['linkedHedgeCoverage', 'funding-wallet search'],
+  ] as const) {
+    if (from[key] === to[key]) continue;
+    changes.push({ field, from: coverageWords[from[key]] ?? 'not recorded',
+      to: coverageWords[to[key]] ?? 'not recorded', direction: 'sideways' });
+  }
 
   const rulesMoved = from.classifierVersion !== to.classifierVersion;
   // Attribution used to rest on the same five-ish fields the card shows -
@@ -155,27 +171,22 @@ export function compareReadings(x: CheckResponse, y: CheckResponse): Comparison 
   // "something in the data moved" cannot be missed for not being on screen
   // (23.09 audit, L11).
   const verdictInputsOf = (r: CheckResponse) =>
-    JSON.stringify({
-      positions: r.positions,
-      orders: r.orders,
-      hedge: r.hedge,
-      hedgeCoverage: r.hedgeCoverage,
-      ordersCoverage: r.ordersCoverage,
-      positionsCoverage: r.positionsCoverage,
-      trades: r.trades ? { tradesPerDay: r.trades.tradesPerDay, crossedShare: r.trades.crossedShare, buyShare: r.trades.buyShare } : null,
-      linkedHedgeRatio: r.linkedHedge?.linkedHedgeRatio ?? null,
-    });
+    JSON.stringify(verdictInputOf({ ...r, trades: r.trades ?? { tradesPerDay: 0, crossedShare: 0, buyShare: 0 } } as CheckResponse));
   const dataMoved = verdictInputsOf(from) !== verdictInputsOf(to);
+  const reasonsOf = (r: CheckResponse) => JSON.stringify([...new Set(r.verdict.reasons)].sort());
   // The grade counts as the answer: a badge that went from "Book (strong)"
   // to "Book (likely)" is not a card on which nothing changed.
   const verdictChange =
     from.verdict.verdict === to.verdict.verdict && (from.verdict.strength ?? null) === (to.verdict.strength ?? null)
+      && reasonsOf(from) === reasonsOf(to)
       ? null
       : {
           from: from.verdict.verdict,
           to: to.verdict.verdict,
           fromStrength: from.verdict.strength ?? null,
           toStrength: to.verdict.strength ?? null,
+          fromQualifier: badgeQualifier(from.verdict, !!from.historical),
+          toQualifier: badgeQualifier(to.verdict, !!to.historical),
           fromRules: from.classifierVersion,
           toRules: to.classifierVersion,
           because: (rulesMoved && dataMoved

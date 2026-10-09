@@ -255,7 +255,13 @@
   .section-heading h2 { margin: 0; font-size: 21px; }
   .section-heading a { font-size: 13px; white-space: nowrap; }
   #examples > .sub { font-size: 13px; margin: 8px 0 20px; }
-  #player-queue { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; border: 0; }
+  #player-queue { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; border: 0; }
+  .deeper-example { grid-column: 1 / -1; }
+  .deeper-example .queue-row { margin-top: 12px; }
+  .example-question { font-size: 14px; line-height: 1.5; }
+  .takeaway { color: var(--muted); font-size: 14px; line-height: 1.6; }
+  .watch-label { width: 180px; font-size: 12px; padding: 7px; }
+  #address-choices { overflow-wrap: anywhere; }
   #player-queue .queue-row { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 22px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); text-align: left; text-decoration: none; color: var(--fg); font: inherit; cursor: pointer; }
   #player-queue .queue-row:hover { border-color: var(--book-fg); background: var(--surface-2); }
   #player-queue .queue-pos { font-size: 20px; }
@@ -274,6 +280,9 @@
   body.has-reading .hero h1 { font-size: 24px; margin-bottom: 0; letter-spacing: -.02em; }
   body.has-reading .hero .sub, body.has-reading .hero .eyebrow,
   body.has-reading #examples, body.has-reading #how-it-works { display: none; }
+  body.has-reading #entry-controls, body.has-reading #recent, body.has-reading #watched { display: none; }
+  #reading-actions .share { flex: 1 1 220px; }
+  #reading-actions .share > summary { font-size: 12px; }
   #card, #examples, #gallery, #how-it-works { scroll-margin-top: 24px; }
 
   .evidence-preview { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 18px; }
@@ -314,7 +323,7 @@
     .section-heading { align-items: flex-start; }
     .section-heading h2 { font-size: 19px; }
     .board .list button { grid-template-columns: minmax(0,1fr); }
-    #decisive.stats, #decisive.stats:has(> :nth-child(2):last-child) { grid-template-columns: 1fr; }
+    #decisive.stats, #decisive.stats:has(> :nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     #all-readings .list button { grid-template-columns: 28px minmax(0, 1fr); gap: 8px; }
     #all-readings .list .badge { grid-column: 2; justify-self: start; height: auto; min-height: 30px; padding-top: 6px; padding-bottom: 6px; }
     #all-readings .list .row-meta { grid-column: 2; }
@@ -328,6 +337,7 @@
 </header>
 <main>
 <div id="workspace">
+<div id="entry-controls">
 <section class="hero" aria-labelledby="hero-title">
   <p class="eyebrow">Look beyond the whale alert</p>
   <h1 id="hero-title">Don't Get Rekt<br><span>Copytrading.</span></h1>
@@ -341,10 +351,14 @@
   <a class="explore-shortcut" href="#explore" id="search-explore">Explore positions →</a>
 </div>
 <p class="search-help" id="address-help">Paste an address, Hypurrscan or Hyperliquid link. No wallet connection needed.</p>
+<details class="fold"><summary>Checking a whale alert?</summary><p class="search-help">Open the alert’s wallet or explorer link and copy the 0x wallet address. You can also paste alert text containing the address. An X post URL alone does not contain the wallet data.</p><p class="search-help">For example: “A whale opened an ETH short · wallet 0x…” — paste the full wallet address, then choose ETH from the positions found.</p></details>
+<div id="address-choices" class="box" hidden><p>More than one wallet found. Choose the address to check:</p><div id="address-choice-buttons" class="chips"></div></div>
 <p class="search-help"><button class="chip" id="use-example">Try a saved example · free</button></p>
 <p class="data-sources"><span>Powered by <a class="partner" href="https://app.nansen.ai/r/36RkYL4jJsy" rel="noopener noreferrer">Nansen API</a></span><span>Orders and fills from <a class="partner" href="https://app.hyperliquid.xyz" rel="noopener noreferrer">Hyperliquid</a></span></p>
+</div>
 <p class="status" id="status" role="status"></p>
 <progress id="check-progress" aria-label="Reading the wallet" hidden></progress>
+<p class="search-help" id="slow-check" hidden>Still reading sources. A live check can take up to 45 seconds; the answer will identify any sources that did not finish. <button class="chip" id="waiting-example">Open a free saved example</button></p>
 <div class="guess" id="guess" hidden>
   <span class="guess-label" id="guess-label">Guess before it loads:</span>
   <span class="guess-chips" id="guess-chips" role="group" aria-labelledby="guess-label">
@@ -384,13 +398,15 @@
     <span class="picker-chips" id="picker-chips"></span>
   </div>
   <p style="margin: 10px 0 0;"><span class="badge" id="badge"></span></p>
-  <div class="box" id="source-warning" role="status" hidden><strong id="source-warning-text"></strong> <button id="try-again">Try again</button></div>
+  <div class="box" id="source-warning" role="status" hidden><strong id="source-warning-text"></strong> <button id="try-again">Try again</button><button id="source-free-examples" hidden>Open free examples</button></div>
   <p class="headline" id="headline"></p>
+  <p class="takeaway" id="takeaway" hidden></p>
   <p class="summary" id="summary"></p>
   <figure class="breakdown" id="breakdown" hidden>
     <figcaption id="breakdown-caption"></figcaption>
+    <p class="search-help" id="diagram-values"></p>
     <div id="breakdown-svg"></div>
-    <p class="search-help">Left: the position. Right: this address's matching holdings. Dashed: held by funding wallets; ownership unverified.</p>
+    <p class="search-help" id="diagram-legend"></p>
     <p id="breakdown-quality" class="breakdown-quality" hidden></p>
   </figure>
   <section class="evidence-preview" aria-label="Key evidence">
@@ -402,7 +418,8 @@
        things the 23.09 audit asked a card to say before submission. The
        Nansen line is readable without opening it; the list is one click. -->
   <p class="open-question" id="open-question" hidden></p>
-  <div style="display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-top: 16px;">
+  <p class="search-help" id="risk-preview" hidden></p>
+  <div id="reading-actions" style="display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-top: 16px;">
     <details class="share" id="share">
       <summary>Share this reading</summary>
       <div class="actions">
@@ -443,7 +460,7 @@
     <div class="box" id="funders" hidden>
       <p><strong>Wallets that funded this account</strong> - they hold the matching asset, which is not the same as this account holding it</p>
       <ul id="funders-list"></ul>
-      <p class="attribution">Linked wallets: Powered by Nansen API. Ownership is inferred from the funding link, not confirmed.</p>
+      <p class="attribution">Linked wallets: Powered by Nansen API. Funding links are observed; common ownership is unverified.</p>
     </div>
     <div class="box" id="notes" hidden>
       <p><strong>Notes on this reading</strong></p>
@@ -456,6 +473,8 @@
     <p class="tech" id="nansen-calls"></p>
   </section>
   <details class="glossary"><summary>What these terms mean</summary><dl>
+    <dt>Book</dt><dd>Evidence of market-making inventory: meaningful buy and sell orders in this position's market. The grade counts corroborating signals, not a probability or a recommendation.</dd>
+    <dt>Spot-covered short</dt><dd>Matching spot at this address covers roughly the size of the short. It does not establish safety, shared collateral or the absence of off-chain debt.</dd>
     <dt>Perp / spot</dt><dd>A perpetual contract tracks an asset's price; spot is the asset held directly.</dd>
     <dt>Net / gross exposure</dt><dd>Net subtracts short dollars from long dollars; gross adds both. Different assets can still move independently.</dd>
     <dt>Resting orders / two-sided quoting</dt><dd>Unfilled limit orders waiting to trade; bids and asks in the same market. Reduce-only exit orders do not count here.</dd>
@@ -482,14 +501,17 @@
 <section id="gallery" hidden>
   <div class="reading-nav"><button id="explore-home">← Check a wallet</button><button id="explore-return" hidden>Back to your reading →</button></div>
   <h1 id="explore-title" tabindex="-1">Explore</h1>
-  <p class="sub">Compare large positions by exposure, coverage and market-making activity. These are dated snapshots, not live rankings.</p>
+  <p class="sub">Learn what large positions do and do not reveal. Every case has a date and evidence; these are saved readings, not a live market overview.</p>
   <p id="explore-status" class="status" role="status">Loading saved readings...</p>
   <p id="explore-reading-status" class="status" role="status" hidden></p>
   <div class="chips" role="group" aria-label="Explore view">
-    <button class="chip" id="explore-ranked" aria-pressed="true" aria-controls="boards-fold">Ranked boards</button>
+    <button class="chip" id="explore-cases" aria-pressed="true" aria-controls="case-studies">Recent case studies</button>
+    <button class="chip" id="explore-ranked" aria-pressed="false" aria-controls="boards-fold">Compare readings</button>
     <button class="chip" id="explore-all" aria-pressed="false" aria-controls="all-readings">All readings</button>
+    <button class="chip" id="explore-archive" aria-pressed="false" aria-controls="archive">Archive</button>
   </div>
-  <section id="boards-fold" aria-label="Ranked boards">
+  <section id="case-studies" aria-label="Recent case studies"><p class="sub">Selected evidence cases. Opening one is free and does not run a new check.</p><div id="case-study-list" class="list"></div></section>
+  <section id="boards-fold" aria-label="Ranked boards" hidden>
     <p class="sub" id="gallery-sub"></p>
     <div id="boards"></div>
   </section>
@@ -501,14 +523,14 @@
     <!-- How the set was chosen, the counts across it, and the readings made
          under earlier rules: all real, all kept, none of it the first thing a
          new visitor needs (23.09 audit, U06). -->
-    <details class="archive" id="archive">
+  </section>
+    <details class="archive" id="archive" hidden>
       <summary id="archive-summary">How these were picked, and the readings made under earlier rules</summary>
       <p class="sub" id="gallery-stats"></p>
       <p class="sub" id="gallery-method"></p>
       <ol class="list" id="archive-list"></ol>
       <button class="more" id="archive-more" hidden>Show more</button>
     </details>
-  </section>
 </section>
 </main>
 <footer>

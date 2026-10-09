@@ -1,4 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { checkNansenBalances } from '../../src/sources/validate';
+
+it('normalizes accepted decimal strings before balance arithmetic', () => {
+  const checked = checkNansenBalances([{ chain: 'ethereum', token_symbol: 'WETH', token_amount: '100', value_usd: '300000' }]);
+  expect(checked.malformed).toBe(0);
+  expect(normalizeNansenBalances(checked.rows)).toMatchObject([{ amount: 100, valueUsd: 300000, priced: true }]);
+  const unpriced = checkNansenBalances([{ chain: 'ethereum', token_symbol: 'WETH', token_amount: '100', value_usd: null }]);
+  expect(normalizeNansenBalances(unpriced.rows)).toMatchObject([{ amount: 100, valueUsd: 0, priced: false }]);
+});
 import clearinghouseFixture from '../fixtures/hyperliquid/clearinghouse-many-positions.json';
 import openOrdersFixture from '../fixtures/hyperliquid/open-orders.json';
 import spotBalancesFixture from '../fixtures/hyperliquid/spot-balances.json';

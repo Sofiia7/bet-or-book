@@ -252,6 +252,9 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
     // less and must not be cached for as long as a current one.
     note(`Positions were measured ${minutes} minutes before this check, not at the moment of it`, true);
   }
+  if (measuredAt !== null && measuredAt - now > 60_000) {
+    note('The position source reports a future timestamp; its time cannot be reconciled with this check', true);
+  }
 
   // Mark prices, so distance to liquidation is measured from where the price
   // is rather than from where the position was opened.
@@ -285,7 +288,8 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
       ? askedFor
       : null;
   if (askedFor && focus === null) {
-    const text = `No ${askedFor.coin} ${askedFor.side} is open at this address; this answer is about the largest position instead`;
+    const scope = positionsCoverage === 'complete' ? 'at this address in this reading' : 'on the checked venues in this reading; other venues are unverified';
+    const text = `No ${askedFor.coin} ${askedFor.side} is open ${scope}; this answer is about the largest position instead`;
     coverage.push(text);
     // Nothing failed to read, so the answer is not degraded - but it is not
     // an answer to the question asked, and that has to stand next to it

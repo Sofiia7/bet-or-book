@@ -153,6 +153,7 @@ describe('checkAddress (offline, real fixtures)', () => {
       nansen: createNansenClient('k', (m) => {
         calls.push(m);
       }),
+      now: () => Date.parse('2026-09-18T13:05:21.479Z'),
     });
     expect(result.source).toBe('nansen');
     expect(result.positions.nPositions).toBe(17);
@@ -171,7 +172,6 @@ describe('checkAddress (offline, real fixtures)', () => {
     // this test is reading old positions and now says so.
     expect(result.positionsAsOf).toBe('2026-09-18T13:04:21.479Z');
     expect(result.coverage).toEqual([
-      expect.stringMatching(/^Positions were measured \d+ minutes before this check, not at the moment of it$/),
       '2 funding wallets carry no Nansen label: whether they are private wallets or exchange addresses is unverified',
     ]);
     expect(result.summary).toMatch(/^Less than 1% of the \$[\d.]+M ETH short is covered by ETH at this address\./);
@@ -203,6 +203,19 @@ describe('checkAddress (offline, real fixtures)', () => {
     // Vitals are attributed to wherever the position record actually came
     // from, not to Nansen just because a key was given.
     expect(result.vitals.find((v) => v.label === 'Leverage')?.source).toBe('Hyperliquid');
+  });
+
+  it('does not call complete matching spot a hedge when Nansen positions failed', async () => {
+    route();
+    const eth = abxClearinghouse.assetPositions.find(p => p.position.coin === 'ETH')!;
+    const nansen = fakeNansen({ positions: syntheticPositions([]), balances: [balanceRow('WETH', Math.abs(Number(eth.position.positionValue)))] });
+    nansen.perpPositions = vi.fn(async () => { throw new Error('positions unavailable'); });
+    const result = await checkAddress(ABRAXAS, { nansen, now: () => abxClearinghouse.time + 60_000 });
+    expect(result.positionsCoverage).toBe('partial');
+    expect(result.hedgeCoverage).toBe('complete');
+    expect(result.hedge.hedgeRatio).toBeCloseTo(1, 2);
+    expect(result.verdict.reasons).toEqual(['positions_not_complete']);
+    expect(result.breakdown?.dataQuality).toBe('unknown');
   });
 
   it('describes a wide position spread without calling it a book (audit A03)', async () => {
@@ -282,6 +295,8 @@ describe('checkAddress (offline, real fixtures)', () => {
     const result = await checkAddress(ABRAXAS, { nansen, now: () => at + 3_600_000 });
     expect(result.positionsAsOf).toBe('2026-09-21T09:00:00.000Z');
     expect(result.coverage).toContain('Positions were measured 60 minutes before this check, not at the moment of it');
+    expect(result.verdict.reasons).toEqual(['positions_stale']);
+    expect(result.breakdown?.dataQuality).toBe('unknown');
   });
 
   it('still answers when open interest cannot be read', async () => {

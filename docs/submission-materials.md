@@ -20,7 +20,7 @@ Every week, someone posts a whale's hundred-million-dollar short. People read th
 
 I built Bet or Book to make that difference visible. Paste a Hyperliquid address or wallet link and select the position you came to investigate. The tool reads public positions, orders, fills and balances. It gives a dated answer, the supporting numbers, and the evidence it could not obtain.
 
-The examples show different stories. A concentrated HYPE long can look directional. A HYPE short can have matching spot at the same address. An ETH short can coexist with matching assets in wallets that funded the account. A transfer does not establish ownership, so those assets do not become a hedge. Another account quotes its position's own market on both sides: evidence of inventory. Use the actual dates and figures on screen in the recorded demo.
+The three main examples show different stories. A concentrated HYPE long looks directional. A HYPE short has matching spot at the same address. An ETH short coexists with matching assets in wallets that funded the account. A transfer does not establish ownership, so those assets do not become its hedge. The optional fourth example shows why busy maker-style trading alone does not prove inventory. The current showcase contains no Book verdict; older Book readings remain explicitly dated in the archive. Use the actual dates and figures on screen in the recorded demo.
 
 The constellation carries these distinctions. The position is on the left, this address's matching holdings on the right, and funder holdings are dashed. Leverage, liquidation distance and funding describe position risk separately. A second reading shows what changed, including whether the account moved or the rules changed.
 

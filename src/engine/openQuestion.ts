@@ -32,6 +32,7 @@ const PAIR_OR_VIEWS =
  * rules' own list (ReasonCode), as it does the rule sentences. */
 const OPEN: Record<Exclude<ReasonCode, 'positions' | 'trades'> | 'balanced_book', (r: Reading) => string | null> = {
   'no open positions found': () => null,
+  positions_stale: () => 'the position and matching holdings at the same time. A fresh reading is needed.',
   orders: (r) =>
     `whether this ${coinOf(r)} ${r.positions.headlineSide ?? 'position'} is inventory the book will lay off or a ` +
     'view it chose to keep. One reading of its orders cannot tell; watching the quoting over days would.',

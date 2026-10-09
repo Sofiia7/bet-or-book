@@ -10124,7 +10124,7 @@
    },
    "sizeVsOi": null,
    "source": "nansen",
-   "summary": "No open positions right now, so there is nothing to classify.",
+   "summary": "No open positions were found in this reading.",
    "evidence": [
     {
      "label": "Open positions",
@@ -10144,14 +10144,14 @@
    "hedgeCoverage": "not-applicable",
    "positionsAsOf": null,
    "degraded": false,
-   "classifierVersion": "v7",
+   "classifierVersion": "v8",
    "snapshotId": "d62d484b-mu726b25",
    "ordersCoverage": "complete",
    "positionsCoverage": "complete",
    "observationSchemaVersion": 3,
    "assetRegistryVersion": 3,
    "observedAt": "2026-09-18T14:33:16.925Z",
-   "interpretedAt": "2026-10-07T16:13:14.685Z",
+   "interpretedAt": "2026-10-09T05:31:33.796Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -10162,7 +10162,7 @@
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address."
     ],
     "more": 0,
-    "provenance": "Positions as of 18 Sept, 14:33 UTC · from the gallery scan, rules v7",
+    "provenance": "Positions as of 18 Sept, 14:33 UTC · from the gallery scan, rules v8",
     "link": null,
     "evidence": [
      {

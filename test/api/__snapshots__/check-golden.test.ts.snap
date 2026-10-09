@@ -15,7 +15,7 @@ exports[`a check, whole, on recorded real answers > a HIP-3 long whose dex will 
     "side": "long",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v7",
+  "classifierVersion": "v8",
   "coverage": [
     "Resting orders on the xyz dex could not be read",
   ],
@@ -143,7 +143,7 @@ exports[`a check, whole, on recorded real answers > a HIP-3 long whose dex will 
     ],
     "link": null,
     "more": 0,
-    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v7",
+    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v8",
   },
   "sizeVsOi": null,
   "source": "nansen",
@@ -238,7 +238,7 @@ exports[`a check, whole, on recorded real answers > a lone long, with its fundin
     "side": "long",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v7",
+  "classifierVersion": "v8",
   "coverage": [
     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
   ],
@@ -366,7 +366,7 @@ exports[`a check, whole, on recorded real answers > a lone long, with its fundin
     ],
     "link": null,
     "more": 0,
-    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v7",
+    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v8",
   },
   "sizeVsOi": 0.018147816861505465,
   "source": "nansen",
@@ -497,7 +497,7 @@ exports[`a check, whole, on recorded real answers > a short 60% covered 1`] = `
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v7",
+  "classifierVersion": "v8",
   "coverage": [
     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
   ],
@@ -630,7 +630,7 @@ exports[`a check, whole, on recorded real answers > a short 60% covered 1`] = `
     ],
     "link": null,
     "more": 0,
-    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v7",
+    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v8",
   },
   "sizeVsOi": 0.04084778513688547,
   "source": "nansen",
@@ -756,7 +756,7 @@ exports[`a check, whole, on recorded real answers > a short covered by its own W
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v7",
+  "classifierVersion": "v8",
   "coverage": [
     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
   ],
@@ -889,7 +889,7 @@ exports[`a check, whole, on recorded real answers > a short covered by its own W
     ],
     "link": null,
     "more": 0,
-    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v7",
+    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v8",
   },
   "sizeVsOi": 0.04084778513688547,
   "source": "nansen",
@@ -996,7 +996,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen answers 200 
   "breakdown": {
     "applies": true,
     "coin": "ETH",
-    "dataQuality": "measured",
+    "dataQuality": "unknown",
     "elsewhere": null,
     "excessUsd": 0,
     "headlineUsd": 179353809.8238,
@@ -1010,7 +1010,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen answers 200 
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v7",
+  "classifierVersion": "v8",
   "coverage": [
     "Positions were measured 116 minutes before this check, not at the moment of it",
     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
@@ -1126,6 +1126,51 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen answers 200 
         "side": "short",
         "sizeUsd": 24370809.836,
       },
+      {
+        "coin": "XRP",
+        "side": "short",
+        "sizeUsd": 4121948.732,
+      },
+      {
+        "coin": "FARTCOIN",
+        "side": "short",
+        "sizeUsd": 3171163.66556,
+      },
+      {
+        "coin": "PUMP",
+        "side": "short",
+        "sizeUsd": 2285868.04052,
+      },
+      {
+        "coin": "LINK",
+        "side": "short",
+        "sizeUsd": 2136661.415,
+      },
+      {
+        "coin": "XPL",
+        "side": "short",
+        "sizeUsd": 722910.733363,
+      },
+      {
+        "coin": "DOGE",
+        "side": "short",
+        "sizeUsd": 81279.36387,
+      },
+      {
+        "coin": "ASTER",
+        "side": "short",
+        "sizeUsd": 23290.012,
+      },
+      {
+        "coin": "AVAX",
+        "side": "short",
+        "sizeUsd": 3.272866,
+      },
+      {
+        "coin": "APE",
+        "side": "short",
+        "sizeUsd": 0.013255,
+      },
     ],
     "grossUsd": 416970282.89358413,
     "headlineCoin": "ETH",
@@ -1174,11 +1219,11 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen answers 200 
     ],
     "link": null,
     "more": 1,
-    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v7",
+    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v8",
   },
   "sizeVsOi": 0.07326205887164401,
   "source": "hyperliquid",
-  "summary": "Of what could be read, 43% of the exposure is one $179.4M ETH short - but only the main perp dex was read, and a HIP-3 position would not appear here, so this is not the whole portfolio.",
+  "summary": "The $179.4M ETH short was measured outside the time window of this check. Its exposure cannot be established by combining those positions with newer holdings or quotes.",
   "trades": {
     "buyShare": 0.596,
     "cappedByApiLimit": true,
@@ -1194,7 +1239,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen answers 200 
   },
   "verdict": {
     "reasons": [
-      "positions_not_complete",
+      "positions_stale",
     ],
     "strength": null,
     "verdict": "unknown",
@@ -1281,7 +1326,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen not used, an
   "breakdown": {
     "applies": true,
     "coin": "ETH",
-    "dataQuality": "partial",
+    "dataQuality": "unknown",
     "elsewhere": null,
     "excessUsd": 0,
     "headlineUsd": 179353809.8238,
@@ -1295,7 +1340,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen not used, an
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v7",
+  "classifierVersion": "v8",
   "coverage": [
     "Nansen not used (today's Nansen credits are used up): main-dex positions only, no other chains, no linked wallets",
     "Positions read from Hyperliquid alone: a position on a HIP-3 dex would not appear here",
@@ -1323,6 +1368,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen not used, an
   "degraded": true,
   "evidence": [
     {
+      "decisive": true,
       "label": "Largest position",
       "source": "Hyperliquid",
       "value": "$179.4M ETH short",
@@ -1338,7 +1384,6 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen not used, an
       "value": "100%",
     },
     {
-      "decisive": true,
       "label": "Hedge found",
       "source": "Hyperliquid",
       "value": "0% (Hyperliquid spot)",
@@ -1406,6 +1451,51 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen not used, an
         "side": "short",
         "sizeUsd": 24370809.836,
       },
+      {
+        "coin": "XRP",
+        "side": "short",
+        "sizeUsd": 4121948.732,
+      },
+      {
+        "coin": "FARTCOIN",
+        "side": "short",
+        "sizeUsd": 3171163.66556,
+      },
+      {
+        "coin": "PUMP",
+        "side": "short",
+        "sizeUsd": 2285868.04052,
+      },
+      {
+        "coin": "LINK",
+        "side": "short",
+        "sizeUsd": 2136661.415,
+      },
+      {
+        "coin": "XPL",
+        "side": "short",
+        "sizeUsd": 722910.733363,
+      },
+      {
+        "coin": "DOGE",
+        "side": "short",
+        "sizeUsd": 81279.36387,
+      },
+      {
+        "coin": "ASTER",
+        "side": "short",
+        "sizeUsd": 23290.012,
+      },
+      {
+        "coin": "AVAX",
+        "side": "short",
+        "sizeUsd": 3.272866,
+      },
+      {
+        "coin": "APE",
+        "side": "short",
+        "sizeUsd": 0.013255,
+      },
     ],
     "grossUsd": 416970282.89358413,
     "headlineCoin": "ETH",
@@ -1427,11 +1517,6 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen not used, an
     "evidence": [
       {
         "decisive": true,
-        "label": "Hedge found",
-        "source": "Hyperliquid",
-        "value": "0% (Hyperliquid spot)",
-      },
-      {
         "label": "Largest position",
         "source": "Hyperliquid",
         "value": "$179.4M ETH short",
@@ -1446,6 +1531,11 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen not used, an
         "source": "Hyperliquid",
         "value": "100%",
       },
+      {
+        "label": "Hedge found",
+        "source": "Hyperliquid",
+        "value": "0% (Hyperliquid spot)",
+      },
     ],
     "limits": [
       "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
@@ -1454,11 +1544,11 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen not used, an
     ],
     "link": null,
     "more": 2,
-    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v7",
+    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v8",
   },
   "sizeVsOi": 0.07326205887164401,
   "source": "hyperliquid",
-  "summary": "43% of the exposure is one $179.4M ETH short, and whether it is hedged could not be established: only its Hyperliquid balances were read, and a hedge on another chain would not show.",
+  "summary": "The $179.4M ETH short was measured outside the time window of this check. Its exposure cannot be established by combining those positions with newer holdings or quotes.",
   "trades": {
     "buyShare": 0.596,
     "cappedByApiLimit": true,
@@ -1474,7 +1564,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen not used, an
   },
   "verdict": {
     "reasons": [
-      "hedge_not_checked",
+      "positions_stale",
     ],
     "strength": null,
     "verdict": "unknown",
@@ -1561,7 +1651,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen positions fa
   "breakdown": {
     "applies": true,
     "coin": "ETH",
-    "dataQuality": "measured",
+    "dataQuality": "unknown",
     "elsewhere": {
       "ownership": "unverified",
       "usd": 399107867.06126976,
@@ -1584,7 +1674,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen positions fa
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v7",
+  "classifierVersion": "v8",
   "coverage": [
     "Positions were measured 116 minutes before this check, not at the moment of it",
     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
@@ -1612,6 +1702,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen positions fa
   "degraded": true,
   "evidence": [
     {
+      "decisive": true,
       "label": "Largest position",
       "source": "Hyperliquid",
       "value": "$179.4M ETH short",
@@ -1632,7 +1723,6 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen positions fa
       "value": "0.0% (Nansen-supported chains)",
     },
     {
-      "decisive": true,
       "label": "Linked wallets",
       "source": "Nansen",
       "value": "$399.1M ETH in 2 wallets, owner unconfirmed",
@@ -1722,6 +1812,51 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen positions fa
         "side": "short",
         "sizeUsd": 24370809.836,
       },
+      {
+        "coin": "XRP",
+        "side": "short",
+        "sizeUsd": 4121948.732,
+      },
+      {
+        "coin": "FARTCOIN",
+        "side": "short",
+        "sizeUsd": 3171163.66556,
+      },
+      {
+        "coin": "PUMP",
+        "side": "short",
+        "sizeUsd": 2285868.04052,
+      },
+      {
+        "coin": "LINK",
+        "side": "short",
+        "sizeUsd": 2136661.415,
+      },
+      {
+        "coin": "XPL",
+        "side": "short",
+        "sizeUsd": 722910.733363,
+      },
+      {
+        "coin": "DOGE",
+        "side": "short",
+        "sizeUsd": 81279.36387,
+      },
+      {
+        "coin": "ASTER",
+        "side": "short",
+        "sizeUsd": 23290.012,
+      },
+      {
+        "coin": "AVAX",
+        "side": "short",
+        "sizeUsd": 3.272866,
+      },
+      {
+        "coin": "APE",
+        "side": "short",
+        "sizeUsd": 0.013255,
+      },
     ],
     "grossUsd": 416970282.89358413,
     "headlineCoin": "ETH",
@@ -1743,11 +1878,6 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen positions fa
     "evidence": [
       {
         "decisive": true,
-        "label": "Linked wallets",
-        "source": "Nansen",
-        "value": "$399.1M ETH in 2 wallets, owner unconfirmed",
-      },
-      {
         "label": "Largest position",
         "source": "Hyperliquid",
         "value": "$179.4M ETH short",
@@ -1762,6 +1892,11 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen positions fa
         "source": "Hyperliquid",
         "value": "100%",
       },
+      {
+        "label": "Hedge found",
+        "source": "Nansen",
+        "value": "0.0% (Nansen-supported chains)",
+      },
     ],
     "limits": [
       "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
@@ -1770,11 +1905,11 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen positions fa
     ],
     "link": null,
     "more": 2,
-    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v7",
+    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v8",
   },
   "sizeVsOi": 0.07326205887164401,
   "source": "hyperliquid",
-  "summary": "Less than 1% of the $179.4M ETH short is covered by ETH at this address. 2 wallets that funded it hold $399.1M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
+  "summary": "The $179.4M ETH short was measured outside the time window of this check. Its exposure cannot be established by combining those positions with newer holdings or quotes.",
   "trades": {
     "buyShare": 0.596,
     "cappedByApiLimit": true,
@@ -1790,7 +1925,7 @@ exports[`a check, whole, on recorded real answers > abraxas: Nansen positions fa
   },
   "verdict": {
     "reasons": [
-      "linked_exposure_unverified",
+      "positions_stale",
     ],
     "strength": null,
     "verdict": "unknown",
@@ -1877,7 +2012,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about a posit
   "breakdown": {
     "applies": true,
     "coin": "ETH",
-    "dataQuality": "measured",
+    "dataQuality": "unknown",
     "elsewhere": {
       "ownership": "unverified",
       "usd": 399107867.06126976,
@@ -1900,10 +2035,10 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about a posit
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v7",
+  "classifierVersion": "v8",
   "coverage": [
     "Positions were measured 116 minutes before this check, not at the moment of it",
-    "No DOGE long is open at this address; this answer is about the largest position instead",
+    "No DOGE long is open at this address in this reading; this answer is about the largest position instead",
     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
     "2 funding wallets carry no Nansen label: whether they are private wallets or exchange addresses is unverified",
   ],
@@ -1914,7 +2049,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about a posit
     },
     {
       "failure": true,
-      "text": "No DOGE long is open at this address; this answer is about the largest position instead",
+      "text": "No DOGE long is open at this address in this reading; this answer is about the largest position instead",
     },
     {
       "failure": false,
@@ -1928,6 +2063,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about a posit
   "degraded": true,
   "evidence": [
     {
+      "decisive": true,
       "label": "Largest position",
       "source": "Nansen",
       "value": "$179.4M ETH short",
@@ -1948,7 +2084,6 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about a posit
       "value": "0.0% (Nansen-supported chains)",
     },
     {
-      "decisive": true,
       "label": "Linked wallets",
       "source": "Nansen",
       "value": "$399.1M ETH in 2 wallets, owner unconfirmed",
@@ -2038,6 +2173,66 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about a posit
         "side": "short",
         "sizeUsd": 26446203.34972,
       },
+      {
+        "coin": "ZEC",
+        "side": "short",
+        "sizeUsd": 24385209.251184,
+      },
+      {
+        "coin": "xyz:SILVER",
+        "side": "short",
+        "sizeUsd": 19068911.49916,
+      },
+      {
+        "coin": "XRP",
+        "side": "short",
+        "sizeUsd": 4121948.732,
+      },
+      {
+        "coin": "FARTCOIN",
+        "side": "short",
+        "sizeUsd": 3170955.515664,
+      },
+      {
+        "coin": "PUMP",
+        "side": "short",
+        "sizeUsd": 2286411.647664,
+      },
+      {
+        "coin": "LINK",
+        "side": "short",
+        "sizeUsd": 2136842.35,
+      },
+      {
+        "coin": "XPL",
+        "side": "short",
+        "sizeUsd": 722788.121608,
+      },
+      {
+        "coin": "xyz:STRC",
+        "side": "long",
+        "sizeUsd": 699409.0631,
+      },
+      {
+        "coin": "DOGE",
+        "side": "short",
+        "sizeUsd": 81291.753,
+      },
+      {
+        "coin": "ASTER",
+        "side": "short",
+        "sizeUsd": 23287.84116,
+      },
+      {
+        "coin": "AVAX",
+        "side": "short",
+        "sizeUsd": 3.272907,
+      },
+      {
+        "coin": "APE",
+        "side": "short",
+        "sizeUsd": 0.013255,
+      },
     ],
     "grossUsd": 463266803.598905,
     "headlineCoin": "ETH",
@@ -2059,11 +2254,6 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about a posit
     "evidence": [
       {
         "decisive": true,
-        "label": "Linked wallets",
-        "source": "Nansen",
-        "value": "$399.1M ETH in 2 wallets, owner unconfirmed",
-      },
-      {
         "label": "Largest position",
         "source": "Nansen",
         "value": "$179.4M ETH short",
@@ -2078,19 +2268,24 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about a posit
         "source": "Nansen",
         "value": "100%",
       },
+      {
+        "label": "Hedge found",
+        "source": "Nansen",
+        "value": "0.0% (Nansen-supported chains)",
+      },
     ],
     "limits": [
       "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
       "Positions were measured 116 minutes before this check, not at the moment of it",
-      "No DOGE long is open at this address; this answer is about the largest position instead",
+      "No DOGE long is open at this address in this reading; this answer is about the largest position instead",
     ],
     "link": null,
     "more": 2,
-    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v7",
+    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v8",
   },
   "sizeVsOi": 0.07328258867196834,
   "source": "nansen",
-  "summary": "Less than 1% of the $179.4M ETH short is covered by ETH at this address. 2 wallets that funded it hold $399.1M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
+  "summary": "The $179.4M ETH short was measured outside the time window of this check. Its exposure cannot be established by combining those positions with newer holdings or quotes.",
   "trades": {
     "buyShare": 0.596,
     "cappedByApiLimit": true,
@@ -2106,7 +2301,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about a posit
   },
   "verdict": {
     "reasons": [
-      "linked_exposure_unverified",
+      "positions_stale",
     ],
     "strength": null,
     "verdict": "unknown",
@@ -2193,7 +2388,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about its sec
   "breakdown": {
     "applies": true,
     "coin": "BTC",
-    "dataQuality": "measured",
+    "dataQuality": "unknown",
     "elsewhere": null,
     "excessUsd": 0,
     "headlineUsd": 106495271.7675,
@@ -2207,7 +2402,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about its sec
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v7",
+  "classifierVersion": "v8",
   "coverage": [
     "Positions were measured 116 minutes before this check, not at the moment of it",
     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
@@ -2230,6 +2425,7 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about its sec
   "degraded": true,
   "evidence": [
     {
+      "decisive": true,
       "label": "Selected position",
       "source": "Nansen",
       "value": "$106.5M BTC short",
@@ -2240,7 +2436,6 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about its sec
       "value": "23%",
     },
     {
-      "decisive": true,
       "label": "Net / gross exposure",
       "source": "Nansen",
       "value": "100%",
@@ -2343,6 +2538,66 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about its sec
         "side": "short",
         "sizeUsd": 26446203.34972,
       },
+      {
+        "coin": "ZEC",
+        "side": "short",
+        "sizeUsd": 24385209.251184,
+      },
+      {
+        "coin": "xyz:SILVER",
+        "side": "short",
+        "sizeUsd": 19068911.49916,
+      },
+      {
+        "coin": "XRP",
+        "side": "short",
+        "sizeUsd": 4121948.732,
+      },
+      {
+        "coin": "FARTCOIN",
+        "side": "short",
+        "sizeUsd": 3170955.515664,
+      },
+      {
+        "coin": "PUMP",
+        "side": "short",
+        "sizeUsd": 2286411.647664,
+      },
+      {
+        "coin": "LINK",
+        "side": "short",
+        "sizeUsd": 2136842.35,
+      },
+      {
+        "coin": "XPL",
+        "side": "short",
+        "sizeUsd": 722788.121608,
+      },
+      {
+        "coin": "xyz:STRC",
+        "side": "long",
+        "sizeUsd": 699409.0631,
+      },
+      {
+        "coin": "DOGE",
+        "side": "short",
+        "sizeUsd": 81291.753,
+      },
+      {
+        "coin": "ASTER",
+        "side": "short",
+        "sizeUsd": 23287.84116,
+      },
+      {
+        "coin": "AVAX",
+        "side": "short",
+        "sizeUsd": 3.272907,
+      },
+      {
+        "coin": "APE",
+        "side": "short",
+        "sizeUsd": 0.013255,
+      },
     ],
     "grossUsd": 463266803.598905,
     "headlineCoin": "BTC",
@@ -2364,11 +2619,6 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about its sec
     "evidence": [
       {
         "decisive": true,
-        "label": "Net / gross exposure",
-        "source": "Nansen",
-        "value": "100%",
-      },
-      {
         "label": "Selected position",
         "source": "Nansen",
         "value": "$106.5M BTC short",
@@ -2377,6 +2627,11 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about its sec
         "label": "Share of exposure",
         "source": "Nansen",
         "value": "23%",
+      },
+      {
+        "label": "Net / gross exposure",
+        "source": "Nansen",
+        "value": "100%",
       },
       {
         "label": "Hedge found",
@@ -2391,11 +2646,11 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about its sec
     ],
     "link": null,
     "more": 1,
-    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v7",
+    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v8",
   },
   "sizeVsOi": 0.03865313377305687,
   "source": "nansen",
-  "summary": "17 open positions net out to 100% of gross exposure, mostly short; the selected leg is $106.5M BTC short (23% of it). No two-sided quoting, and no BTC was found at this address on Nansen-supported chains. Debts and other derivatives are not read here.",
+  "summary": "The $106.5M BTC short was measured outside the time window of this check. Its exposure cannot be established by combining those positions with newer holdings or quotes.",
   "trades": {
     "buyShare": 0.596,
     "cappedByApiLimit": true,
@@ -2411,10 +2666,10 @@ exports[`a check, whole, on recorded real answers > abraxas: asked about its sec
   },
   "verdict": {
     "reasons": [
-      "directional_portfolio",
+      "positions_stale",
     ],
     "strength": null,
-    "verdict": "looks_like_a_bet",
+    "verdict": "unknown",
   },
   "vitals": [
     {
@@ -2498,7 +2753,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the deadline alread
   "breakdown": {
     "applies": true,
     "coin": "ETH",
-    "dataQuality": "partial",
+    "dataQuality": "unknown",
     "elsewhere": null,
     "excessUsd": 0,
     "headlineUsd": 179353809.8238,
@@ -2512,7 +2767,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the deadline alread
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v7",
+  "classifierVersion": "v8",
   "coverage": [
     "This check ran out of time before it could read positions from Nansen",
     "Positions read from Hyperliquid alone: a position on a HIP-3 dex would not appear here",
@@ -2550,6 +2805,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the deadline alread
   "degraded": true,
   "evidence": [
     {
+      "decisive": true,
       "label": "Largest position",
       "source": "Hyperliquid",
       "value": "$179.4M ETH short",
@@ -2565,7 +2821,6 @@ exports[`a check, whole, on recorded real answers > abraxas: the deadline alread
       "value": "100%",
     },
     {
-      "decisive": true,
       "label": "Hedge found",
       "source": "Hyperliquid",
       "value": "0% (Hyperliquid spot)",
@@ -2633,6 +2888,51 @@ exports[`a check, whole, on recorded real answers > abraxas: the deadline alread
         "side": "short",
         "sizeUsd": 24370809.836,
       },
+      {
+        "coin": "XRP",
+        "side": "short",
+        "sizeUsd": 4121948.732,
+      },
+      {
+        "coin": "FARTCOIN",
+        "side": "short",
+        "sizeUsd": 3171163.66556,
+      },
+      {
+        "coin": "PUMP",
+        "side": "short",
+        "sizeUsd": 2285868.04052,
+      },
+      {
+        "coin": "LINK",
+        "side": "short",
+        "sizeUsd": 2136661.415,
+      },
+      {
+        "coin": "XPL",
+        "side": "short",
+        "sizeUsd": 722910.733363,
+      },
+      {
+        "coin": "DOGE",
+        "side": "short",
+        "sizeUsd": 81279.36387,
+      },
+      {
+        "coin": "ASTER",
+        "side": "short",
+        "sizeUsd": 23290.012,
+      },
+      {
+        "coin": "AVAX",
+        "side": "short",
+        "sizeUsd": 3.272866,
+      },
+      {
+        "coin": "APE",
+        "side": "short",
+        "sizeUsd": 0.013255,
+      },
     ],
     "grossUsd": 416970282.89358413,
     "headlineCoin": "ETH",
@@ -2654,11 +2954,6 @@ exports[`a check, whole, on recorded real answers > abraxas: the deadline alread
     "evidence": [
       {
         "decisive": true,
-        "label": "Hedge found",
-        "source": "Hyperliquid",
-        "value": "0% (Hyperliquid spot)",
-      },
-      {
         "label": "Largest position",
         "source": "Hyperliquid",
         "value": "$179.4M ETH short",
@@ -2673,6 +2968,11 @@ exports[`a check, whole, on recorded real answers > abraxas: the deadline alread
         "source": "Hyperliquid",
         "value": "100%",
       },
+      {
+        "label": "Hedge found",
+        "source": "Hyperliquid",
+        "value": "0% (Hyperliquid spot)",
+      },
     ],
     "limits": [
       "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
@@ -2681,11 +2981,11 @@ exports[`a check, whole, on recorded real answers > abraxas: the deadline alread
     ],
     "link": null,
     "more": 4,
-    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v7",
+    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v8",
   },
   "sizeVsOi": 0.07326205887164401,
   "source": "hyperliquid",
-  "summary": "43% of the exposure is one $179.4M ETH short, and whether it is hedged could not be established: only its Hyperliquid balances were read, and a hedge on another chain would not show.",
+  "summary": "The $179.4M ETH short was measured outside the time window of this check. Its exposure cannot be established by combining those positions with newer holdings or quotes.",
   "trades": {
     "buyShare": 0.596,
     "cappedByApiLimit": true,
@@ -2701,7 +3001,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the deadline alread
   },
   "verdict": {
     "reasons": [
-      "hedge_not_checked",
+      "positions_stale",
     ],
     "strength": null,
     "verdict": "unknown",
@@ -2788,7 +3088,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the full paid path,
   "breakdown": {
     "applies": true,
     "coin": "ETH",
-    "dataQuality": "measured",
+    "dataQuality": "unknown",
     "elsewhere": {
       "ownership": "unverified",
       "usd": 399107867.06126976,
@@ -2811,7 +3111,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the full paid path,
     "side": "short",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v7",
+  "classifierVersion": "v8",
   "coverage": [
     "Positions were measured 116 minutes before this check, not at the moment of it",
     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
@@ -2834,6 +3134,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the full paid path,
   "degraded": true,
   "evidence": [
     {
+      "decisive": true,
       "label": "Largest position",
       "source": "Nansen",
       "value": "$179.4M ETH short",
@@ -2854,7 +3155,6 @@ exports[`a check, whole, on recorded real answers > abraxas: the full paid path,
       "value": "0.0% (Nansen-supported chains)",
     },
     {
-      "decisive": true,
       "label": "Linked wallets",
       "source": "Nansen",
       "value": "$399.1M ETH in 2 wallets, owner unconfirmed",
@@ -2944,6 +3244,66 @@ exports[`a check, whole, on recorded real answers > abraxas: the full paid path,
         "side": "short",
         "sizeUsd": 26446203.34972,
       },
+      {
+        "coin": "ZEC",
+        "side": "short",
+        "sizeUsd": 24385209.251184,
+      },
+      {
+        "coin": "xyz:SILVER",
+        "side": "short",
+        "sizeUsd": 19068911.49916,
+      },
+      {
+        "coin": "XRP",
+        "side": "short",
+        "sizeUsd": 4121948.732,
+      },
+      {
+        "coin": "FARTCOIN",
+        "side": "short",
+        "sizeUsd": 3170955.515664,
+      },
+      {
+        "coin": "PUMP",
+        "side": "short",
+        "sizeUsd": 2286411.647664,
+      },
+      {
+        "coin": "LINK",
+        "side": "short",
+        "sizeUsd": 2136842.35,
+      },
+      {
+        "coin": "XPL",
+        "side": "short",
+        "sizeUsd": 722788.121608,
+      },
+      {
+        "coin": "xyz:STRC",
+        "side": "long",
+        "sizeUsd": 699409.0631,
+      },
+      {
+        "coin": "DOGE",
+        "side": "short",
+        "sizeUsd": 81291.753,
+      },
+      {
+        "coin": "ASTER",
+        "side": "short",
+        "sizeUsd": 23287.84116,
+      },
+      {
+        "coin": "AVAX",
+        "side": "short",
+        "sizeUsd": 3.272907,
+      },
+      {
+        "coin": "APE",
+        "side": "short",
+        "sizeUsd": 0.013255,
+      },
     ],
     "grossUsd": 463266803.598905,
     "headlineCoin": "ETH",
@@ -2965,11 +3325,6 @@ exports[`a check, whole, on recorded real answers > abraxas: the full paid path,
     "evidence": [
       {
         "decisive": true,
-        "label": "Linked wallets",
-        "source": "Nansen",
-        "value": "$399.1M ETH in 2 wallets, owner unconfirmed",
-      },
-      {
         "label": "Largest position",
         "source": "Nansen",
         "value": "$179.4M ETH short",
@@ -2984,6 +3339,11 @@ exports[`a check, whole, on recorded real answers > abraxas: the full paid path,
         "source": "Nansen",
         "value": "100%",
       },
+      {
+        "label": "Hedge found",
+        "source": "Nansen",
+        "value": "0.0% (Nansen-supported chains)",
+      },
     ],
     "limits": [
       "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
@@ -2992,11 +3352,11 @@ exports[`a check, whole, on recorded real answers > abraxas: the full paid path,
     ],
     "link": null,
     "more": 1,
-    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v7",
+    "provenance": "Positions as of 18 Sept, 13:04 UTC · checked live, rules v8",
   },
   "sizeVsOi": 0.07328258867196834,
   "source": "nansen",
-  "summary": "Less than 1% of the $179.4M ETH short is covered by ETH at this address. 2 wallets that funded it hold $399.1M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
+  "summary": "The $179.4M ETH short was measured outside the time window of this check. Its exposure cannot be established by combining those positions with newer holdings or quotes.",
   "trades": {
     "buyShare": 0.596,
     "cappedByApiLimit": true,
@@ -3012,7 +3372,7 @@ exports[`a check, whole, on recorded real answers > abraxas: the full paid path,
   },
   "verdict": {
     "reasons": [
-      "linked_exposure_unverified",
+      "positions_stale",
     ],
     "strength": null,
     "verdict": "unknown",
@@ -3107,7 +3467,7 @@ exports[`a check, whole, on recorded real answers > thirty offsetting positions 
     "side": "long",
   },
   "checkedAt": "2026-09-18T15:00:00.000Z",
-  "classifierVersion": "v7",
+  "classifierVersion": "v8",
   "coverage": [
     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
   ],
@@ -3208,6 +3568,131 @@ exports[`a check, whole, on recorded real answers > thirty offsetting positions 
         "side": "long",
         "sizeUsd": 1000000,
       },
+      {
+        "coin": "C5",
+        "side": "short",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C6",
+        "side": "long",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C7",
+        "side": "short",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C8",
+        "side": "long",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C9",
+        "side": "short",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C10",
+        "side": "long",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C11",
+        "side": "short",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C12",
+        "side": "long",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C13",
+        "side": "short",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C14",
+        "side": "long",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C15",
+        "side": "short",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C16",
+        "side": "long",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C17",
+        "side": "short",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C18",
+        "side": "long",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C19",
+        "side": "short",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C20",
+        "side": "long",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C21",
+        "side": "short",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C22",
+        "side": "long",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C23",
+        "side": "short",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C24",
+        "side": "long",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C25",
+        "side": "short",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C26",
+        "side": "long",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C27",
+        "side": "short",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C28",
+        "side": "long",
+        "sizeUsd": 1000000,
+      },
+      {
+        "coin": "C29",
+        "side": "short",
+        "sizeUsd": 1000000,
+      },
     ],
     "grossUsd": 30000000,
     "headlineCoin": "C0",
@@ -3255,7 +3740,7 @@ exports[`a check, whole, on recorded real answers > thirty offsetting positions 
     ],
     "link": null,
     "more": 0,
-    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v7",
+    "provenance": "Positions as of 18 Sept, 14:59 UTC · checked live, rules v8",
   },
   "sizeVsOi": null,
   "source": "nansen",

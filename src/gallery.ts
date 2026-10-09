@@ -27,6 +27,7 @@ export interface Gallery {
 export interface GalleryRow {
   snapshotId: string;
   description?: string;
+  question?: string;
   address: string;
   checkedAt: string;
   classifierVersion: string;
@@ -51,7 +52,7 @@ export interface GalleryRow {
   /** Dollars of genuinely two-sided quoting in the headline market itself -
    * the number the Book rule actually turns on (v5). Zero for every verdict
    * but Book, since that is the only path `computeVerdict` reaches it from. */
-  headlineTwoSidedNotionalUsd: number;
+  headlineTwoSidedNotionalUsd: number | null;
   /** The same short reason the big card's badge carries next to "Unknown"
    * (src/engine/reasons.ts, badgeQualifier) - null when there is none to
    * give. Computed fresh here from the stored verdict, the same way
@@ -118,15 +119,8 @@ export function galleryIndex(gallery: Gallery, idOf: (e: CheckResponse) => strin
         hedgeCoverage: e.hedgeCoverage,
         hedgeDataQuality: e.breakdown?.dataQuality ?? 'unknown',
         sizeVsOi: e.sizeVsOi,
-        // Missing (not zero) on any entry scanned before the 23.09 audit's
-        // L01 fix added this field to OrderFeatures - every such entry is
-        // already excluded from "current" by missingForCurrentRules (a book
-        // verdict needs exactly this number, so a legacy book-shaped entry
-        // is marked historical rather than silently re-judged), so a ranking
-        // that filters by verdict === 'book' before sorting by this value
-        // never actually sees the default; it is a safety net, not a claim
-        // that a legacy entry quotes nothing.
-        headlineTwoSidedNotionalUsd: e.orders.headlineTwoSidedNotionalUsd ?? 0,
+        // Older readings never measured this; absence must not become zero.
+        headlineTwoSidedNotionalUsd: e.orders.headlineTwoSidedNotionalUsd ?? null,
         // Not a stored field (see the doc comment on GalleryRow) - a pure
         // function of the verdict this entry already carries, recomputed
         // here rather than forwarded.

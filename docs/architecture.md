@@ -66,6 +66,7 @@ Every check, picture and saved-reading request leaves one line of JSON ([`src/te
 | To see | Query in Workers Logs |
 |---|---|
 | Latency | P50 and P95 of `ms`, where `event` = `check`, grouped by `outcome` |
+| Product engagement | `event` = `usage`: count landing/example/check/reading/share/save/repeat events, by reading kind, entry and incomplete flag; anonymous, best effort, not unique people. See [product-metrics.md](product-metrics.md) |
 | Cache hits | count grouped by `outcome` (`fresh` against `cached`) |
 | Degraded answers | count where `outcome` = `fresh`, grouped by `degraded` |
 | Why a verdict came out Unknown | count where `verdict` = `unknown`, grouped by `reason` |

@@ -24,6 +24,7 @@
  * debugging one particular request.
  */
 import type { CheckResponse } from './api/check';
+import type { UsageEvent } from './usage';
 
 export interface CheckEvent {
   event: 'check';
@@ -54,6 +55,10 @@ export interface CheckEvent {
   /** Credits the API priced, plus one for each call it did not - the same
    * conservative count the spend cap settles with. */
   credits?: number;
+  /** Last balance reported by this check, with its measurement time. A
+   * historical measurement, not a live account balance between requests. */
+  creditsRemaining?: number;
+  creditsMeasuredAt?: number;
   /** Fresh checks only: why Nansen was not asked at all - no key, the day's
    * cap, the account nearly empty. Absent when it was asked. */
   nansenOff?: string;
@@ -100,7 +105,7 @@ export interface SnapshotEvent {
   kvDegraded: boolean;
 }
 
-export type TelemetryEvent = CheckEvent | PictureEvent | SnapshotEvent;
+export type TelemetryEvent = CheckEvent | PictureEvent | SnapshotEvent | UsageEvent;
 
 const FAILURES = new Set<string>(['failed', 'draw_failed', 'save_failed']);
 

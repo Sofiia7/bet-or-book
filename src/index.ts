@@ -23,9 +23,10 @@ import type { KVLike } from './kv';
 import type { SafeKV } from './safeKv';
 import { ogCardFor, ogCacheKey, OG_LAYOUT_VERSION } from './engine/ogCard';
 import { emit, readingFields, type CheckEvent, type PictureEvent, type SnapshotEvent } from './telemetry';
+import { readUsage } from './usage';
 import { ruleExplanation, badgeQualifier } from './engine/reasons';
 import { openQuestion } from './engine/openQuestion';
-import { readingHeadline, whatWouldChange, exampleDescription, VERDICT_STYLES } from './engine/presentation';
+import { readingHeadline, evidenceTakeaway, caseQuestion, whatWouldChange, exampleDescription, VERDICT_STYLES } from './engine/presentation';
 import { nansenContribution } from './engine/nansenContribution';
 import { renderOgPng, type OgFont } from './engine/ogRender';
 import interRegular from '../assets/inter-regular.woff';
@@ -54,6 +55,7 @@ function explained<T extends CheckResponse>(r: T): T {
     nansen: nansenContribution(r),
     badgeQualifier: badgeQualifier(r.verdict, r.historical !== undefined),
     headline: readingHeadline(r),
+    takeaway: evidenceTakeaway(r),
     whatChanges: whatWouldChange(r),
   };
 }
@@ -87,7 +89,10 @@ const gallerySansFeatured: Gallery = {
 };
 const listedGallery: GalleryIndex & { featured: GalleryIndex['entries'] } = {
   ...galleryIndex(gallerySansFeatured, galleryIdOf),
-  featured: galleryIndex(featured, galleryIdOf).entries.map(row => ({ ...row, description: exampleDescription(featured.entries.find(e => galleryIdOf(e) === row.snapshotId)!) })),
+  featured: galleryIndex(featured, galleryIdOf).entries.map(row => {
+    const card = featured.entries.find(e => galleryIdOf(e) === row.snapshotId)!;
+    return { ...row, description: exampleDescription(card), question: caseQuestion(card) };
+  }),
 };
 const scriptedLedger = ledgerData as unknown as LedgerSummary;
 
@@ -333,8 +338,8 @@ function withSocialTags(html: string, card: CheckResponse, url: URL, id: string)
 
 /** What each verdict is called in a shared link's title. */
 const VERDICT_WORDS: Record<string, string> = {
-  book: 'a market maker’s book',
-  hedged: 'hedged in this same account',
+  book: 'market-making evidence in this market',
+  hedged: 'a spot-covered short at this address',
   looks_like_a_bet: 'looks like a real bet',
   unknown: 'not settled by what could be read',
 };
@@ -354,6 +359,20 @@ export default {
       });
     }
     const kv = safeKv(env.KV);
+
+    if (url.pathname === '/api/events') {
+      if (method !== 'POST') return new Response(null, { status: 405, headers: { allow: 'POST' } });
+      if (!fromThisSite(request, url)) return new Response(null, { status: 403 });
+      const client = requestGate(env.REQUEST_GATE, 60, 60);
+      const usageGlobalGate = requestGate(env.REQUEST_GATE, 300, 60);
+      if (!(await client.allow(`usage:${extractIp(request)}`)) || !(await usageGlobalGate.allow('usage:global'))) {
+        return new Response(null, { status: 429 });
+      }
+      const event = await readUsage(request);
+      if (!event) return new Response(null, { status: 400 });
+      emit(event);
+      return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
+    }
 
     if (url.pathname === '/app.js') {
       if (method === 'POST') return Response.json({ error: 'no such endpoint' }, { status: 405 });
@@ -479,14 +498,10 @@ export default {
           const known = parsed.positions.candidates.some(
             (c) => c.coin.toUpperCase() === focus.coin.toUpperCase() && c.side === focus.side,
           );
-          // `candidates` is the five largest positions, not necessarily all
-          // of them (src/engine/features.ts, MAX_CANDIDATES = 5). Absence
-          // from a truncated list proves nothing - only when nPositions is
-          // itself five or fewer is `candidates` the complete roster, and
-          // only then can "not in it" become "not open" without a fresh
-          // check (25.09 audit, A02).
+          // Older cached readings may carry only their five largest legs.
+          // Infer absence only when both the roster and venue read are full.
           const candidatesAreComplete = parsed.positions.nPositions <= parsed.positions.candidates.length;
-          if (!known && candidatesAreComplete) {
+          if (!known && candidatesAreComplete && parsed.positionsCoverage === 'complete') {
             const note = `No ${focus.coin} ${focus.side} is open at this address; this answer is about the largest position instead`;
             counted('not_open', readingFields(parsed));
             return Response.json({
@@ -533,7 +548,7 @@ export default {
       // for the same question cost this request nothing. The `as` keeps
       // TypeScript from deciding it is still null after the await: it is
       // assigned inside the producer below.
-      let fresh = null as Pick<CheckEvent, 'nansenCalls' | 'credits' | 'nansenOff'> | null;
+      let fresh = null as Pick<CheckEvent, 'nansenCalls' | 'credits' | 'nansenOff' | 'creditsRemaining' | 'creditsMeasuredAt'> | null;
       try {
         const ttl = (r: CheckResponse) => (r.degraded ? DEGRADED_CACHE_TTL_SECONDS : CHECK_CACHE_TTL_SECONDS);
         const result = await withCache(kv, cacheKey, ttl, async () => {
@@ -637,13 +652,14 @@ export default {
             // A call with no cost header counts as one credit, the
             // conservative direction for a cap.
             const spent = calls.reduce((sum, c) => sum + (c.creditsCost ?? 1), 0);
+            const lastKnown = [...calls].reverse().find((c) => c.creditsRemaining !== null);
             fresh = {
               nansenCalls: calls.length,
               credits: spent,
+              ...(lastKnown ? { creditsRemaining: lastKnown.creditsRemaining!, creditsMeasuredAt: lastKnown.at } : {}),
               ...(nansenOffReason !== undefined ? { nansenOff: nansenOffReason } : {}),
             };
             if (hold !== null) {
-              const lastKnown = [...calls].reverse().find((c) => c.creditsRemaining !== null);
               // A refusal that still reports credits is about one endpoint,
               // not about the balance, and must not stop tomorrow too.
               const refused = calls.some((c) => meansOutOfCredits(c.status, c.creditsRemaining));

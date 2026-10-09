@@ -87,6 +87,7 @@ export type CheckResponse = CheckResult & {
    * qualify. Added wherever a reading is served. */
   badgeQualifier?: string | null;
   headline?: string;
+  takeaway?: string;
   whatChanges?: string | null;
 };
 

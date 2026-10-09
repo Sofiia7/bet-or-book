@@ -126,9 +126,15 @@ export function verdictInputOf(
   o: Pick<
     Observation,
     'positions' | 'orders' | 'hedge' | 'trades' | 'linkedHedge' | 'hedgeCoverage' | 'ordersCoverage' | 'positionsCoverage'
-  > & Partial<Pick<Observation, 'linkedHedgeCoverage'>>,
+  > & Partial<Pick<Observation, 'linkedHedgeCoverage' | 'positionsAsOf' | 'checkedAt'>>,
 ): VerdictInput {
+  const measured = Date.parse(o.positionsAsOf ?? '');
+  const checked = Date.parse(o.checkedAt ?? '');
   return {
+    // Compare against the original check, never against the time a saved
+    // reading is reopened. Re-explaining a snapshot cannot make it fresher.
+    positionsStale: Number.isFinite(measured) && Number.isFinite(checked)
+      && (checked - measured >= 15 * 60_000 || measured - checked > 60_000),
     positions: o.positions,
     orders: o.orders,
     hedge: o.hedge,

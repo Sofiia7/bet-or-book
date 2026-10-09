@@ -1236,11 +1236,11 @@
    "mainDexPositionCount": 1,
    "focus": null,
    "positionsAsOf": "2026-10-07T15:56:31.225Z",
-   "classifierVersion": "v7",
+   "classifierVersion": "v8",
    "observationSchemaVersion": 7,
    "assetRegistryVersion": 3,
    "observedAt": "2026-10-07T15:56:31.225Z",
-   "interpretedAt": "2026-10-07T16:13:14.335Z",
+   "interpretedAt": "2026-10-09T05:31:34.714Z",
    "degraded": false,
    "summary": "100% of the exposure is one $122.1M HYPE long. Spot cannot offset a long, and debts or other derivatives are not read here.",
    "evidence": [
@@ -1329,7 +1329,7 @@
      "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here"
     ],
     "more": 0,
-    "provenance": "Positions as of 7 Oct, 15:56 UTC · saved reading, rules v7",
+    "provenance": "Positions as of 7 Oct, 15:56 UTC · saved reading, rules v8",
     "link": null,
     "evidence": [
      {
@@ -1445,11 +1445,11 @@
    "mainDexPositionCount": 1,
    "focus": null,
    "positionsAsOf": "2026-10-07T15:56:35.344Z",
-   "classifierVersion": "v7",
+   "classifierVersion": "v8",
    "observationSchemaVersion": 7,
    "assetRegistryVersion": 3,
    "observedAt": "2026-10-07T15:56:35.344Z",
-   "interpretedAt": "2026-10-07T16:13:14.335Z",
+   "interpretedAt": "2026-10-09T05:31:34.714Z",
    "degraded": false,
    "summary": "The $57.3M HYPE short is 99% covered by $56.9M of spot HYPE held by this address on Hyperliquid - other Nansen-supported chains were checked and found nothing.",
    "evidence": [
@@ -1555,7 +1555,7 @@
      "Borrowed on Hyperliquid under portfolio margin: 36,825,222 USDC. 642,500 HYPE of the spot held against the short is supplied as collateral. Spot balances are counted net of what is borrowed, and a loan taken anywhere else would not appear here"
     ],
     "more": 0,
-    "provenance": "Positions as of 7 Oct, 15:56 UTC · saved reading, rules v7",
+    "provenance": "Positions as of 7 Oct, 15:56 UTC · saved reading, rules v8",
     "link": null,
     "evidence": [
      {
@@ -1708,11 +1708,11 @@
    "mainDexPositionCount": 29,
    "focus": null,
    "positionsAsOf": "2026-10-07T15:56:38.813Z",
-   "classifierVersion": "v7",
+   "classifierVersion": "v8",
    "observationSchemaVersion": 7,
    "assetRegistryVersion": 3,
    "observedAt": "2026-10-07T15:56:38.813Z",
-   "interpretedAt": "2026-10-07T16:13:14.335Z",
+   "interpretedAt": "2026-10-09T05:31:34.714Z",
    "degraded": false,
    "summary": "Less than 1% of the $212.1M ETH short is covered by ETH at this address. 2 wallets that funded it hold $318.7M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
    "evidence": [
@@ -1816,7 +1816,7 @@
      "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here"
     ],
     "more": 0,
-    "provenance": "Positions as of 7 Oct, 15:56 UTC · saved reading, rules v7",
+    "provenance": "Positions as of 7 Oct, 15:56 UTC · saved reading, rules v8",
     "link": null,
     "evidence": [
      {
@@ -1969,11 +1969,11 @@
    "mainDexPositionCount": 86,
    "focus": null,
    "positionsAsOf": "2026-10-07T15:56:48.035Z",
-   "classifierVersion": "v7",
+   "classifierVersion": "v8",
    "observationSchemaVersion": 7,
    "assetRegistryVersion": 3,
    "observedAt": "2026-10-07T15:56:48.035Z",
-   "interpretedAt": "2026-10-07T16:13:14.335Z",
+   "interpretedAt": "2026-10-09T05:31:34.714Z",
    "degraded": false,
    "summary": "2,000+ fills over 0.2 hours, 47% buys and 74% as maker, 4.0% of them in ETH. That is a busy account, but nothing here shows the $66.1M ETH short is inventory rather than a position.",
    "evidence": [
@@ -2070,7 +2070,7 @@
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address."
     ],
     "more": 0,
-    "provenance": "Positions as of 7 Oct, 15:56 UTC · saved reading, rules v7",
+    "provenance": "Positions as of 7 Oct, 15:56 UTC · saved reading, rules v8",
     "link": null,
     "evidence": [
      {

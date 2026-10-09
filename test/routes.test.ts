@@ -6,6 +6,8 @@ import { testEnv, request, ORIGIN } from './support/worker';
 import { ogCacheKey, OG_LAYOUT_VERSION } from '../src/engine/ogCard';
 import ogFallbackPng from '../assets/og-fallback.png';
 import clearinghouseFixture from './fixtures/hyperliquid/clearinghouse-many-positions.json';
+import { CLASSIFIER_VERSION } from '../src/engine/verdict';
+import { ASSET_REGISTRY_VERSION } from '../src/engine/observation';
 
 const ADDRESS = '0x1111111111111111111111111111111111111111';
 
@@ -321,7 +323,12 @@ describe('asking about a particular position', () => {
 
     const first = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
     const firstBody = (await first.json()) as { positions: { candidates: Array<{ coin: string }> } };
-    expect(firstBody.positions.candidates.map((c) => c.coin)).not.toContain('WLD');
+    expect(firstBody.positions.candidates.map((c) => c.coin)).toContain('WLD');
+    // Also exercise migration from an older, genuinely truncated cache.
+    const key = `check:${CLASSIFIER_VERSION}:${ASSET_REGISTRY_VERSION}:${ADDRESS}`;
+    const cached = JSON.parse((await env.KV.get(key))!);
+    cached.positions.candidates = cached.positions.candidates.slice(0, 5);
+    await env.KV.put(key, JSON.stringify(cached));
 
     // Asking about WLD specifically must not answer "not open" purely
     // because it fell outside the cached top-5 - it must actually check.
@@ -529,7 +536,7 @@ describe('a rate limit bounds new checks, not free reads of one already on recor
     expect(repeat.status).toBe(200);
   });
 
-  it('answers a coin/side that is not open from the address\'s own cached reading, for free', async () => {
+  it('does not infer absence on all venues from a cached main-dex reading', async () => {
     const hlPosition = (coin: string, szi: string, positionValue: string) => ({
       type: 'oneWay',
       position: {
@@ -575,7 +582,7 @@ describe('a rate limit bounds new checks, not free reads of one already on recor
     };
     // No new Hyperliquid read - answered from the plain reading already on
     // record, not a fresh check of an ask that was never going to resolve.
-    expect(seen.calls).toBe(callsAfterFirst);
+    expect(seen.calls).toBeGreaterThan(callsAfterFirst);
     expect(bogusBody.focus).toBeNull();
     expect(bogusBody.positions.headlineCoin).toBe('ETH');
     expect(bogusBody.coverage.join(' ')).toContain('No DOGE long is open');
@@ -584,6 +591,15 @@ describe('a rate limit bounds new checks, not free reads of one already on recor
       text: expect.stringContaining('No DOGE long is open'),
       failure: true,
     });
+    // A complete, untruncated roster can still answer absence without spend.
+    const key = `check:${CLASSIFIER_VERSION}:${ASSET_REGISTRY_VERSION}:${ADDRESS}`;
+    const cached = JSON.parse((await env.KV.get(key))!);
+    cached.positionsCoverage = 'complete';
+    await env.KV.put(key, JSON.stringify(cached));
+    const callsBeforeComplete = seen.calls;
+    const complete = await worker.fetch(request(`/api/check?address=${ADDRESS}&coin=SHIB&side=long`, { method: 'POST' }), env);
+    expect(complete.status).toBe(200);
+    expect(seen.calls).toBe(callsBeforeComplete);
   });
 });
 

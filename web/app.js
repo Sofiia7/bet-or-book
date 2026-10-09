@@ -1,4 +1,23 @@
 const ADDRESS_RE = /^0x[0-9a-f]{40}$/;
+async function timedFetch(url, options = {}, timeout = 15000) {
+  return fetch(url, { ...options, signal: AbortSignal.timeout(timeout) });
+}
+const usageEntry = new URLSearchParams(window.location.search).has('s') ? 'shared_link' : 'home';
+const usageReadings = new Set();
+let returningReader = false;
+try { returningReader = localStorage.getItem('betOrBook:hasRead') === '1'; } catch {}
+let repeatRecorded = false;
+let usageSent = 0;
+function recordUsage(action, d) {
+  // Test traffic and the operator reserve are not product engagement.
+  if (['localhost', '127.0.0.1', '::1', '[::1]'].includes(window.location.hostname)
+    || window.location.hash === '#operator' || operatorKey() || usageSent >= 25) return;
+  usageSent++;
+  timedFetch('/api/events', { method: 'POST', keepalive: true,
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ action, kind: d && d.__kind || 'none', entry: usageEntry, incomplete: !!(d && d.degraded) }),
+  }).catch(() => {});
+}
 const EXPLORERS = {
   arbitrum: 'https://arbiscan.io/address/',
   ethereum: 'https://etherscan.io/address/',
@@ -6,8 +25,8 @@ const EXPLORERS = {
   solana: 'https://solscan.io/account/',
 };
 const VERDICTS = {
-  book: { label: 'Book', cls: 'book', headline: 'This is a market-making book.', accent: '#7fa2ff' },
-  hedged: { label: 'Hedged', cls: 'hedged', headline: 'The offsetting asset is in this same account.', accent: '#4fe0b0' },
+  book: { label: 'Book', cls: 'book', headline: 'Market-making evidence in this position’s market.', accent: '#7fa2ff' },
+  hedged: { label: 'Spot-covered short', cls: 'hedged', headline: 'The offsetting asset is in this same account.', accent: '#4fe0b0' },
   looks_like_a_bet: { label: 'Looks like a bet', cls: 'bet', headline: 'This looks like a real bet.', accent: '#f2b35c' },
   unknown: { label: 'Unknown', cls: 'unknown', headline: 'Not enough evidence either way.', accent: '#a3a8b6' },
 };
@@ -327,6 +346,7 @@ function constellationInputsFor(d) {
  * so one formatter covers hedged, unknown, long and book alike - only the
  * label below it (constellationStatLabelFor) changes per verdict. */
 function constellationStatFor(d, inputs) {
+  if (d.verdict.verdict !== 'book' && d.positions.headlineSide === 'long') return '—';
   return inputs.coverage > 0 && inputs.coverage < 0.001 ? '<0.1%' : fmtPct(inputs.coverage);
 }
 
@@ -337,6 +357,7 @@ function constellationStatFor(d, inputs) {
  * old wording (old drawBookQuoting said "matched both sides"; old
  * drawScale's funders case said "covered by <coin> this address holds"). */
 function constellationStatLabelFor(d) {
+  if (d.verdict.verdict !== 'book' && d.positions.headlineSide === 'long') return 'spot coverage not applicable';
   if (d.verdict.verdict === 'book') return 'quoted both sides';
   if (constellationQualityNoteFor(d)) return 'found coverage';
   return d.verdict.verdict === 'unknown' ? 'covered by this address' : 'covered';
@@ -349,6 +370,8 @@ function constellationQualityNoteFor(d) {
   // (hedgeCanChangeVerdict), so its 'partial' says nothing about the number
   // shown - and used to flag every Book short as INCOMPLETE DATA (27.09).
   if (d.verdict.verdict === 'book') return null;
+  if ((d.verdict.reasons || []).includes('positions_stale')) return 'Exposure unresolved: positions and the other sources describe different times.';
+  if (d.positionsCoverage && d.positionsCoverage !== 'complete') return 'Exposure unresolved: positions on other venues were not verified. This shows found holdings only.';
   const quality = d.breakdown && d.breakdown.applies && d.breakdown.dataQuality;
   if (quality === 'unknown' && d.hedge && d.hedge.hasUnresolvedLiability) return 'Exposure unresolved: the spot ratio does not include the known same-asset debt.';
   if (quality === 'unknown' && (d.positions.sameAssetOffsetShare || 0) > 0) return 'Exposure unresolved: the spot ratio does not combine the opposing perpetual legs.';
@@ -378,8 +401,11 @@ function badgeText(d) {
   return d.verdict.verdict === 'unknown' && d.badgeQualifier ? base + ' · ' + d.badgeQualifier : base;
 }
 function headlineFor(d) {
+  if ((d.verdict.reasons || []).includes('positions_stale')) return 'The position data is out of date for this check.';
   if (d.headline) return d.headline;
-  if (d.positions.nPositions === 0) return 'Nothing open right now.';
+  if (d.positions.nPositions === 0) return d.positionsCoverage === 'complete'
+    ? 'No open positions found in this reading.'
+    : 'No positions found on the checked venues. Other venues are unverified.';
   const reasons = d.verdict.reasons || [];
   if (reasons.indexOf('linked_exposure_unverified') !== -1) {
     return 'The matching assets sit in a wallet that funded this account, not in this account.';
@@ -442,7 +468,7 @@ async function renderChanged(d) {
   if (!d.supersedes || !d.snapshotId) return;
   let c;
   try {
-    const res = await fetch(
+    const res = await timedFetch(
       '/api/compare?a=' + encodeURIComponent(d.supersedes) + '&b=' + encodeURIComponent(d.snapshotId),
     );
     if (!res.ok) return;
@@ -463,18 +489,20 @@ async function renderChanged(d) {
     $('changed-list').replaceChildren();
     return;
   }
-  if (!c.changes.length && !c.verdictChange) return;
+  if (!c.changes.length && !c.verdictChange && !c.rulesChanged) return;
 
   box.hidden = false;
   $('changed-title').textContent = 'What changed since ' + fmtTime(c.from.observedAt);
   // A grade is part of the answer: "Book (strong)" to "Book (likely)" is a
   // change, and "did not change" under two different versions of the rules
   // says so rather than reading as the same rules agreeing twice.
-  const named = (verdict, strength) => (VERDICTS[verdict] || VERDICTS.unknown).label + (strength ? ' (' + strength + ')' : '');
+  const named = (verdict, strength, qualifier) => (VERDICTS[verdict] || VERDICTS.unknown).label + (strength ? ' (' + strength + ')' : '') + (qualifier ? ' — ' + qualifier : '');
   const vc = c.verdictChange;
   $('changed-because').textContent = vc
-    ? 'The answer went from "' + named(vc.from, vc.fromStrength) + '" to "' + named(vc.to, vc.toStrength) +
-      '" because ' + vc.because + '.'
+    ? named(vc.from, vc.fromStrength, vc.fromQualifier) === named(vc.to, vc.toStrength, vc.toQualifier)
+      ? 'The conclusion stayed the same, but its supporting evidence changed because ' + vc.because + '.'
+      : 'The answer went from "' + named(vc.from, vc.fromStrength, vc.fromQualifier) + '" to "' + named(vc.to, vc.toStrength, vc.toQualifier) +
+        '" because ' + vc.because + '.'
     : c.rulesChanged
       ? 'The answer did not change, though the rules reading it did (' + c.from.classifierVersion + ' to ' +
         c.to.classifierVersion + ').'
@@ -510,8 +538,7 @@ function renderPicker(d, kind) {
     return;
   }
   box.hidden = false;
-  $('picker-chips').replaceChildren(
-    ...list.map((c) => {
+  const makeChip = (c) => {
       const active = c.coin === d.positions.headlineCoin && c.side === d.positions.headlineSide;
       const b = el('button', 'chip', fmtUsd(c.sizeUsd) + ' ' + c.coin + ' ' + c.side);
       b.setAttribute('aria-pressed', String(active));
@@ -519,8 +546,17 @@ function renderPicker(d, kind) {
       b.disabled = active;
       b.addEventListener('click', () => checkPosition(d.address, c));
       return b;
-    }),
-  );
+    };
+  $('picker-chips').replaceChildren(...list.slice(0, 5).map(makeChip));
+  if (list.length > 5) {
+    const more = el('details', 'fold');
+    more.append(el('summary', null, 'All ' + list.length + ' positions · selecting one runs a new check'));
+    const search = el('input'); search.type = 'search'; search.placeholder = 'Find an asset';
+    search.setAttribute('aria-label', 'Find an open position by asset');
+    const choices = el('div', 'picker-chips');
+    const show = () => choices.replaceChildren(...list.filter(c => c.coin.toLowerCase().includes(search.value.trim().toLowerCase())).map(makeChip));
+    search.addEventListener('input', show); show(); more.append(search, choices); $('picker-chips').append(more);
+  }
 }
 
 // The least-covered board uses the classifier's material-coverage boundary.
@@ -530,6 +566,7 @@ const MATERIAL_GAP_SHARE = 0.1;
 function renderBreakdown(d) {
   const box = $('breakdown');
   const isBook = d.verdict.verdict === 'book' && !!d.orders;
+  if (isBook && !Number.isFinite(d.orders.headlineTwoSidedNotionalUsd)) { box.hidden = true; return; }
   const b = d.breakdown;
   const isLong = !isBook && (!b || !b.applies) && d.positions.nPositions > 0 && d.positions.headlineSide === 'long';
   if (!isBook && (!b || !b.applies || !b.segments.length) && !isLong) {
@@ -548,7 +585,7 @@ function renderBreakdown(d) {
 
   const canvas = document.createElement('canvas');
   canvas.style.width = '100%';
-  canvas.style.height = '260px';
+  canvas.style.height = '210px';
   canvas.style.display = 'block';
   const inputs = constellationInputsFor(d);
   const qualityNote = constellationQualityNoteFor(d);
@@ -571,6 +608,15 @@ function renderBreakdown(d) {
       : b && b.elsewhere
         ? `What stands against the ${coin} ${side} - and what only looks like it does`
         : `What stands against the ${coin} ${side}`;
+  $('diagram-legend').textContent = isBook
+    ? 'Illustration of quoting: matched buy and sell orders in this market. This is evidence of market-making activity, not proof of intent.'
+    : isLong
+      ? 'Spot coverage does not apply to a long. This illustration is not a transaction network.'
+      : 'Illustration of coverage, not a transaction network. Own matching holdings count; funding-wallet holdings do not prove ownership.';
+  $('diagram-values').textContent = 'Position: ' + fmtUsd(d.positions.headlineNotionalUsd) +
+    (isBook ? ' · Matched quotes: ' + fmtUsd(d.orders.headlineTwoSidedNotionalUsd)
+      : isLong ? '' : ' · Own matching holdings: ' + fmtUsd(d.hedge.hedgeUsd) +
+        (b && b.elsewhere ? ' · Funders: ' + fmtUsd(b.elsewhere.usd) + ' (ownership unverified)' : ''));
 }
 
 /** What this rendering is: a live check, a saved reading or a gallery card. */
@@ -583,6 +629,14 @@ function renderResult(d, opts) {
   $('gallery').hidden = true;
   current = d;
   current.__kind = kindOf(opts);
+  if (current.__kind === 'live') updateSavedPosition(d);
+  const readingKey = d.snapshotId || d.address + ':' + d.checkedAt;
+  if (!usageReadings.has(readingKey)) {
+    usageReadings.add(readingKey);
+    recordUsage('reading_view', d);
+    if (returningReader && !repeatRecorded) { repeatRecorded = true; recordUsage('repeat_read', d); }
+    try { localStorage.setItem('betOrBook:hasRead', '1'); } catch {}
+  }
   // Unhidden first, before anything below measures a box inside it: with
   // `#card` still hidden, `#breakdown`'s own clientWidth reads 0 regardless
   // of its own hidden state, and renderBreakdown fell back to a fixed 640 on
@@ -594,7 +648,8 @@ function renderResult(d, opts) {
   $('reading-nav').hidden = false;
   // A new card starts folded: what the last one had open says nothing about
   // what the reader wants from this one.
-  for (const id of ['share', 'full-analysis']) $(id).open = false;
+  for (const id of ['full-analysis']) $(id).open = false;
+  $('share').open = true;
   const v = verdictOf(d);
   $('guess').hidden = true;
   clearTimeout(guessRevealTimer);
@@ -621,14 +676,20 @@ function renderResult(d, opts) {
   // the card as it already was in the list.
   $('badge').className = 'badge ' + v.cls + (d.historical ? ' historical' : '');
   $('headline').textContent = headlineFor(d);
+  $('takeaway').hidden = !d.takeaway;
+  $('takeaway').textContent = d.takeaway || '';
   $('summary').textContent = d.summary || '';
   $('source-warning').hidden = !d.degraded;
   $('source-warning-text').textContent = d.source === 'hyperliquid'
-    ? 'Hyperliquid only · Nansen not read. This reading has incomplete coverage.'
+    ? 'Positions from Hyperliquid main dex · other venues could not be verified.'
     : 'Incomplete reading · some sources could not be read.';
   const sourceNote = (d.coverage || []).find(text => /Nansen not used|Nansen did not answer|Nansen could not complete/.test(text));
   if (sourceNote) $('source-warning-text').textContent = sourceNote;
-  $('watch-address').textContent = watched().includes(d.address) ? 'Saved to your watchlist' : 'Save to watchlist';
+  const unavailable = /credits|budget|no API key configured/.test(sourceNote || '');
+  $('source-free-examples').hidden = !unavailable;
+  $('try-again').hidden = unavailable;
+  if (unavailable) $('source-warning-text').textContent = 'Full live coverage is temporarily unavailable. This reading covers the main venue only; it does not settle the wallet’s exposure.';
+  $('watch-address').textContent = watched().some(row => row.address === d.address && row.coin === d.positions.headlineCoin && row.side === d.positions.headlineSide) ? 'Saved to your watchlist' : 'Save this position';
   $('what-changes').hidden = !d.whatChanges;
   $('what-changes').textContent = d.whatChanges ? 'What would change this: ' + d.whatChanges : '';
 
@@ -658,7 +719,9 @@ function renderResult(d, opts) {
   $('analysis-limit').hidden = !repeatsLimit;
   const nz = d.nansen;
   $('nansen').hidden = !nz;
-  $('nansen-preview').hidden = !nz;
+  // Sources are already beside the facts. Keep the provider breakdown in
+  // Full analysis instead of repeating the headline above Share.
+  $('nansen-preview').hidden = true;
   if (nz) {
     $('nansen-lead').textContent = nz.lead;
     $('nansen-list').replaceChildren(...nz.items.map((text) => el('li', null, text)));
@@ -699,7 +762,7 @@ function renderResult(d, opts) {
     ' ',
     el('strong', null, positionText(d)),
     ' ',
-    el('span', 'muted', '· checked ' + fmtTime(d.checkedAt)),
+    el('span', 'muted', '· ' + shortAddr(d.address)),
   );
   renderChanged(d);
   renderBreakdown(d);
@@ -711,7 +774,7 @@ function renderResult(d, opts) {
   // twice, and the diagram is kept anyway as the visual backup for that
   // repetition. drawCard() and the OG preview use the diagram or a decisive
   // tile, while the interactive card can show both.
-  const heroTiles = (d.evidence || []).filter((item) => item.decisive);
+  const heroTiles = (d.evidence || []).filter((item) => item.decisive).slice(0, 2);
   // A reason of linked_exposure_unverified already put the funders' figure
   // into heroTiles above, as the "Linked wallets" evidence tile (src/engine
   // /evidence.ts's DECISIVE_LABEL_BY_REASON) built from this same linkedHedge
@@ -719,6 +782,10 @@ function renderResult(d, opts) {
   // amount and wallet count twice in a row (confirmed against the stored
   // 34stjd0gtgkz1 reading, $395.8M in 2 wallets, in data/featured.json).
   const alreadyShowsFunderHoldings = (d.verdict.reasons || []).includes('linked_exposure_unverified');
+  if (alreadyShowsFunderHoldings && heroTiles.length < 2) {
+    const ownSpot = (d.evidence || []).find(item => item.label === 'Hedge found');
+    if (ownSpot) heroTiles.push(ownSpot);
+  }
   if (d.breakdown && d.breakdown.elsewhere && !alreadyShowsFunderHoldings) {
     heroTiles.push({
       label: 'Held elsewhere',
@@ -728,7 +795,8 @@ function renderResult(d, opts) {
     });
   }
   for (const item of (d.evidence || [])) {
-    if (heroTiles.length >= 3) break;
+    if (heroTiles.length >= 2) break;
+    if (['Largest position', 'Position asked about', 'Share of exposure'].includes(item.label)) continue;
     if (!heroTiles.some((shown) => shown.label === item.label)) heroTiles.push(item);
   }
   $('decisive').hidden = heroTiles.length === 0;
@@ -766,7 +834,7 @@ function renderResult(d, opts) {
   const meta = $('meta');
   meta.replaceChildren();
   const calls = typeof d.nansenCalls === 'number' ? ' · ' + plural(d.nansenCalls, 'Nansen API call') : '';
-  const src = d.source === 'nansen' ? 'positions from Nansen' : 'positions from Hyperliquid (Nansen unavailable)';
+  const src = d.source === 'nansen' ? 'positions from Nansen' : 'positions from Hyperliquid main dex';
   // When the source says it measured the positions, that is the time the
   // numbers describe. "Checked" is only when this page asked.
   const measured =
@@ -778,6 +846,7 @@ function renderResult(d, opts) {
   // looks new when it is nine minutes old is the wrong thing to hand a
   // reader watching a position move.
   const ageMin = Math.floor((Date.now() - new Date(d.checkedAt).getTime()) / 60000);
+  const relativeAge = ageMin < 1 ? 'just now' : ageMin < 60 ? plural(ageMin, 'minute') + ' ago' : ageMin < 1440 ? plural(Math.floor(ageMin / 60), 'hour') + ' ago' : plural(Math.floor(ageMin / 1440), 'day') + ' ago';
   const age = kindOf(opts) === 'live' && ageMin >= 1 ? ' · cached, ' + plural(ageMin, 'minute') + ' old' : '';
   meta.append('Checked ' + fmtTime(d.checkedAt) + measured + age + calls + ' · ' + src + rules + ' · ');
   const hs = el('a', null, 'view on Hypurrscan');
@@ -792,6 +861,7 @@ function renderResult(d, opts) {
   $('address').value = d.address;
 
   const kind = kindOf(opts);
+  $('snapshot-text').textContent = '';
   if (d.focus) {
     $('picker-chips').setAttribute('aria-label', 'asked about ' + d.focus.coin + ' ' + d.focus.side);
   }
@@ -810,8 +880,13 @@ function renderResult(d, opts) {
       : 'Snapshot from the gallery scan, ' + fmtTime(d.checkedAt) + '.';
   } else if (kind === 'saved') {
     $('snapshot-text').textContent =
-      'Saved reading from ' + fmtTime(d.checkedAt) + '. Checking again makes a new one.';
+      'Saved · ' + fmtTime(d.checkedAt) + '.';
   }
+  $('snapshot').hidden = false;
+  $('snapshot-text').textContent += (kind === 'live' ? 'Read ' + fmtTime(d.checkedAt) + '. ' : ' ') + relativeAge + '.';
+  const risks = (d.vitals || []).filter(item => /leverage|liquidation/i.test(item.label)).slice(0, 2);
+  $('risk-preview').hidden = risks.length === 0;
+  $('risk-preview').textContent = risks.map(item => item.label + ': ' + item.value).join(' · ');
 
   $('card-canvas').hidden = true;
   if (kind === 'live' && d.snapshotId && d.positions.nPositions > 0) {
@@ -858,6 +933,7 @@ function showLink(id) {
 
 function setBusy(on) {
   busy = on;
+  if (!on) $('slow-check').hidden = true;
   $('check-progress').hidden = !on;
   $('check').disabled = on;
   $('check').textContent = on ? 'Checking...' : 'Check position';
@@ -940,6 +1016,7 @@ async function load(url, onData, failureText, method, notice, retryDelays) {
   clearTimeout(guessRevealTimer);
   const isLiveCheck = method === 'POST' && url.indexOf('/api/check') === 0;
   if (isLiveCheck) {
+    recordUsage('check_start');
     guessRevealTimer = setTimeout(() => {
       if (seq === requestSeq) $('guess').hidden = false;
     }, 700);
@@ -951,13 +1028,14 @@ async function load(url, onData, failureText, method, notice, retryDelays) {
   // when nothing is would misdescribe a free lookup as a paid check.
   const doing = method === 'POST' ? 'Reading positions from Nansen and orders from Hyperliquid...' : 'Opening the saved reading...';
   setStatus((notice ? notice + ' ' : '') + doing, false);
+  const slowTimer = isLiveCheck ? setTimeout(() => { if (seq === requestSeq && busy) $('slow-check').hidden = false; }, 8000) : null;
   try {
     let res;
     let data;
     // Only a check carries the operator key, and only when one is set.
     const key = method === 'POST' && url.indexOf('/api/check') === 0 ? operatorKey() : '';
     for (let attempt = 0; ; attempt++) {
-      res = await fetch(url, key ? { method, headers: { 'x-demo-key': key } } : { method: method || 'GET' });
+      res = await timedFetch(url, key ? { method, headers: { 'x-demo-key': key } } : { method: method || 'GET' }, isLiveCheck ? 55000 : 15000);
       data = await res.json().catch(() => ({}));
       if (seq !== requestSeq) return;
       const wait = res.status === 404 && retryDelays ? retryDelays[attempt] : undefined;
@@ -985,11 +1063,12 @@ async function load(url, onData, failureText, method, notice, retryDelays) {
     $('guess').hidden = true;
     if (seq === requestSeq) {
       setStatus(
-        'Could not reach the server. Try again shortly.' + (current ? ' The card below is the previous reading.' : ''),
+        (e.name === 'TimeoutError' ? 'The server took too long to answer. A live check may still finish; wait a moment before trying again.' : 'Could not reach the server. Try again shortly.') + (current ? ' The card below is the previous reading.' : ''),
         true,
       );
     }
   } finally {
+    clearTimeout(slowTimer);
     if (seq === requestSeq) setBusy(false);
   }
 }
@@ -1026,10 +1105,10 @@ function askForPicture(d, isRetry) {
     });
 }
 
-function runCheck() {
+function runCheck(selectedAddress) {
   if (busy) return;
   const raw = $('address').value;
-  const addr = extractAddress(raw);
+  const addr = typeof selectedAddress === 'string' && ADDRESS_RE.test(selectedAddress) ? selectedAddress : extractAddress(raw);
   if (!addr) {
     $('address').setAttribute('aria-invalid', 'true');
     // A transaction hash is the common case: it is 66 characters of hex and
@@ -1043,9 +1122,21 @@ function runCheck() {
     );
     return;
   }
-  const all = [...raw.trim().matchAll(/0x[0-9a-fA-F]{40}(?![0-9a-fA-F])/g)];
+  const all = [...new Set([...raw.trim().matchAll(/0x[0-9a-fA-F]{40}(?![0-9a-fA-F])/g)].map(m => m[0].toLowerCase()))];
   $('address').removeAttribute('aria-invalid');
-  const notice = all.length > 1 ? 'Found ' + all.length + ' addresses; using the first, ' + addr + '.' : '';
+  if (all.length > 1 && typeof selectedAddress !== 'string') {
+    $('address-choices').hidden = false;
+    $('address-choice-buttons').replaceChildren(...all.map(address => {
+      const b = el('button', 'chip', address);
+      b.addEventListener('click', () => runCheck(address));
+      return b;
+    }));
+    setStatus('Choose one wallet before starting the check.');
+    $('address-choice-buttons').querySelector('button').focus();
+    return;
+  }
+  $('address-choices').hidden = true;
+  const notice = 'Checking wallet ' + addr + '.';
   return load(
     '/api/check?address=' + encodeURIComponent(addr),
     (data) => {
@@ -1097,6 +1188,8 @@ function openSnapshot(id, navigation = 'replace') {
       renderResult(data, { kind: data.kind === 'gallery' ? 'gallery' : 'saved' });
       if (navigation === 'push') window.history.pushState(null, '', window.location.href);
       if (navigation !== 'preserve') showLink(id);
+      $('card').scrollIntoView({ block: 'start' });
+      $('card').focus({ preventScroll: true });
     },
     'That link points at a reading that is no longer saved. Check the address again to make a new one.',
     'GET',
@@ -1124,7 +1217,9 @@ $('check-live').addEventListener('click', () => {
   }
 });
 $('check-another').addEventListener('click', () => {
+  showExamples();
   $('address').value = '';
+  $('address-choices').hidden = true;
   $('address').focus({ preventScroll: true });
   $('address').scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
@@ -1142,6 +1237,7 @@ function showExamples() {
   $('reading-nav').hidden = true;
   document.body.classList.remove('has-reading');
   $('address').value = '';
+  $('address-choices').hidden = true;
   setStatus('');
   showLink(null);
   renderPlayer();
@@ -1197,14 +1293,14 @@ $('explore-return').addEventListener('click', () => {
   $('card').scrollIntoView({ block: 'start' });
   $('card').focus({ preventScroll: true });
 });
-function selectExploreView(all) {
-  $('boards-fold').hidden = all;
-  $('all-readings').hidden = !all;
-  $('explore-ranked').setAttribute('aria-pressed', String(!all));
-  $('explore-all').setAttribute('aria-pressed', String(all));
+function selectExploreView(view) {
+  for (const [key, panel] of [['cases', 'case-studies'], ['ranked', 'boards-fold'], ['all', 'all-readings'], ['archive', 'archive']]) {
+    $(panel).hidden = key !== view;
+    $('explore-' + key).setAttribute('aria-pressed', String(key === view));
+  }
+  if (view === 'archive') $('archive').open = true;
 }
-$('explore-ranked').addEventListener('click', () => selectExploreView(false));
-$('explore-all').addEventListener('click', () => selectExploreView(true));
+for (const view of ['cases', 'ranked', 'all', 'archive']) $('explore-' + view).addEventListener('click', () => selectExploreView(view));
 window.addEventListener('popstate', () => {
   const id = new URLSearchParams(window.location.search).get('s');
   if (window.location.hash === '#explore') {
@@ -1243,6 +1339,7 @@ function renderPlayer() {
   const rows = list.map((e) => {
     const row = el('button', 'queue-row');
     row.append(
+      el('strong', 'example-question', e.question || 'What does this position reveal?'),
       el('span', 'badge ' + verdictOf(e).cls, badgeText(e)),
       el('span', 'queue-pos', positionText(e)),
       el('span', 'example-note', e.description || descriptions[e.verdict.verdict]),
@@ -1258,7 +1355,9 @@ function renderPlayer() {
     });
     return row;
   });
-  $('player-queue').replaceChildren(...rows);
+  const extra = el('details', 'fold deeper-example');
+  extra.append(el('summary', null, 'More evidence cases'), ...rows.slice(3));
+  $('player-queue').replaceChildren(...rows.slice(0, 3), ...(rows.length > 3 ? [extra] : []));
 }
 
 // The breakdown SVG is now built at its own real rendered width rather than
@@ -1352,11 +1451,11 @@ const BOARDS = [
     stat: (e) => fmtPct(e.sizeVsOi) + ' of open interest',
   },
   {
-    title: 'Best covered shorts',
-    note: 'Hedged: the same account holds the offsetting spot.',
+    title: 'Shorts with matching spot',
+    note: 'Matching spot at the same address, ranked by closeness to the short’s size.',
     filter: (e) => e.verdict.verdict === 'hedged' && e.positions.headlineSide === 'short',
-    sort: (a, b) => b.hedgeRatio - a.hedgeRatio,
-    stat: (e) => fmtPct(e.hedgeRatio) + ' covered',
+    sort: (a, b) => Math.abs(1 - a.hedgeRatio) - Math.abs(1 - b.hedgeRatio),
+    stat: (e) => (e.hedgeRatio > 0 && e.hedgeRatio < 0.001 ? '<0.1%' : fmtPct(e.hedgeRatio)) + ' covered',
   },
   {
     title: 'Least covered shorts',
@@ -1366,12 +1465,12 @@ const BOARDS = [
     // number is the whole story (25.09 audit, A01).
     filter: (e) => e.positions.headlineSide === 'short' && e.hedgeCoverage === 'complete' && e.hedgeDataQuality === 'measured' && e.hedgeRatio < MATERIAL_GAP_SHARE,
     sort: (a, b) => a.hedgeRatio - b.hedgeRatio,
-    stat: (e) => fmtPct(e.hedgeRatio) + ' covered',
+    stat: (e) => (e.hedgeRatio > 0 && e.hedgeRatio < 0.001 ? '<0.1%' : fmtPct(e.hedgeRatio)) + ' covered',
   },
   {
     title: 'Market makers',
     note: "Book: the account quotes the position's own market on both sides.",
-    filter: (e) => e.verdict.verdict === 'book',
+    filter: (e) => e.verdict.verdict === 'book' && !e.historical && Number.isFinite(e.headlineTwoSidedNotionalUsd),
     sort: (a, b) => b.headlineTwoSidedNotionalUsd - a.headlineTwoSidedNotionalUsd,
     stat: (e) => fmtUsd(e.headlineTwoSidedNotionalUsd) + ' matched',
   },
@@ -1402,7 +1501,7 @@ function renderBoards(rows) {
   const box = $('boards');
   box.replaceChildren();
   for (const board of BOARDS) {
-    const matches = rows.filter(board.filter).sort(board.sort).slice(0, BOARD_SIZE);
+    const matches = rows.filter((e) => !e.historical && board.filter(e)).sort(board.sort).slice(0, BOARD_SIZE);
     if (matches.length === 0) continue;
     const section = el('div', 'board');
     section.append(el('h3', null, board.title), el('p', 'board-note', board.note));
@@ -1451,7 +1550,7 @@ function renderArchive() {
 
 async function loadGallery() {
   try {
-    const res = await fetch('/api/gallery');
+    const res = await timedFetch('/api/gallery');
     if (!res.ok) throw new Error('Gallery unavailable');
     gallery = await res.json();
   } catch (e) {
@@ -1462,13 +1561,20 @@ async function loadGallery() {
     return;
   }
   renderPlayer();
+  $('case-study-list').replaceChildren(...(gallery.featured || []).slice(0, 8).map(e => {
+    const article = el('div', 'box');
+    const b = el('button', 'chip', positionText(e) + ' · Open saved reading');
+    b.addEventListener('click', () => openSnapshot(e.snapshotId, 'push'));
+    article.append(el('h3', null, e.question || 'What does this position reveal?'), el('p', 'example-note', e.description || ''), el('p', 'example-date', 'Read ' + fmtTime(e.checkedAt)), b);
+    return article;
+  }));
 
   // An account can close its position between the ranking and its check;
   // with nothing open it is not one of the biggest positions any more.
   const open = (gallery.entries || [])
     .filter((e) => e.positions.nPositions > 0)
     .sort((a, b) => b.positions.headlineNotionalUsd - a.positions.headlineNotionalUsd);
-  if (open.length === 0) {
+  if (open.length === 0 && !(gallery.featured || []).length) {
     $('explore-status').textContent = 'No saved open positions are available yet.';
     return;
   }
@@ -1481,17 +1587,18 @@ async function loadGallery() {
   // Archived readings keep their own rules and explicit labels in every board.
   const boardRows = new Map();
   for (const row of [...gallery.historicalRows, ...gallery.currentRows, ...gallery.featured]) boardRows.set(row.address.toLowerCase(), row);
-  renderBoards([...boardRows.values()]);
+  const comparableRows = [...boardRows.values()].filter(e => !e.historical);
+  renderBoards(comparableRows);
 
   // Cards are re-checked one at a time as credits allow, so the set can span
   // days. Showing one timestamp for all of them would be wrong.
-  const times = [...boardRows.values()].map((e) => e.checkedAt).sort();
+  const times = comparableRows.map((e) => e.checkedAt).sort();
   const first = fmtTime(times[0]);
   const last = fmtTime(times[times.length - 1]);
   const when = first === last ? 'read ' + first : 'read between ' + first + ' and ' + last;
   $('gallery-sub').textContent =
     'Saved readings, ' + when + '. Opening one costs nothing and checks nothing again. ' +
-    'Boards include older rules, labelled on each row. These are dated readings, not a current market ranking.';
+    'Boards use comparable readings under current rules. Earlier readings are in the archive. These are dated readings, not a current market ranking.';
 
   const rows = gallery.currentRows;
   const counts = galleryCounts(rows);
@@ -1695,7 +1802,8 @@ function drawCard() {
   const isBook = d.verdict.verdict === 'book' && !!d.orders;
   const b = d.breakdown;
   const isLong = !isBook && (!b || !b.applies) && d.positions.nPositions > 0 && d.positions.headlineSide === 'long';
-  const showConstellation = isBook || (b && b.applies && b.segments.length > 0) || isLong;
+  const showConstellation = isBook && !Number.isFinite(d.orders.headlineTwoSidedNotionalUsd)
+    ? false : isBook || (b && b.applies && b.segments.length > 0) || isLong;
 
   ctx.fillStyle = '#8b90a0';
   ctx.font = font(400, 26);
@@ -1747,6 +1855,7 @@ $('copy-link').addEventListener('click', async () => {
   const btn = $('copy-link');
   try {
     await navigator.clipboard.writeText(link);
+    recordUsage('share_copy', current);
     btn.textContent = 'Copied';
     setTimeout(() => { btn.textContent = 'Copy link'; }, 1500);
   } catch (e) {
@@ -1903,22 +2012,32 @@ if (window.location.hash === '#explore') {
   $('check').focus();
 }
 renderRecent();
+recordUsage('landing_view');
 
-// Move the saved-reading controls and position risks below the answer.
-$('summary').insertAdjacentElement('afterend', $('snapshot'));
-$('breakdown').insertAdjacentElement('afterend', $('vitals'));
-$('snapshot').insertAdjacentElement('afterend', $('changed'));
+// Put the question, answer, decisive facts and actions before the picture.
+// The longer explanation and all account-level risk metrics remain available.
+$('subject').insertAdjacentElement('afterend', $('snapshot'));
+$('headline').insertAdjacentElement('afterend', $('takeaway'));
+$('takeaway').insertAdjacentElement('afterend', document.querySelector('.evidence-preview'));
+document.querySelector('.evidence-preview').insertAdjacentElement('afterend', $('reading-actions'));
+$('reading-actions').insertAdjacentElement('afterend', $('risk-preview'));
+$('risk-preview').insertAdjacentElement('afterend', $('open-question'));
+$('full-analysis').querySelector('summary').insertAdjacentElement('afterend', $('summary'));
 $('try-again').addEventListener('click', () => {
   if (!current || busy) return;
   let url = '/api/check?address=' + encodeURIComponent(current.address) + '&retry=1';
   if (current.focus) url += '&coin=' + encodeURIComponent(current.focus.coin) + '&side=' + current.focus.side;
   load(url, data => { renderResult(data, { kind: 'live' }); showLink(data.snapshotSaved !== false ? data.snapshotId : null); askForPicture(data); }, 'Could not complete the reading. Try again shortly.', 'POST');
 });
+$('source-free-examples').addEventListener('click', () => { showExamples(); $('examples').scrollIntoView({ block: 'start' }); });
 $('use-example').addEventListener('click', () => {
+  recordUsage('example_open');
   const link = $('player-queue').querySelector('a[href]');
   if (!link && gallery?.featured?.[0]) return openSnapshot(gallery.featured[0].snapshotId);
   if (link) openSnapshot(new URL(link.href, window.location.origin).searchParams.get('s'));
 });
+$('waiting-example').addEventListener('click', () => $('use-example').click());
+$('address').addEventListener('input', () => { $('address-choices').hidden = true; });
 $('download-image').addEventListener('click', () => {
   if (!current) return;
   drawCard();
@@ -1931,26 +2050,69 @@ $('download-image').addEventListener('click', () => {
   }, 'image/png');
 });
 const WATCH_KEY = 'betOrBook:watch';
-function watched() { try { const rows = JSON.parse(localStorage.getItem(WATCH_KEY) || '[]'); return Array.isArray(rows) ? rows.filter(a => ADDRESS_RE.test(a)).slice(0, 12) : []; } catch { return []; } }
+function watched() {
+  try {
+    const rows = JSON.parse(localStorage.getItem(WATCH_KEY) || '[]');
+    return Array.isArray(rows) ? rows.map(row => typeof row === 'string' ? { address: row } : row)
+      .filter(row => row && typeof row.address === 'string' && ADDRESS_RE.test(row.address.toLowerCase()))
+      .map(row => ({ address: row.address.toLowerCase(), coin: typeof row.coin === 'string' ? row.coin : null,
+        side: ['long', 'short'].includes(row.side) ? row.side : null,
+        snapshotId: typeof row.snapshotId === 'string' ? row.snapshotId : null,
+        checkedAt: typeof row.checkedAt === 'string' ? row.checkedAt : null,
+        label: typeof row.label === 'string' ? row.label.trim().slice(0, 80) : '' }))
+      .slice(0, 12) : [];
+  } catch { return []; }
+}
+const watchIdentity = row => row.address + ':' + (row.coin || '') + ':' + (row.side || '');
+function updateSavedPosition(d) {
+  if (!d.snapshotId || d.snapshotSaved === false) return;
+  const identity = watchIdentity({ address: d.address.toLowerCase(), coin: d.positions.headlineCoin, side: d.positions.headlineSide });
+  const rows = watched();
+  const row = rows.find(r => watchIdentity(r) === identity);
+  if (!row || (row.checkedAt && Date.parse(d.checkedAt) < Date.parse(row.checkedAt))) return;
+  row.snapshotId = d.snapshotId; row.checkedAt = d.checkedAt;
+  try { localStorage.setItem(WATCH_KEY, JSON.stringify(rows)); renderWatched(); } catch {}
+}
 function renderWatched() {
   let box = $('watched');
   if (!box) { box = el('div', 'examples'); box.id = 'watched'; $('recent').insertAdjacentElement('afterend', box); }
   const rows = watched(); box.hidden = rows.length === 0; box.replaceChildren();
   if (!rows.length) return;
-  box.append(el('p', 'search-help', 'Your watchlist · stored in this browser. Checking uses credits only when you press Check.'));
-  rows.forEach(address => {
-    const b = el('button', 'chip', shortAddr(address));
-    b.addEventListener('click', () => { $('address').value = address; $('address').focus(); setStatus('Watchlist address filled in. Press Check to read it again.'); });
-    const remove = el('button', 'chip', 'Remove'); remove.setAttribute('aria-label', 'Remove ' + shortAddr(address));
-    remove.addEventListener('click', () => { try { localStorage.setItem(WATCH_KEY, JSON.stringify(watched().filter(a => a !== address))); } catch {} renderWatched(); });
-    box.append(b, remove);
+  box.append(el('p', 'search-help', 'Saved positions · this browser only. Open a saved reading free; Refresh runs a new check.'));
+  rows.forEach(row => {
+    const label = (row.label ? row.label + ' · ' : '') + (row.coin ? row.coin + ' ' + row.side + ' · ' : '') + shortAddr(row.address);
+    const group = el('div', 'watch-row');
+    const b = el('button', 'chip', label + (row.snapshotId ? ' · Open saved' : ' · Check address'));
+    b.addEventListener('click', () => {
+      if (row.snapshotId) openSnapshot(row.snapshotId, 'push');
+      else { showExamples(); $('address').value = row.address; $('address').focus(); setStatus('Address filled in. Press Check to run a reading.'); }
+    });
+    const refresh = el('button', 'chip', 'Refresh'); refresh.setAttribute('aria-label', 'Refresh ' + label + ' with a new check');
+    refresh.addEventListener('click', () => { if (busy) return; if (row.coin && row.side) checkPosition(row.address, row); else { $('address').value = row.address; runCheck(); } });
+    const remove = el('button', 'chip', 'Remove'); remove.setAttribute('aria-label', 'Remove ' + label);
+    remove.addEventListener('click', () => { try { localStorage.setItem(WATCH_KEY, JSON.stringify(watched().filter(a => watchIdentity(a) !== watchIdentity(row)))); } catch {} renderWatched(); });
+    const name = el('input', 'watch-label'); name.type = 'text'; name.maxLength = 80;
+    name.value = row.label || ''; name.placeholder = 'Name this position'; name.setAttribute('aria-label', 'Name saved position ' + label);
+    name.addEventListener('input', () => {
+      const rows = watched(); const saved = rows.find(r => watchIdentity(r) === watchIdentity(row));
+      if (!saved) return;
+      saved.label = name.value.trim().slice(0, 80);
+      try { localStorage.setItem(WATCH_KEY, JSON.stringify(rows)); b.textContent = (saved.label ? saved.label + ' · ' : '') + (row.coin ? row.coin + ' ' + row.side + ' · ' : '') + shortAddr(row.address) + (row.snapshotId ? ' · Open saved' : ' · Check address'); }
+      catch { setStatus('This browser could not save the position name.', true); }
+    });
+    group.append(b, refresh, name, remove);
+    if (row.checkedAt) group.append(el('span', 'search-help', ' Read ' + fmtTime(row.checkedAt)));
+    box.append(group);
   });
 }
 $('watch-address').addEventListener('click', () => {
   if (!current || !ADDRESS_RE.test(current.address)) return;
-  try { localStorage.setItem(WATCH_KEY, JSON.stringify([...new Set([current.address, ...watched()])].slice(0, 12))); renderWatched(); $('watch-address').textContent = 'Saved to your watchlist'; }
+  const row = { address: current.address.toLowerCase(), coin: current.positions.headlineCoin, side: current.positions.headlineSide,
+    snapshotId: current.snapshotSaved !== false ? current.snapshotId : null, checkedAt: current.checkedAt };
+  row.label = watched().find(saved => watchIdentity(saved) === watchIdentity(row))?.label || '';
+  try { localStorage.setItem(WATCH_KEY, JSON.stringify([row, ...watched().filter(a => watchIdentity(a) !== watchIdentity(row))].slice(0, 12))); recordUsage('watch_save', current); renderWatched(); $('watch-address').textContent = 'Saved to your watchlist'; }
   catch { setStatus('This browser cannot save a watchlist.', true); }
 });
 renderWatched();
 
-$('player-queue').addEventListener('click', e => { const a = e.target.closest('a[href]'); if (!a) return; e.preventDefault(); openSnapshot(new URL(a.href).searchParams.get('s')); });
+$('player-queue').addEventListener('click', e => { const a = e.target.closest('a[href]'); if (!a) return; e.preventDefault(); recordUsage('example_open'); openSnapshot(new URL(a.href).searchParams.get('s')); });

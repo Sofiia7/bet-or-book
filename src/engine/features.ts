@@ -40,9 +40,6 @@ export interface PositionRef {
   sizeUsd: number;
 }
 
-/** How many positions are worth offering. More than a handful stops being a
- * choice and becomes a list to read. */
-const MAX_CANDIDATES = 5;
 
 export function computePositionFeatures(
   positions: Position[],
@@ -133,7 +130,6 @@ export function computePositionFeatures(
     netSide,
     candidates: [...positions]
       .sort((a, b) => b.sizeUsd - a.sizeUsd)
-      .slice(0, MAX_CANDIDATES)
       .map((p) => ({ coin: p.coin, side: p.side, sizeUsd: p.sizeUsd })),
   };
 }

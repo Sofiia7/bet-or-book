@@ -5,7 +5,7 @@ The Worker already gates paid work and reserves credits atomically. A zone rate-
 In the bet-or-book.trade zone, open Security > Security rules and create a rate limiting rule. On a Free zone, use:
 
 ```text
-http.request.uri.path in {"/api/check" "/api/og" "/api/demo-access"}
+http.request.uri.path in {"/api/check" "/api/og" "/api/demo-access" "/api/events"}
 ```
 
 Count by IP, 30 requests in 10 seconds, Block for 10 seconds. Review any existing rule before replacing it: the Free plan allows one rule. Verify ordinary checks and all four examples, then test the rule with disposable requests that do not start paid checks (GET /api/check without an address).

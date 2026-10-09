@@ -27,7 +27,9 @@ export function interpret(o: Observation, interpretedAt: string): Interpreted {
  * part of a card the gallery re-explain rebuilds as well. */
 export function words(r: EvidenceInput) {
   const { summary, evidence } = explain(r);
-  return { summary, evidence, breakdown: exposureBreakdown(r.positions, r.hedge, r.linkedHedge, r.hedgeCoverage) };
+  const breakdown = exposureBreakdown(r.positions, r.hedge, r.linkedHedge, r.hedgeCoverage, r.positionsCoverage);
+  if (r.verdict.reasons.includes('positions_stale')) breakdown.dataQuality = 'unknown';
+  return { summary, evidence, breakdown };
 }
 
 /**

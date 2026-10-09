@@ -7,7 +7,7 @@ Official portal: https://colosseum.com/worldsfair. The October 7 audit gives the
 | Product | Bet or Book: Hyperliquid position intelligence | Copy description from submission-materials.md |
 | Website / repository | https://bet-or-book.trade / https://github.com/Sofiia7/bet-or-book | Verify public links |
 | Integrations | HyperCore info API, Nansen, Cloudflare Workers, Durable Objects, KV | Confirm competition tracks |
-| Team / location | Solo; Serbia according to the audit | Confirm identity and location |
+| Team / location | Founder-provided details required | Confirm team, identity and location; do not infer them from an audit or timezone |
 | Logo | assets/logo.svg and generated assets/logo.png | Upload |
 | Pitch video | 2-3 minute script in submission-materials.md | Record and upload |
 | Demo video | Shot list in demo-script.md | Record final deployed site, under 3 minutes |

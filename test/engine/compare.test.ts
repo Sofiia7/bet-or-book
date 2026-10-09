@@ -26,6 +26,19 @@ const reading = (over: Partial<CheckResponse> = {}): CheckResponse =>
   }) as unknown as CheckResponse;
 
 describe('what moved between two readings', () => {
+  it('reports a changed Unknown explanation even when the badge class stays the same', () => {
+    const c = compareReadings(reading({ verdict: { verdict: 'unknown', strength: null, reasons: ['hedge_not_checked'] }, hedgeCoverage: 'missing' }), reading({ hedgeCoverage: 'complete' }));
+    expect(c.verdictChange).toMatchObject({ from: 'unknown', to: 'unknown', because: 'the reading changed' });
+    expect(c.verdictChange?.fromQualifier).not.toBe(c.verdictChange?.toQualifier);
+  });
+  it('attributes completion of the linked-wallet search to the reading', () => {
+    const c = compareReadings(reading({ linkedHedgeCoverage: 'missing' }), reading({ linkedHedgeCoverage: 'complete', verdict: { verdict: 'looks_like_a_bet', strength: null, reasons: ['directional_concentration'] } }));
+    expect(c.verdictChange?.because).toBe('the reading changed');
+  });
+  it('ignores reason ordering', () => {
+    const a = reading({ verdict: { verdict: 'book', strength: 'strong', reasons: ['orders', 'trades'] } });
+    expect(compareReadings(a, { ...a, verdict: { ...a.verdict, reasons: ['trades', 'orders'] } }).verdictChange).toBeNull();
+  });
   it('reports the position growing, with the size of the move', () => {
     const c = compareReadings(
       reading(),
@@ -117,7 +130,7 @@ describe('a change in the answer is attributed to data or to rules', () => {
         positionsCoverage: 'complete',
       }),
     );
-    expect(c.changes).toEqual([]);
+    expect(c.changes).toContainEqual({ field: 'position sources', from: 'read in part', to: 'read in full', direction: 'sideways' });
     expect(c.verdictChange?.because).toBe('both the reading and the rules changed');
   });
 

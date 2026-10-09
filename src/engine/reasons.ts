@@ -22,7 +22,7 @@ const usd = (n: number) => (n >= 1000 ? `$${Math.round(n / 1000)}K` : `$${n}`);
  * own list, so a new reason does not compile until it has a sentence. The two
  * signs that only ever grade a book are below, with their own wording. */
 const WHY: Record<Exclude<ReasonCode, 'positions' | 'trades'> | 'balanced_book', string> = {
-  'no open positions found': 'Nothing is open at this address right now, so there is no position to judge.',
+  'no open positions found': 'No open positions were found on the venues covered by this reading, so there is no position to judge.',
 
   // A book: quoting is what decides it, the rest only grades it.
   orders:
@@ -69,8 +69,8 @@ const WHY: Record<Exclude<ReasonCode, 'positions' | 'trades'> | 'balanced_book',
     'This would read as a bet, but not every venue\'s resting orders could be read, and "quotes nothing" ' +
     'needs all of them read.',
   positions_not_complete:
-    'This would read as a bet, but the positions came from one venue only, and "nothing else is open" ' +
-    'needs every venue read.',
+    'Only part of the positions could be read. Unseen perpetual legs can change the exposure, even when matching spot is visible.',
+  positions_stale: 'Positions and the other sources were measured too far apart to establish exposure in one coherent reading.',
 
   directional_concentration:
     `Looks like a bet: at most ${T.bet.maxPositions} positions, this one at least ${pct(T.bet.minHeadlineShare)} of ` +
@@ -119,6 +119,7 @@ const BADGE_QUALIFIER: Record<Exclude<ReasonCode, 'positions' | 'trades' | 'no o
   partial_offset: 'partly covered',
   quotes_not_checked: 'orders not fully read',
   positions_not_complete: 'positions not fully read',
+  positions_stale: 'positions out of date',
   directional_concentration: 'looks directional',
   directional_portfolio: 'looks directional',
   offset_not_measured: 'offset not measured',

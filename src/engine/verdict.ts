@@ -93,7 +93,8 @@ export interface VerdictThresholds {
 // failed funding-wallet reads withhold claims the available data cannot prove.
 // v7 (07.10): reduce-only exits do not establish quoting, partial coverage
 // precedes maker flow, and known same-asset legs group across perp dexes.
-export const CLASSIFIER_VERSION = 'v7';
+// v8 (09.10): incomplete positions cannot establish combined exposure.
+export const CLASSIFIER_VERSION = 'v8';
 
 export const DEFAULT_THRESHOLDS: VerdictThresholds = {
   book: {
@@ -154,6 +155,8 @@ export const DEFAULT_THRESHOLDS: VerdictThresholds = {
 export type SourceCoverage = 'complete' | 'partial' | 'missing';
 
 export interface VerdictInput {
+  /** Positions and the other sources must describe a coherent time window. */
+  positionsStale?: boolean;
   positions: PositionFeatures;
   orders: OrderFeatures;
   hedge: HedgeFeatures;
@@ -211,6 +214,7 @@ export type ReasonCode =
   | 'partial_offset'
   | 'quotes_not_checked'
   | 'positions_not_complete'
+  | 'positions_stale'
   | 'directional_concentration'
   | 'offset_not_measured'
   | 'mixed_long_short_book'
@@ -311,6 +315,7 @@ export function computeVerdict(
   input: VerdictInput,
   thresholds: VerdictThresholds = DEFAULT_THRESHOLDS,
 ): VerdictResult {
+  if (input.positionsStale) return decided('unknown', null, ['positions_stale']);
   if (input.positions.nPositions === 0) {
     return decided('unknown', null, ['no open positions found']);
   }
@@ -346,6 +351,12 @@ export function computeVerdict(
   // non-crypto markets do not imply an on-chain token that must be matched.
   if (input.positions.headlineCoin?.includes(':') && input.positions.headlineUnderlyingVerified !== true) {
     return decided('unknown', null, ['underlying_not_verified']);
+  }
+
+  // Missing perp venues can contain opposing or additional legs. Even a
+  // complete spot balance cannot establish exposure without those positions.
+  if ((input.positionsCoverage ?? 'complete') !== 'complete') {
+    return decided('unknown', null, ['positions_not_complete']);
   }
 
   // Over-covered first: holdings that were missed can only add to the spot
