@@ -6,14 +6,35 @@ import featured from '../data/featured.json';
 import type { CheckResponse } from '../src/api/check';
 import { interpret, present } from '../src/engine/interpret';
 import { readingHeadline, evidenceTakeaway } from '../src/engine/presentation';
+import { compareReadings } from '../src/engine/compare';
 
 const sample = featured.entries.find(e => !e.superseded) as unknown as CheckResponse;
+const baseline = featured.entries.find(e => e.snapshotId === '0aio3f82kqsu9') as unknown as CheckResponse;
+const changedReading = { ...baseline, snapshotId: 'replay-new-reading', snapshotSaved: true,
+  checkedAt: '2026-10-09T10:00:00Z', observedAt: '2026-10-09T10:00:00Z', supersedes: undefined,
+  positions: { ...baseline.positions, headlineNotionalUsd: baseline.positions.headlineNotionalUsd * 0.75 },
+};
+const focusedReading = { ...changedReading, snapshotId: 'replay-focused-reading',
+  focus: { coin: baseline.positions.headlineCoin!, side: baseline.positions.headlineSide! } };
 const fixture = present(interpret({ ...sample, source: 'hyperliquid', degraded: true,
   positionsCoverage: 'partial', coverage: ['Nansen not used: budget unavailable in this local UI fixture'],
 }, sample.checkedAt));
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || '/', 'http://localhost:8789');
+  const replayReading = [changedReading, focusedReading].find(r => r.snapshotId === (url.searchParams.get('b') || url.searchParams.get('id')));
+  if (url.pathname === '/api/compare' && replayReading) {
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(JSON.stringify(compareReadings(baseline, replayReading))); return;
+  }
+  if (url.pathname === '/api/snapshot' && replayReading) {
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(JSON.stringify(replayReading)); return;
+  }
   if (req.method === 'POST' && url.pathname === '/api/check') {
+    if (url.searchParams.get('address') === baseline.address) {
+      res.writeHead(200, { 'content-type': 'application/json', 'x-browser-replay': '1' });
+      res.end(JSON.stringify(url.searchParams.has('coin') ? focusedReading : changedReading)); return;
+    }
     // Address ending in 1 exercises the slow path; other addresses return
     // the budget-off fixture immediately. These are fixtures, not checks.
     if (url.searchParams.get('address')?.endsWith('1')) await new Promise(resolve => setTimeout(resolve, 20000));

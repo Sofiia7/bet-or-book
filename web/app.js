@@ -1,4 +1,5 @@
 import { savedReadingLink, readingCopyText, readingPostText } from '../src/engine/shareText.ts';
+import { advanceSavedReading } from '../src/engine/savedReading.ts';
 const ADDRESS_RE = /^0x[0-9a-f]{40}$/;
 async function timedFetch(url, options = {}, timeout = 15000) {
   return fetch(url, { ...options, signal: AbortSignal.timeout(timeout) });
@@ -466,19 +467,31 @@ const compareCache = new Map();
 async function renderChanged(d) {
   const box = $('changed');
   box.hidden = true;
-  if (!d.supersedes || !d.snapshotId) return;
+  const saved = watched().find(row => row.snapshotId === d.snapshotId && row.address === d.address.toLowerCase());
+  const previousId = saved?.previousSnapshotId || d.supersedes;
+  if (!previousId || !d.snapshotId || d.snapshotSaved === false || previousId === d.snapshotId) return;
+  const comparisonKey = previousId + ':' + d.snapshotId;
+  $('changed-list').replaceChildren();
+  $('changed-title').textContent = saved?.previousSnapshotId ? 'Since your previous saved reading' : 'Since the previous reading';
+  $('changed-because').textContent = 'Comparing saved evidence…';
+  $('changed-previous').href = '/?s=' + encodeURIComponent(previousId);
+  box.hidden = false;
   let c;
   try {
-    const res = await timedFetch(
-      '/api/compare?a=' + encodeURIComponent(d.supersedes) + '&b=' + encodeURIComponent(d.snapshotId),
-    );
-    if (!res.ok) return;
-    c = await res.json();
+    c = compareCache.get(comparisonKey);
+    if (!c) {
+      const res = await timedFetch('/api/compare?a=' + encodeURIComponent(previousId) + '&b=' + encodeURIComponent(d.snapshotId));
+      if (!res.ok) throw new Error('Comparison unavailable');
+      c = await res.json();
+      if (compareCache.size >= 20) compareCache.delete(compareCache.keys().next().value);
+      compareCache.set(comparisonKey, c);
+    }
   } catch {
+    if (current === d) $('changed-because').textContent = 'Comparison unavailable. The previous link may have expired; this does not mean the position stayed the same.';
     return;
   }
   // The card may have moved on while this was in the air.
-  if (!current || current.snapshotId !== d.snapshotId) return;
+  if (current !== d) return;
   // A different question - a manual pick against the largest-position
   // default, or two different manual picks - is not a change at this
   // address, and putting the two side by side as if it were is worse than
@@ -490,8 +503,6 @@ async function renderChanged(d) {
     $('changed-list').replaceChildren();
     return;
   }
-  if (!c.changes.length && !c.verdictChange && !c.rulesChanged) return;
-
   box.hidden = false;
   $('changed-title').textContent = 'What changed since ' + fmtTime(c.from.observedAt);
   // A grade is part of the answer: "Book (strong)" to "Book (likely)" is a
@@ -507,7 +518,7 @@ async function renderChanged(d) {
     : c.rulesChanged
       ? 'The answer did not change, though the rules reading it did (' + c.from.classifierVersion + ' to ' +
         c.to.classifierVersion + ').'
-      : 'The answer did not change.';
+      : c.changes.length ? 'The answer did not change.' : 'No material changes detected in the compared evidence. This is not a live monitor.';
   const arrow = { up: '\u2191', down: '\u2193', sideways: '\u2192' };
   $('changed-list').replaceChildren(
     ...c.changes.map((ch) => {
@@ -2039,7 +2050,8 @@ $('headline').insertAdjacentElement('afterend', $('takeaway'));
 $('takeaway').insertAdjacentElement('afterend', document.querySelector('.evidence-preview'));
 document.querySelector('.evidence-preview').insertAdjacentElement('afterend', $('reading-actions'));
 $('reading-actions').insertAdjacentElement('afterend', $('risk-preview'));
-$('risk-preview').insertAdjacentElement('afterend', $('open-question'));
+$('risk-preview').insertAdjacentElement('afterend', $('changed'));
+$('changed').insertAdjacentElement('afterend', $('open-question'));
 $('full-analysis').querySelector('summary').insertAdjacentElement('afterend', $('summary'));
 $('try-again').addEventListener('click', () => {
   if (!current || busy) return;
@@ -2076,6 +2088,7 @@ function watched() {
       .map(row => ({ address: row.address.toLowerCase(), coin: typeof row.coin === 'string' ? row.coin : null,
         side: ['long', 'short'].includes(row.side) ? row.side : null,
         snapshotId: typeof row.snapshotId === 'string' ? row.snapshotId : null,
+        previousSnapshotId: typeof row.previousSnapshotId === 'string' ? row.previousSnapshotId : null,
         checkedAt: typeof row.checkedAt === 'string' ? row.checkedAt : null,
         label: typeof row.label === 'string' ? row.label.trim().slice(0, 80) : '' }))
       .slice(0, 12) : [];
@@ -2088,12 +2101,16 @@ function updateSavedPosition(d) {
   const rows = watched();
   const row = rows.find(r => watchIdentity(r) === identity);
   if (!row || (row.checkedAt && Date.parse(d.checkedAt) < Date.parse(row.checkedAt))) return;
-  row.snapshotId = d.snapshotId; row.checkedAt = d.checkedAt;
+  Object.assign(row, advanceSavedReading(row, d));
   try { localStorage.setItem(WATCH_KEY, JSON.stringify(rows)); renderWatched(); } catch {}
 }
 function renderWatched() {
   let box = $('watched');
-  if (!box) { box = el('div', 'examples'); box.id = 'watched'; $('recent').insertAdjacentElement('afterend', box); }
+  if (!box) {
+    box = el('div', 'examples'); box.id = 'watched'; box.tabIndex = -1;
+    box.setAttribute('role', 'region'); box.setAttribute('aria-label', 'Your saved positions');
+    $('recent').insertAdjacentElement('afterend', box);
+  }
   const rows = watched(); box.hidden = rows.length === 0; box.replaceChildren();
   if (!rows.length) return;
   box.append(el('p', 'search-help', 'Saved positions · this browser only. Open a saved reading free; Refresh runs a new check.'));
@@ -2127,7 +2144,9 @@ $('watch-address').addEventListener('click', () => {
   if (!current || !ADDRESS_RE.test(current.address)) return;
   const row = { address: current.address.toLowerCase(), coin: current.positions.headlineCoin, side: current.positions.headlineSide,
     snapshotId: current.snapshotSaved !== false ? current.snapshotId : null, checkedAt: current.checkedAt };
-  row.label = watched().find(saved => watchIdentity(saved) === watchIdentity(row))?.label || '';
+  const existing = watched().find(saved => watchIdentity(saved) === watchIdentity(row));
+  row.label = existing?.label || '';
+  row.previousSnapshotId = existing?.snapshotId === row.snapshotId ? existing.previousSnapshotId : null;
   try {
     localStorage.setItem(WATCH_KEY, JSON.stringify([row, ...watched().filter(a => watchIdentity(a) !== watchIdentity(row))].slice(0, 12)));
     recordUsage('watch_save', current); renderWatched(); $('watch-address').textContent = 'Saved to your watchlist';
@@ -2151,7 +2170,7 @@ $('saved-position-name').addEventListener('input', () => {
 });
 $('save-copy-link').addEventListener('click', () => copyReadingLink($('save-copy-link')));
 $('open-saved-positions').addEventListener('click', () => {
-  showExamples(); $('watched').scrollIntoView({ block: 'center' }); $('watched').querySelector('button')?.focus({ preventScroll: true });
+  showExamples(); $('watched').scrollIntoView({ block: 'center' }); $('watched').focus({ preventScroll: true });
 });
 
 $('player-queue').addEventListener('click', e => { const a = e.target.closest('a[href]'); if (!a) return; e.preventDefault(); recordUsage('example_open'); openSnapshot(new URL(a.href).searchParams.get('s')); });
