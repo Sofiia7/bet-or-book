@@ -156,11 +156,18 @@ export function checkPerpMeta(raw: unknown): [HlPerpMeta, HlPerpAssetCtx[]] {
  * that is either absent or zero or more. An unpriced row is valid (23.09
  * audit, L05): its size is unknown, not zero. */
 export function checkNansenBalances(raw: unknown): Checked<NansenBalance> {
-  return partition(raw, 'balances', (r) => {
+  const checked = partition<NansenBalance>(raw, 'balances', (r) => {
     const amount = numeric(r.token_amount);
     const value = r.value_usd === null || r.value_usd === undefined ? 0 : numeric(r.value_usd);
     return named(r.chain) && amount !== null && amount >= 0 && value !== null && value >= 0;
   });
+  // The validator accepts decimal strings. Return the promised numeric
+  // domain shape so no downstream finite check silently drops valid rows.
+  return { ...checked, rows: checked.rows.map((r) => ({
+    ...r,
+    token_amount: numeric(r.token_amount)!,
+    value_usd: r.value_usd == null ? r.value_usd : numeric(r.value_usd)!,
+  })) };
 }
 
 /** A funding link: an address that is one, a relation, a chain, and a time

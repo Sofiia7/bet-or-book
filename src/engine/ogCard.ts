@@ -11,6 +11,7 @@ import type { CheckResult } from '../api/check';
 import { shareCard } from './share';
 import { formatPct } from './evidence';
 import { constellationInputsForOg, type ConstellationInputs } from './constellation';
+import { VERDICT_STYLES } from './presentation';
 
 /**
  * The picture's own layout, as part of where it is kept.
@@ -32,7 +33,7 @@ import { constellationInputsForOg, type ConstellationInputs } from './constellat
  * when the prose wraps into three lines. Version 7 refreshes historical
  * labels and rule-version provenance after the v6 logic audit.
  */
-export const OG_LAYOUT_VERSION = 7;
+export const OG_LAYOUT_VERSION = 10;
 
 /** Where one reading's picture is kept, in this layout. */
 export const ogCacheKey = (id: string): string => `og:v${OG_LAYOUT_VERSION}:${id}`;
@@ -86,17 +87,17 @@ export interface OgCardData {
  * reads from one palette instead of two. Concrete hex, not a CSS var: this
  * card has no cascade to read a var() from. */
 const ACCENT: Record<VerdictResult['verdict'], string> = {
-  book: '#7fa2ff',
-  hedged: '#4fe0b0',
-  looks_like_a_bet: '#f2b35c',
-  unknown: '#a3a8b6',
+  book: VERDICT_STYLES.book.accent,
+  hedged: VERDICT_STYLES.hedged.accent,
+  looks_like_a_bet: VERDICT_STYLES.looks_like_a_bet.accent,
+  unknown: VERDICT_STYLES.unknown.accent,
 };
 
 const BADGE_LABEL: Record<VerdictResult['verdict'], string> = {
-  book: 'Book',
-  hedged: 'Hedged',
-  looks_like_a_bet: 'Looks like a bet',
-  unknown: 'Unknown',
+  book: VERDICT_STYLES.book.label,
+  hedged: VERDICT_STYLES.hedged.label,
+  looks_like_a_bet: VERDICT_STYLES.looks_like_a_bet.label,
+  unknown: VERDICT_STYLES.unknown.label,
 };
 
 function shortAddress(address: string): string {
@@ -174,11 +175,12 @@ export function ogCardData(input: OgCardInput): OgCardData {
   const isBook = input.verdict.verdict === 'book';
   const b = input.breakdown;
   const isLong = !isBook && (!b || !b.applies) && input.positions.nPositions > 0 && input.positions.headlineSide === 'long';
-  const showConstellation = isBook || (!!b && b.applies && b.segments.length > 0) || isLong;
+  const showConstellation = isBook && !Number.isFinite(input.orders.headlineTwoSidedNotionalUsd)
+    ? false : isBook || (!!b && b.applies && b.segments.length > 0) || isLong;
   const constellation = showConstellation ? constellationInputsForOg(input) : null;
   const quality = input.breakdown?.dataQuality ?? (input.breakdown?.applies ? 'unknown' : 'measured');
   const constellationStat = constellation
-    ? { value: constellation.coverage > 0 && constellation.coverage < 0.001 ? '<0.1%' : formatPct(constellation.coverage), label: quality === 'measured' ? constellationStatLabel(input.verdict.verdict) : 'found coverage' }
+    ? { value: isLong ? '—' : constellation.coverage > 0 && constellation.coverage < 0.001 ? '<0.1%' : formatPct(constellation.coverage), label: isLong ? 'spot coverage not applicable' : quality === 'measured' ? constellationStatLabel(input.verdict.verdict) : 'found coverage' }
     : null;
 
   return {

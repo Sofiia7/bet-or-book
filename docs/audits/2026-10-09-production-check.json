@@ -1,0 +1,27 @@
+{
+  "startedAt": "2026-10-09T06:49:13.779Z",
+  "checkedAt": "2026-10-09T06:49:20.536Z",
+  "status": 200,
+  "ms": 6755,
+  "source": "nansen",
+  "degraded": false,
+  "nansenCalls": 4,
+  "snapshotId": "2nkzy3bjpx02a",
+  "snapshotSaved": true,
+  "classifierVersion": "v8",
+  "positionsCoverage": "complete",
+  "hedgeCoverage": "not-applicable",
+  "verdict": {
+    "verdict": "looks_like_a_bet",
+    "strength": null,
+    "reasons": [
+      "directional_concentration"
+    ]
+  },
+  "coverage": [
+    "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here"
+  ],
+  "creditsSpent": 4,
+  "creditsRemaining": 858,
+  "creditsMeasuredAt": "2026-10-09T06:49:20.038Z"
+}

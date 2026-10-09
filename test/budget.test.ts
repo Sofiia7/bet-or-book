@@ -92,6 +92,6 @@ describe('BudgetLedger', () => {
 
   it('knows what one check can cost at worst', () => {
     // positions, PnL, own balances, two related-wallet chains, two funders.
-    expect(WORST_CASE_CALLS).toBe(7);
+    expect(WORST_CASE_CALLS).toBe(2 * (2 + 3 + 2 + 2));
   });
 });

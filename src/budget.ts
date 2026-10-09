@@ -37,7 +37,8 @@
 
 /** The most Nansen calls one check can make: positions, PnL, own balances,
  * related wallets on two chains, and two funders' balances. */
-export const WORST_CASE_CALLS = 7;
+// Own balances can use three pages; each of the nine calls can retry once.
+export const WORST_CASE_CALLS = 18;
 
 /** How long a reservation can be held by a request that never came back.
  * Four paid stages at the 20 s Nansen timeout, plus the free reads, is the

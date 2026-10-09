@@ -5,6 +5,8 @@ import { safeKv } from './safeKv';
 import { WORST_CASE_CALLS } from './budget';
 import { spendGuard, requestGate } from './coordinator';
 import { createNansenClient, meansOutOfCredits, type NansenCallMeta } from './sources/nansen';
+import { reusePositions } from './sources/reusePositions';
+import { stagedNansen } from './sources/stagedNansen';
 import { CLASSIFIER_VERSION } from './engine/verdict';
 import { ASSET_REGISTRY_VERSION } from './engine/observation';
 import type { CheckResponse } from './api/check';
@@ -12,10 +14,11 @@ import { snapshotId, snapshotKey, isSnapshotId, SNAPSHOT_TTL_SECONDS, shortHash 
 import { shareCard } from './engine/share';
 import { compareReadings } from './engine/compare';
 import pageHtml from '../web/index.html';
-import pageScript from '../web/app.js';
+import pageScriptSource from '../web/app.min.js';
 import { landingExamples } from './landing';
 import galleryData from '../data/gallery.json';
 import featuredData from '../data/featured.json';
+import featuredOg from '../data/og-featured.json';
 import ledgerData from '../data/ledger.json';
 import { galleryIndex, previousReadingId, type Gallery, type GalleryIndex } from './gallery';
 import { BUILDATHON_WINDOW, type LedgerSummary } from './ledger';
@@ -23,8 +26,13 @@ import type { KVLike } from './kv';
 import type { SafeKV } from './safeKv';
 import { ogCardFor, ogCacheKey, OG_LAYOUT_VERSION } from './engine/ogCard';
 import { emit, readingFields, type CheckEvent, type PictureEvent, type SnapshotEvent } from './telemetry';
+import { readUsage } from './usage';
+import { publisherReading, publisherEmbed } from './publisher';
+import { readSmallJson } from './readSmallJson';
+import { nextQuoteSample, type QuoteSample } from './engine/quoteDiagnostics';
 import { ruleExplanation, badgeQualifier } from './engine/reasons';
 import { openQuestion } from './engine/openQuestion';
+import { readingHeadline, evidenceTakeaway, caseQuestion, whatWouldChange, exampleDescription, VERDICT_STYLES } from './engine/presentation';
 import { nansenContribution } from './engine/nansenContribution';
 import { renderOgPng, type OgFont } from './engine/ogRender';
 import interRegular from '../assets/inter-regular.woff';
@@ -34,8 +42,10 @@ import interBold from '../assets/inter-bold.woff';
 // resvg-wasm's initWasm accepts.
 import resvgWasmModule from '../node_modules/@resvg/resvg-wasm/index_bg.wasm';
 import ogFallbackPng from '../assets/og-fallback.png';
+import logoPng from '../assets/logo.png';
 
 const gallery = galleryData as unknown as Gallery;
+const pageScript = pageScriptSource.replace('__VERDICT_STYLES__', JSON.stringify(VERDICT_STYLES));
 
 /** A reading as it leaves the Worker, with four things worked out here from
  * what it already holds, so the page has the words without keeping its own
@@ -50,6 +60,9 @@ function explained<T extends CheckResponse>(r: T): T {
     openQuestion: openQuestion(r),
     nansen: nansenContribution(r),
     badgeQualifier: badgeQualifier(r.verdict, r.historical !== undefined),
+    headline: readingHeadline(r),
+    takeaway: evidenceTakeaway(r),
+    whatChanges: whatWouldChange(r),
   };
 }
 /** Gallery cards by snapshot id, so a shared link to one opens the card that
@@ -82,7 +95,10 @@ const gallerySansFeatured: Gallery = {
 };
 const listedGallery: GalleryIndex & { featured: GalleryIndex['entries'] } = {
   ...galleryIndex(gallerySansFeatured, galleryIdOf),
-  featured: galleryIndex(featured, galleryIdOf).entries,
+  featured: galleryIndex(featured, galleryIdOf).entries.map(row => {
+    const card = featured.entries.find(e => galleryIdOf(e) === row.snapshotId)!;
+    return { ...row, description: exampleDescription(card), question: caseQuestion(card) };
+  }),
 };
 const scriptedLedger = ledgerData as unknown as LedgerSummary;
 
@@ -113,9 +129,11 @@ interface Env {
    * be atomic, which is the one thing KV cannot promise. */
   NANSEN_BUDGET: DurableObjectNamespace;
   REQUEST_GATE: DurableObjectNamespace;
+  PILOT_WATCH?: DurableObjectNamespace;
 }
 
 export { NansenBudget, RequestGate } from './coordinator';
+export { PilotWatch } from './pilotWatch';
 
 const CHECK_CACHE_TTL_SECONDS = 600;
 /** An answer assembled from sources that were missing or cut short is worth
@@ -135,18 +153,16 @@ const LEDGER_MEMO_MS = 60_000;
  * all: an injected <script> has nothing to execute under. Inline styles
  * stay, which is a far smaller surface. The policy also buys no framing
  * (clickjacking), no requests to other origins and no plugin content.
- * Google Fonts (26.09 redesign) needs its own two carve-outs: the
- * stylesheet comes from fonts.googleapis.com, the woff2 files it points at
- * come from fonts.gstatic.com - two different origins, so style-src and
- * font-src each need exactly the one they serve, nothing wider. */
+ * Fonts are self-hosted, so no third-party style or font origin is needed. */
 const PAGE_HEADERS = {
+  'strict-transport-security': 'max-age=15552000',
   'content-type': 'text/html;charset=UTF-8',
   'content-security-policy':
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-    "font-src 'self' https://fonts.gstatic.com; " +
-    "img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; " +
+    "img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'strict-origin-when-cross-origin',
+  'permissions-policy': 'camera=(), microphone=(), geolocation=()',
 };
 
 const SCRIPT_HEADERS = {
@@ -191,7 +207,13 @@ const OG_FONTS: OgFont[] = [
  * only reads, and drawing happens in a request of its own - see drawOgPng.
  */
 async function storedOgPng(kv: SafeKV, id: string): Promise<Uint8Array | null> {
-  const cached = await kv.get(ogCacheKey(id));
+  const embedded = featuredOg.layoutVersion === OG_LAYOUT_VERSION ? (featuredOg.readings as Record<string, string>)[id] : undefined;
+  if (embedded) return new Uint8Array(Buffer.from(embedded, 'base64'));
+  let cached = await kv.get(ogCacheKey(id));
+  // v9 and v10 have the same picture layout; these frozen historical
+  // readings did not change. Keep their existing images without reupload.
+  const bundled = bundledById.get(id)?.card;
+  if (cached === null && bundled && bundled.classifierVersion !== 'v10') cached = await kv.get(`og:v9:${id}`);
   return cached === null ? null : new Uint8Array(Buffer.from(cached, 'base64'));
 }
 
@@ -230,8 +252,7 @@ const notFoundYet = () =>
   Response.json(
     {
       error:
-        'that reading could not be found here: it may have expired, or, if it was saved in the last minute, ' +
-        'it may not have reached this region yet',
+        'That reading could not be found. It may have expired or may still be saving. Try again shortly.',
     },
     { status: 404, headers: { 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } },
   );
@@ -331,8 +352,8 @@ function withSocialTags(html: string, card: CheckResponse, url: URL, id: string)
 
 /** What each verdict is called in a shared link's title. */
 const VERDICT_WORDS: Record<string, string> = {
-  book: 'a market maker’s book',
-  hedged: 'hedged in this same account',
+  book: 'market-making evidence in this market',
+  hedged: 'a spot-covered short at this address',
   looks_like_a_bet: 'looks like a real bet',
   unknown: 'not settled by what could be read',
 };
@@ -341,7 +362,22 @@ const VERDICT_WORDS: Record<string, string> = {
  * are a daily quota too. */
 let ledgerMemo: { at: number; body: unknown } | null = null;
 
-export default {
+const worker = {
+  async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
+    if (!env.PILOT_WATCH) return;
+    const stub = env.PILOT_WATCH.get(env.PILOT_WATCH.idFromName('pilot'));
+    const call = (body: unknown) => stub.fetch('https://watch.internal', { method: 'POST', body: JSON.stringify(body) });
+    const job = await (await call({ action: 'claim' })).json() as { id: string; address: string; focus?: { coin: string; side: string }; lease: number } | null;
+    if (!job) return;
+    const url = new URL('https://bet-or-book.trade/api/check');
+    url.searchParams.set('address', job.address); url.searchParams.set('context', '0');
+    if (job.focus) { url.searchParams.set('coin', job.focus.coin); url.searchParams.set('side', job.focus.side); }
+    try {
+      // Same guarded public path: no operator key and no demo reserve access.
+      const res = await worker.fetch(new Request(url, { method: 'POST', headers: { origin: url.origin } }), env);
+      await call({ action: 'complete', ...job, ...(res.ok ? { result: await res.json() } : { error: 'Check unavailable' }) });
+    } catch { await call({ action: 'complete', ...job, error: 'Check unavailable' }); }
+  },
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const method = request.method;
@@ -352,10 +388,76 @@ export default {
       });
     }
     const kv = safeKv(env.KV);
+    if (url.pathname === '/api/watch') {
+      if (method !== 'POST') return Response.json({ error: 'POST required' }, { status: 405 });
+      if (!fromThisSite(request, url)) return Response.json({ error: 'Same-origin request required' }, { status: 403 });
+      if (!env.PILOT_WATCH) return Response.json({ error: 'Monitoring unavailable' }, { status: 503 });
+      const limiter = requestGate(env.REQUEST_GATE, 30, 60);
+      if (!(await limiter.allow('watch:' + extractIp(request)))) return Response.json({ error: 'Try again in a minute' }, { status: 429 });
+      const parsed = await readSmallJson(request, 512);
+      if (!parsed.ok) return Response.json({ error: 'Invalid or oversized request' }, { status: parsed.status });
+      const body = parsed.value as { action?: string; snapshotId?: string; token?: string } | null;
+      if (!body || !['subscribe', 'status', 'unsubscribe'].includes(body.action || '')) return Response.json({ error: 'Unknown action' }, { status: 400 });
+      const stub = env.PILOT_WATCH.get(env.PILOT_WATCH.idFromName('pilot'));
+      let baseline: CheckResponse | undefined;
+      if (body.action === 'subscribe') {
+        if (!isSnapshotId(body.snapshotId || '')) return Response.json({ error: 'A saved reading is required' }, { status: 400 });
+        baseline = bundledById.get(body.snapshotId!)?.card ?? await readSnapshot(kv, body.snapshotId!) ?? undefined;
+        if (!baseline || baseline.historical || baseline.degraded || baseline.positionsCoverage !== 'complete' || !baseline.positions.nPositions || baseline.verdict.reasons.includes('positions_stale')) return Response.json({ error: 'Choose a complete current saved reading with an open position' }, { status: 400 });
+        const subscriptions = requestGate(env.REQUEST_GATE, 1, 86_400);
+        if (!(await subscriptions.allow('watch-subscribe:' + extractIp(request)))) return Response.json({ error: 'One pilot subscription per connection per day' }, { status: 429 });
+      } else if (typeof body.token !== 'string' || !/^[0-9a-f-]{72}$/.test(body.token)) return Response.json({ error: 'Invalid monitoring token' }, { status: 400 });
+      const res = await stub.fetch('https://watch.internal', { method: 'POST', body: JSON.stringify({ action: body.action, token: body.token, baseline }) });
+      return new Response(res.body, { status: res.status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+    }
+    if (url.pathname === '/embed' || url.pathname.startsWith('/api/v1/readings/')) {
+      const api = url.pathname.startsWith('/api/v1/readings/');
+      const headers: Record<string, string> = api ? { 'access-control-allow-origin': '*', 'cache-control': 'public, max-age=60', 'x-content-type-options': 'nosniff' }
+        : { ...PAGE_HEADERS, 'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors *; base-uri 'none'; form-action 'none'", 'cache-control': 'public, max-age=60' };
+      if (method === 'POST') return Response.json({ error: 'Saved readings are read-only' }, { status: 405, headers: { ...headers, allow: 'GET, HEAD' } });
+      const id = api ? url.pathname.slice('/api/v1/readings/'.length) : url.searchParams.get('s') || '';
+      if (!isSnapshotId(id)) return Response.json({ error: 'not a snapshot id' }, { status: 400, headers });
+      const card = bundledById.get(id)?.card ?? await readSnapshot(kv, id);
+      if (!card) return Response.json({ error: 'saved reading not found' }, { status: 404, headers: { ...headers, 'cache-control': 'no-store' } });
+      const res = api ? Response.json(publisherReading(card, id, url.origin, url.searchParams.get('claim')), { headers })
+        : new Response(publisherEmbed(card, id, url.origin, url.searchParams.get('claim')), { headers });
+      return method === 'HEAD' ? headOf(res) : res;
+    }
+
+    if (url.pathname === '/api/events') {
+      if (method !== 'POST') return new Response(null, { status: 405, headers: { allow: 'POST' } });
+      if (!fromThisSite(request, url)) return new Response(null, { status: 403 });
+      const client = requestGate(env.REQUEST_GATE, 60, 60);
+      const usageGlobalGate = requestGate(env.REQUEST_GATE, 300, 60);
+      if (!(await client.allow(`usage:${extractIp(request)}`)) || !(await usageGlobalGate.allow('usage:global'))) {
+        return new Response(null, { status: 429 });
+      }
+      const event = await readUsage(request);
+      if (!event) return new Response(null, { status: 400 });
+      emit(event);
+      return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
+    }
 
     if (url.pathname === '/app.js') {
       if (method === 'POST') return Response.json({ error: 'no such endpoint' }, { status: 405 });
-      const res = new Response(pageScript, { headers: SCRIPT_HEADERS });
+      const res = new Response(pageScript, { headers: {
+        ...SCRIPT_HEADERS,
+        'cache-control': url.searchParams.get('v') === shortHash(pageScript)
+          ? 'public, max-age=31536000, immutable' : 'public, max-age=300',
+      } });
+      return method === 'HEAD' ? headOf(res) : res;
+    }
+
+    if (url.pathname === '/og-fallback.png' || url.pathname === '/logo.png' || url.pathname.startsWith('/fonts/')) {
+      if (method === 'POST') return new Response('method not allowed', { status: 405, headers: { allow: 'GET, HEAD' } });
+      const font = url.pathname === '/fonts/inter-regular.woff' ? interRegular
+        : url.pathname === '/fonts/inter-bold.woff' ? interBold : null;
+      if (!font && url.pathname !== '/og-fallback.png' && url.pathname !== '/logo.png') return new Response('not found', { status: 404 });
+      const res = new Response(font ?? (url.pathname === '/logo.png' ? logoPng : ogFallbackPng), { headers: {
+        'content-type': font ? 'font/woff' : 'image/png',
+        'cache-control': 'public, max-age=86400',
+        'x-content-type-options': 'nosniff',
+      } });
       return method === 'HEAD' ? headOf(res) : res;
     }
 
@@ -365,7 +467,7 @@ export default {
       if (!address) {
         return Response.json(
           { error: 'no valid Hyperliquid address found in the address parameter' },
-          { status: 400 },
+          { status: 400, headers: { 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } },
         );
       }
       // Which position the reader asked about, if any. A coin is a short
@@ -388,7 +490,8 @@ export default {
       // a deploy that adds a token to the registry could still answer a
       // recognised holding as unrecognised for up to ten minutes (24.09
       // audit, L08).
-      const cacheKey = `check:${CLASSIFIER_VERSION}:${ASSET_REGISTRY_VERSION}:${address}${asked}`;
+      const includeContext = url.searchParams.get('context') !== '0';
+      const cacheKey = `check:${CLASSIFIER_VERSION}:${ASSET_REGISTRY_VERSION}:${address}${asked}${includeContext ? '' : ':core'}`;
 
       // Reading an answer that already exists and starting a new one that
       // costs money are two different acts, so they are two different
@@ -401,9 +504,9 @@ export default {
           cached === null
             ? Response.json(
                 { error: 'no recent reading of this address; POST to /api/check to run one' },
-                { status: 404 },
+                { status: 404, headers: { 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } },
               )
-            : new Response(cached, { headers: { 'content-type': 'application/json' } });
+            : new Response(cached, { headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } });
         return method === 'HEAD' ? headOf(res) : res;
       }
 
@@ -441,7 +544,7 @@ export default {
       // it should not spend a place in the rate limiter meant to bound how
       // often a new, expensive check may start (23.09 audit, S02).
       const alreadyCached = await kv.get(cacheKey);
-      if (alreadyCached !== null) {
+      if (alreadyCached !== null && !(url.searchParams.get('retry') === '1' && (JSON.parse(alreadyCached) as CheckResponse).degraded)) {
         counted('cached', readingFields(JSON.parse(alreadyCached) as CheckResponse));
         return new Response(alreadyCached, { headers: { 'content-type': 'application/json' } });
       }
@@ -460,14 +563,10 @@ export default {
           const known = parsed.positions.candidates.some(
             (c) => c.coin.toUpperCase() === focus.coin.toUpperCase() && c.side === focus.side,
           );
-          // `candidates` is the five largest positions, not necessarily all
-          // of them (src/engine/features.ts, MAX_CANDIDATES = 5). Absence
-          // from a truncated list proves nothing - only when nPositions is
-          // itself five or fewer is `candidates` the complete roster, and
-          // only then can "not in it" become "not open" without a fresh
-          // check (25.09 audit, A02).
+          // Older cached readings may carry only their five largest legs.
+          // Infer absence only when both the roster and venue read are full.
           const candidatesAreComplete = parsed.positions.nPositions <= parsed.positions.candidates.length;
-          if (!known && candidatesAreComplete) {
+          if (!known && candidatesAreComplete && parsed.positionsCoverage === 'complete') {
             const note = `No ${focus.coin} ${focus.side} is open at this address; this answer is about the largest position instead`;
             counted('not_open', readingFields(parsed));
             return Response.json({
@@ -495,7 +594,7 @@ export default {
         if (!(await limiter.allow(ip))) {
           counted('rate_limited');
           return Response.json(
-            { error: 'too many checks from this address, try again shortly' },
+            { error: 'Too many checks from your connection. Try again in about a minute.' },
             { status: 429, headers: { 'retry-after': String(RATE_LIMIT_WINDOW_SECONDS) } },
           );
         }
@@ -514,7 +613,7 @@ export default {
       // for the same question cost this request nothing. The `as` keeps
       // TypeScript from deciding it is still null after the await: it is
       // assigned inside the producer below.
-      let fresh = null as Pick<CheckEvent, 'nansenCalls' | 'credits' | 'nansenOff'> | null;
+      let fresh = null as Pick<CheckEvent, 'nansenCalls' | 'credits' | 'nansenOff' | 'creditsRemaining' | 'creditsMeasuredAt'> | null;
       try {
         const ttl = (r: CheckResponse) => (r.degraded ? DEGRADED_CACHE_TTL_SECONDS : CHECK_CACHE_TTL_SECONDS);
         const result = await withCache(kv, cacheKey, ttl, async () => {
@@ -536,7 +635,7 @@ export default {
           let hold: string | null = null;
           if (!env.NANSEN_API_KEY) {
             nansenOffReason = 'no API key configured';
-          } else {
+          } else if (includeContext) {
             const reservation = await budget.reserve(day, WORST_CASE_CALLS);
             if (reservation.ok) hold = reservation.id;
             else nansenOffReason = reservation.reason;
@@ -547,23 +646,35 @@ export default {
           const timeout = AbortSignal.timeout(CHECK_DEADLINE_MS);
           const nansen =
             nansenOffReason === undefined
-              ? createNansenClient(
+              ? reusePositions(includeContext ? createNansenClient(
                   env.NANSEN_API_KEY!,
                   (m) => {
                     calls.push(m);
                   },
                   timeout,
-                )
+                ) : stagedNansen(env.NANSEN_API_KEY!, budget, day, m => { calls.push(m); }, timeout), kv)
               : null;
           try {
             const result = await checkAddress(address, {
               nansen,
               nansenOffReason,
               focus,
+              includeContext,
               deadline: startedAt + CHECK_DEADLINE_MS,
               signal: timeout,
             });
             const id = snapshotId(address, result.checkedAt, result.classifierVersion, result.focus);
+            const quoteKey = `quote-samples:${address}:${result.focus?.coin || 'largest'}:${result.focus?.side || ''}`;
+            if (result.orders.headlineTwoSided && result.ordersCoverage === 'complete') {
+              const rawPrevious = await kv.get(quoteKey);
+              let previous: QuoteSample | null = null;
+              try { previous = rawPrevious ? JSON.parse(rawPrevious) as QuoteSample : null; } catch { /* discard corrupt history */ }
+              const sample = nextQuoteSample(previous, { ...result, nansenCalls: calls.length });
+              if (sample) {
+                result.quoteSamples = { samples: sample.samples, firstAt: sample.firstAt, lastAt: sample.at, continuityConfirmed: false };
+                await kv.put(quoteKey, JSON.stringify(sample), { expirationTtl: 1800 });
+              }
+            }
             // The "what changed" comparison used to fire only for the 22
             // gallery cards a script had re-read by hand; a reader who just
             // checks the same address twice never saw it (audit J05). This
@@ -605,7 +716,7 @@ export default {
             // The pointer only moves once this reading is durably the
             // newest one: a save that failed above already returned, so it
             // can never bump a real reading off the position of "latest".
-            await kv.put(latestKey, id, { expirationTtl: SNAPSHOT_TTL_SECONDS });
+            if (!result.degraded) await kv.put(latestKey, id, { expirationTtl: SNAPSHOT_TTL_SECONDS });
             // The link goes on the picture, so it can only be added once the
             // reading it points at is really there.
             return {
@@ -618,13 +729,14 @@ export default {
             // A call with no cost header counts as one credit, the
             // conservative direction for a cap.
             const spent = calls.reduce((sum, c) => sum + (c.creditsCost ?? 1), 0);
+            const lastKnown = [...calls].reverse().find((c) => c.creditsRemaining !== null);
             fresh = {
               nansenCalls: calls.length,
               credits: spent,
+              ...(lastKnown ? { creditsRemaining: lastKnown.creditsRemaining!, creditsMeasuredAt: lastKnown.at } : {}),
               ...(nansenOffReason !== undefined ? { nansenOff: nansenOffReason } : {}),
             };
             if (hold !== null) {
-              const lastKnown = [...calls].reverse().find((c) => c.creditsRemaining !== null);
               // A refusal that still reports credits is about one endpoint,
               // not about the balance, and must not stop tomorrow too.
               const refused = calls.some((c) => meansOutOfCredits(c.status, c.creditsRemaining));
@@ -636,7 +748,7 @@ export default {
             // the number the buildathon submission rests on.
             await budget.record(day, calls);
           }
-        });
+        }, url.searchParams.get('retry') === '1' ? r => r.degraded : undefined);
         counted(
           fresh ? 'fresh' : 'cached',
           fresh ? { ...readingFields(result), ...fresh, saved: result.snapshotSaved === true } : readingFields(result),
@@ -702,7 +814,7 @@ export default {
           return Response.json({ error: 'pictures are drawn for this site' }, { status: 403 });
         }
         if (!isSnapshotId(id)) return Response.json({ error: 'not a snapshot id' }, { status: 400 });
-        if ((await kv.get(ogCacheKey(id))) !== null) {
+        if ((await storedOgPng(kv, id)) !== null) {
           counted('already_drawn');
           return new Response(null, { status: 204 });
         }
@@ -718,7 +830,7 @@ export default {
         if (!(await limiter.allow(`og:${extractIp(request)}`))) {
           counted('rate_limited');
           return Response.json(
-            { error: 'too many pictures from this address, try again shortly' },
+            { error: 'Too many pictures from your connection. Try again in about a minute.' },
             { status: 429, headers: { 'retry-after': String(RATE_LIMIT_WINDOW_SECONDS) } },
           );
         }
@@ -785,6 +897,8 @@ export default {
     if (url.pathname === '/api/demo-access') {
       if (method !== 'POST') return Response.json({ error: 'POST only' }, { status: 405, headers: { allow: 'POST' } });
       if (!fromThisSite(request, url)) return Response.json({ error: 'from this site only' }, { status: 403 });
+      const gate = requestGate(env.REQUEST_GATE, 5, 60);
+      if (!(await gate.allow(`demo:${extractIp(request)}`))) return new Response(null, { status: 429, headers: { 'retry-after': '60', 'cache-control': 'no-store' } });
       return new Response(null, { status: (await isOperator(request, env)) ? 204 : 403 });
     }
 
@@ -833,3 +947,4 @@ export default {
     return new Response('not found', { status: 404, headers: { 'content-type': 'text/plain;charset=UTF-8' } });
   },
 };
+export default worker;

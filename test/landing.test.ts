@@ -6,7 +6,7 @@
 // front of the reader a moment after the page showed (27.09).
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import featuredData from '../data/featured.json';
+import featuredData from './fixtures/featured-september.json';
 import { galleryIndex, type Gallery } from '../src/gallery';
 import { landingExamples } from '../src/landing';
 import { snapshotId } from '../src/snapshot';
@@ -21,7 +21,7 @@ const badges = [...html.matchAll(/class="badge [a-z]+">([^<]+)</g)].map((m) => m
  * that function's rule rather than imported, since app.js is a browser
  * script; test/web-app-verdict-sync.test.ts guards the page's constants the
  * same way. */
-const LABELS: Record<string, string> = { book: 'Book', hedged: 'Hedged', looks_like_a_bet: 'Looks like a bet', unknown: 'Unknown' };
+const LABELS: Record<string, string> = { book: 'Book', hedged: 'Spot-covered short', looks_like_a_bet: 'Looks like a bet', unknown: 'Unknown' };
 function pageBadgeText(row: (typeof rows)[number]): string {
   const base = LABELS[row.verdict.verdict] + (row.verdict.strength ? ` (${row.verdict.strength})` : '');
   return row.verdict.verdict === 'unknown' && row.badgeQualifier ? `${base} · ${row.badgeQualifier}` : base;

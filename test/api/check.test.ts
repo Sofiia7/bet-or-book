@@ -123,6 +123,21 @@ function syntheticPositions(list: Array<{ coin: string; size: number; valueUsd: 
   };
 }
 
+it('core exposure mode skips optional PnL and long funding context without changing the verdict', async () => {
+  route();
+  const at = abxClearinghouse.time;
+  const positions = syntheticPositions([{ coin: 'ETH', size: 10, valueUsd: 1000000 }]); positions.timestamp = at;
+  const core = fakeNansen({ positions });
+  const full = fakeNansen({ positions });
+  const reading = await checkAddress(ABRAXAS, { nansen: core, includeContext: false, now: () => at + 60000 });
+  const context = await checkAddress(ABRAXAS, { nansen: full, now: () => at + 60000 });
+  expect(core.perpPnlSummary).not.toHaveBeenCalled();
+  expect(core.relatedWallets).not.toHaveBeenCalled();
+  expect(full.perpPnlSummary).toHaveBeenCalledTimes(1);
+  expect(reading.verdict).toEqual(context.verdict);
+  expect(reading.pnl).toBeNull();
+});
+
 /** Canonical WETH on Ethereum: the holdings model judges a balance by its
  * contract, so a placeholder address is now correctly not counted as ETH. */
 const WETH_ETHEREUM = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
@@ -153,6 +168,7 @@ describe('checkAddress (offline, real fixtures)', () => {
       nansen: createNansenClient('k', (m) => {
         calls.push(m);
       }),
+      now: () => Date.parse('2026-09-18T13:05:21.479Z'),
     });
     expect(result.source).toBe('nansen');
     expect(result.positions.nPositions).toBe(17);
@@ -171,7 +187,6 @@ describe('checkAddress (offline, real fixtures)', () => {
     // this test is reading old positions and now says so.
     expect(result.positionsAsOf).toBe('2026-09-18T13:04:21.479Z');
     expect(result.coverage).toEqual([
-      expect.stringMatching(/^Positions were measured \d+ minutes before this check, not at the moment of it$/),
       '2 funding wallets carry no Nansen label: whether they are private wallets or exchange addresses is unverified',
     ]);
     expect(result.summary).toMatch(/^Less than 1% of the \$[\d.]+M ETH short is covered by ETH at this address\./);
@@ -203,6 +218,19 @@ describe('checkAddress (offline, real fixtures)', () => {
     // Vitals are attributed to wherever the position record actually came
     // from, not to Nansen just because a key was given.
     expect(result.vitals.find((v) => v.label === 'Leverage')?.source).toBe('Hyperliquid');
+  });
+
+  it('does not call complete matching spot a hedge when Nansen positions failed', async () => {
+    route();
+    const eth = abxClearinghouse.assetPositions.find(p => p.position.coin === 'ETH')!;
+    const nansen = fakeNansen({ positions: syntheticPositions([]), balances: [balanceRow('WETH', Math.abs(Number(eth.position.positionValue)))] });
+    nansen.perpPositions = vi.fn(async () => { throw new Error('positions unavailable'); });
+    const result = await checkAddress(ABRAXAS, { nansen, now: () => abxClearinghouse.time + 60_000 });
+    expect(result.positionsCoverage).toBe('partial');
+    expect(result.hedgeCoverage).toBe('complete');
+    expect(result.hedge.hedgeRatio).toBeCloseTo(1, 2);
+    expect(result.verdict.reasons).toEqual(['positions_not_complete']);
+    expect(result.breakdown?.dataQuality).toBe('unknown');
   });
 
   it('describes a wide position spread without calling it a book (audit A03)', async () => {
@@ -282,6 +310,8 @@ describe('checkAddress (offline, real fixtures)', () => {
     const result = await checkAddress(ABRAXAS, { nansen, now: () => at + 3_600_000 });
     expect(result.positionsAsOf).toBe('2026-09-21T09:00:00.000Z');
     expect(result.coverage).toContain('Positions were measured 60 minutes before this check, not at the moment of it');
+    expect(result.verdict.reasons).toEqual(['positions_stale']);
+    expect(result.breakdown?.dataQuality).toBe('unknown');
   });
 
   it('still answers when open interest cannot be read', async () => {
@@ -328,7 +358,7 @@ describe('checkAddress (offline, real fixtures)', () => {
     const result = await checkAddress(ABRAXAS, { nansen });
     expect(result.source).toBe('hyperliquid');
     expect(result.positions.nPositions).toBe(14);
-    expect(result.coverage.some((c) => c.includes('unexpected shape'))).toBe(true);
+    expect(result.coverage.some((c) => c.includes('Nansen did not answer'))).toBe(true);
   });
 
   it('falls back when a number in the Nansen answer is not a number', async () => {
@@ -338,7 +368,7 @@ describe('checkAddress (offline, real fixtures)', () => {
     const nansen = { ...fakeNansen({ positions: syntheticPositions([]) }), perpPositions: vi.fn(async () => broken) };
     const result = await checkAddress(ABRAXAS, { nansen });
     expect(result.source).toBe('hyperliquid');
-    expect(result.coverage.some((c) => c.includes('unexpected shape'))).toBe(true);
+    expect(result.coverage.some((c) => c.includes('Nansen did not answer'))).toBe(true);
   });
 
   it('reads resting orders on every dex the account has a position on', async () => {

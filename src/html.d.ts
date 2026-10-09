@@ -3,7 +3,7 @@ declare module '*.html' {
   export default content;
 }
 
-declare module '*/web/app.js' {
+declare module '*/web/app.min.js' {
   const content: string;
   export default content;
 }

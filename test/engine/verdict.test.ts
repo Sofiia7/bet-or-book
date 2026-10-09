@@ -237,9 +237,9 @@ describe('hedgeCanChangeVerdict', () => {
     expect(hedgeCanChangeVerdict({ positions: many, orders: orders({}) })).toBe(true);
   });
 
-  it('still reads spot when some portfolio legs cancel: that says nothing about the selected short', () => {
+  it('skips paid spot reads when unresolved portfolio offsets already withhold the verdict', () => {
     const balanced = positions({ ...concentratedShort, nPositions: 6, netToGross: 0.2, headlineShare: 0.3, sameAssetOffsetShare: 0.9 });
-    expect(hedgeCanChangeVerdict({ positions: balanced, orders: orders({}) })).toBe(true);
+    expect(hedgeCanChangeVerdict({ positions: balanced, orders: orders({}) })).toBe(false);
   });
 
   it('is true when the dollars net out across different assets: spot could still offset the short', () => {

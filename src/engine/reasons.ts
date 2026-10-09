@@ -21,8 +21,8 @@ const usd = (n: number) => (n >= 1000 ? `$${Math.round(n / 1000)}K` : `$${n}`);
 /** Words for every reason the rules can put first. Typed against the rules'
  * own list, so a new reason does not compile until it has a sentence. The two
  * signs that only ever grade a book are below, with their own wording. */
-const WHY: Record<Exclude<ReasonCode, 'positions' | 'trades'>, string> = {
-  'no open positions found': 'Nothing is open at this address right now, so there is no position to judge.',
+const WHY: Record<Exclude<ReasonCode, 'positions' | 'trades'> | 'balanced_book', string> = {
+  'no open positions found': 'No open positions were found on the venues covered by this reading, so there is no position to judge.',
 
   // A book: quoting is what decides it, the rest only grades it.
   orders:
@@ -69,8 +69,8 @@ const WHY: Record<Exclude<ReasonCode, 'positions' | 'trades'>, string> = {
     'This would read as a bet, but not every venue\'s resting orders could be read, and "quotes nothing" ' +
     'needs all of them read.',
   positions_not_complete:
-    'This would read as a bet, but the positions came from one venue only, and "nothing else is open" ' +
-    'needs every venue read.',
+    'Only part of the positions could be read. Unseen perpetual legs can change the exposure, even when matching spot is visible.',
+  positions_stale: 'Positions and the other sources were measured too far apart to establish exposure in one coherent reading.',
 
   directional_concentration:
     `Looks like a bet: at most ${T.bet.maxPositions} positions, this one at least ${pct(T.bet.minHeadlineShare)} of ` +
@@ -92,7 +92,7 @@ const WHY: Record<Exclude<ReasonCode, 'positions' | 'trades'>, string> = {
   linked_exposure_unverified:
     'No verdict: the matching asset sits in wallets that funded this account. A funding link shows where the money ' +
     'came from, not who holds it now, so it cannot count as this account\'s hedge.',
-  'signals disagree: not enough evidence for book, hedge, or bet':
+  'signals_disagree':
     'No verdict: the signs point different ways, and none of them is enough for a book, a hedge or a bet.',
 };
 
@@ -104,7 +104,7 @@ const WHY: Record<Exclude<ReasonCode, 'positions' | 'trades'>, string> = {
  * union `WHY` already is, so a new reason cannot ship without a phrase here
  * either (24.09 audit U02 + L10: one dictionary, not one on the server and a
  * second, drifting one on the page). */
-const BADGE_QUALIFIER: Record<Exclude<ReasonCode, 'positions' | 'trades' | 'no open positions found'>, string> = {
+const BADGE_QUALIFIER: Record<Exclude<ReasonCode, 'positions' | 'trades' | 'no open positions found'> | 'balanced_book', string> = {
   orders: 'market-making activity',
   balanced_book: 'offsetting positions',
   perp_offset_unresolved: 'perp offsets unresolved',
@@ -119,13 +119,14 @@ const BADGE_QUALIFIER: Record<Exclude<ReasonCode, 'positions' | 'trades' | 'no o
   partial_offset: 'partly covered',
   quotes_not_checked: 'orders not fully read',
   positions_not_complete: 'positions not fully read',
+  positions_stale: 'positions out of date',
   directional_concentration: 'looks directional',
   directional_portfolio: 'looks directional',
   offset_not_measured: 'offset not measured',
   mixed_long_short_book: 'mixed assets',
   diversified_book_no_quotes: 'book-shaped, no quotes',
   linked_exposure_unverified: 'assets sit with funders',
-  'signals disagree: not enough evidence for book, hedge, or bet': 'signals disagree',
+  'signals_disagree': 'signals disagree',
 };
 
 /** The short badge qualifier for one verdict, or null when there is none -
@@ -133,7 +134,7 @@ const BADGE_QUALIFIER: Record<Exclude<ReasonCode, 'positions' | 'trades' | 'no o
  * reading (whose rules may not have a phrase here). */
 export function badgeQualifier(verdict: VerdictResult, historical = false): string | null {
   if (historical) return null;
-  const first = verdict.reasons?.[0];
+  const first = normalizeReason(verdict.reasons?.[0]);
   return first !== undefined && first in BADGE_QUALIFIER ? BADGE_QUALIFIER[first as keyof typeof BADGE_QUALIFIER] : null;
 }
 
@@ -161,6 +162,10 @@ export function ruleExplanation(verdict: VerdictResult, historical = false): str
       .filter((s): s is string => s !== undefined);
     return also.length ? `${WHY.orders} Also seen: ${also.join(' and ')}.` : WHY.orders;
   }
-  const first = reasons[0];
+  const first = normalizeReason(reasons[0]);
   return first !== undefined && first in WHY ? WHY[first as keyof typeof WHY] : null;
+}
+
+export function normalizeReason(reason: string | undefined): string | undefined {
+  return reason === "signals disagree: not enough evidence for book, hedge, or bet" ? 'signals_disagree' : reason;
 }

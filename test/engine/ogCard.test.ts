@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ogCardData } from '../../src/engine/ogCard';
+import { ogCardData, type OgCardInput } from '../../src/engine/ogCard';
 import type { VerdictResult } from '../../src/engine/verdict';
 import type { ExposureBreakdown } from '../../src/engine/breakdown';
 
@@ -31,6 +31,11 @@ function input(overrides: Record<string, unknown> = {}) {
 }
 
 describe('ogCardData', () => {
+  it('does not turn an unmeasured historical Book into a zero quoting diagram', () => {
+    const d = ogCardData(input({ verdict: verdict({ verdict: 'book' }), orders: {} as OgCardInput['orders'] }));
+    expect(d.constellation).toBeNull();
+    expect(d.constellationStat).toBeNull();
+  });
   it('names the badge with its strength when there is one', () => {
     const d = ogCardData(input({ verdict: verdict({ verdict: 'book', strength: 'strong', reasons: ['orders'] }) }));
     expect(d.badgeText).toBe('Book (strong)');
@@ -38,7 +43,7 @@ describe('ogCardData', () => {
 
   it('names the badge with no strength for a hedge', () => {
     const d = ogCardData(input({ verdict: verdict({ verdict: 'hedged', strength: null, reasons: ['hedge_leg'] }) }));
-    expect(d.badgeText).toBe('Hedged');
+    expect(d.badgeText).toBe('Spot-covered short');
   });
 
   it('picks the accent colour that matches the page for each verdict (26.09 redesign: the dark-theme fixed hex, same four values web/app.js\'s VERDICTS[...].accent now reads)', () => {
@@ -85,7 +90,7 @@ describe('ogCardData', () => {
     expect(d.constellation).not.toBeNull();
     expect(d.constellation?.coverage).toBe(0);
     expect(d.constellation?.ghost).toBe(false);
-    expect(d.constellationStat).toEqual({ value: '0%', label: 'covered' });
+    expect(d.constellationStat).toEqual({ value: '—', label: 'spot coverage not applicable' });
   });
 
   it('draws a constellation for a book verdict regardless of breakdown.applies, densely, using matched-both-sides coverage', () => {

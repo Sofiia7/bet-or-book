@@ -12,12 +12,14 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22.12'
           cache: npm
       - run: npm ci
+      - name: Browser asset is up to date
+        run: npm run build:web && git diff --exit-code -- web/app.min.js
       - name: Typecheck
         run: npm run typecheck
       - name: Tests
@@ -34,7 +36,7 @@ jobs:
         # committed by another route. The pattern is Nansen's key shape, not
         # a value.
         run: |
-          if git grep -nE '(NANSEN_API_KEY|apikey)\s*[:=]\s*["'\'']?[A-Za-z0-9]{20,}' -- . ':!*.yml'; then
+          if git grep -nE '(NANSEN_API_KEY|DEMO_KEY|apikey)\s*[:=]\s*["'\'']?[A-Za-z0-9]{20,}' -- . ':!*.yml'; then
             echo "A credential looks committed. Rotate it and remove it from history."
             exit 1
           fi

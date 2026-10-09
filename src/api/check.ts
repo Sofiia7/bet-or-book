@@ -26,6 +26,7 @@ export type CheckOptions = ObserveOptions;
 
 /** An observation with one interpretation of it: what a check returns. */
 export interface CheckResult extends Observation {
+  quoteSamples?: { samples: number; firstAt: string; lastAt: string; continuityConfirmed: false };
   verdict: VerdictResult;
   /** The rules that read all of this. See CLASSIFIER_VERSION. */
   classifierVersion: string;
@@ -86,6 +87,9 @@ export type CheckResponse = CheckResult & {
    * opened. Null when the verdict is not Unknown, or there is nothing to
    * qualify. Added wherever a reading is served. */
   badgeQualifier?: string | null;
+  headline?: string;
+  takeaway?: string;
+  whatChanges?: string | null;
 };
 
 /** Reads one address and answers about it: observe, interpret, present.

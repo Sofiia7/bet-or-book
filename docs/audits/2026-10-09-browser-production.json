@@ -1,0 +1,31 @@
+{
+  "baseURL": "https://bet-or-book.trade",
+  "checkedAt": "2026-10-09T11:03:51.282Z",
+  "checks": [
+    "Three contrasting examples and additional case",
+    "390 px home: no horizontal overflow",
+    "390 px home: viewport applied",
+    "Transaction hash is rejected",
+    "Invalid input is announced",
+    "Multiple addresses require a choice",
+    "Address choice does not start a paid check",
+    "Explore starts with case studies",
+    "Archive opens separately",
+    "Funder headline keeps ownership boundary",
+    "Back returns from a reading to Explore",
+    "Shared reading shows result before search",
+    "Saved date is visible",
+    "Evidence takeaway is visible",
+    "Share copies the saved reading link",
+    "320 px reading: no horizontal overflow",
+    "320 px reading: viewport applied",
+    "390 px reading: no horizontal overflow",
+    "390 px reading: viewport applied",
+    "1280 px reading: no horizontal overflow",
+    "1280 px reading: viewport applied",
+    "Keyboard reaches the first reading action",
+    "Incomplete reading keeps its warning",
+    "Archive keeps historical rules and date",
+    "No browser JavaScript errors"
+  ]
+}

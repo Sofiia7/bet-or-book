@@ -13,20 +13,20 @@
 <meta property="og:site_name" content="Bet or Book">
 <meta property="og:title" content="Bet or Book">
 <meta property="og:description" content="Paste a Hyperliquid address: see what actually stands behind that whale position - a bet, a hedge, or a market maker's book.">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://bet-or-book.trade/og-fallback.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://bet-or-book.trade/og-fallback.png">
 <!--/SOCIAL-->
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237fa2ff'/%3E%3Ctext x='16' y='22.5' font-size='17' font-weight='700' text-anchor='middle' fill='%2308090c' font-family='sans-serif'%3EB%3C/text%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="/logo.png" type="image/png">
 <style>
+  @font-face { font-family: Inter; src: url('/fonts/inter-regular.woff') format('woff'); font-weight: 400; font-display: swap; }
+  @font-face { font-family: Inter; src: url('/fonts/inter-bold.woff') format('woff'); font-weight: 600 700; font-display: swap; }
   :root {
-    --bg: #08090c; --fg: #e6e8ee; --muted: #8b90a0; --faint: #5a5f6d; --line: rgba(255,255,255,.08); --panel: #0c0e13; --hover: rgba(255,255,255,.05);
+    --bg: #08090c; --fg: #e6e8ee; --muted: #8b90a0; --faint: #858a99; --line: rgba(255,255,255,.08); --panel: #0c0e13; --hover: rgba(255,255,255,.05);
     --book-bg: rgba(127,162,255,.12); --book-fg: #7fa2ff;
     --hedged-bg: rgba(79,224,176,.12); --hedged-fg: #4fe0b0;
     --bet-bg: rgba(242,179,92,.12); --bet-fg: #f2b35c;
     --unknown-bg: rgba(163,168,182,.12); --unknown-fg: #a3a8b6;
-    --note-bg: rgba(242,179,92,.12); --note-fg: #f2b35c;
     --link: #9fb8ff; --error: #ff6b6b;
     --surface-2: #0e1015; --surface-3: #0a0b10;
   }
@@ -36,7 +36,6 @@
     font-family: "Inter", -apple-system, system-ui, "Segoe UI", sans-serif;
     background: var(--bg);
     background-image: radial-gradient(1200px 600px at 50% -200px, #11131b 0%, var(--bg) 60%);
-    background-attachment: fixed;
     color: var(--fg); max-width: 1080px; margin: 40px auto; padding: 0 28px; line-height: 1.5;
   }
   h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
@@ -62,7 +61,7 @@
      The badge no longer tints its background per verdict - the handoff's
      own pill has none, only the border, the text color and the dot. */
   .badge {
-    display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px;
+    display: inline-flex; align-items: center; gap: 8px; min-height: 30px; height: auto; padding: 4px 12px;
     border: 1px solid rgba(255,255,255,.1); border-radius: 999px;
     font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; font-weight: 500;
     letter-spacing: .1em; text-transform: uppercase;
@@ -152,15 +151,12 @@
   .stat-value { font-size: 18px; font-weight: 600; overflow-wrap: anywhere; }
   .stat-source { font-size: 11px; color: var(--faint); margin-top: 2px; }
   /* #decisive holds only the tile(s) that turned the verdict (renderResult's
-     heroTiles, web/app.js) - restyled as the handoff's own two-column
+     heroTiles, web/app.js) - shown as a responsive
      legend directly under the diagram, dropping the boxed tile look every
      other .stat still keeps in "Everything else this reading found" and in
      the vitals strip. Usually one tile; a second (what stands elsewhere,
-     uncounted) sits beside it, right-aligned, only when that is not already
+     uncounted) sits beside it only when that is not already
      the same evidence - see heroTiles in renderResult. */
-  #decisive.stats { grid-template-columns: 1fr; gap: 20px; margin: 20px 0 4px; padding-top: 18px; border-top: 1px solid var(--line); }
-  #decisive.stats:has(> :nth-child(2):last-child) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  #decisive.stats:has(> :nth-child(2):last-child) > :last-child { text-align: right; }
   #decisive .stat.decisive { grid-column: auto; background: none; border-left: 0; padding: 0; }
   #decisive .stat-label { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
   #decisive .stat-value { font-size: 17px; font-weight: 700; margin: 6px 0 4px; }
@@ -176,7 +172,6 @@
   .fold p { margin: 6px 0 0; }
   .fold .tech { font-size: 12px; color: var(--muted); }
   .fold code { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; background: var(--panel); padding: 1px 5px; border-radius: 4px; }
-  .note { background: var(--note-bg); color: var(--note-fg); }
   /* Which position the answer is about, before the answer. */
   .subject { margin: 12px 0 0; font-size: 14px; }
   .subject .muted { margin-right: 6px; }
@@ -203,14 +198,14 @@
   .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
   /* A verdict the current rules never produced is shown as what it is:
      an earlier reading, not a present finding. */
-  .badge.historical { opacity: 0.6; border-style: dashed; }
+  .badge.historical { border-style: dashed; }
   #card-canvas { display: block; width: 100%; height: auto; border-radius: 8px; margin-top: 12px; border: 1px solid var(--line); }
   .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0; }
   .chip { padding: 6px 12px; font-size: 13px; border-radius: 999px; }
   .chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
   /* Keyboard users need to see where they are. aria attributes alone say
      nothing about that. */
-  :focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+  :focus-visible { outline: 3px solid var(--link); outline-offset: 3px; }
   .list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
   .list button { width: 100%; display: grid; grid-template-columns: 34px 1fr auto; gap: 4px 12px; align-items: center; text-align: left; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 10px 4px; }
   /* boardRow (web/app.js) never draws a rank number - it has none to draw,
@@ -246,7 +241,7 @@
   .eyebrow { color: var(--book-fg); font: 11px "JetBrains Mono", monospace; letter-spacing: .13em; text-transform: uppercase; margin: 0 0 18px; }
   .hero h1 { font-size: clamp(36px, 5.5vw, 60px); line-height: 1.08; letter-spacing: -.045em; font-weight: 700; margin: 0 0 20px; }
   .hero h1 span { color: var(--book-fg); }
-  .hero .sub { font-size: clamp(13px, 1.04vw, 15px); line-height: 1.7; }
+  .hero .sub { font-size: clamp(14px, 1.15vw, 16px); line-height: 1.7; }
   .search-label { display: block; font-size: 13px; margin-top: 12px; }
   .search-row { margin-top: 10px; }
   .search-row input { padding: 17px; background: var(--panel); }
@@ -260,7 +255,13 @@
   .section-heading h2 { margin: 0; font-size: 21px; }
   .section-heading a { font-size: 13px; white-space: nowrap; }
   #examples > .sub { font-size: 13px; margin: 8px 0 20px; }
-  #player-queue { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; border: 0; }
+  #player-queue { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; border: 0; }
+  .deeper-example { grid-column: 1 / -1; }
+  .deeper-example .queue-row { margin-top: 12px; }
+  .example-question { font-size: 14px; line-height: 1.5; }
+  .takeaway { color: var(--muted); font-size: 14px; line-height: 1.6; }
+  .watch-label { width: 180px; font-size: 12px; padding: 7px; }
+  #address-choices { overflow-wrap: anywhere; }
   #player-queue .queue-row { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 22px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); text-align: left; text-decoration: none; color: var(--fg); font: inherit; cursor: pointer; }
   #player-queue .queue-row:hover { border-color: var(--book-fg); background: var(--surface-2); }
   #player-queue .queue-pos { font-size: 20px; }
@@ -279,25 +280,22 @@
   body.has-reading .hero h1 { font-size: 24px; margin-bottom: 0; letter-spacing: -.02em; }
   body.has-reading .hero .sub, body.has-reading .hero .eyebrow,
   body.has-reading #examples, body.has-reading #how-it-works { display: none; }
+  body.has-reading #entry-controls, body.has-reading #recent, body.has-reading #watched { display: none; }
+  #reading-actions .share { flex: 1 1 160px; }
+  #reading-actions { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 16px; }
+  .save-share-controls { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+  #reading-actions button { font-size: 12px; }
+  #save-confirmation { margin: 0; }
+  #save-confirmation p { margin: 0 0 10px; }
+  #saved-position-name { width: 100%; max-width: 320px; }
+  #claim-choice { display:block; width:100%; max-width:100%; min-width:0; margin-top:8px; padding:8px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; }
+  .monitor-notices { width:100%; overflow-wrap:anywhere; }
+  #reading-actions .share > summary { font-size: 12px; }
   #card, #examples, #gallery, #how-it-works { scroll-margin-top: 24px; }
-  @media (max-width: 600px) {
-    body { margin-top: 22px; padding: 0 18px; }
-    .site-header { gap: 12px; }
-    .site-nav { gap: 14px; font-size: 12px; }
-    .hero { padding-top: 36px; }
-    .hero .sub { font-size: 15px; }
-    .search-row { flex-direction: column; }
-    #player-queue, .steps { grid-template-columns: 1fr; }
-    .section-heading { align-items: flex-start; }
-    .section-heading h2 { font-size: 19px; }
-  }
-  @media (max-width: 939px) {
-    .hero .sub { font-size: 15px; }
-  }
+
   .evidence-preview { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 18px; }
   .evidence-preview h3, .analysis-section h3 { font-size: 14px; margin: 0 0 12px; }
-  #decisive.stats { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); border: 0; padding: 0; margin: 0; }
-  #decisive.stats:has(> :nth-child(2):last-child) > :last-child { text-align: left; }
+  #decisive.stats { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 20px; border: 0; padding: 0; margin: 0; }
   #decisive .stat { padding: 0; }
   .source-lead { font-size: 13px; color: var(--muted); margin: 18px 0; }
   .source-lead strong { color: var(--fg); }
@@ -312,15 +310,32 @@
   #explore-title { font-size: 36px; margin: 30px 0 12px; }
   #gallery > .chips { margin: 24px 0; }
   #gallery-sub { font-size: 12px; margin-bottom: 24px; }
+  .explore-shortcut { display: inline-flex; align-items: center; justify-content: center; padding: 10px 8px; font-size: 14px; color: var(--link); text-decoration: underline; white-space: nowrap; }
+  .explore-shortcut:hover { background: var(--book-bg); }
+  .site-nav #nav-boards { color: var(--book-fg); font-weight: 700; }
+  .status, .search-help, .limit, .still-open, .tech { font-size: 14px; }
+  summary, nav a { min-height: 32px; padding-top: 5px; padding-bottom: 5px; }
+  .chip { min-height: 36px; }
+  .glossary { margin: 18px 0; font-size: 14px; color: var(--muted); }
+  .glossary dt { color: var(--fg); font-weight: 600; }
+  .glossary dd { margin: 0 0 12px; }
+  #check-progress { width: 100%; height: 5px; accent-color: var(--link); }
   @media (max-width: 600px) {
-    #decisive.stats, #decisive.stats:has(> :nth-child(2):last-child) { grid-template-columns: 1fr; }
+    body { margin-top: 22px; padding: 0 18px; }
+    .site-header { gap: 12px; }
+    .site-nav { gap: 14px; font-size: 12px; }
+    .hero { padding-top: 36px; }
+    .hero .sub { font-size: 16px; }
+    .search-row { flex-direction: column; }
+    #player-queue, .steps { grid-template-columns: 1fr; }
+    .section-heading { align-items: flex-start; }
+    .section-heading h2 { font-size: 19px; }
+    .board .list button { grid-template-columns: minmax(0,1fr); }
+    #decisive.stats, #decisive.stats:has(> :nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     #all-readings .list button { grid-template-columns: 28px minmax(0, 1fr); gap: 8px; }
     #all-readings .list .badge { grid-column: 2; justify-self: start; height: auto; min-height: 30px; padding-top: 6px; padding-bottom: 6px; }
     #all-readings .list .row-meta { grid-column: 2; }
   }
-  .explore-shortcut { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--book-fg); border-radius: 8px; padding: 14px 20px; font-size: 14px; font-weight: 700; color: var(--book-fg); text-decoration: none; white-space: nowrap; }
-  .explore-shortcut:hover { background: var(--book-bg); }
-  .site-nav #nav-boards { color: var(--book-fg); font-weight: 700; }
 </style>
 </head>
 <body>
@@ -330,6 +345,7 @@
 </header>
 <main>
 <div id="workspace">
+<div id="entry-controls">
 <section class="hero" aria-labelledby="hero-title">
   <p class="eyebrow">Look beyond the whale alert</p>
   <h1 id="hero-title">Don't Get Rekt<br><span>Copytrading.</span></h1>
@@ -338,20 +354,26 @@
 
 <label class="search-label" for="address">Check a Hyperliquid wallet</label>
 <div class="row search-row">
-  <input id="address" type="text" placeholder="Paste a Hyperliquid wallet address" autocomplete="off" spellcheck="false" aria-label="Hyperliquid address" aria-describedby="address-help">
+  <input id="address" type="text" placeholder="Paste a Hyperliquid wallet address" autocomplete="off" spellcheck="false" aria-describedby="address-help">
   <button id="check">Check position</button>
   <a class="explore-shortcut" href="#explore" id="search-explore">Explore positions →</a>
 </div>
-<p class="search-help" id="address-help">Links containing a wallet address work too. No wallet connection needed.</p>
+<p class="search-help" id="address-help">Paste an address, Hypurrscan or Hyperliquid link. No wallet connection needed.</p>
+<details class="fold"><summary>Checking a whale alert?</summary><p class="search-help">Open the alert’s wallet or explorer link and copy the 0x wallet address. You can also paste alert text containing the address. An X post URL alone does not contain the wallet data.</p><p class="search-help">For example: “A whale opened an ETH short · wallet 0x…” — paste the full wallet address, then choose ETH from the positions found.</p></details>
+<div id="address-choices" class="box" hidden><p>More than one wallet found. Choose the address to check:</p><div id="address-choice-buttons" class="chips"></div></div>
+<p class="search-help"><button class="chip" id="use-example">Try a saved example · free</button></p>
 <p class="data-sources"><span>Powered by <a class="partner" href="https://app.nansen.ai/r/36RkYL4jJsy" rel="noopener noreferrer">Nansen API</a></span><span>Orders and fills from <a class="partner" href="https://app.hyperliquid.xyz" rel="noopener noreferrer">Hyperliquid</a></span></p>
+</div>
 <p class="status" id="status" role="status"></p>
+<progress id="check-progress" aria-label="Reading the wallet" hidden></progress>
+<p class="search-help" id="slow-check" hidden>Still reading sources. A live check can take up to 45 seconds; the answer will identify any sources that did not finish. <button class="chip" id="waiting-example">Open a free saved example</button></p>
 <div class="guess" id="guess" hidden>
-  <span class="guess-label">Guess before it loads:</span>
-  <span class="guess-chips" id="guess-chips">
-    <button class="chip" data-guess="looks_like_a_bet">Bet</button>
-    <button class="chip" data-guess="hedged">Hedge</button>
-    <button class="chip" data-guess="book">Book</button>
-    <button class="chip" data-guess="cant_tell">Can't tell</button>
+  <span class="guess-label" id="guess-label">Guess before it loads:</span>
+  <span class="guess-chips" id="guess-chips" role="group" aria-labelledby="guess-label">
+    <button class="chip" aria-pressed="false" data-guess="looks_like_a_bet">Bet</button>
+    <button class="chip" aria-pressed="false" data-guess="hedged">Hedge</button>
+    <button class="chip" aria-pressed="false" data-guess="book">Book</button>
+    <button class="chip" aria-pressed="false" data-guess="cant_tell">Can't tell</button>
   </span>
 </div>
 <!-- Read fresh on 26 September and picked by hand, one of each kind of
@@ -359,7 +381,7 @@
      chips to that file. The scan further down is older and was read before
      the card had the position's own numbers (23.09 audit, U05). -->
 <section id="examples" aria-labelledby="examples-title">
-  <div class="section-heading"><h2 id="examples-title">Big positions. Different stories.</h2><a href="#how-it-works">How it works ↗</a></div>
+  <div class="section-heading"><h2 id="examples-title">Big positions. Different stories.</h2><a id="nav-how-it-works" href="#how-it-works">How it works ↗</a></div>
   <p class="sub" id="examples-status">Explore saved examples. Each opens a dated reading, without running a new check.</p>
   <div class="queue" id="player-queue"><!--FEATURED_EXAMPLES--></div>
 </section>
@@ -384,11 +406,15 @@
     <span class="picker-chips" id="picker-chips"></span>
   </div>
   <p style="margin: 10px 0 0;"><span class="badge" id="badge"></span></p>
+  <div class="box" id="source-warning" role="status" hidden><strong id="source-warning-text"></strong> <button id="try-again">Try again</button><button id="source-free-examples" hidden>Open free examples</button></div>
   <p class="headline" id="headline"></p>
+  <p class="takeaway" id="takeaway" hidden></p>
   <p class="summary" id="summary"></p>
   <figure class="breakdown" id="breakdown" hidden>
     <figcaption id="breakdown-caption"></figcaption>
+    <p class="search-help" id="diagram-values"></p>
     <div id="breakdown-svg"></div>
+    <p class="search-help" id="diagram-legend"></p>
     <p id="breakdown-quality" class="breakdown-quality" hidden></p>
   </figure>
   <section class="evidence-preview" aria-label="Key evidence">
@@ -400,29 +426,60 @@
        things the 23.09 audit asked a card to say before submission. The
        Nansen line is readable without opening it; the list is one click. -->
   <p class="open-question" id="open-question" hidden></p>
-  <div style="display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-top: 16px;">
+  <p class="search-help" id="risk-preview" hidden></p>
+  <details class="fold" id="claim-checker">
+    <summary>Check an assertion from the alert</summary>
+    <label for="claim-choice">What does the alert claim?</label>
+    <select id="claim-choice">
+      <option value="">Choose an assertion</option>
+      <option value="directional">This position is a directional bet</option>
+      <option value="spot">Own spot holdings cover this short</option>
+      <option value="ownership">Funding-wallet holdings belong to this account</option>
+      <option value="inventory">This position is market-maker inventory</option>
+    </select>
+    <p id="claim-result" role="status" hidden></p>
+    <p class="search-help">Uses this dated reading only. Evidence supports an interpretation, not the owner’s intent. No extra provider calls.</p>
+  </details>
+  <section id="reading-actions" aria-label="Save and share this reading">
+    <div class="save-share-controls">
+    <button id="watch-address">Save this position</button>
     <details class="share" id="share">
       <summary>Share this reading</summary>
       <div class="actions">
-        <button id="share-x">Share on X</button>
         <button id="copy-link">Copy link</button>
+        <button id="copy-reading">Copy reading</button>
+        <button id="copy-embed">Copy embed</button>
+        <button id="share-x">Share on X</button>
+        <button id="download-image">Download PNG</button>
       </div>
     </details>
+    </div>
+    <p class="search-help" id="share-note"></p>
+    <div class="box" id="save-confirmation" role="status" hidden>
+      <p id="save-confirmation-text"></p>
+      <label class="search-help" for="saved-position-name">Name this saved position (optional)</label>
+      <input id="saved-position-name" type="text" maxlength="80" placeholder="For example: ETH whale from my alert">
+      <div class="actions"><button id="save-copy-link">Copy saved reading link</button><button id="open-saved-positions">Open my saved positions</button></div>
+    </div>
     <button id="check-another" style="border: none; background: none; color: var(--link); cursor: pointer; padding: 10px 4px;">Check another</button>
-  </div>
+  </section>
   <div class="box" id="coverage" hidden>
     <p><strong>Not read this time</strong></p>
     <ul id="coverage-list"></ul>
   </div>
   <p class="limit" id="standing-limit">Not visible to this tool: centralized exchanges, OTC deals and wallets with no on-chain link to this address.</p>
-  <canvas id="card-canvas" width="1200" height="675" hidden></canvas>
-  <details class="fold full-analysis" id="full-analysis">
-    <summary>Full analysis <span class="muted">· metrics, rules and sources</span></summary>
+  <p class="open-question" id="what-changes" hidden></p>
+  <canvas id="card-canvas" aria-hidden="true" width="1200" height="675" hidden></canvas>
   <div class="box changed" id="changed" hidden>
     <p><strong id="changed-title"></strong> <span class="muted" id="changed-because"></span></p>
     <ul id="changed-list"></ul>
+    <a id="changed-previous" href="/">Open previous reading · free</a>
   </div>
+  <details class="fold full-analysis" id="full-analysis">
+    <summary>Full analysis <span class="muted">· metrics, rules and sources</span></summary>
   <p class="meta" id="meta"></p>
+  <section class="analysis-section" id="market-diagnostics" hidden><h3>Market and quote observations</h3><ul id="market-diagnostics-list"></ul></section>
+  <p><button id="load-context">Load optional PnL context · new check</button><span class="muted"> Uses the shared data budget. Exposure checks work without this context.</span></p>
   <section class="analysis-section" id="decided" hidden>
     <h3>How this was decided</h3>
     <p id="decided-rule"></p>
@@ -432,13 +489,13 @@
     <h3>All evidence</h3>
     <div class="stats" id="stats"></div>
     <figure class="vitals" id="vitals" hidden>
-      <figcaption>The position itself, not the verdict</figcaption>
+      <figcaption>Position risk and activity</figcaption>
       <div class="stats" id="vitals-stats"></div>
     </figure>
     <div class="box" id="funders" hidden>
       <p><strong>Wallets that funded this account</strong> - they hold the matching asset, which is not the same as this account holding it</p>
       <ul id="funders-list"></ul>
-      <p class="attribution">Linked wallets: Powered by Nansen API. Ownership is inferred from the funding link, not confirmed.</p>
+      <p class="attribution">Linked wallets: Powered by Nansen API. Funding links are observed; common ownership is unverified.</p>
     </div>
     <div class="box" id="notes" hidden>
       <p><strong>Notes on this reading</strong></p>
@@ -450,6 +507,18 @@
     <ul id="nansen-list"></ul>
     <p class="tech" id="nansen-calls"></p>
   </section>
+  <details class="glossary"><summary>What these terms mean</summary><dl>
+    <dt>Book</dt><dd>Evidence of market-making inventory: meaningful buy and sell orders in this position's market. The grade counts corroborating signals, not a probability or a recommendation.</dd>
+    <dt>Spot-covered short</dt><dd>Matching spot at this address covers roughly the size of the short. It does not establish safety, shared collateral or the absence of off-chain debt.</dd>
+    <dt>Perp / spot</dt><dd>A perpetual contract tracks an asset's price; spot is the asset held directly.</dd>
+    <dt>Net / gross exposure</dt><dd>Net subtracts short dollars from long dollars; gross adds both. Different assets can still move independently.</dd>
+    <dt>Resting orders / two-sided quoting</dt><dd>Unfilled limit orders waiting to trade; bids and asks in the same market. Reduce-only exit orders do not count here.</dd>
+    <dt>Fills / maker</dt><dd>Executed trades. A maker supplies the resting order that another trader takes.</dd>
+    <dt>Open interest</dt><dd>The total value of outstanding perpetual contracts in a market.</dd>
+    <dt>Main dex / HIP-3</dt><dd>Hyperliquid's main perpetual exchange and independently deployed perpetual markets on Hyperliquid.</dd>
+    <dt>Funding / cross leverage</dt><dd>Periodic payments between longs and shorts; cross margin shares collateral between positions.</dd>
+    <dt>First funder</dt><dd>A wallet that transferred funds to this address. A transfer alone does not establish common ownership.</dd>
+  </dl></details>
   <p class="limit" id="analysis-limit" hidden>Not visible to this tool: centralized exchanges, OTC deals and wallets with no on-chain link to this address.</p>
   </details>
 </div>
@@ -467,14 +536,17 @@
 <section id="gallery" hidden>
   <div class="reading-nav"><button id="explore-home">← Check a wallet</button><button id="explore-return" hidden>Back to your reading →</button></div>
   <h1 id="explore-title" tabindex="-1">Explore</h1>
-  <p class="sub">Compare large positions by exposure, coverage and market-making activity. These are dated snapshots, not live rankings.</p>
+  <p class="sub">Learn what large positions do and do not reveal. Every case has a date and evidence; these are saved readings, not a live market overview.</p>
   <p id="explore-status" class="status" role="status">Loading saved readings...</p>
   <p id="explore-reading-status" class="status" role="status" hidden></p>
   <div class="chips" role="group" aria-label="Explore view">
-    <button class="chip" id="explore-ranked" aria-pressed="true" aria-controls="boards-fold">Ranked boards</button>
+    <button class="chip" id="explore-cases" aria-pressed="true" aria-controls="case-studies">Recent case studies</button>
+    <button class="chip" id="explore-ranked" aria-pressed="false" aria-controls="boards-fold">Compare readings</button>
     <button class="chip" id="explore-all" aria-pressed="false" aria-controls="all-readings">All readings</button>
+    <button class="chip" id="explore-archive" aria-pressed="false" aria-controls="archive">Archive</button>
   </div>
-  <section id="boards-fold" aria-label="Ranked boards">
+  <section id="case-studies" aria-label="Recent case studies"><p class="sub">Selected evidence cases. Opening one is free and does not run a new check.</p><div id="case-study-list" class="list"></div></section>
+  <section id="boards-fold" aria-label="Ranked boards" hidden>
     <p class="sub" id="gallery-sub"></p>
     <div id="boards"></div>
   </section>
@@ -486,19 +558,18 @@
     <!-- How the set was chosen, the counts across it, and the readings made
          under earlier rules: all real, all kept, none of it the first thing a
          new visitor needs (23.09 audit, U06). -->
-    <details class="archive" id="archive">
+  </section>
+    <details class="archive" id="archive" hidden>
       <summary id="archive-summary">How these were picked, and the readings made under earlier rules</summary>
       <p class="sub" id="gallery-stats"></p>
       <p class="sub" id="gallery-method"></p>
       <ol class="list" id="archive-list"></ol>
       <button class="more" id="archive-more" hidden>Show more</button>
     </details>
-  </section>
 </section>
 </main>
 <footer>
   <p>Positions, realized PnL, balances on other chains and linked wallets: <strong>Powered by <a class="partner" href="https://app.nansen.ai/r/36RkYL4jJsy" rel="noopener noreferrer">Nansen API</a></strong>. Resting orders and fills: <a class="partner" href="https://app.hyperliquid.xyz" rel="noopener noreferrer">Hyperliquid API</a>.</p>
-  <p id="ledger" hidden></p>
   <p>This tool only inspects. It is not financial advice and never trades. <a href="https://github.com/Sofiia7/bet-or-book" rel="noopener noreferrer">Source code</a></p>
 </footer>
 

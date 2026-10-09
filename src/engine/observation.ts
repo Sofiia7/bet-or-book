@@ -32,6 +32,7 @@ import type {
 } from './features';
 import type { VitalsItem } from './vitals';
 import type { PnlSummary } from '../types';
+import type { MarketDefinition } from './marketIdentity';
 
 /**
  * What one check saw, before any rule has read it: every number the rules
@@ -47,6 +48,9 @@ import type { PnlSummary } from '../types';
  * stored observation without pretending to have checked the account again.
  */
 export interface Observation {
+  marketDefinition?: MarketDefinition;
+  marketProvenance?: { venue: string; status: 'complete' | 'missing'; listed: boolean | null; deployer: string | null; oracleUpdater: string | null; underlyingVerified: boolean; at: string };
+  quoteGeometry?: { reference: 'mark' | 'mid'; markPx: number; pricedQuoteUsd: number; weightedDistanceBps: number; nearestDistanceBps: number; farthestDistanceBps: number } | null;
   address: string;
   positions: PositionFeatures;
   orders: OrderFeatures;
@@ -126,9 +130,15 @@ export function verdictInputOf(
   o: Pick<
     Observation,
     'positions' | 'orders' | 'hedge' | 'trades' | 'linkedHedge' | 'hedgeCoverage' | 'ordersCoverage' | 'positionsCoverage'
-  > & Partial<Pick<Observation, 'linkedHedgeCoverage'>>,
+  > & Partial<Pick<Observation, 'linkedHedgeCoverage' | 'positionsAsOf' | 'checkedAt'>>,
 ): VerdictInput {
+  const measured = Date.parse(o.positionsAsOf ?? '');
+  const checked = Date.parse(o.checkedAt ?? '');
   return {
+    // Compare against the original check, never against the time a saved
+    // reading is reopened. Re-explaining a snapshot cannot make it fresher.
+    positionsStale: Number.isFinite(measured) && Number.isFinite(checked)
+      && (checked - measured >= 15 * 60_000 || measured - checked > 60_000),
     positions: o.positions,
     orders: o.orders,
     hedge: o.hedge,
@@ -159,7 +169,7 @@ export function verdictInputOf(
  *    listed means none was looked for, not none found.
  */
 // 6: the headline-asset liability flag reaches the classifier.
-export const OBSERVATION_SCHEMA_VERSION = 6;
+export const OBSERVATION_SCHEMA_VERSION = 8;
 
 /** The first observation that looked for loans on Hyperliquid. */
 export const LOANS_READ_FROM_SCHEMA = 5;
@@ -167,7 +177,7 @@ export const LOANS_READ_FROM_SCHEMA = 5;
 /** The contract allowlist and alias table that read the holdings. Bumped
  * whenever a token is added, because "not recognised" is a statement about
  * this list and the list changes. */
-export const ASSET_REGISTRY_VERSION = 2;
+export const ASSET_REGISTRY_VERSION = 3;
 
 type Stored = Partial<CheckResponse> & Pick<CheckResponse, 'positions' | 'orders' | 'hedge'>;
 
@@ -198,8 +208,15 @@ export function legacySourceCoverage(e: Stored): { orders: SourceCoverage; posit
  * entry may be re-judged; anything in it means the entry is history.
  */
 export function missingForCurrentRules(e: Stored): string[] {
+  if (e.positions.headlineCoin?.includes(':') && e.positions.headlineUnderlyingVerified === true && !e.marketDefinition) return ['marketDefinition'];
   if (e.observationSchemaVersion === OBSERVATION_SCHEMA_VERSION) return [];
   const missing: string[] = [];
+  if (e.orders.restingOrders >= DEFAULT_THRESHOLDS.book.minRestingOrders && e.orders.quoteEligibilityVersion !== 1) {
+    missing.push('orders.quoteEligibilityVersion');
+  }
+  if (e.positions.headlineCoin?.includes(':') && typeof e.positions.headlineUnderlyingVerified !== 'boolean') {
+    missing.push('positions.headlineUnderlyingVerified');
+  }
 
   // Schema 5 explicitly recorded same-asset debt in coverage notes. A
   // clean read with no such note can be re-read; a debt note cannot safely

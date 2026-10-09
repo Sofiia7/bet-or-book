@@ -26,10 +26,12 @@ export async function withCache<T>(
    * complete one. */
   ttlSeconds: number | ((value: T) => number),
   produce: () => Promise<T>,
+  bypass?: (value: T) => boolean,
 ): Promise<T> {
   const cached = await kv.get(key);
   if (cached !== null) {
-    return JSON.parse(cached) as T;
+    const value = JSON.parse(cached) as T;
+    if (!bypass?.(value)) return value;
   }
 
   const running = inFlight.get(key);

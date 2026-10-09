@@ -66,11 +66,13 @@ export function normalizePositions(state: HlClearinghouseState): Position[] {
 
 export function normalizeOrders(orders: HlOpenOrder[]): RestingOrder[] {
   return (arrayOf(orders, 'openOrders') as HlOpenOrder[])
-    .filter((o) => !o.isTrigger)
+    .filter((o) => !o.isTrigger && !o.reduceOnly)
     .map((o) => ({
       coin: o.coin,
       side: o.side === 'B' ? 'bid' : 'ask',
       sizeUsd: Number(o.sz) * Number(o.limitPx),
+      limitPx: Number(o.limitPx),
+      timestamp: o.timestamp,
     }));
 }
 

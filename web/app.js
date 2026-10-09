@@ -1,11 +1,38 @@
+import {createConstellation} from "./constellation.js";
+import {createShareCard} from "./share-card.js";
+import {createExplore} from "./explore.js";
+import { savedReadingLink, readingCopyText, readingPostText } from '../src/engine/shareText.ts';
+import { advanceSavedReading } from '../src/engine/savedReading.ts';
+import { CLAIMS, checkClaim, isClaim } from '../src/engine/claims.ts';
+import { createMonitoring } from './monitor.js';
+import { formatUsd as usd } from '../src/engine/evidence.ts';
+import { timedFetch } from './transport.js';
 const ADDRESS_RE = /^0x[0-9a-f]{40}$/;
+const usageEntry = new URLSearchParams(window.location.search).has('s') ? 'shared_link' : 'home';
+const usageReadings = new Set();
+let returningReader = false;
+try { returningReader = localStorage.getItem('betOrBook:hasRead') === '1'; } catch {}
+let repeatRecorded = false;
+let usageSent = 0;
+function recordUsage(action, d) {
+  // Test traffic and the operator reserve are not product engagement.
+  if (['localhost', '127.0.0.1', '::1', '[::1]'].includes(window.location.hostname)
+    || window.location.hash === '#operator' || operatorKey() || usageSent >= 25) return;
+  usageSent++;
+  timedFetch('/api/events', { method: 'POST', keepalive: true,
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ action, kind: d && d.__kind || 'none', entry: usageEntry, incomplete: !!(d && d.degraded) }),
+  }).catch(() => {});
+}
 const EXPLORERS = {
   arbitrum: 'https://arbiscan.io/address/',
   ethereum: 'https://etherscan.io/address/',
+  hyperevm: 'https://hyperevmscan.io/address/',
+  solana: 'https://solscan.io/account/',
 };
 const VERDICTS = {
-  book: { label: 'Book', cls: 'book', headline: 'This is a market-making book.', accent: '#7fa2ff' },
-  hedged: { label: 'Hedged', cls: 'hedged', headline: 'The offsetting asset is in this same account.', accent: '#4fe0b0' },
+  book: { label: 'Book', cls: 'book', headline: 'Market-making evidence in this position’s market.', accent: '#7fa2ff' },
+  hedged: { label: 'Spot-covered short', cls: 'hedged', headline: 'The offsetting asset is in this same account.', accent: '#4fe0b0' },
   looks_like_a_bet: { label: 'Looks like a bet', cls: 'bet', headline: 'This looks like a real bet.', accent: '#f2b35c' },
   unknown: { label: 'Unknown', cls: 'unknown', headline: 'Not enough evidence either way.', accent: '#a3a8b6' },
 };
@@ -17,12 +44,6 @@ const VERDICTS = {
 // --unknown-fg. Kept as concrete hex here rather than a CSS var because both
 // fixed-background renderers (this canvas, and the OG picture's satori
 // tree) have no CSS cascade to read a var() from.
-const SVG_ACCENT_VAR = {
-  book: '--book-fg', hedged: '--hedged-fg', looks_like_a_bet: '--bet-fg', unknown: '--unknown-fg',
-};
-function svgAccentOf(d) {
-  return 'var(' + (SVG_ACCENT_VAR[d.verdict.verdict] || SVG_ACCENT_VAR.unknown) + ')';
-}
 const PAGE_SIZE = 25;
 
 const $ = (id) => document.getElementById(id);
@@ -30,8 +51,8 @@ let current = null;
 let pendingGuess = null;
 let guessRevealTimer = null;
 let gallery = null;
-let galleryFilter = 'all';
-let galleryShown = PAGE_SIZE;
+
+
 
 function el(tag, cls, text) {
   const e = document.createElement(tag);
@@ -70,309 +91,8 @@ function fmtPct(x) {
   return (Math.abs(p) >= 10 ? Math.round(p) : p.toFixed(1)) + '%';
 }
 
-// A small, fast, deterministic PRNG (mulberry32) so the same reading always
-// draws the same constellation - the picture must be stable across renders
-// of the same data, not merely plausible-looking (handoff: "the waveform is
-// static: no playback and no animation").
-function rng(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a |= 0; a = (a + 0x6D2B79F5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-// A stable small integer from an address, so a given address always draws
-// the same constellation across visits and across a live check vs. a saved
-// reading of the same account - not a security hash, just a display seed.
-function seedFromAddress(address) {
-  let h = 0;
-  for (let i = 0; i < address.length; i++) h = (Math.imul(h, 31) + address.charCodeAt(i)) | 0;
-  return h >>> 0;
-}
-
-function buildConstellationModel(seed, N) {
-  const R = rng(seed);
-  const bumps = [];
-  const nb = 3 + Math.floor(R() * 3);
-  for (let i = 0; i < nb; i++) bumps.push({ c: 0.08 + R() * 0.84, w: 0.025 + R() * 0.09, h: 0.3 + R() * 0.6 });
-  bumps[0].h = 1;
-  const env = [];
-  for (let i = 0; i < N; i++) {
-    const x = i / (N - 1);
-    let v = 0.05;
-    for (const b of bumps) v = Math.max(v, b.h * Math.exp(-((x - b.c) ** 2) / (2 * b.w * b.w)));
-    env.push(Math.min(1, v * (0.5 + 0.5 * R())));
-  }
-  const jitter = [], mids = [];
-  for (let i = 0; i < N; i++) { jitter.push(0.85 + R() * 0.3); mids.push(R() < 0.5 ? 0.15 + R() * 0.7 : -1); }
-  const bokeh = [];
-  for (let i = 0; i < 9; i++) bokeh.push({ x: R(), y: 0.2 + R() * 0.7, r: 14 + R() * 46, side: R() < 0.5 ? 0 : 1 });
-  return { env, jitter, mids, bokeh };
-}
-// (This drops the handoff's unused phase/twinkle-over-time machinery - the
-// handoff's own paint() always calls draw() with t=0 and never animates in
-// practice, "no playback and no animation" per its own README, so nothing
-// here needs a per-frame time input.)
-
-const CONSTELLATION_DOTS = ['#6fd0ff', '#9a7bff', '#ff4fa8', '#ffc94d'];
-const constellationHash = (n) => { const x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x); };
-const CONSTELLATION_SPRITES = {};
-function constellationSprite(hex) {
-  if (CONSTELLATION_SPRITES[hex]) return CONSTELLATION_SPRITES[hex];
-  const S = 96;
-  const cv = document.createElement('canvas');
-  cv.width = cv.height = S;
-  const g = cv.getContext('2d');
-  const r = parseInt(hex.slice(1, 3), 16), gg = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
-  const R = S / 2;
-  const rg = g.createRadialGradient(R, R, 0, R, R, R);
-  rg.addColorStop(0, 'rgba(255,255,255,1)');
-  rg.addColorStop(0.06, `rgba(${Math.round((r + 510) / 3)},${Math.round((gg + 510) / 3)},${Math.round((b + 510) / 3)},1)`);
-  rg.addColorStop(0.14, `rgba(${r},${gg},${b},0.9)`);
-  rg.addColorStop(0.32, `rgba(${r},${gg},${b},0.28)`);
-  rg.addColorStop(0.6, `rgba(${r},${gg},${b},0.07)`);
-  rg.addColorStop(1, `rgba(${r},${gg},${b},0)`);
-  g.fillStyle = rg;
-  g.fillRect(0, 0, S, S);
-  return (CONSTELLATION_SPRITES[hex] = cv);
-}
-
-/**
- * Draws one constellation: a left peak (the headline position, always full
- * height) and a right peak scaled by `coverage` (0-1) - what stands against
- * it, as a fraction of the same size. `ghost`, when true, mirrors the LEFT
- * envelope on the right at a fixed dashed/hollow style, for "this exists but
- * is not counted" (funds that sit with a funder, not this account). `mini`
- * draws a small, static, glow-free version for the queue list.
- */
-function drawConstellation(cv, { seed, coverage, ghost, mini, bookDensity }) {
-  if (!cv) return;
-  const dpr = window.devicePixelRatio || 1;
-  const W = cv.clientWidth, H = cv.clientHeight;
-  if (!W || !H) return;
-  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) {
-    cv.width = Math.round(W * dpr);
-    cv.height = Math.round(H * dpr);
-  }
-  const ctx = cv.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, W, H);
-
-  const N = mini ? 24 : Math.round((bookDensity ? 32 * 1.3 : 32));
-  const model = buildConstellationModel(seed, N);
-  const padX = mini ? 2 : 24, padY = mini ? 3 : 22;
-  const gapHalf = mini ? W * 0.03 : W * 0.075;
-  const amp = W / 2 - gapHalf - padX;
-  const step = (H - 2 * padY) / (N - 1);
-  const baseL = padX, baseR = W - padX;
-
-  if (!mini) {
-    for (const bk of model.bokeh) {
-      const bx = (bk.side ? 0.55 + bk.y * 0.4 : 0.05 + bk.y * 0.4) * W, by = bk.x * H;
-      const g = ctx.createRadialGradient(bx, by, 0, bx, by, bk.r);
-      const c = bx < W / 2 ? '#3fe0ff' : '#ff4fa3';
-      g.addColorStop(0, c + '1f');
-      g.addColorStop(1, c + '00');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(bx, by, bk.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(baseL + 0.5, padY); ctx.lineTo(baseL + 0.5, H - padY);
-    ctx.moveTo(baseR - 0.5, padY); ctx.lineTo(baseR - 0.5, H - padY);
-    ctx.stroke();
-  }
-
-  const build = (isRight, ampK, floor) => {
-    const sk = (isRight ? 5000 : 0) + seed * 97;
-    const dir = isRight ? -1 : 1, base = isRight ? baseR : baseL;
-    const pts = [];
-    for (let i = 0; i < N; i++) {
-      const y = padY + i * step;
-      const e = Math.max(floor, model.env[i] * ampK * (isRight ? model.jitter[i] : 1));
-      pts.push({ x: base + dir * e * amp, y, k: sk + i * 2 + 1 });
-      if (!mini && model.mids[i] > 0 && e > 0.12) {
-        pts.push({ x: base + dir * e * amp * model.mids[i], y: y + step * 0.4, k: sk + i * 2 + 2 });
-      }
-      if (!mini && i % 4 === 0) pts.push({ x: base, y, baseline: true });
-    }
-    pts.sort((a, b) => a.y - b.y);
-    return pts;
-  };
-  const left = build(false, 1, 0.02);
-  const right = build(true, coverage, coverage > 0.05 ? 0.02 : 0.015);
-  const ghostPts = ghost ? build(true, 1, 0.02) : null;
-
-  const link = (pts, maxK, reach) => {
-    const segs = [];
-    for (let j = 0; j < pts.length; j++) {
-      for (let k = j + 1; k < Math.min(pts.length, j + maxK); k++) {
-        const a = pts[j], b = pts[k];
-        if (Math.abs(b.y - a.y) < step * reach) segs.push([a, b]);
-      }
-    }
-    return segs;
-  };
-
-  if (ghostPts) {
-    ctx.save();
-    ctx.setLineDash([2, 4]);
-    ctx.strokeStyle = 'rgba(170,176,192,0.28)';
-    ctx.lineWidth = mini ? 0.6 : 0.8;
-    ctx.beginPath();
-    for (const [a, b] of link(ghostPts, mini ? 2 : 4, 2.2)) { ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); }
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.strokeStyle = 'rgba(170,176,192,0.45)';
-    for (const p of ghostPts) {
-      if (p.baseline) continue;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, mini ? 0.9 : 1.8, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  for (const pts of [left, right]) {
-    const segs = link(pts, mini ? 2 : 5, mini ? 1.5 : 2.6);
-    ctx.lineWidth = mini ? 0.7 : 0.8;
-    ctx.globalAlpha = mini ? 0.75 : 0.5;
-    ctx.strokeStyle = '#3f8cff';
-    ctx.beginPath();
-    for (const [a, b] of segs) { ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); }
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-    for (const p of pts) {
-      if (p.baseline) {
-        ctx.fillStyle = 'rgba(255,255,255,0.25)';
-        ctx.beginPath(); ctx.arc(p.x, p.y, 1, 0, Math.PI * 2); ctx.fill();
-        continue;
-      }
-      const hueSeed = constellationHash(p.k);
-      const color = CONSTELLATION_DOTS[Math.floor(hueSeed * CONSTELLATION_DOTS.length)];
-      const brightness = 0.55 + 0.45 * constellationHash(p.k + 0.2);
-      const size = (mini ? 9 : 16 + brightness * 22) * 0.4;
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.globalAlpha = brightness;
-      ctx.drawImage(constellationSprite(color), p.x - size / 2, p.y - size / 2, size, size);
-      ctx.globalCompositeOperation = 'source-over';
-    }
-    ctx.globalAlpha = 1;
-  }
-}
-
-/**
- * What `drawConstellation` needs, derived from a real reading rather than
- * the design handoff's four hardcoded mock numbers. `coverage` mirrors what
- * each verdict's own rule already measures - it is not a new number, only a
- * new way to draw one that already exists on every reading.
- *
- * The right side of the constellation means exactly one thing for every
- * verdict: coverage - what genuinely offsets or matches the position, never
- * concentration (how large this position is relative to the rest of the
- * account, a different question this project already answers elsewhere).
- * Traced by hand against every verdict type in this project (see the 26.09
- * redesign plan, Task 2, Step 4, and its correction after review):
- *  - Book: `coverage` is matched-both-sides notional over the headline
- *    notional - the same fraction the old drawBookQuoting bar filled.
- *  - Long/bet (isLong, i.e. `!b || !b.applies`, the same condition
- *    renderBreakdown already used elsewhere in this file): `coverage` is a
- *    flat 0 - spot cannot offset a long (see computeHedgeFeatures in
- *    src/engine/features.ts, where hedgeRatio is hard-wired to 0 whenever
- *    the headline side is not 'short'), so a long's coverage is 0 by
- *    construction, not a number this function needs to derive. This matches
- *    the design handoff's own mock (`right: 0` for its one bet example)
- *    exactly. An earlier version of this function used `headlineShare`
- *    (concentration) here instead, on the reasoning that a flat 0 would
- *    make every bet look identical regardless of how concentrated it was -
- *    that reasoning conflated two different axes: concentration is real and
- *    specific to this address, but it is not what the right side of this
- *    diagram means, and using it there drew a fully-covered-looking peak
- *    for the one verdict type that is by definition never covered at all.
- *    Concentration itself is not lost - it is exactly what the `#decisive`
- *    hero tiles above this diagram already show ("Largest position: $X
- *    HYPE long"), independent of this canvas.
- *  - Hedged / Unknown ("funders" in the handoff's naming) / any other
- *    reading whose breakdown applies: `coverage` is `hedge.hedgeRatio`,
- *    clamped to [0,1] - algebraically identical to the old drawScale's own
- *    `(covered + excess) / headlineUsd`, since covered+excess always equals
- *    hedge.hedgeUsd whether or not the hedge exceeds the position. `ghost`
- *    is true exactly when `breakdown.elsewhere` exists (the funders case).
- *
- * Data quality is displayed alongside the diagram and in exported images.
- * A confirmed amount found so far is useful even when the search was partial;
- * the label must never suggest that the remaining exposure was fully read.
- */
-function constellationInputsFor(d) {
-  const seed = seedFromAddress(d.address);
-  const b = d.breakdown;
-  const isLong = !b || !b.applies;
-  if (d.verdict.verdict === 'book') {
-    const headlineUsd = d.positions.headlineNotionalUsd || 0;
-    const matched = (d.orders && d.orders.headlineTwoSidedNotionalUsd) || 0;
-    return { seed, coverage: headlineUsd > 0 ? Math.min(1, matched / headlineUsd) : 0, ghost: false, bookDensity: true };
-  }
-  if (isLong) {
-    return { seed, coverage: 0, ghost: false, bookDensity: false };
-  }
-  const ratio = d.hedge && typeof d.hedge.hedgeRatio === 'number' ? d.hedge.hedgeRatio : 0;
-  const hasElsewhere = !!(b && b.elsewhere);
-  return { seed, coverage: Math.max(0, Math.min(1, ratio)), ghost: hasElsewhere, bookDensity: false };
-}
-
-/** The big centered number over the diagram: every branch of
- * constellationInputsFor already normalizes `coverage` to a 0-1 fraction,
- * so one formatter covers hedged, unknown, long and book alike - only the
- * label below it (constellationStatLabelFor) changes per verdict. */
-function constellationStatFor(d, inputs) {
-  return inputs.coverage > 0 && inputs.coverage < 0.001 ? '<0.1%' : fmtPct(inputs.coverage);
-}
-
-/** The short label under the big number. Every verdict's number is now a
- * coverage fraction, never concentration, so a long reads the same shape of
- * label a hedged position at 0% would ("covered") rather than a
- * concentration-flavored phrase - book and unknown/funders keep their own
- * old wording (old drawBookQuoting said "matched both sides"; old
- * drawScale's funders case said "covered by <coin> this address holds"). */
-function constellationStatLabelFor(d) {
-  if (d.verdict.verdict === 'book') return 'quoted both sides';
-  if (constellationQualityNoteFor(d)) return 'found coverage';
-  return d.verdict.verdict === 'unknown' ? 'covered by this address' : 'covered';
-}
-
-function constellationQualityNoteFor(d) {
-  // A book's number is how much of its own market it quotes on both sides,
-  // read in full from its resting orders. The hedge search that
-  // breakdown.dataQuality describes is deliberately never run for a book
-  // (hedgeCanChangeVerdict), so its 'partial' says nothing about the number
-  // shown - and used to flag every Book short as INCOMPLETE DATA (27.09).
-  if (d.verdict.verdict === 'book') return null;
-  const quality = d.breakdown && d.breakdown.applies && d.breakdown.dataQuality;
-  if (quality === 'unknown' && d.hedge && d.hedge.hasUnresolvedLiability) return 'Exposure unresolved: the spot ratio does not include the known same-asset debt.';
-  if (quality === 'unknown' && (d.positions.sameAssetOffsetShare || 0) > 0) return 'Exposure unresolved: the spot ratio does not combine the opposing perpetual legs.';
-  if (quality === 'unknown' && (d.positions.headlineCoin || '').includes(':')) return 'Exposure unresolved: the underlying of this HIP-3 contract has not been verified.';
-  if (quality === 'partial') return 'Incomplete read: not all holdings were checked. Coverage shown is only what was found.';
-  if (quality === 'unpriced') return 'Incomplete read: some matching holdings could not be priced. Coverage shown is only what was found.';
-  if (quality === 'unverified') return 'Incomplete read: some holdings could not be identified. Coverage shown is only what was found.';
-  if (quality === 'unknown' || quality === undefined && d.breakdown && d.breakdown.applies) return 'Coverage quality was not recorded for this saved reading.';
-  return null;
-}
-
-function constellationQualityFlagFor(d) {
-  if (!constellationQualityNoteFor(d)) return null;
-  return d.breakdown && (!d.breakdown.dataQuality || d.breakdown.dataQuality === 'unknown')
-    ? 'Coverage unverified'
-    : 'Incomplete data';
-}
-
 function fmtTime(iso) {
-  return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) + ' UTC';
+  return new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) + ' UTC';
 }
 function verdictOf(d) {
   return VERDICTS[d.verdict.verdict] || VERDICTS.unknown;
@@ -382,7 +102,11 @@ function badgeText(d) {
   return d.verdict.verdict === 'unknown' && d.badgeQualifier ? base + ' · ' + d.badgeQualifier : base;
 }
 function headlineFor(d) {
-  if (d.positions.nPositions === 0) return 'Nothing open right now.';
+  if ((d.verdict.reasons || []).includes('positions_stale')) return 'The position data is out of date for this check.';
+  if (d.headline) return d.headline;
+  if (d.positions.nPositions === 0) return d.positionsCoverage === 'complete'
+    ? 'No open positions found in this reading.'
+    : 'No positions found on the checked venues. Other venues are unverified.';
   const reasons = d.verdict.reasons || [];
   if (reasons.indexOf('linked_exposure_unverified') !== -1) {
     return 'The matching assets sit in a wallet that funded this account, not in this account.';
@@ -438,22 +162,58 @@ function setStatus(text, isError) {
  * attribution: "the reading changed" and "the rules changed" are two
  * different pieces of news and a card cannot leave the reader to guess.
  */
+const compareCache = new Map();
+let pendingClaim = new URLSearchParams(window.location.search).get('claim');
+function renderClaim(d) {
+  const params = new URLSearchParams(window.location.search);
+  const choice = pendingClaim || (params.get('s') === d.snapshotId ? params.get('claim') : null);
+  pendingClaim = null;
+  $('claim-choice').value = isClaim(choice) ? choice : '';
+  $('claim-checker').open = isClaim(choice);
+  $('claim-result').hidden = !isClaim(choice);
+  if (isClaim(choice)) {
+    const result = checkClaim(d, choice);
+    $('claim-result').textContent = result.status + ': ' + result.explanation;
+  }
+}
+$('claim-choice').addEventListener('change', () => {
+  if (!current) return;
+  const choice = $('claim-choice').value;
+  $('claim-result').hidden = !isClaim(choice);
+  if (isClaim(choice)) {
+    const result = checkClaim(current, choice);
+    $('claim-result').textContent = result.status + ': ' + result.explanation;
+  }
+  if (current.snapshotId) showLink(current.snapshotId);
+});
 async function renderChanged(d) {
   const box = $('changed');
   box.hidden = true;
-  if (!d.supersedes || !d.snapshotId) return;
+  const saved = watched().find(row => row.snapshotId === d.snapshotId && row.address === d.address.toLowerCase());
+  const previousId = saved?.previousSnapshotId || d.supersedes;
+  if (!previousId || !d.snapshotId || d.snapshotSaved === false || previousId === d.snapshotId) return;
+  const comparisonKey = previousId + ':' + d.snapshotId;
+  $('changed-list').replaceChildren();
+  $('changed-title').textContent = saved?.previousSnapshotId ? 'Since your previous saved reading' : 'Since the previous reading';
+  $('changed-because').textContent = 'Comparing saved evidence…';
+  $('changed-previous').href = '/?s=' + encodeURIComponent(previousId);
+  box.hidden = false;
   let c;
   try {
-    const res = await fetch(
-      '/api/compare?a=' + encodeURIComponent(d.supersedes) + '&b=' + encodeURIComponent(d.snapshotId),
-    );
-    if (!res.ok) return;
-    c = await res.json();
+    c = compareCache.get(comparisonKey);
+    if (!c) {
+      const res = await timedFetch('/api/compare?a=' + encodeURIComponent(previousId) + '&b=' + encodeURIComponent(d.snapshotId));
+      if (!res.ok) throw new Error('Comparison unavailable');
+      c = await res.json();
+      if (compareCache.size >= 20) compareCache.delete(compareCache.keys().next().value);
+      compareCache.set(comparisonKey, c);
+    }
   } catch {
+    if (current === d) $('changed-because').textContent = 'Comparison unavailable. The previous link may have expired; this does not mean the position stayed the same.';
     return;
   }
   // The card may have moved on while this was in the air.
-  if (!current || current.snapshotId !== d.snapshotId) return;
+  if (current !== d) return;
   // A different question - a manual pick against the largest-position
   // default, or two different manual picks - is not a change at this
   // address, and putting the two side by side as if it were is worse than
@@ -465,22 +225,22 @@ async function renderChanged(d) {
     $('changed-list').replaceChildren();
     return;
   }
-  if (!c.changes.length && !c.verdictChange) return;
-
   box.hidden = false;
   $('changed-title').textContent = 'What changed since ' + fmtTime(c.from.observedAt);
   // A grade is part of the answer: "Book (strong)" to "Book (likely)" is a
   // change, and "did not change" under two different versions of the rules
   // says so rather than reading as the same rules agreeing twice.
-  const named = (verdict, strength) => (VERDICTS[verdict] || VERDICTS.unknown).label + (strength ? ' (' + strength + ')' : '');
+  const named = (verdict, strength, qualifier) => (VERDICTS[verdict] || VERDICTS.unknown).label + (strength ? ' (' + strength + ')' : '') + (qualifier ? ' — ' + qualifier : '');
   const vc = c.verdictChange;
   $('changed-because').textContent = vc
-    ? 'The answer went from "' + named(vc.from, vc.fromStrength) + '" to "' + named(vc.to, vc.toStrength) +
-      '" because ' + vc.because + '.'
+    ? named(vc.from, vc.fromStrength, vc.fromQualifier) === named(vc.to, vc.toStrength, vc.toQualifier)
+      ? 'The conclusion stayed the same, but its supporting evidence changed because ' + vc.because + '.'
+      : 'The answer went from "' + named(vc.from, vc.fromStrength, vc.fromQualifier) + '" to "' + named(vc.to, vc.toStrength, vc.toQualifier) +
+        '" because ' + vc.because + '.'
     : c.rulesChanged
       ? 'The answer did not change, though the rules reading it did (' + c.from.classifierVersion + ' to ' +
         c.to.classifierVersion + ').'
-      : 'The answer did not change.';
+      : c.changes.length ? 'The answer did not change.' : 'No material changes detected in the compared evidence. This is not a live monitor.';
   const arrow = { up: '\u2191', down: '\u2193', sideways: '\u2192' };
   $('changed-list').replaceChildren(
     ...c.changes.map((ch) => {
@@ -512,8 +272,7 @@ function renderPicker(d, kind) {
     return;
   }
   box.hidden = false;
-  $('picker-chips').replaceChildren(
-    ...list.map((c) => {
+  const makeChip = (c) => {
       const active = c.coin === d.positions.headlineCoin && c.side === d.positions.headlineSide;
       const b = el('button', 'chip', fmtUsd(c.sizeUsd) + ' ' + c.coin + ' ' + c.side);
       b.setAttribute('aria-pressed', String(active));
@@ -521,26 +280,27 @@ function renderPicker(d, kind) {
       b.disabled = active;
       b.addEventListener('click', () => checkPosition(d.address, c));
       return b;
-    }),
-  );
+    };
+  $('picker-chips').replaceChildren(...list.slice(0, 5).map(makeChip));
+  if (list.length > 5) {
+    const more = el('details', 'fold');
+    more.append(el('summary', null, 'All ' + list.length + ' positions · selecting one runs a new check'));
+    const search = el('input'); search.type = 'search'; search.placeholder = 'Find an asset';
+    search.setAttribute('aria-label', 'Find an open position by asset');
+    const choices = el('div', 'picker-chips');
+    const show = () => choices.replaceChildren(...list.filter(c => c.coin.toLowerCase().includes(search.value.trim().toLowerCase())).map(makeChip));
+    search.addEventListener('input', show); show(); more.append(search, choices); $('picker-chips').append(more);
+  }
 }
 
-// MATERIAL_GAP_SHARE, HEDGE_BAND_MIN and HEDGE_BAND_MAX no longer feed any
-// drawing code - the balance-scale SVG they were tuned for (drawScale, and
-// drawBeamAndPivot/drawPan/scaleGeometry/MAX_TILT_DEG beside it) was
-// replaced by the constellation canvas above them in this file. They stay,
-// unused but present, only because test/web-app-verdict-sync.test.ts reads
-// these exact names out of this file's own source text and checks them
-// against DEFAULT_THRESHOLDS.hedged, so a retune of the classifier's real
-// thresholds still has something in this file to disagree with, rather than
-// silently going unchecked (26.09 redesign plan, Task 2, Step 7).
+// The least-covered board uses the classifier's material-coverage boundary.
+// test/web-app-verdict-sync.test.ts checks this real filter, not dead constants.
 const MATERIAL_GAP_SHARE = 0.1;
-const HEDGE_BAND_MIN = 0.85;
-const HEDGE_BAND_MAX = 1.15;
 
 function renderBreakdown(d) {
   const box = $('breakdown');
   const isBook = d.verdict.verdict === 'book' && !!d.orders;
+  if (isBook && !Number.isFinite(d.orders.headlineTwoSidedNotionalUsd)) { box.hidden = true; return; }
   const b = d.breakdown;
   const isLong = !isBook && (!b || !b.applies) && d.positions.nPositions > 0 && d.positions.headlineSide === 'long';
   if (!isBook && (!b || !b.applies || !b.segments.length) && !isLong) {
@@ -559,7 +319,7 @@ function renderBreakdown(d) {
 
   const canvas = document.createElement('canvas');
   canvas.style.width = '100%';
-  canvas.style.height = '260px';
+  canvas.style.height = '210px';
   canvas.style.display = 'block';
   const inputs = constellationInputsFor(d);
   const qualityNote = constellationQualityNoteFor(d);
@@ -573,10 +333,7 @@ function renderBreakdown(d) {
   $('breakdown-quality').hidden = !qualityNote;
   $('breakdown-quality').textContent = qualityNote || '';
   drawConstellation(canvas, { ...inputs, mini: false });
-  if (!canvas.dataset.roAttached) {
-    canvas.dataset.roAttached = '1';
-    new ResizeObserver(() => drawConstellation(canvas, { ...constellationInputsFor(d), mini: false })).observe(canvas);
-  }
+  canvas.setAttribute('aria-hidden', 'true');
 
   $('breakdown-caption').textContent = isBook
     ? `What stands behind the ${coin} ${side}`
@@ -585,6 +342,15 @@ function renderBreakdown(d) {
       : b && b.elsewhere
         ? `What stands against the ${coin} ${side} - and what only looks like it does`
         : `What stands against the ${coin} ${side}`;
+  $('diagram-legend').textContent = isBook
+    ? 'Illustration of quoting: matched buy and sell orders in this market. This is evidence of market-making activity, not proof of intent.'
+    : isLong
+      ? 'Spot coverage does not apply to a long. This illustration is not a transaction network.'
+      : 'Illustration of coverage, not a transaction network. Own matching holdings count; funding-wallet holdings do not prove ownership.';
+  $('diagram-values').textContent = 'Position: ' + fmtUsd(d.positions.headlineNotionalUsd) +
+    (isBook ? ' · Matched quotes: ' + fmtUsd(d.orders.headlineTwoSidedNotionalUsd)
+      : isLong ? '' : ' · Own matching holdings: ' + fmtUsd(d.hedge.hedgeUsd) +
+        (b && b.elsewhere ? ' · Funders: ' + fmtUsd(b.elsewhere.usd) + ' (ownership unverified)' : ''));
 }
 
 /** What this rendering is: a live check, a saved reading or a gallery card. */
@@ -597,6 +363,15 @@ function renderResult(d, opts) {
   $('gallery').hidden = true;
   current = d;
   current.__kind = kindOf(opts);
+  renderClaim(d);
+  if (current.__kind === 'live') updateSavedPosition(d);
+  const readingKey = d.snapshotId || d.address + ':' + d.checkedAt;
+  if (!usageReadings.has(readingKey)) {
+    usageReadings.add(readingKey);
+    recordUsage('reading_view', d);
+    if (returningReader && !repeatRecorded) { repeatRecorded = true; recordUsage('repeat_read', d); }
+    try { localStorage.setItem('betOrBook:hasRead', '1'); } catch {}
+  }
   // Unhidden first, before anything below measures a box inside it: with
   // `#card` still hidden, `#breakdown`'s own clientWidth reads 0 regardless
   // of its own hidden state, and renderBreakdown fell back to a fixed 640 on
@@ -608,7 +383,14 @@ function renderResult(d, opts) {
   $('reading-nav').hidden = false;
   // A new card starts folded: what the last one had open says nothing about
   // what the reader wants from this one.
-  for (const id of ['share', 'full-analysis']) $(id).open = false;
+  for (const id of ['full-analysis']) $(id).open = false;
+  $('share').open = true;
+  $('save-confirmation').hidden = true;
+  $('copy-embed').hidden = !savedReadingLink(d, window.location.origin);
+  $('share-note').textContent = savedReadingLink(d, window.location.origin)
+    ? 'Shares this dated reading and its evidence. Opening the link is free.'
+    : 'No saved reading link is available. You can copy the evidence or export the card.';
+  $('copy-link').textContent = savedReadingLink(d, window.location.origin) ? 'Copy link' : 'Copy wallet link';
   const v = verdictOf(d);
   $('guess').hidden = true;
   clearTimeout(guessRevealTimer);
@@ -635,7 +417,22 @@ function renderResult(d, opts) {
   // the card as it already was in the list.
   $('badge').className = 'badge ' + v.cls + (d.historical ? ' historical' : '');
   $('headline').textContent = headlineFor(d);
+  $('takeaway').hidden = !d.takeaway;
+  $('takeaway').textContent = d.takeaway || '';
   $('summary').textContent = d.summary || '';
+  $('source-warning').hidden = !d.degraded;
+  $('source-warning-text').textContent = d.source === 'hyperliquid'
+    ? 'Positions from Hyperliquid main dex · other venues could not be verified.'
+    : 'Incomplete reading · some sources could not be read.';
+  const sourceNote = (d.coverage || []).find(text => /Nansen not used|Nansen did not answer|Nansen could not complete/.test(text));
+  if (sourceNote) $('source-warning-text').textContent = sourceNote;
+  const unavailable = /credits|budget|no API key configured/.test(sourceNote || '');
+  $('source-free-examples').hidden = !unavailable;
+  $('try-again').hidden = unavailable;
+  if (unavailable) $('source-warning-text').textContent = 'Full live coverage is temporarily unavailable. This reading covers the main venue only; it does not settle the wallet’s exposure.';
+  $('watch-address').textContent = watched().some(row => row.address === d.address && row.coin === d.positions.headlineCoin && row.side === d.positions.headlineSide) ? 'Saved to your watchlist' : 'Save this position';
+  $('what-changes').hidden = !d.whatChanges;
+  $('what-changes').textContent = d.whatChanges ? 'What would change this: ' + d.whatChanges : '';
 
   // Closed by default, so the summary above is the whole answer for a
   // reader who does not ask for more. Opening it says the rule in words
@@ -663,7 +460,9 @@ function renderResult(d, opts) {
   $('analysis-limit').hidden = !repeatsLimit;
   const nz = d.nansen;
   $('nansen').hidden = !nz;
-  $('nansen-preview').hidden = !nz;
+  // Sources are already beside the facts. Keep the provider breakdown in
+  // Full analysis instead of repeating the headline above Share.
+  $('nansen-preview').hidden = true;
   if (nz) {
     $('nansen-lead').textContent = nz.lead;
     $('nansen-list').replaceChildren(...nz.items.map((text) => el('li', null, text)));
@@ -680,7 +479,22 @@ function renderResult(d, opts) {
     box.append(el('div', 'stat-label', item.label), el('div', 'stat-value', value), el('div', 'stat-source', item.source));
     return box;
   };
-  $('stats').replaceChildren(...(d.evidence || []).map(tile));
+  $('stats').replaceChildren(...(d.evidence || []).map(item => tile({ ...item, decisive: false })));
+  const diagnostics = [];
+  const legs = d.positions.selectedPerpLegs;
+  if (legs && (legs.opposingUsd || legs.sameSideOtherUsd)) diagnostics.push('Selected asset contracts: long ' + usd(legs.longUsd) + ', short ' + usd(legs.shortUsd) + ', net ' + usd(legs.netUsd) + '. These legs do not establish spot ownership.');
+  const market = d.marketProvenance;
+  if (d.marketDefinition) diagnostics.push('Contract definition: ' + d.marketDefinition.status + (d.marketDefinition.underlying ? ' · ' + d.marketDefinition.underlying : '') + '. This documents the referenced asset; it does not audit oracle prices or establish spot equivalence.');
+  if (market) diagnostics.push('HIP-3 venue ' + market.venue + ': ' + (market.status === 'missing' ? 'registry unavailable' : market.listed ? 'listed in the venue registry; deployer ' + market.deployer + '; oracle updater ' + (market.oracleUpdater || 'not published') : 'not found in the venue registry') + '. Venue membership does not verify the underlying asset.');
+  if (d.quoteGeometry) diagnostics.push('Priced orders: weighted distance ' + d.quoteGeometry.weightedDistanceBps.toFixed(1) + ' bps from the ' + (d.quoteGeometry.reference === 'mid' ? 'order-book midpoint' : 'mark price') + '; nearest ' + d.quoteGeometry.nearestDistanceBps.toFixed(1) + ' bps.' + (d.quoteGeometry.reference === 'mid' ? '' : ' Midpoint unavailable; mark is a fallback.'));
+  if (d.quoteSamples) diagnostics.push('Two-sided quotes seen in ' + d.quoteSamples.samples + ' separate observed sample(s), from ' + d.quoteSamples.firstAt + ' to ' + d.quoteSamples.lastAt + '. Best-effort samples do not prove continuous quoting or fill probability.');
+  $('market-diagnostics').hidden = !diagnostics.length;
+  $('market-diagnostics-list').replaceChildren(...diagnostics.map(text => el('li', null, text)));
+  if (d.marketDefinition?.source) {
+    const source = el('a', null, 'Publisher contract specification'); source.href = d.marketDefinition.source; source.target = '_blank'; source.rel = 'noopener noreferrer';
+    const row = el('li'); row.append(source, ' · reviewed ' + d.marketDefinition.reviewedAt + ' · review expires ' + d.marketDefinition.reviewUntil);
+    $('market-diagnostics-list').append(row);
+  }
 
   // Leverage, distance to liquidation, unrealized PnL, funding since open:
   // numbers about the position itself rather than about the verdict, so
@@ -704,7 +518,7 @@ function renderResult(d, opts) {
     ' ',
     el('strong', null, positionText(d)),
     ' ',
-    el('span', 'muted', '· checked ' + fmtTime(d.checkedAt)),
+    el('span', 'muted', '· ' + shortAddr(d.address)),
   );
   renderChanged(d);
   renderBreakdown(d);
@@ -714,12 +528,9 @@ function renderResult(d, opts) {
   // diagram repeats the same fact. That is a real tradeoff, not a settled
   // one: in most cases the tile and the diagram now do say the same thing
   // twice, and the diagram is kept anyway as the visual backup for that
-  // repetition. Scope note: drawCard() (the Copy/Download image renderer,
-  // ~line 1538) and the OG social preview are untouched by this task and
-  // still pick tile XOR diagram, never both - so a live reading and its own
-  // shareable image can now disagree structurally. That gap is this task's
-  // known boundary, left for a future task, not an oversight.
-  const heroTiles = (d.evidence || []).filter((item) => item.decisive);
+  // repetition. drawCard() and the OG preview use the diagram or a decisive
+  // tile, while the interactive card can show both.
+  const heroTiles = (d.evidence || []).filter((item) => item.decisive).slice(0, 2);
   // A reason of linked_exposure_unverified already put the funders' figure
   // into heroTiles above, as the "Linked wallets" evidence tile (src/engine
   // /evidence.ts's DECISIVE_LABEL_BY_REASON) built from this same linkedHedge
@@ -727,6 +538,10 @@ function renderResult(d, opts) {
   // amount and wallet count twice in a row (confirmed against the stored
   // 34stjd0gtgkz1 reading, $395.8M in 2 wallets, in data/featured.json).
   const alreadyShowsFunderHoldings = (d.verdict.reasons || []).includes('linked_exposure_unverified');
+  if (alreadyShowsFunderHoldings && heroTiles.length < 2) {
+    const ownSpot = (d.evidence || []).find(item => item.label === 'Hedge found');
+    if (ownSpot) heroTiles.push(ownSpot);
+  }
   if (d.breakdown && d.breakdown.elsewhere && !alreadyShowsFunderHoldings) {
     heroTiles.push({
       label: 'Held elsewhere',
@@ -736,7 +551,8 @@ function renderResult(d, opts) {
     });
   }
   for (const item of (d.evidence || [])) {
-    if (heroTiles.length >= 3) break;
+    if (heroTiles.length >= 2) break;
+    if (['Largest position', 'Position asked about', 'Share of exposure'].includes(item.label)) continue;
     if (!heroTiles.some((shown) => shown.label === item.label)) heroTiles.push(item);
   }
   $('decisive').hidden = heroTiles.length === 0;
@@ -774,7 +590,7 @@ function renderResult(d, opts) {
   const meta = $('meta');
   meta.replaceChildren();
   const calls = typeof d.nansenCalls === 'number' ? ' · ' + plural(d.nansenCalls, 'Nansen API call') : '';
-  const src = d.source === 'nansen' ? 'positions from Nansen' : 'positions from Hyperliquid (Nansen unavailable)';
+  const src = d.source === 'nansen' ? 'positions from Nansen' : 'positions from Hyperliquid main dex';
   // When the source says it measured the positions, that is the time the
   // numbers describe. "Checked" is only when this page asked.
   const measured =
@@ -786,6 +602,7 @@ function renderResult(d, opts) {
   // looks new when it is nine minutes old is the wrong thing to hand a
   // reader watching a position move.
   const ageMin = Math.floor((Date.now() - new Date(d.checkedAt).getTime()) / 60000);
+  const relativeAge = ageMin < 1 ? 'just now' : ageMin < 60 ? plural(ageMin, 'minute') + ' ago' : ageMin < 1440 ? plural(Math.floor(ageMin / 60), 'hour') + ' ago' : plural(Math.floor(ageMin / 1440), 'day') + ' ago';
   const age = kindOf(opts) === 'live' && ageMin >= 1 ? ' · cached, ' + plural(ageMin, 'minute') + ' old' : '';
   meta.append('Checked ' + fmtTime(d.checkedAt) + measured + age + calls + ' · ' + src + rules + ' · ');
   const hs = el('a', null, 'view on Hypurrscan');
@@ -800,6 +617,7 @@ function renderResult(d, opts) {
   $('address').value = d.address;
 
   const kind = kindOf(opts);
+  $('snapshot-text').textContent = '';
   if (d.focus) {
     $('picker-chips').setAttribute('aria-label', 'asked about ' + d.focus.coin + ' ' + d.focus.side);
   }
@@ -818,8 +636,13 @@ function renderResult(d, opts) {
       : 'Snapshot from the gallery scan, ' + fmtTime(d.checkedAt) + '.';
   } else if (kind === 'saved') {
     $('snapshot-text').textContent =
-      'Saved reading from ' + fmtTime(d.checkedAt) + '. Checking again makes a new one.';
+      'Saved · ' + fmtTime(d.checkedAt) + '.';
   }
+  $('snapshot').hidden = false;
+  $('snapshot-text').textContent += (kind === 'live' ? 'Read ' + fmtTime(d.checkedAt) + '. ' : ' ') + relativeAge + '.';
+  const risks = (d.vitals || []).filter(item => /leverage|liquidation/i.test(item.label)).slice(0, 2);
+  $('risk-preview').hidden = risks.length === 0;
+  $('risk-preview').textContent = risks.map(item => item.label + ': ' + item.value).join(' · ');
 
   $('card-canvas').hidden = true;
   if (kind === 'live' && d.snapshotId && d.positions.nPositions > 0) {
@@ -858,7 +681,8 @@ function takeOver() {
  * to leave the previous reading's link in the bar, so copying it shared the
  * wrong one. */
 function showLink(id) {
-  const next = id ? '/?s=' + encodeURIComponent(id) : '/';
+  const claim = current?.snapshotId === id && isClaim($('claim-choice').value) ? '&claim=' + $('claim-choice').value : '';
+  const next = id ? '/?s=' + encodeURIComponent(id) + claim : '/';
   if (window.location.pathname + window.location.search + window.location.hash !== next) {
     window.history.replaceState(null, '', next);
   }
@@ -866,6 +690,8 @@ function showLink(id) {
 
 function setBusy(on) {
   busy = on;
+  if (!on) $('slow-check').hidden = true;
+  $('check-progress').hidden = !on;
   $('check').disabled = on;
   $('check').textContent = on ? 'Checking...' : 'Check position';
   $('check-live').disabled = on;
@@ -947,6 +773,7 @@ async function load(url, onData, failureText, method, notice, retryDelays) {
   clearTimeout(guessRevealTimer);
   const isLiveCheck = method === 'POST' && url.indexOf('/api/check') === 0;
   if (isLiveCheck) {
+    recordUsage('check_start');
     guessRevealTimer = setTimeout(() => {
       if (seq === requestSeq) $('guess').hidden = false;
     }, 700);
@@ -958,19 +785,20 @@ async function load(url, onData, failureText, method, notice, retryDelays) {
   // when nothing is would misdescribe a free lookup as a paid check.
   const doing = method === 'POST' ? 'Reading positions from Nansen and orders from Hyperliquid...' : 'Opening the saved reading...';
   setStatus((notice ? notice + ' ' : '') + doing, false);
+  const slowTimer = isLiveCheck ? setTimeout(() => { if (seq === requestSeq && busy) $('slow-check').hidden = false; }, 8000) : null;
   try {
     let res;
     let data;
     // Only a check carries the operator key, and only when one is set.
     const key = method === 'POST' && url.indexOf('/api/check') === 0 ? operatorKey() : '';
     for (let attempt = 0; ; attempt++) {
-      res = await fetch(url, key ? { method, headers: { 'x-demo-key': key } } : { method: method || 'GET' });
+      res = await timedFetch(url, key ? { method, headers: { 'x-demo-key': key } } : { method: method || 'GET' }, isLiveCheck ? 55000 : 15000);
       data = await res.json().catch(() => ({}));
       if (seq !== requestSeq) return;
       const wait = res.status === 404 && retryDelays ? retryDelays[attempt] : undefined;
       if (wait === undefined) break;
       setStatus(
-        'Not found here yet. A reading saved in the last minute can take that long to reach every region - trying again...',
+        'This reading may still be saving. Trying once more...',
         false,
       );
       await new Promise((resolve) => setTimeout(resolve, wait));
@@ -992,11 +820,12 @@ async function load(url, onData, failureText, method, notice, retryDelays) {
     $('guess').hidden = true;
     if (seq === requestSeq) {
       setStatus(
-        'Could not reach the server. Try again shortly.' + (current ? ' The card below is the previous reading.' : ''),
+        (e.name === 'TimeoutError' ? 'The server took too long to answer. A live check may still finish; wait a moment before trying again.' : 'Could not reach the server. Try again shortly.') + (current ? ' The card below is the previous reading.' : ''),
         true,
       );
     }
   } finally {
+    clearTimeout(slowTimer);
     if (seq === requestSeq) setBusy(false);
   }
 }
@@ -1033,11 +862,12 @@ function askForPicture(d, isRetry) {
     });
 }
 
-function runCheck() {
+function runCheck(selectedAddress) {
   if (busy) return;
   const raw = $('address').value;
-  const addr = extractAddress(raw);
+  const addr = typeof selectedAddress === 'string' && ADDRESS_RE.test(selectedAddress) ? selectedAddress : extractAddress(raw);
   if (!addr) {
+    $('address').setAttribute('aria-invalid', 'true');
     // A transaction hash is the common case: it is 66 characters of hex and
     // used to yield its first 42, which is somebody else's address.
     const hex = raw.trim().match(/0x[0-9a-fA-F]{41,}/);
@@ -1049,10 +879,23 @@ function runCheck() {
     );
     return;
   }
-  const all = [...raw.trim().matchAll(/0x[0-9a-fA-F]{40}(?![0-9a-fA-F])/g)];
-  const notice = all.length > 1 ? 'Found ' + all.length + ' addresses; using the first, ' + addr + '.' : '';
+  const all = [...new Set([...raw.trim().matchAll(/0x[0-9a-fA-F]{40}(?![0-9a-fA-F])/g)].map(m => m[0].toLowerCase()))];
+  $('address').removeAttribute('aria-invalid');
+  if (all.length > 1 && typeof selectedAddress !== 'string') {
+    $('address-choices').hidden = false;
+    $('address-choice-buttons').replaceChildren(...all.map(address => {
+      const b = el('button', 'chip', address);
+      b.addEventListener('click', () => runCheck(address));
+      return b;
+    }));
+    setStatus('Choose one wallet before starting the check.');
+    $('address-choice-buttons').querySelector('button').focus();
+    return;
+  }
+  $('address-choices').hidden = true;
+  const notice = 'Checking wallet ' + addr + '.';
   return load(
-    '/api/check?address=' + encodeURIComponent(addr),
+    '/api/check?context=0&address=' + encodeURIComponent(addr),
     (data) => {
       renderResult(data, { kind: 'live' });
       // A live reading is worth linking to, so the address in the bar
@@ -1077,7 +920,7 @@ function runCheck() {
 function checkPosition(address, position) {
   if (busy) return;
   const query =
-    '/api/check?address=' + encodeURIComponent(address) +
+    '/api/check?context=0&address=' + encodeURIComponent(address) +
     '&coin=' + encodeURIComponent(position.coin) +
     '&side=' + encodeURIComponent(position.side);
   return load(
@@ -1092,7 +935,7 @@ function checkPosition(address, position) {
   );
 }
 
-function openSnapshot(id) {
+function openSnapshot(id, navigation = 'replace') {
   takeOver();
   return load(
     '/api/snapshot?id=' + encodeURIComponent(id),
@@ -1100,12 +943,15 @@ function openSnapshot(id) {
       // The server says which of the two this is: a gallery card opened by
       // its link is still a gallery card, with the gallery's own wording.
       renderResult(data, { kind: data.kind === 'gallery' ? 'gallery' : 'saved' });
-      showLink(id);
+      if (navigation === 'push') window.history.pushState(null, '', window.location.href);
+      if (navigation !== 'preserve') showLink(id);
+      $('card').scrollIntoView({ block: 'start' });
+      $('card').focus({ preventScroll: true });
     },
     'That link points at a reading that is no longer saved. Check the address again to make a new one.',
     'GET',
     '',
-    [2000, 6000, 12000],
+    document.referrer && new URL(document.referrer).origin === window.location.origin ? [2000] : [],
   );
 }
 
@@ -1113,6 +959,7 @@ $('check').addEventListener('click', runCheck);
 $('address').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') runCheck();
 });
+$('address').addEventListener('input', () => $('address').removeAttribute('aria-invalid'));
 $('check-live').addEventListener('click', () => {
   if (!current) return;
   $('address').value = current.address;
@@ -1127,7 +974,9 @@ $('check-live').addEventListener('click', () => {
   }
 });
 $('check-another').addEventListener('click', () => {
+  showExamples();
   $('address').value = '';
+  $('address-choices').hidden = true;
   $('address').focus({ preventScroll: true });
   $('address').scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
@@ -1145,6 +994,7 @@ function showExamples() {
   $('reading-nav').hidden = true;
   document.body.classList.remove('has-reading');
   $('address').value = '';
+  $('address-choices').hidden = true;
   setStatus('');
   showLink(null);
   renderPlayer();
@@ -1159,6 +1009,17 @@ $('nav-examples').addEventListener('click', (event) => {
   showExamples();
   $('examples').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
+$('nav-how-it-works').addEventListener('click', (event) => {
+  // A native fragment navigation emits popstate, whose page routing resets
+  // the address. This section only needs scrolling, with no history change.
+  event.preventDefault();
+  $('how-it-works').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+let galleryPromise = null;
+function ensureGallery() {
+  if (!galleryPromise) galleryPromise = loadGallery().finally(() => { if (!gallery) galleryPromise = null; });
+  return galleryPromise;
+}
 function openBoards(event) {
   if (event) event.preventDefault();
   takeOver();
@@ -1168,9 +1029,10 @@ function openBoards(event) {
   $('gallery').hidden = false;
   $('explore-return').hidden = !current;
   setStatus('');
-  if (window.location.hash !== '#explore') window.history.pushState(null, '', '/#explore');
+  if (window.location.hash !== '#explore') window.history.pushState(null, '', window.location.pathname + window.location.search + '#explore');
   window.scrollTo(0, 0);
   $('explore-title').focus({ preventScroll: true });
+  ensureGallery();
 }
 $('nav-boards').addEventListener('click', openBoards);
 $('reading-boards').addEventListener('click', openBoards);
@@ -1188,17 +1050,20 @@ $('explore-return').addEventListener('click', () => {
   $('card').scrollIntoView({ block: 'start' });
   $('card').focus({ preventScroll: true });
 });
-function selectExploreView(all) {
-  $('boards-fold').hidden = all;
-  $('all-readings').hidden = !all;
-  $('explore-ranked').setAttribute('aria-pressed', String(!all));
-  $('explore-all').setAttribute('aria-pressed', String(all));
+function selectExploreView(view) {
+  for (const [key, panel] of [['cases', 'case-studies'], ['ranked', 'boards-fold'], ['all', 'all-readings'], ['archive', 'archive']]) {
+    $(panel).hidden = key !== view;
+    $('explore-' + key).setAttribute('aria-pressed', String(key === view));
+  }
+  if (view === 'archive') $('archive').open = true;
 }
-$('explore-ranked').addEventListener('click', () => selectExploreView(false));
-$('explore-all').addEventListener('click', () => selectExploreView(true));
+for (const view of ['cases', 'ranked', 'all', 'archive']) $('explore-' + view).addEventListener('click', () => selectExploreView(view));
 window.addEventListener('popstate', () => {
-  if (window.location.hash === '#explore') return openBoards();
   const id = new URLSearchParams(window.location.search).get('s');
+  if (window.location.hash === '#explore') {
+    if (id && current?.snapshotId !== id) return openSnapshot(id, 'preserve').then(() => openBoards());
+    return openBoards();
+  }
   if (id) openSnapshot(id);
   else showExamples();
 });
@@ -1211,43 +1076,6 @@ $('guess-chips').addEventListener('click', (e) => {
 });
 
 // The landing examples open the same saved readings as shared links.
-
-function playerList() {
-  return (gallery && gallery.featured) || [];
-}
-
-function renderPlayer() {
-  const list = playerList();
-  if (list.length === 0) return;
-  const descriptions = {
-    looks_like_a_bet: 'A concentrated directional position, with no visible offset found.',
-    hedged: 'Matching holdings at this address cover the short.',
-    unknown: 'Matching assets sit with funding wallets. A transfer does not prove ownership.',
-    book: 'Orders on both sides of the market point to trading inventory.',
-  };
-
-  // Verdict and position are enough to scan an example. The full diagram
-  // belongs to the opened reading, where its labels and evidence fit.
-  const rows = list.map((e) => {
-    const row = el('button', 'queue-row');
-    row.append(
-      el('span', 'badge ' + verdictOf(e).cls, badgeText(e)),
-      el('span', 'queue-pos', positionText(e)),
-      el('span', 'example-note', descriptions[e.verdict.verdict]),
-      el('span', 'example-date', 'Read ' + fmtTime(e.checkedAt)),
-      el('span', 'example-open', 'Open the reading →'),
-    );
-    row.addEventListener('click', async () => {
-      await openSnapshot(e.snapshotId);
-      if (current && current.snapshotId === e.snapshotId) {
-        $('card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        $('card').focus({ preventScroll: true });
-      }
-    });
-    return row;
-  });
-  $('player-queue').replaceChildren(...rows);
-}
 
 // The breakdown SVG is now built at its own real rendered width rather than
 // a fixed one CSS scales uniformly (audit U01), so unlike the rest of the
@@ -1273,441 +1101,7 @@ window.addEventListener('resize', () => {
 // the first thing a new visitor needs (23.09 audit, U06). Account PnL is not
 // on a row: thirty days of the account say nothing about one position.
 
-let archiveShown = PAGE_SIZE;
-
-function galleryCounts(rows) {
-  const counts = { book: 0, hedged: 0, looks_like_a_bet: 0, unknown: 0 };
-  for (const e of rows) counts[e.verdict.verdict] = (counts[e.verdict.verdict] || 0) + 1;
-  return counts;
-}
-
-function galleryRow(e, rank) {
-  const li = el('li');
-  const b = el('button');
-  const badge = el('span', 'badge ' + verdictOf(e).cls, badgeText(e));
-  // A verdict from rules that are no longer in force is labelled as one, in
-  // the list as well as on the card.
-  if (e.historical) {
-    badge.classList.add('historical');
-    badge.title = e.historical.reason;
-  }
-  b.append(
-    el('span', 'rank', '#' + rank),
-    el('span', 'pos', positionText(e)),
-    badge,
-    el(
-      'span',
-      'row-meta',
-      plural(e.positions.nPositions, 'open position') +
-        ' · ' +
-        shortAddr(e.address) +
-        (e.historical ? ' · read by earlier rules (' + (e.classifierVersion || 'v1') + ')' : ''),
-    ),
-  );
-  b.addEventListener('click', async () => {
-    // Whatever check is in the air was about a different account; the
-    // snapshot load takes the next request number, so its answer cannot
-    // land on this card (audit R03).
-    await openSnapshot(e.snapshotId);
-    if (current && current.snapshotId === e.snapshotId) {
-      $('card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  });
-  li.append(b);
-  return li;
-}
-
-// ---- ratings board ----
-//
-// Five short boards, ranked from numbers every reading already carries -
-// nothing new is fetched, nothing is invented, and a board with nothing
-// that qualifies is left out rather than shown empty (24.09 mechanic:
-// ratings board, user-approved; replaces the flat "More readings" list as
-// the first thing shown, folding in audit item U07).
-const BOARDS = [
-  {
-    title: 'Biggest bets',
-    note: 'Looks like a bet, ranked by size.',
-    filter: (e) => e.verdict.verdict === 'looks_like_a_bet',
-    sort: (a, b) => b.positions.headlineNotionalUsd - a.positions.headlineNotionalUsd,
-    stat: (e) => fmtUsd(e.positions.headlineNotionalUsd),
-  },
-  {
-    title: 'Biggest slice of a market',
-    note: "Position size against that market's open interest on Hyperliquid.",
-    filter: (e) => e.sizeVsOi !== null && e.sizeVsOi > 0,
-    sort: (a, b) => b.sizeVsOi - a.sizeVsOi,
-    stat: (e) => fmtPct(e.sizeVsOi) + ' of open interest',
-  },
-  {
-    title: 'Best covered shorts',
-    note: 'Hedged: the same account holds the offsetting spot.',
-    filter: (e) => e.verdict.verdict === 'hedged' && e.positions.headlineSide === 'short',
-    sort: (a, b) => b.hedgeRatio - a.hedgeRatio,
-    stat: (e) => fmtPct(e.hedgeRatio) + ' covered',
-  },
-  {
-    title: 'Least covered shorts',
-    note: 'Under 10% covered by this address, on a hedge search that ran to completion - the rest is still open.',
-    // A ratio measured under a partial or missing read is a floor, not a
-    // finding: it belongs nowhere near "least covered", which claims the
-    // number is the whole story (25.09 audit, A01).
-    filter: (e) => e.positions.headlineSide === 'short' && e.hedgeCoverage === 'complete' && e.hedgeDataQuality === 'measured' && e.hedgeRatio < 0.1,
-    sort: (a, b) => a.hedgeRatio - b.hedgeRatio,
-    stat: (e) => fmtPct(e.hedgeRatio) + ' covered',
-  },
-  {
-    title: 'Market makers',
-    note: "Book: the account quotes the position's own market on both sides.",
-    filter: (e) => e.verdict.verdict === 'book',
-    sort: (a, b) => b.headlineTwoSidedNotionalUsd - a.headlineTwoSidedNotionalUsd,
-    stat: (e) => fmtUsd(e.headlineTwoSidedNotionalUsd) + ' matched',
-  },
-];
-const BOARD_SIZE = 5;
-
-function boardRow(e, board) {
-  const li = el('li');
-  const b = el('button');
-  b.append(
-    el('span', 'pos', positionText(e)),
-    el('span', 'badge ' + verdictOf(e).cls, badgeText(e)),
-    el('span', 'row-meta', board.stat(e) + ' · ' + shortAddr(e.address) + ' · ' + fmtTime(e.checkedAt)),
-  );
-  b.addEventListener('click', async () => {
-    await openSnapshot(e.snapshotId);
-    if (current && current.snapshotId === e.snapshotId) {
-      $('card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  });
-  li.append(b);
-  return li;
-}
-
-function renderBoards(rows) {
-  const box = $('boards');
-  box.replaceChildren();
-  for (const board of BOARDS) {
-    const matches = rows.filter(board.filter).sort(board.sort).slice(0, BOARD_SIZE);
-    if (matches.length === 0) continue;
-    const section = el('div', 'board');
-    section.append(el('h3', null, board.title), el('p', 'board-note', board.note));
-    const list = el('ol', 'list');
-    list.append(...matches.map((e) => boardRow(e, board)));
-    section.append(list);
-    box.append(section);
-  }
-}
-
-function renderGallery() {
-  const rows = [...gallery.currentRows, ...(gallery.featured || [])]
-    .sort((a, b) => b.positions.headlineNotionalUsd - a.positions.headlineNotionalUsd);
-  const counts = galleryCounts(rows);
-  const filters = [
-    ['all', 'All ' + rows.length],
-    ...['looks_like_a_bet', 'hedged', 'unknown', 'book']
-      .filter((k) => counts[k] > 0)
-      .map((k) => [k, VERDICTS[k].label + ' ' + counts[k]]),
-  ];
-  // Re-rendering the chips destroys the one the reader is on, and focus with
-  // it, which drops a keyboard user back to the top of the document.
-  const focusedChip = document.activeElement && document.activeElement.closest('#chips') ? galleryFilter : null;
-  $('chips').replaceChildren(...filters.map(([key, label]) => {
-    const b = el('button', 'chip', label);
-    b.setAttribute('aria-pressed', String(galleryFilter === key));
-    b.addEventListener('click', () => {
-      galleryFilter = key;
-      galleryShown = PAGE_SIZE;
-      renderGallery();
-    });
-    if (focusedChip === key) queueMicrotask(() => b.focus());
-    return b;
-  }));
-
-  const visible = galleryFilter === 'all' ? rows : rows.filter((e) => e.verdict.verdict === galleryFilter);
-  $('gallery-list').replaceChildren(...visible.slice(0, galleryShown).map((e) => galleryRow(e, rows.indexOf(e) + 1)));
-  $('more').hidden = visible.length <= galleryShown;
-}
-
-function renderArchive() {
-  const rows = gallery.historicalRows;
-  $('archive-list').replaceChildren(...rows.slice(0, archiveShown).map((e, i) => galleryRow(e, i + 1)));
-  $('archive-more').hidden = rows.length <= archiveShown;
-}
-
-async function loadGallery() {
-  try {
-    const res = await fetch('/api/gallery');
-    if (!res.ok) throw new Error('Gallery unavailable');
-    gallery = await res.json();
-  } catch (e) {
-    $('examples-status').textContent = 'The full gallery could not load. You can still open these saved examples.';
-    $('explore-status').textContent = 'Saved readings could not load. Reload the page to try again.';
-    return;
-  }
-  renderPlayer();
-
-  // An account can close its position between the ranking and its check;
-  // with nothing open it is not one of the biggest positions any more.
-  const open = (gallery.entries || [])
-    .filter((e) => e.positions.nPositions > 0)
-    .sort((a, b) => b.positions.headlineNotionalUsd - a.positions.headlineNotionalUsd);
-  if (open.length === 0) {
-    $('explore-status').textContent = 'No saved open positions are available yet.';
-    return;
-  }
-  gallery.currentRows = open.filter((e) => !e.historical);
-  gallery.historicalRows = open.filter((e) => e.historical);
-  // gallery.featured (the four hand-picked demonstration readings) never
-  // overlaps gallery.currentRows by address - the L03 fix already strips a
-  // current row wherever a featured reading supersedes it - so this is a
-  // plain concatenation, not a merge that needs de-duplicating.
-  renderBoards([...gallery.currentRows, ...gallery.featured]);
-
-  // Cards are re-checked one at a time as credits allow, so the set can span
-  // days. Showing one timestamp for all of them would be wrong.
-  const times = open.map((e) => e.checkedAt).sort();
-  const first = fmtTime(times[0]);
-  const last = fmtTime(times[times.length - 1]);
-  const when = first === last ? 'read ' + first : 'read between ' + first + ' and ' + last;
-  $('gallery-sub').textContent =
-    'Saved readings from one scan, ' + when + '. Opening one costs nothing and checks nothing again. ' +
-    'Boards also mix in a few saved readings sampled at other times.';
-
-  const rows = gallery.currentRows;
-  const counts = galleryCounts(rows);
-  const betShare = rows.length ? Math.round((counts.looks_like_a_bet / rows.length) * 100) : 0;
-  // "Of the N read", not "of the market": counts from one dated scan of a
-  // set chosen a particular way, which is not a statistic about the market.
-  $('gallery-stats').textContent =
-    rows.length === 0
-    ? 'The scan predates the current rules. Its readings remain in the archive below; the four examples were reinterpreted from newer observations.'
-    : gallery.universe + '. Of the ' + rows.length + ' read by the current rules, ' +
-    counts.looks_like_a_bet + ' (' + betShare + '%) look like real bets and ' +
-    (counts.book + counts.hedged) + ' are books or hedges.';
-  $('gallery-method').textContent =
-    'How these were picked: the top 3,000 accounts by value from the public leaderboard, ranked by the size of ' +
-    'their largest main-dex position. Leverage breaks the link between what an account is worth and what it holds, ' +
-    'a HIP-3-only account can fall out before it is ever checked, and the scan spent its last credits on the ' +
-    'cheaper checks. ' +
-    (gallery.historicalRows.length
-      ? 'Below: ' + plural(gallery.historicalRows.length, 'reading') + ' kept as the earlier rules read them.'
-      : '');
-  $('archive-summary').textContent = gallery.historicalRows.length
-    ? 'How these were picked, and ' + plural(gallery.historicalRows.length, 'reading') + ' made under earlier rules'
-    : 'How these were picked';
-  $('explore-status').hidden = true;
-  renderGallery();
-}
-
-$('more').addEventListener('click', () => {
-  galleryShown += PAGE_SIZE;
-  renderGallery();
-});
-
-// The archive's rows are drawn when it is first opened, not on every load.
-$('archive').addEventListener('toggle', () => {
-  if ($('archive').open && gallery && gallery.historicalRows) renderArchive();
-});
-$('archive-more').addEventListener('click', () => {
-  archiveShown += PAGE_SIZE;
-  renderArchive();
-});
-
 // ---- share card ----
-
-function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
-  const words = text.split(' ');
-  let line = '';
-  let lines = 0;
-  let curY = y;
-  for (const word of words) {
-    const test = line + word + ' ';
-    if (ctx.measureText(test).width > maxWidth && line !== '') {
-      lines++;
-      if (lines === maxLines) {
-        ctx.fillText(line.trim() + '...', x, curY);
-        return curY;
-      }
-      ctx.fillText(line, x, curY);
-      line = word + ' ';
-      curY += lineHeight;
-    } else {
-      line = test;
-    }
-  }
-  ctx.fillText(line, x, curY);
-  return curY;
-}
-
-/** Cuts a string to fit, with an ellipsis. Four evidence columns sharing a
- * fixed width meant a long HIP-3 symbol or a long value simply drew over its
- * neighbour. */
-function clipText(ctx, text, maxWidth) {
-  let s = String(text);
-  if (ctx.measureText(s).width <= maxWidth) return s;
-  while (s.length > 1 && ctx.measureText(s + '...').width > maxWidth) s = s.slice(0, -1);
-  return s + '...';
-}
-
-/**
- * What goes on the picture, as the server worked it out (src/engine/share.ts).
- *
- * The page used to build this itself and could say "Everything this tool
- * reads was read in full", which is true of the reading and false about the
- * account: nothing here can see an exchange balance, an OTC deal or an
- * unlinked wallet. That standing limit is now first on every card, and the
- * fallback below is for a saved reading made before the server sent one.
- */
-function cardShare(d, kind) {
-  if (d.share) {
-    // A bundled gallery card is built without knowing which site serves it,
-    // so the link back is filled in here where the origin is known.
-    return d.share.link || !d.snapshotId
-      ? d.share
-      : { ...d.share, link: window.location.origin + '/?s=' + d.snapshotId };
-  }
-  const notes = (d.coverage || []).slice(0, 2);
-  return {
-    limits: [
-      'Not visible to this tool at all: positions on centralized exchanges, OTC deals, ' +
-        'and wallets with no on-chain link to this address.',
-      ...notes,
-    ],
-    more: Math.max(0, (d.coverage || []).length - notes.length),
-    provenance: 'Positions as of ' + fmtTime(d.positionsAsOf || d.checkedAt) + ' · ' + kind,
-    link: d.snapshotId ? window.location.origin + '/?s=' + d.snapshotId : null,
-    evidence: (d.evidence || []).slice(0, 4),
-  };
-}
-
-/**
- * The constellation, drawn onto this same fixed-size canvas by way of the
- * real drawConstellation from Task 2 - not a second, cheaper copy of it.
- * drawConstellation measures its target through clientWidth/clientHeight,
- * which only resolve on an element that is actually laid out; card-canvas
- * itself stays `hidden` for the whole of drawCard() (display:none, so its
- * own clientWidth reads 0 - the exact trap renderBreakdown's own history
- * already describes hitting once, on #breakdown-svg, before #card was
- * unhidden first). A scratch canvas, sized in CSS pixels to exactly the
- * region this card wants to fill and positioned off the visible page rather
- * than display:none (which lays out at zero size the same as hidden), gives
- * drawConstellation something real to measure - its result is then copied
- * onto card-canvas with one drawImage call, scaled to fit regardless of the
- * scratch canvas's own devicePixelRatio-scaled backing store, and the
- * scratch canvas is removed again before this function returns.
- */
-function drawCardConstellation(ctx, d, x, y, w, h) {
-  const scratch = document.createElement('canvas');
-  scratch.style.position = 'fixed';
-  scratch.style.left = '-99999px';
-  scratch.style.top = '0px';
-  scratch.style.width = w + 'px';
-  scratch.style.height = h + 'px';
-  document.body.append(scratch);
-  const inputs = constellationInputsFor(d);
-  drawConstellation(scratch, { ...inputs, mini: false });
-  ctx.drawImage(scratch, x, y, w, h);
-  scratch.remove();
-
-  const font = (weight, size) => weight + ' ' + size + 'px -apple-system, system-ui, "Segoe UI", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#e6e8ee';
-  ctx.font = font(700, 48);
-  ctx.fillText(constellationStatFor(d, inputs), x + w / 2, y + h / 2 - 4);
-  ctx.fillStyle = '#8b90a0';
-  ctx.font = font(400, 15);
-  ctx.fillText(constellationStatLabelFor(d).toUpperCase(), x + w / 2, y + h / 2 + 22);
-  if (constellationQualityNoteFor(d)) {
-    ctx.fillStyle = '#f2b35c';
-    ctx.font = font(600, 14);
-    ctx.fillText(constellationQualityFlagFor(d).toUpperCase(), x + w / 2, y + h / 2 + 43);
-  }
-  ctx.textAlign = 'left';
-}
-
-/** The older layout, for a card with no diagram to draw. Only reached when
- * none of drawCard's own isBook/breakdown-applies-with-segments/isLong hold
- * - between them (the same three conditions renderBreakdown itself checks)
- * every account with any open position at all gets a constellation instead,
- * so this is effectively just "nothing open right now". */
-function drawEvidenceColumns(ctx, items, W, font) {
-  const colW = (W - 112) / 4;
-  items.forEach((item, i) => {
-    const x = 56 + i * colW;
-    const room = colW - 16;
-    ctx.fillStyle = '#8b90a0';
-    ctx.font = font(400, 18);
-    ctx.fillText(clipText(ctx, item.label, room), x, 432);
-    ctx.fillStyle = '#e6e8ee';
-    ctx.font = font(700, item.value.length > 14 ? 24 : 30);
-    ctx.fillText(clipText(ctx, item.value, room), x, 470);
-    ctx.fillStyle = '#5a5f6d';
-    ctx.font = font(400, 15);
-    ctx.fillText(clipText(ctx, item.source, room), x, 496);
-  });
-}
-
-function drawCard() {
-  const canvas = $('card-canvas');
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
-  const d = current;
-  const v = verdictOf(d);
-  const font = (weight, size) => weight + ' ' + size + 'px -apple-system, system-ui, "Segoe UI", sans-serif';
-
-  ctx.fillStyle = '#0c0e13';
-  ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = v.accent;
-  ctx.fillRect(0, 0, 12, H);
-
-  ctx.fillStyle = v.accent;
-  ctx.font = font(700, 28);
-  ctx.fillText(badgeText(d).toUpperCase(), 56, 84);
-
-  ctx.fillStyle = '#e6e8ee';
-  ctx.font = font(700, 44);
-  wrapText(ctx, headlineFor(d), 56, 146, W - 112, 52, 2);
-
-  const share = cardShare(d, (d && d.__kind) || 'live');
-  // Mirrors renderBreakdown's own gate (Task 2) exactly, so the picture that
-  // travels never disagrees with the page it was copied from about whether
-  // there is a diagram to show at all.
-  const isBook = d.verdict.verdict === 'book' && !!d.orders;
-  const b = d.breakdown;
-  const isLong = !isBook && (!b || !b.applies) && d.positions.nPositions > 0 && d.positions.headlineSide === 'long';
-  const showConstellation = isBook || (b && b.applies && b.segments.length > 0) || isLong;
-
-  ctx.fillStyle = '#8b90a0';
-  ctx.font = font(400, 26);
-  wrapText(ctx, d.summary || '', 56, 250, W - 112, 36, showConstellation ? 3 : 4);
-
-  if (showConstellation) {
-    drawCardConstellation(ctx, d, 56, 386, W - 112, 130);
-  } else {
-    drawEvidenceColumns(ctx, share.evidence, W, font);
-  }
-
-  // A badge alone reads as a verdict with nothing behind it. What the check
-  // could not read belongs on the picture, not only on the page it came from.
-  ctx.fillStyle = '#8b90a0';
-  ctx.font = font(400, 18);
-  ctx.fillText('What this reading could not cover', 56, 532);
-  ctx.fillStyle = '#8b90a0';
-  ctx.font = font(400, 17);
-  const limitsText = share.limits.join(' ') + (share.more > 0 ? ' (+' + share.more + ' more on the page)' : '');
-  wrapText(ctx, limitsText, 56, 556, W - 112, 23, 3);
-
-  // When and what of, printed on the image rather than left to the post it
-  // is pasted into, plus the link back to this exact reading.
-  ctx.fillStyle = '#5a5f6d';
-  ctx.font = font(400, 17);
-  ctx.fillText(clipText(ctx, 'Bet or Book · ' + shortAddr(d.address) + ' · ' + share.provenance, W - 380), 56, H - 46);
-  if (share.link) ctx.fillText(clipText(ctx, share.link, W - 380), 56, H - 22);
-  ctx.textAlign = 'right';
-  ctx.fillText(d.source === 'nansen' ? 'Powered by Nansen API' : 'Data: Hyperliquid API', W - 56, H - 46);
-  ctx.textAlign = 'left';
-}
 
 // Opening the one Share button is the moment a reader means to share, and
 // the best time to have the link's own picture drawn before any crawler
@@ -1716,43 +1110,68 @@ $('share').addEventListener('toggle', () => {
   if ($('share').open && current) askForPicture(current);
 });
 
-$('copy-link').addEventListener('click', async () => {
+async function copyReadingLink(btn, savedId) {
   if (!current) return;
-  askForPicture(current);
+  if (!savedId || savedId === current.snapshotId) askForPicture(current);
   // The link opens this reading, not a new check of this account. Without a
   // snapshot id there is nothing saved to point at, so it falls back to the
   // address and the button says which one it gave.
-  const link = current.snapshotId
-    ? window.location.origin + '/?s=' + current.snapshotId
-    : window.location.origin + '/?address=' + current.address;
-  const btn = $('copy-link');
+  const savedLink = savedReadingLink(savedId ? { snapshotId: savedId } : current, window.location.origin);
+  const claim = $('claim-choice').value;
+  const link = savedLink ? savedLink + (isClaim(claim) ? '&claim=' + claim : '') : window.location.origin + '/?address=' + encodeURIComponent(current.address);
   try {
     await navigator.clipboard.writeText(link);
+    recordUsage('share_copy', current);
     btn.textContent = 'Copied';
-    setTimeout(() => { btn.textContent = 'Copy link'; }, 1500);
+    setTimeout(() => { btn.textContent = btn.id === 'save-copy-link' ? 'Copy saved reading link'
+      : savedReadingLink(current || {}, window.location.origin) ? 'Copy link' : 'Copy wallet link'; }, 1500);
   } catch (e) {
     window.prompt('Copy this link:', link);
   }
-});
+}
 
 /** The card's own summary, plus the link that reopens it, sized for a post
  * on X: any link counts as 23 characters there whatever its real length, so
  * the summary is trimmed against what is actually left, not against 280
  * raw characters. The reader can still edit before posting; this is a
  * draft, not a submission (audit item 10). */
-function postText(d) {
-  const link = d.snapshotId ? window.location.origin + '/?s=' + d.snapshotId : window.location.origin;
-  const LINK_WEIGHT = 23;
-  const TWEET_LIMIT = 280;
-  const suffix = '\n\nBuilt on @nansen_ai\n' + link;
-  const suffixWeight = suffix.length - link.length + LINK_WEIGHT;
-  const budget = Math.max(0, TWEET_LIMIT - suffixWeight);
-  let body = (d.summary || '').trim();
-  if (body.length > budget) {
-    body = body.slice(0, Math.max(0, budget - 1)).trim() + '…';
-  }
-  return body + suffix;
+function shareTextData(d, compact) {
+  const reasons = d.verdict.reasons || [];
+  const limit = reasons.includes('linked_exposure_unverified') ? 'Funding links do not establish ownership.'
+    : d.degraded || reasons.includes('positions_stale') ? 'Incomplete data; exposure remains unresolved.'
+    : d.verdict.verdict === 'hedged' ? 'Spot coverage is not a safety rating.'
+    : d.verdict.verdict === 'book' ? 'Quotes show activity, not trading intent.'
+    : 'Off-chain and unlinked hedges are not visible.';
+  const claim = $('claim-choice').value;
+  const claimReading = isClaim(claim) ? checkClaim(d, claim) : null;
+  const link = savedReadingLink(d, window.location.origin);
+  return { position: positionText(d), verdict: compact ? verdictOf(d).label : badgeText(d),
+    headline: claimReading ? CLAIMS[claim] + ': ' + claimReading.status + '. ' + claimReading.explanation : headlineFor(d),
+    readAt: fmtTime(d.checkedAt), limitation: compact ? limit : d.openQuestion ? 'Still open: ' + d.openQuestion : d.takeaway || limit,
+    attribution: d.source === 'nansen' ? 'Powered by @nansen_ai' : 'Data: Hyperliquid',
+    link: link && isClaim(claim) ? link + '&claim=' + encodeURIComponent(claim) : link };
 }
+function postText(d) {
+  return readingPostText(shareTextData(d, true));
+}
+$('copy-reading').addEventListener('click', async () => {
+  if (!current) return;
+  const text = readingCopyText(shareTextData(current, false));
+  const btn = $('copy-reading');
+  try {
+    await navigator.clipboard.writeText(text); recordUsage('share_copy', current);
+    btn.textContent = 'Reading copied'; setTimeout(() => { btn.textContent = 'Copy reading'; }, 1500);
+  } catch { window.prompt('Copy this reading:', text); }
+});
+$('copy-link').addEventListener('click', () => copyReadingLink($('copy-link')));
+$('copy-embed').addEventListener('click', async () => {
+  if (!current || !savedReadingLink(current, window.location.origin)) return;
+  const claim = $('claim-choice').value;
+  const url = window.location.origin + '/embed?s=' + encodeURIComponent(current.snapshotId) + (isClaim(claim) ? '&claim=' + claim : '');
+  const code = '<iframe src="' + url + '" title="Bet or Book dated position evidence" width="100%" height="600" loading="lazy" style="border:0;border-radius:12px"></iframe>';
+  try { await navigator.clipboard.writeText(code); $('copy-embed').textContent = 'Embed copied'; setTimeout(() => { $('copy-embed').textContent = 'Copy embed'; }, 1500); }
+  catch { window.prompt('Copy this embed code:', code); }
+});
 
 // A direct hand-off, not one more thing to copy and paste yourself: X's own
 // intent endpoint opens composer with the text already in it, in a new tab,
@@ -1760,7 +1179,7 @@ function postText(d) {
 // attaching an image, though - the compose box only shows one once X's own
 // crawler has fetched a link's og:image, which does not happen inside the
 // compose box itself. So the card's own picture is also put on the
-// clipboard, the same way "Copy image" does it, and the button says to
+// clipboard, and the button says to
 // paste it in - a real image in the post, not a hope that the link unfurls
 // before it is read.
 $('share-x').addEventListener('click', () => {
@@ -1769,8 +1188,7 @@ $('share-x').addEventListener('click', () => {
   const text = postText(current);
   // Opened synchronously, inside the click itself - once anything here is
   // awaited first, some browsers no longer count this as the user's own
-  // gesture and block it as a popup (the same reason "Copy image" draws the
-  // card before it awaits the clipboard write, not after).
+  // gesture and block it as a popup.
   window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank', 'noopener,noreferrer');
   drawCard();
   const canvas = $('card-canvas');
@@ -1783,6 +1201,8 @@ $('share-x').addEventListener('click', () => {
     } catch (e) {
       // The tab with the text is already open either way; only the image
       // did not make it to the clipboard, so there is nothing to undo here.
+      btn.textContent = 'Opened X · use Download PNG to attach the card';
+      setTimeout(() => { btn.textContent = 'Share on X'; }, 5000);
     }
   }, 'image/png');
 });
@@ -1860,34 +1280,18 @@ function recordGuess(matched) {
   }
 }
 
-async function loadLedger() {
-  try {
-    const res = await fetch('/api/ledger');
-    if (!res.ok) return;
-    const data = await res.json();
-    const w = data.scripted.window;
-    const p = $('ledger');
-    p.replaceChildren(
-      'Nansen API calls made by this project between ' + w.from + ' and ' + w.to + ': ' + data.totalCalls.toLocaleString('en-US') + ' (',
-    );
-    const a = el('a', null, 'ledger');
-    a.href = '/api/ledger';
-    p.append(a, ').');
-    p.hidden = false;
-  } catch (e) {
-    // The counter is a footnote; the page works without it.
-  }
-}
+const {drawConstellation, constellationInputsFor, constellationStatFor, constellationStatLabelFor, constellationQualityNoteFor, constellationQualityFlagFor} = createConstellation({fmtPct});
+const {drawCard}=createShareCard({getCurrent:()=>current, $, verdictOf, badgeText, headlineFor, fmtTime, shortAddr, drawConstellation, constellationInputsFor, constellationStatFor, constellationStatLabelFor, constellationQualityNoteFor, constellationQualityFlagFor});
+const {loadGallery, renderPlayer}=createExplore({$, el, verdictOf, badgeText, positionText, shortAddr, plural, fmtUsd, fmtPct, fmtTime, recordUsage, openSnapshot, getCurrent:()=>current, publishGallery:g=>{gallery=g;}, timedFetch, VERDICTS, PAGE_SIZE, MATERIAL_GAP_SHARE});
 
-// The ledger is a footnote, so it waits for the part of the page a reader
-// came for (23.09 audit).
-loadGallery().finally(loadLedger);
+// Explore loads its list on demand; the bundled example links work immediately.
 if (window.location.hash === '#operator') setUpOperator();
 const params = new URLSearchParams(window.location.search);
 const saved = params.get('s');
 const preset = params.get('address');
 if (window.location.hash === '#explore') {
-  openBoards();
+  if (saved) openSnapshot(saved, 'preserve').then(() => openBoards());
+  else openBoards();
 } else if (saved) {
   // A saved reading opens as itself. No check runs, so nothing is spent and
   // nothing can have changed between the link being written and read.
@@ -1903,3 +1307,154 @@ if (window.location.hash === '#explore') {
   $('check').focus();
 }
 renderRecent();
+recordUsage('landing_view');
+
+// Put the question, answer, decisive facts and actions before the picture.
+// The longer explanation and all account-level risk metrics remain available.
+$('subject').insertAdjacentElement('afterend', $('snapshot'));
+$('headline').insertAdjacentElement('afterend', $('takeaway'));
+$('takeaway').insertAdjacentElement('afterend', document.querySelector('.evidence-preview'));
+document.querySelector('.evidence-preview').insertAdjacentElement('afterend', $('reading-actions'));
+$('reading-actions').insertAdjacentElement('afterend', $('risk-preview'));
+$('risk-preview').insertAdjacentElement('afterend', $('changed'));
+$('changed').insertAdjacentElement('afterend', $('open-question'));
+$('open-question').insertAdjacentElement('afterend', $('claim-checker'));
+$('full-analysis').querySelector('summary').insertAdjacentElement('afterend', $('summary'));
+$('try-again').addEventListener('click', () => {
+  if (!current || busy) return;
+  let url = '/api/check?context=0&address=' + encodeURIComponent(current.address) + '&retry=1';
+  if (current.focus) url += '&coin=' + encodeURIComponent(current.focus.coin) + '&side=' + current.focus.side;
+  load(url, data => { renderResult(data, { kind: 'live' }); showLink(data.snapshotSaved !== false ? data.snapshotId : null); askForPicture(data); }, 'Could not complete the reading. Try again shortly.', 'POST');
+});
+$('load-context').addEventListener('click', () => {
+  if (!current || busy) return;
+  let url = '/api/check?context=1&address=' + encodeURIComponent(current.address);
+  if (current.focus) url += '&coin=' + encodeURIComponent(current.focus.coin) + '&side=' + current.focus.side;
+  load(url, data => { renderResult(data, { kind: 'live' }); showLink(data.snapshotSaved !== false ? data.snapshotId : null); askForPicture(data); }, 'Optional context could not be loaded.', 'POST');
+});
+$('source-free-examples').addEventListener('click', () => { showExamples(); $('examples').scrollIntoView({ block: 'start' }); });
+$('use-example').addEventListener('click', () => {
+  recordUsage('example_open');
+  const link = $('player-queue').querySelector('a[href]');
+  if (!link && gallery?.featured?.[0]) return openSnapshot(gallery.featured[0].snapshotId);
+  if (link) openSnapshot(new URL(link.href, window.location.origin).searchParams.get('s'));
+});
+$('waiting-example').addEventListener('click', () => $('use-example').click());
+$('address').addEventListener('input', () => { $('address-choices').hidden = true; });
+$('download-image').addEventListener('click', () => {
+  if (!current) return;
+  drawCard();
+  $('card-canvas').toBlob(blob => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = el('a'); a.href = url; a.download = 'bet-or-book-' + (current.snapshotId || current.address) + '.png';
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }, 'image/png');
+});
+const WATCH_KEY = 'betOrBook:watch';
+function watched() {
+  try {
+    const rows = JSON.parse(localStorage.getItem(WATCH_KEY) || '[]');
+    return Array.isArray(rows) ? rows.map(row => typeof row === 'string' ? { address: row } : row)
+      .filter(row => row && typeof row.address === 'string' && ADDRESS_RE.test(row.address.toLowerCase()))
+      .map(row => ({ address: row.address.toLowerCase(), coin: typeof row.coin === 'string' ? row.coin : null,
+        side: ['long', 'short'].includes(row.side) ? row.side : null,
+        snapshotId: typeof row.snapshotId === 'string' ? row.snapshotId : null,
+        previousSnapshotId: typeof row.previousSnapshotId === 'string' ? row.previousSnapshotId : null,
+        monitorToken: typeof row.monitorToken === 'string' && /^[0-9a-f-]{72}$/.test(row.monitorToken) ? row.monitorToken : null,
+        monitorStatus: typeof row.monitorStatus === 'string' ? row.monitorStatus : '',
+        monitorExpires: typeof row.monitorExpires === 'string' ? row.monitorExpires : null,
+        monitorEvents: Array.isArray(row.monitorEvents) ? row.monitorEvents.slice(0, 5).filter(e => e && typeof e.snapshotId === 'string' && typeof e.at === 'string' && Array.isArray(e.changes) && e.changes.every(c => typeof c === 'string')) : [],
+        checkedAt: typeof row.checkedAt === 'string' ? row.checkedAt : null,
+        label: typeof row.label === 'string' ? row.label.trim().slice(0, 80) : '' }))
+      .slice(0, 12) : [];
+  } catch { return []; }
+}
+const watchIdentity = row => row.address + ':' + (row.coin || '') + ':' + (row.side || '');
+const monitoring = createMonitoring({ read: watched, write: rows => localStorage.setItem(WATCH_KEY, JSON.stringify(rows)), render: renderWatched, status: setStatus, fetchJson: timedFetch });
+function updateSavedPosition(d) {
+  if (!d.snapshotId || d.snapshotSaved === false) return;
+  const identity = watchIdentity({ address: d.address.toLowerCase(), coin: d.positions.headlineCoin, side: d.positions.headlineSide });
+  const rows = watched();
+  const row = rows.find(r => watchIdentity(r) === identity);
+  if (!row || (row.checkedAt && Date.parse(d.checkedAt) < Date.parse(row.checkedAt))) return;
+  Object.assign(row, advanceSavedReading(row, d));
+  try { localStorage.setItem(WATCH_KEY, JSON.stringify(rows)); renderWatched(); } catch {}
+}
+function renderWatched() {
+  let box = $('watched');
+  if (!box) {
+    box = el('div', 'examples'); box.id = 'watched'; box.tabIndex = -1;
+    box.setAttribute('role', 'region'); box.setAttribute('aria-label', 'Your saved positions');
+    $('recent').insertAdjacentElement('afterend', box);
+  }
+  const rows = watched(); box.hidden = rows.length === 0; box.replaceChildren();
+  if (!rows.length) return;
+  box.append(el('p', 'search-help', 'Saved positions · this browser only. Open a saved reading free; Refresh runs a new check.'));
+  box.append(el('p', 'search-help', 'Optional monitoring: 4 pilot slots, about every 4 hours for 72 hours. Stores the public wallet and reading question on the server; alerts appear here. The shared budget can pause checks.'));
+  rows.forEach(row => {
+    const label = (row.label ? row.label + ' · ' : '') + (row.coin ? row.coin + ' ' + row.side + ' · ' : '') + shortAddr(row.address);
+    const group = el('div', 'watch-row');
+    const b = el('button', 'chip', label + (row.snapshotId ? ' · Open saved' : ' · Check address'));
+    b.addEventListener('click', () => {
+      if (row.snapshotId) openSnapshot(row.snapshotId, 'push');
+      else { showExamples(); $('address').value = row.address; $('address').focus(); setStatus('Address filled in. Press Check to run a reading.'); }
+    });
+    const refresh = el('button', 'chip', 'Refresh'); refresh.setAttribute('aria-label', 'Refresh ' + label + ' with a new check');
+    refresh.addEventListener('click', () => { if (busy) return; if (row.coin && row.side) checkPosition(row.address, row); else { $('address').value = row.address; runCheck(); } });
+    const remove = el('button', 'chip', 'Remove'); remove.setAttribute('aria-label', 'Remove ' + label);
+    remove.addEventListener('click', () => { if (row.monitorToken) { setStatus('Stop monitoring before removing this saved position.', true); return; } try { localStorage.setItem(WATCH_KEY, JSON.stringify(watched().filter(a => watchIdentity(a) !== watchIdentity(row)))); } catch {} renderWatched(); });
+    const name = el('input', 'watch-label'); name.type = 'text'; name.maxLength = 80;
+    name.value = row.label || ''; name.placeholder = 'Name this position'; name.setAttribute('aria-label', 'Name saved position ' + label);
+    name.addEventListener('input', () => {
+      const rows = watched(); const saved = rows.find(r => watchIdentity(r) === watchIdentity(row));
+      if (!saved) return;
+      saved.label = name.value.trim().slice(0, 80);
+      try { localStorage.setItem(WATCH_KEY, JSON.stringify(rows)); b.textContent = (saved.label ? saved.label + ' · ' : '') + (row.coin ? row.coin + ' ' + row.side + ' · ' : '') + shortAddr(row.address) + (row.snapshotId ? ' · Open saved' : ' · Check address'); }
+      catch { setStatus('This browser could not save the position name.', true); }
+    });
+    group.append(b, refresh, name, monitoring.button(row), remove, monitoring.notices(row));
+    if (row.checkedAt) group.append(el('span', 'search-help', ' Read ' + fmtTime(row.checkedAt)));
+    box.append(group);
+  });
+}
+$('watch-address').addEventListener('click', () => {
+  if (!current || !ADDRESS_RE.test(current.address)) return;
+  const candidate = { address: current.address.toLowerCase(), coin: current.positions.headlineCoin, side: current.positions.headlineSide,
+    snapshotId: current.snapshotSaved !== false ? current.snapshotId : null, checkedAt: current.checkedAt };
+  const rows = watched();
+  const existing = rows.find(saved => watchIdentity(saved) === watchIdentity(candidate));
+  if (!existing && rows.length >= 12) { setStatus('Your 12 saved-position slots are full. Remove one before saving another; existing readings and monitor controls are kept.', true); return; }
+  const row = advanceSavedReading(existing || { ...candidate, snapshotId: null, label: '', previousSnapshotId: null }, current);
+  try {
+    localStorage.setItem(WATCH_KEY, JSON.stringify([row, ...rows.filter(a => watchIdentity(a) !== watchIdentity(row))]));
+    recordUsage('watch_save', current); renderWatched(); $('watch-address').textContent = 'Saved to your watchlist';
+    $('save-confirmation').hidden = false; $('saved-position-name').value = row.label;
+    $('save-confirmation-text').textContent = row.snapshotId
+      ? row.snapshotId !== current.snapshotId || current.snapshotSaved === false
+        ? 'Kept your previously saved reading from ' + fmtTime(row.checkedAt) + '. This older or unsaved reading did not replace it. The link below opens the retained reading.'
+        : 'Saved in this browser. Open the dated reading again free; Refresh runs a new check.'
+      : 'Position saved in this browser. This reading has no saved link; reopening fills in the wallet for a new check.';
+    $('save-copy-link').hidden = !row.snapshotId;
+    $('save-copy-link').dataset.snapshotId = row.snapshotId || '';
+  }
+  catch { setStatus('This browser cannot save a watchlist.', true); }
+});
+renderWatched();
+monitoring.poll();
+$('saved-position-name').addEventListener('input', () => {
+  if (!current) return;
+  const identity = watchIdentity({ address: current.address.toLowerCase(), coin: current.positions.headlineCoin, side: current.positions.headlineSide });
+  const rows = watched(); const row = rows.find(r => watchIdentity(r) === identity);
+  if (!row) return;
+  row.label = $('saved-position-name').value.trim().slice(0, 80);
+  try { localStorage.setItem(WATCH_KEY, JSON.stringify(rows)); renderWatched(); }
+  catch { setStatus('This browser could not save the position name.', true); }
+});
+$('save-copy-link').addEventListener('click', () => copyReadingLink($('save-copy-link'), $('save-copy-link').dataset.snapshotId));
+$('open-saved-positions').addEventListener('click', () => {
+  showExamples(); $('watched').scrollIntoView({ block: 'center' }); $('watched').focus({ preventScroll: true });
+});
+
+$('player-queue').addEventListener('click', e => { const a = e.target.closest('a[href]'); if (!a) return; e.preventDefault(); recordUsage('example_open'); openSnapshot(new URL(a.href).searchParams.get('s')); });

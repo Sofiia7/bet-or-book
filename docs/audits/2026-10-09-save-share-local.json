@@ -1,0 +1,18 @@
+{
+  "baseURL": "http://localhost:8788",
+  "checkedAt": "2026-10-09T10:47:15.024Z",
+  "checks": [
+    "Save confirms browser-local storage and free reopening",
+    "Saved confirmation copies the exact dated reading link",
+    "Copied reading includes its original date",
+    "Copied reading includes the ownership limitation",
+    "Copied reading carries attribution and saved link",
+    "320 px Save confirmation fits the viewport",
+    "390 px Save confirmation fits the viewport",
+    "1280 px Save confirmation fits the viewport",
+    "Named position is accessible from the saved list",
+    "Saved name persists after reload",
+    "Reopening restores the original reading date",
+    "No JavaScript errors in Save and Share"
+  ]
+}

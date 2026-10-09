@@ -6,6 +6,8 @@ import { testEnv, request, ORIGIN } from './support/worker';
 import { ogCacheKey, OG_LAYOUT_VERSION } from '../src/engine/ogCard';
 import ogFallbackPng from '../assets/og-fallback.png';
 import clearinghouseFixture from './fixtures/hyperliquid/clearinghouse-many-positions.json';
+import { CLASSIFIER_VERSION } from '../src/engine/verdict';
+import { ASSET_REGISTRY_VERSION } from '../src/engine/observation';
 
 const ADDRESS = '0x1111111111111111111111111111111111111111';
 
@@ -41,6 +43,31 @@ function routeUpstreams() {
 afterEach(() => vi.restoreAllMocks());
 
 describe('starting a check is a POST, and everything else is a lookup', () => {
+  it('marks GET check responses private to the request, including invalid input', async () => {
+    for (const path of ['/api/check', `/api/check?address=${ADDRESS}`]) {
+      const res = await worker.fetch(request(path), testEnv());
+      expect(res.headers.get('cache-control')).toBe('no-store');
+      expect(res.headers.get('x-robots-tag')).toBe('noindex');
+    }
+  });
+  it('does not replace the latest complete pointer with an incomplete reading', async () => {
+    routeUpstreams();
+    const env = testEnv();
+    await env.KV.put(`latest:${ADDRESS}:largest`, 'previous-complete');
+    const res = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
+    expect((await res.json() as { degraded: boolean }).degraded).toBe(true);
+    expect(await env.KV.get(`latest:${ADDRESS}:largest`)).toBe('previous-complete');
+  });
+  it('limits operator key guessing before any upstream work', async () => {
+    const seen = routeUpstreams();
+    const env = testEnv({ DEMO_KEY: 'operator-secret' });
+    const attempt = () => worker.fetch(request('/api/demo-access', { method: 'POST', headers: { 'x-demo-key': 'wrong' } }), env);
+    for (let i = 0; i < 5; i++) expect((await attempt()).status).toBe(403);
+    const refused = await attempt();
+    expect(refused.status).toBe(429);
+    expect(refused.headers.get('retry-after')).toBe('60');
+    expect(seen).toEqual([]);
+  });
   it('runs a check on POST from this origin', async () => {
     routeUpstreams();
     const res = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), testEnv());
@@ -105,7 +132,7 @@ describe('a burst is bounded for everyone at once, not only per address', () => 
 describe('the demo keeps a reserve the public path cannot reach', () => {
   it('stops public checks at the public cap while the demo key still works', async () => {
     routeUpstreams();
-    const env = testEnv({ NANSEN_API_KEY: 'k', NANSEN_DAILY_CREDIT_CAP: '14', NANSEN_DEMO_RESERVE: '7', DEMO_KEY: 'secret' });
+    const env = testEnv({ NANSEN_API_KEY: 'k', NANSEN_DAILY_CREDIT_CAP: '36', NANSEN_DEMO_RESERVE: '18', DEMO_KEY: 'secret' });
     const first = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
     expect(((await first.json()) as { coverage: string[] }).coverage.join(' ')).not.toContain('Nansen not used');
 
@@ -296,7 +323,12 @@ describe('asking about a particular position', () => {
 
     const first = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
     const firstBody = (await first.json()) as { positions: { candidates: Array<{ coin: string }> } };
-    expect(firstBody.positions.candidates.map((c) => c.coin)).not.toContain('WLD');
+    expect(firstBody.positions.candidates.map((c) => c.coin)).toContain('WLD');
+    // Also exercise migration from an older, genuinely truncated cache.
+    const key = `check:${CLASSIFIER_VERSION}:${ASSET_REGISTRY_VERSION}:${ADDRESS}`;
+    const cached = JSON.parse((await env.KV.get(key))!);
+    cached.positions.candidates = cached.positions.candidates.slice(0, 5);
+    await env.KV.put(key, JSON.stringify(cached));
 
     // Asking about WLD specifically must not answer "not open" purely
     // because it fell outside the cached top-5 - it must actually check.
@@ -372,7 +404,8 @@ describe('a live check remembers the reading it replaces (22.09 audit, J05)', ()
     const second = await worker.fetch(request(`/api/check?address=${ADDRESS}`, { method: 'POST' }), env);
     const secondBody = (await second.json()) as { snapshotId: string; supersedes?: string };
     expect(secondBody.snapshotId).not.toBe(firstBody.snapshotId);
-    expect(secondBody.supersedes).toBe(firstBody.snapshotId);
+    expect(secondBody.supersedes).toBeUndefined();
+    expect(await env.KV.get(`latest:${ADDRESS}:largest`)).toBeNull();
 
     const cmp = await worker.fetch(request(`/api/compare?a=${firstBody.snapshotId}&b=${secondBody.snapshotId}`), env);
     expect(cmp.status).toBe(200);
@@ -464,7 +497,8 @@ describe('a live check remembers the reading it replaces (22.09 audit, J05)', ()
       env,
     );
     const ethAgainBody = (await ethAgain.json()) as { snapshotId: string; supersedes?: string };
-    expect(ethAgainBody.supersedes).toBe(ethBody.snapshotId);
+    expect(ethAgainBody.supersedes).toBeUndefined();
+    expect(await env.KV.get(`latest:${ADDRESS}:ETH:short`)).toBeNull();
   });
 });
 
@@ -502,7 +536,7 @@ describe('a rate limit bounds new checks, not free reads of one already on recor
     expect(repeat.status).toBe(200);
   });
 
-  it('answers a coin/side that is not open from the address\'s own cached reading, for free', async () => {
+  it('does not infer absence on all venues from a cached main-dex reading', async () => {
     const hlPosition = (coin: string, szi: string, positionValue: string) => ({
       type: 'oneWay',
       position: {
@@ -548,7 +582,7 @@ describe('a rate limit bounds new checks, not free reads of one already on recor
     };
     // No new Hyperliquid read - answered from the plain reading already on
     // record, not a fresh check of an ask that was never going to resolve.
-    expect(seen.calls).toBe(callsAfterFirst);
+    expect(seen.calls).toBeGreaterThan(callsAfterFirst);
     expect(bogusBody.focus).toBeNull();
     expect(bogusBody.positions.headlineCoin).toBe('ETH');
     expect(bogusBody.coverage.join(' ')).toContain('No DOGE long is open');
@@ -557,6 +591,15 @@ describe('a rate limit bounds new checks, not free reads of one already on recor
       text: expect.stringContaining('No DOGE long is open'),
       failure: true,
     });
+    // A complete, untruncated roster can still answer absence without spend.
+    const key = `check:${CLASSIFIER_VERSION}:${ASSET_REGISTRY_VERSION}:${ADDRESS}`;
+    const cached = JSON.parse((await env.KV.get(key))!);
+    cached.positionsCoverage = 'complete';
+    await env.KV.put(key, JSON.stringify(cached));
+    const callsBeforeComplete = seen.calls;
+    const complete = await worker.fetch(request(`/api/check?address=${ADDRESS}&coin=SHIB&side=long`, { method: 'POST' }), env);
+    expect(complete.status).toBe(200);
+    expect(seen.calls).toBe(callsBeforeComplete);
   });
 });
 

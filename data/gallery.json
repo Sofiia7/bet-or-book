@@ -5419,8 +5419,9 @@
    "classifierVersion": "v2",
    "snapshotId": "37b81ab9-mu71ntzt",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd",
@@ -5430,7 +5431,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:18 UTC · from the gallery scan, rules v2",
@@ -6949,8 +6950,9 @@
    "classifierVersion": "v2",
    "snapshotId": "939f9503-mu722m6e",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd",
@@ -6960,7 +6962,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:30 UTC · from the gallery scan, rules v2",
@@ -8904,8 +8906,9 @@
    "classifierVersion": "v2",
    "snapshotId": "3bcae23e-mu724ydt",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd",
@@ -8915,7 +8918,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:32 UTC · from the gallery scan, rules v2",
@@ -9737,8 +9740,9 @@
    "classifierVersion": "v2",
    "snapshotId": "4044570e-mu72608g",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd"
@@ -9747,7 +9751,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:33 UTC · from the gallery scan, rules v2",
@@ -10120,7 +10124,7 @@
    },
    "sizeVsOi": null,
    "source": "nansen",
-   "summary": "No open positions right now, so there is nothing to classify.",
+   "summary": "No open positions were found in this reading.",
    "evidence": [
     {
      "label": "Open positions",
@@ -10140,14 +10144,14 @@
    "hedgeCoverage": "not-applicable",
    "positionsAsOf": null,
    "degraded": false,
-   "classifierVersion": "v6",
+   "classifierVersion": "v10",
    "snapshotId": "d62d484b-mu726b25",
    "ordersCoverage": "complete",
    "positionsCoverage": "complete",
    "observationSchemaVersion": 3,
-   "assetRegistryVersion": 2,
+   "assetRegistryVersion": 3,
    "observedAt": "2026-09-18T14:33:16.925Z",
-   "interpretedAt": "2026-09-27T13:48:54.067Z",
+   "interpretedAt": "2026-10-09T12:36:38.604Z",
    "previousInterpretation": {
     "verdict": "unknown",
     "classifierVersion": "v3",
@@ -10158,7 +10162,7 @@
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address."
     ],
     "more": 0,
-    "provenance": "Positions as of 18 Sept, 14:33 UTC · from the gallery scan, rules v6",
+    "provenance": "Positions as of 18 Sept, 14:33 UTC · from the gallery scan, rules v10",
     "link": null,
     "evidence": [
      {
@@ -11371,8 +11375,10 @@
    "classifierVersion": "v2",
    "snapshotId": "4e23288c-mu727p8n",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
+     "positions.headlineUnderlyingVerified",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd"
@@ -11381,7 +11387,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
      "Size versus open interest not computed for a HIP-3 dex market"
     ],
     "more": 0,
@@ -11927,8 +11933,9 @@
    "classifierVersion": "v2",
    "snapshotId": "a61c57d0-mu728av3",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd",
@@ -11938,7 +11945,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:34 UTC · from the gallery scan, rules v2",
@@ -13450,8 +13457,9 @@
    "classifierVersion": "v2",
    "snapshotId": "32008fcb-mu729ycw",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "positions.headlineUnderlyingVerified",
      "hedge.hasUnresolvedLiability",
      "hedge.unverifiedUsd"
     ]
@@ -13459,7 +13467,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+     "This reading was taken before the current rules existed and does not record positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
      "Size versus open interest not computed for a HIP-3 dex market"
     ],
     "more": 0,
@@ -13737,7 +13745,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability, so it cannot be re-judged without checking the account again.",
+     "This reading was taken before the current rules existed and does not record positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability, so it cannot be re-judged without checking the account again.",
      "Size versus open interest not computed for a HIP-3 dex market"
     ],
     "more": 0,
@@ -13787,8 +13795,9 @@
    "supersedes": "fc667adb-mu72a3rc",
    "linkedHedgeCoverage": "not-applicable",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "positions.headlineUnderlyingVerified",
      "hedge.hasUnresolvedLiability"
     ]
    }
@@ -15273,8 +15282,9 @@
    "classifierVersion": "v2",
    "snapshotId": "b7e0b9fb-mu72bwn6",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd",
@@ -15284,7 +15294,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:37 UTC · from the gallery scan, rules v2",
@@ -17937,8 +17947,9 @@
    "classifierVersion": "v2",
    "snapshotId": "77ee3604-mu72ere5",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd",
@@ -17948,7 +17959,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:39 UTC · from the gallery scan, rules v2",
@@ -18616,8 +18627,9 @@
    "classifierVersion": "v2",
    "snapshotId": "8ae4c5b3-mu72fifq",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd"
@@ -18626,7 +18638,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:40 UTC · from the gallery scan, rules v2",
@@ -19423,8 +19435,9 @@
    "classifierVersion": "v2",
    "snapshotId": "051c2e6d-mu72gg1z",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd"
@@ -19433,7 +19446,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:41 UTC · from the gallery scan, rules v2",
@@ -20686,8 +20699,9 @@
    "classifierVersion": "v2",
    "snapshotId": "e0ffc829-mu72hsq7",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "positions.headlineUnderlyingVerified",
      "hedge.hasUnresolvedLiability",
      "hedge.unverifiedUsd"
     ]
@@ -20695,7 +20709,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+     "This reading was taken before the current rules existed and does not record positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
      "Size versus open interest not computed for a HIP-3 dex market"
     ],
     "more": 0,
@@ -21260,8 +21274,9 @@
    "classifierVersion": "v2",
    "snapshotId": "e187055f-mu72i8y6",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd",
@@ -21271,7 +21286,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
      "A wallet that funded this account is Gate Deposit, an exchange address: its balances are not counted here"
     ],
     "more": 0,
@@ -21657,8 +21672,9 @@
    "nansenCalls": 2,
    "snapshotId": "b1ec7feb-mub534ls",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd"
@@ -21667,7 +21683,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 21 Sept, 11:05 UTC · from the gallery scan, rules v2",
@@ -23735,8 +23751,9 @@
    "classifierVersion": "v2",
    "snapshotId": "3ee505ba-mu72l93k",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd"
@@ -23745,7 +23762,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:44 UTC · from the gallery scan, rules v2",
@@ -24805,8 +24822,9 @@
    "classifierVersion": "v2",
    "snapshotId": "54dbc1fb-mu72mr5x",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd"
@@ -24815,7 +24833,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:46 UTC · from the gallery scan, rules v2",
@@ -27025,8 +27043,9 @@
    "classifierVersion": "v2",
    "snapshotId": "8b61a50f-mu72pcve",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd"
@@ -27035,7 +27054,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:48 UTC · from the gallery scan, rules v2",
@@ -27149,8 +27168,9 @@
    "classifierVersion": "v2",
    "snapshotId": "456f1049-mu72pia9",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd"
@@ -27159,7 +27179,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:48 UTC · from the gallery scan, rules v2",
@@ -28291,8 +28311,9 @@
    "nansenCalls": 6,
    "snapshotId": "af0fdd39-mub53fev",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd"
@@ -28301,7 +28322,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
      "Holdings on other chains: first 100 tokens only"
     ],
     "more": 1,
@@ -29644,8 +29665,10 @@
    "classifierVersion": "v2",
    "snapshotId": "8af700ba-mu72s7l1",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
+     "positions.headlineUnderlyingVerified",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd"
@@ -29654,7 +29677,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
      "Size versus open interest not computed for a HIP-3 dex market"
     ],
     "more": 0,
@@ -29788,8 +29811,9 @@
    "classifierVersion": "v2",
    "snapshotId": "99967871-mu72sczq",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "positions.headlineUnderlyingVerified",
      "hedge.hasUnresolvedLiability",
      "hedge.unverifiedUsd"
     ]
@@ -29797,7 +29821,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+     "This reading was taken before the current rules existed and does not record positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
      "Size versus open interest not computed for a HIP-3 dex market"
     ],
     "more": 0,
@@ -30311,8 +30335,10 @@
    "classifierVersion": "v2",
    "snapshotId": "4fe260d1-mu72syme",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
+     "positions.headlineUnderlyingVerified",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd"
@@ -30321,7 +30347,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
      "Size versus open interest not computed for a HIP-3 dex market"
     ],
     "more": 0,
@@ -30436,8 +30462,9 @@
    "classifierVersion": "v2",
    "snapshotId": "64702807-mu72t419",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd"
@@ -30446,7 +30473,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:51 UTC · from the gallery scan, rules v2",
@@ -31268,8 +31295,9 @@
    "nansenCalls": 2,
    "snapshotId": "482b0f4d-mub53ktl",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd"
@@ -31278,7 +31306,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 21 Sept, 11:06 UTC · from the gallery scan, rules v2",
@@ -31952,8 +31980,9 @@
    "classifierVersion": "v2",
    "snapshotId": "4da577b5-mu72v2cd",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd"
@@ -31962,7 +31991,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:52 UTC · from the gallery scan, rules v2",
@@ -33069,8 +33098,9 @@
    "classifierVersion": "v2",
    "snapshotId": "acb66d19-mu72wv7m",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "positions.headlineUnderlyingVerified",
      "hedge.hasUnresolvedLiability",
      "hedge.unverifiedUsd"
     ]
@@ -33078,7 +33108,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+     "This reading was taken before the current rules existed and does not record positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
      "Size versus open interest not computed for a HIP-3 dex market"
     ],
     "more": 0,
@@ -34470,8 +34500,9 @@
    "classifierVersion": "v2",
    "snapshotId": "27c9fa86-mu72yd9q",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd",
@@ -34481,7 +34512,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:55 UTC · from the gallery scan, rules v2",
@@ -34735,8 +34766,9 @@
    "classifierVersion": "v2",
    "snapshotId": "888e000c-mu72yo3b",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd"
@@ -34745,7 +34777,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:55 UTC · from the gallery scan, rules v2",
@@ -34870,8 +34902,9 @@
    "classifierVersion": "v2",
    "snapshotId": "498216a2-mu72yywt",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd",
@@ -34881,7 +34914,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd or hedge.unverifiedUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:55 UTC · from the gallery scan, rules v2",
@@ -35415,8 +35448,9 @@
    "classifierVersion": "v2",
    "snapshotId": "654016a8-mu72zpy2",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.twoSidedNotionalUsd",
      "orders.headlineTwoSidedNotionalUsd"
@@ -35425,7 +35459,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.twoSidedNotionalUsd or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 18 Sept, 14:56 UTC · from the gallery scan, rules v2",
@@ -36556,7 +36590,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 21 Sept, 20:18 UTC · from the gallery scan, rules v4",
@@ -36611,8 +36645,9 @@
    "supersedes": "ecb63caa-mu71kz95",
    "vitals": [],
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.headlineTwoSidedNotionalUsd"
     ]
@@ -36901,7 +36936,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 21 Sept, 20:18 UTC · from the gallery scan, rules v4",
@@ -36944,8 +36979,9 @@
    "supersedes": "f517639a-mu725uts",
    "vitals": [],
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.headlineTwoSidedNotionalUsd"
     ]
@@ -37084,7 +37120,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability, so it cannot be re-judged without checking the account again.",
+     "This reading was taken before the current rules existed and does not record positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability, so it cannot be re-judged without checking the account again.",
      "A funding wallet was read to its first 100 tokens only, so its holdings may be understated"
     ],
     "more": 1,
@@ -37136,8 +37172,9 @@
    "vitals": [],
    "linkedHedgeCoverage": "complete",
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record positions.headlineUnderlyingVerified or hedge.hasUnresolvedLiability, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "positions.headlineUnderlyingVerified",
      "hedge.hasUnresolvedLiability"
     ]
    }
@@ -37262,7 +37299,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 21 Sept, 20:18 UTC · from the gallery scan, rules v4",
@@ -37322,8 +37359,9 @@
    "supersedes": "6859da14-mu72jata",
    "vitals": [],
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.headlineTwoSidedNotionalUsd"
     ]
@@ -37456,7 +37494,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 21 Sept, 20:18 UTC · from the gallery scan, rules v4",
@@ -37520,8 +37558,9 @@
    "supersedes": "023a3d05-mu72kyad",
    "vitals": [],
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.headlineTwoSidedNotionalUsd"
     ]
@@ -37981,7 +38020,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
      "A funding wallet was read to its first 100 tokens only, so its holdings may be understated"
     ],
     "more": 0,
@@ -38037,8 +38076,9 @@
    "supersedes": "0facac3b-mu72nt0q",
    "vitals": [],
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.headlineTwoSidedNotionalUsd"
     ]
@@ -38326,7 +38366,7 @@
    "share": {
     "limits": [
      "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
-     "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
+     "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again."
     ],
     "more": 0,
     "provenance": "Positions as of 21 Sept, 20:19 UTC · from the gallery scan, rules v4",
@@ -38381,8 +38421,9 @@
    "supersedes": "31dea251-mu72u0hr",
    "vitals": [],
    "historical": {
-    "reason": "This reading was taken before the current rules existed and does not record hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
+    "reason": "This reading was taken before the current rules existed and does not record orders.quoteEligibilityVersion or hedge.hasUnresolvedLiability or orders.headlineTwoSidedNotionalUsd, so it cannot be re-judged without checking the account again.",
     "missing": [
+     "orders.quoteEligibilityVersion",
      "hedge.hasUnresolvedLiability",
      "orders.headlineTwoSidedNotionalUsd"
     ]

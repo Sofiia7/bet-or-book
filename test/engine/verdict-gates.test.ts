@@ -27,6 +27,14 @@ function positions(overrides: Partial<PositionFeatures>): PositionFeatures {
 const orders = (o: Partial<OrderFeatures> = {}): OrderFeatures => ({ ...computeOrderFeatures([]), ...o });
 const hedge = (o: Partial<HedgeFeatures> = {}): HedgeFeatures => ({ ...EMPTY_HEDGE, ...o });
 
+describe('October audit: unseen perp venues withhold exposure claims', () => {
+  it.each([0, 0.5, 1, 1.5])('withholds exposure at spot ratio %s under a partial position read', (hedgeRatio) => {
+    const input = { positions: positions({}), orders: orders(), hedge: hedge({ hedgeRatio }), hedgeCoverage: 'complete' as const };
+    expect(computeVerdict({ ...input, positionsCoverage: 'partial' }).reasons).toEqual(['positions_not_complete']);
+    if (hedgeRatio === 1) expect(computeVerdict({ ...input, positionsCoverage: 'complete' }).verdict).toBe('hedged');
+  });
+});
+
 describe('A02: a coverage gap is checked before the hedge band, not after it', () => {
   it('does not call a short hedged on the strength of one page of holdings', () => {
     const v = computeVerdict({

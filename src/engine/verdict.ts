@@ -91,7 +91,12 @@ export interface VerdictThresholds {
  */
 // v6 (27.09): unresolved perp offsets, liabilities, market identity and
 // failed funding-wallet reads withhold claims the available data cannot prove.
-export const CLASSIFIER_VERSION = 'v6';
+// v7 (07.10): reduce-only exits do not establish quoting, partial coverage
+// precedes maker flow, and known same-asset legs group across perp dexes.
+// v8 (09.10): incomplete positions cannot establish combined exposure.
+// v9: relevant perp legs are scoped to the selected asset when measured.
+// v10: HIP-3 definitions require an exact reviewed deployment and live operator.
+export const CLASSIFIER_VERSION = 'v10';
 
 export const DEFAULT_THRESHOLDS: VerdictThresholds = {
   book: {
@@ -126,7 +131,7 @@ export const DEFAULT_THRESHOLDS: VerdictThresholds = {
     // above 122% - three different situations the old 50% floor merged.
     minHedgeRatio: 0.85,
     maxHedgeRatio: 1.15,
-    linkedLookupBelowRatio: 0.5,
+    linkedLookupBelowRatio: 0.1,
     minPositionsForBalancedBook: 2,
     maxPositionsForBalancedBook: 19,
     // Dollars that net out prove nothing on their own; this is the share of
@@ -152,6 +157,8 @@ export const DEFAULT_THRESHOLDS: VerdictThresholds = {
 export type SourceCoverage = 'complete' | 'partial' | 'missing';
 
 export interface VerdictInput {
+  /** Positions and the other sources must describe a coherent time window. */
+  positionsStale?: boolean;
   positions: PositionFeatures;
   orders: OrderFeatures;
   hedge: HedgeFeatures;
@@ -197,7 +204,6 @@ export type BookSignal = 'positions' | 'orders' | 'trades';
 export type ReasonCode =
   | BookSignal
   | 'no open positions found'
-  | 'balanced_book'
   | 'perp_offset_unresolved'
   | 'liability_not_resolved'
   | 'underlying_not_verified'
@@ -210,13 +216,14 @@ export type ReasonCode =
   | 'partial_offset'
   | 'quotes_not_checked'
   | 'positions_not_complete'
+  | 'positions_stale'
   | 'directional_concentration'
   | 'offset_not_measured'
   | 'mixed_long_short_book'
   | 'diversified_book_no_quotes'
   | 'linked_exposure_unverified'
   | 'directional_portfolio'
-  | 'signals disagree: not enough evidence for book, hedge, or bet';
+  | 'signals_disagree';
 
 /** A verdict as the current rules give it, with its reasons type-checked. */
 const decided = (verdict: Verdict, strength: VerdictStrength, reasons: ReasonCode[]): VerdictResult => ({
@@ -225,7 +232,7 @@ const decided = (verdict: Verdict, strength: VerdictStrength, reasons: ReasonCod
   reasons,
 });
 
-type StructureInput = Pick<VerdictInput, 'positions' | 'orders' | 'trades'>;
+type StructureInput = Pick<VerdictInput, 'positions' | 'orders' | 'trades'> & { hedge?: Partial<HedgeFeatures> };
 
 /** Dollars of two-sided quoting that make the quoting material against the
  * position being asked about. */
@@ -284,6 +291,11 @@ function offsetShare(input: StructureInput): number | null {
   const share = input.positions.sameAssetOffsetShare;
   return typeof share === 'number' && Number.isFinite(share) ? share : null;
 }
+function selectedOffset(input: StructureInput): boolean {
+  const legs = input.positions.selectedPerpLegs;
+  // Old aggregate snapshots cannot resolve which asset had an offset.
+  return legs ? legs.opposingUsd > 0 || legs.sameSideOtherUsd > 0 : (offsetShare(input) ?? 0) > 0;
+}
 
 /** A hedge read costs a credit, so it is worth making only when its answer
  * could move the verdict: positions exist, the quoting has not already
@@ -299,6 +311,9 @@ export function hedgeCanChangeVerdict(
   return (
     input.positions.nPositions > 0 &&
     input.positions.headlineSide === 'short' &&
+    !selectedOffset(input) &&
+    !input.hedge?.hasUnresolvedLiability &&
+    (!input.positions.headlineCoin?.includes(':') || input.positions.headlineUnderlyingVerified === true) &&
     !bookSignals(input, thresholds.book).includes('orders')
   );
 }
@@ -307,6 +322,7 @@ export function computeVerdict(
   input: VerdictInput,
   thresholds: VerdictThresholds = DEFAULT_THRESHOLDS,
 ): VerdictResult {
+  if (input.positionsStale) return decided('unknown', null, ['positions_stale']);
   if (input.positions.nPositions === 0) {
     return decided('unknown', null, ['no open positions found']);
   }
@@ -332,16 +348,22 @@ export function computeVerdict(
   // prove that the selected position is offset (e.g. matched BTC legs next
   // to an unhedged ETH short), nor does spot alone describe combined
   // spot/perp coverage. Until that combined exposure is measured, abstain.
-  if ((offsetShare(input) ?? 0) > 0) {
+  if (selectedOffset(input)) {
     return decided('unknown', null, ['perp_offset_unresolved']);
   }
   if (input.hedge.hasUnresolvedLiability) {
     return decided('unknown', null, ['liability_not_resolved']);
   }
-  // A HIP-3 market name is not a verified underlying-asset identity. The
-  // current registry cannot match it to spot or to other perp venues.
-  if (input.positions.headlineCoin?.includes(':')) {
+  // Prefixed crypto names still require verified identity. Explicitly known
+  // non-crypto markets do not imply an on-chain token that must be matched.
+  if (input.positions.headlineCoin?.includes(':') && input.positions.headlineUnderlyingVerified !== true) {
     return decided('unknown', null, ['underlying_not_verified']);
+  }
+
+  // Missing perp venues can contain opposing or additional legs. Even a
+  // complete spot balance cannot establish exposure without those positions.
+  if ((input.positionsCoverage ?? 'complete') !== 'complete') {
+    return decided('unknown', null, ['positions_not_complete']);
   }
 
   // Over-covered first: holdings that were missed can only add to the spot
@@ -382,14 +404,11 @@ export function computeVerdict(
   // unchecked, unrecognised, in-band - answers this position's question, so
   // maker flow only gets to withhold a verdict when nothing above resolved
   // it either way.
-  if (book.includes('trades')) {
-    return decided('unknown', null, ['maker_flow_only']);
-  }
-
-  // Partly offset is still a position, and over-covered is a position the
-  // other way round. Neither of them is "not a directional view".
   if (ratio >= thresholds.bet.maxHedgeRatio) {
     return decided('unknown', null, ['partial_offset']);
+  }
+  if (book.includes('trades')) {
+    return decided('unknown', null, ['maker_flow_only']);
   }
 
   const linkedRatio = input.linkedHedge?.linkedHedgeRatio ?? 0;
@@ -466,5 +485,5 @@ export function computeVerdict(
     return decided('looks_like_a_bet', null, ['directional_portfolio']);
   }
 
-  return decided('unknown', null, ['signals disagree: not enough evidence for book, hedge, or bet']);
+  return decided('unknown', null, ['signals_disagree']);
 }
