@@ -1,3 +1,4 @@
+import { savedReadingLink, readingCopyText, readingPostText } from '../src/engine/shareText.ts';
 const ADDRESS_RE = /^0x[0-9a-f]{40}$/;
 async function timedFetch(url, options = {}, timeout = 15000) {
   return fetch(url, { ...options, signal: AbortSignal.timeout(timeout) });
@@ -650,6 +651,11 @@ function renderResult(d, opts) {
   // what the reader wants from this one.
   for (const id of ['full-analysis']) $(id).open = false;
   $('share').open = true;
+  $('save-confirmation').hidden = true;
+  $('share-note').textContent = savedReadingLink(d, window.location.origin)
+    ? 'Shares this dated reading and its evidence. Opening the link is free.'
+    : 'No saved reading link is available. You can copy the evidence or export the card.';
+  $('copy-link').textContent = savedReadingLink(d, window.location.origin) ? 'Copy link' : 'Copy wallet link';
   const v = verdictOf(d);
   $('guess').hidden = true;
   clearTimeout(guessRevealTimer);
@@ -1347,6 +1353,7 @@ function renderPlayer() {
       el('span', 'example-open', 'Open the reading →'),
     );
     row.addEventListener('click', async () => {
+      recordUsage('example_open');
       await openSnapshot(e.snapshotId);
       if (current && current.snapshotId === e.snapshotId) {
         $('card').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1564,7 +1571,7 @@ async function loadGallery() {
   $('case-study-list').replaceChildren(...(gallery.featured || []).slice(0, 8).map(e => {
     const article = el('div', 'box');
     const b = el('button', 'chip', positionText(e) + ' · Open saved reading');
-    b.addEventListener('click', () => openSnapshot(e.snapshotId, 'push'));
+    b.addEventListener('click', () => { recordUsage('example_open'); openSnapshot(e.snapshotId, 'push'); });
     article.append(el('h3', null, e.question || 'What does this position reveal?'), el('p', 'example-note', e.description || ''), el('p', 'example-date', 'Read ' + fmtTime(e.checkedAt)), b);
     return article;
   }));
@@ -1843,44 +1850,55 @@ $('share').addEventListener('toggle', () => {
   if ($('share').open && current) askForPicture(current);
 });
 
-$('copy-link').addEventListener('click', async () => {
+async function copyReadingLink(btn) {
   if (!current) return;
   askForPicture(current);
   // The link opens this reading, not a new check of this account. Without a
   // snapshot id there is nothing saved to point at, so it falls back to the
   // address and the button says which one it gave.
-  const link = current.snapshotId
-    ? window.location.origin + '/?s=' + current.snapshotId
-    : window.location.origin + '/?address=' + current.address;
-  const btn = $('copy-link');
+  const savedLink = savedReadingLink(current, window.location.origin);
+  const link = savedLink || window.location.origin + '/?address=' + encodeURIComponent(current.address);
   try {
     await navigator.clipboard.writeText(link);
     recordUsage('share_copy', current);
     btn.textContent = 'Copied';
-    setTimeout(() => { btn.textContent = 'Copy link'; }, 1500);
+    setTimeout(() => { btn.textContent = btn.id === 'save-copy-link' ? 'Copy saved reading link'
+      : savedReadingLink(current || {}, window.location.origin) ? 'Copy link' : 'Copy wallet link'; }, 1500);
   } catch (e) {
     window.prompt('Copy this link:', link);
   }
-});
+}
 
 /** The card's own summary, plus the link that reopens it, sized for a post
  * on X: any link counts as 23 characters there whatever its real length, so
  * the summary is trimmed against what is actually left, not against 280
  * raw characters. The reader can still edit before posting; this is a
  * draft, not a submission (audit item 10). */
-function postText(d) {
-  const link = d.snapshotId ? window.location.origin + '/?s=' + d.snapshotId : window.location.origin;
-  const LINK_WEIGHT = 23;
-  const TWEET_LIMIT = 280;
-  const suffix = '\n\nBuilt on @nansen_ai\n' + link;
-  const suffixWeight = suffix.length - link.length + LINK_WEIGHT;
-  const budget = Math.max(0, TWEET_LIMIT - suffixWeight);
-  let body = (d.summary || '').trim();
-  if (body.length > budget) {
-    body = body.slice(0, Math.max(0, budget - 1)).trim() + '…';
-  }
-  return body + suffix;
+function shareTextData(d, compact) {
+  const reasons = d.verdict.reasons || [];
+  const limit = reasons.includes('linked_exposure_unverified') ? 'Funding links do not establish ownership.'
+    : d.degraded || reasons.includes('positions_stale') ? 'Incomplete data; exposure remains unresolved.'
+    : d.verdict.verdict === 'hedged' ? 'Spot coverage is not a safety rating.'
+    : d.verdict.verdict === 'book' ? 'Quotes show activity, not trading intent.'
+    : 'Off-chain and unlinked hedges are not visible.';
+  return { position: positionText(d), verdict: compact ? verdictOf(d).label : badgeText(d), headline: headlineFor(d),
+    readAt: fmtTime(d.checkedAt), limitation: compact ? limit : d.openQuestion ? 'Still open: ' + d.openQuestion : d.takeaway || limit,
+    attribution: d.source === 'nansen' ? 'Powered by @nansen_ai' : 'Data: Hyperliquid',
+    link: savedReadingLink(d, window.location.origin) };
 }
+function postText(d) {
+  return readingPostText(shareTextData(d, true));
+}
+$('copy-reading').addEventListener('click', async () => {
+  if (!current) return;
+  const text = readingCopyText(shareTextData(current, false));
+  const btn = $('copy-reading');
+  try {
+    await navigator.clipboard.writeText(text); recordUsage('share_copy', current);
+    btn.textContent = 'Reading copied'; setTimeout(() => { btn.textContent = 'Copy reading'; }, 1500);
+  } catch { window.prompt('Copy this reading:', text); }
+});
+$('copy-link').addEventListener('click', () => copyReadingLink($('copy-link')));
 
 // A direct hand-off, not one more thing to copy and paste yourself: X's own
 // intent endpoint opens composer with the text already in it, in a new tab,
@@ -2110,9 +2128,30 @@ $('watch-address').addEventListener('click', () => {
   const row = { address: current.address.toLowerCase(), coin: current.positions.headlineCoin, side: current.positions.headlineSide,
     snapshotId: current.snapshotSaved !== false ? current.snapshotId : null, checkedAt: current.checkedAt };
   row.label = watched().find(saved => watchIdentity(saved) === watchIdentity(row))?.label || '';
-  try { localStorage.setItem(WATCH_KEY, JSON.stringify([row, ...watched().filter(a => watchIdentity(a) !== watchIdentity(row))].slice(0, 12))); recordUsage('watch_save', current); renderWatched(); $('watch-address').textContent = 'Saved to your watchlist'; }
+  try {
+    localStorage.setItem(WATCH_KEY, JSON.stringify([row, ...watched().filter(a => watchIdentity(a) !== watchIdentity(row))].slice(0, 12)));
+    recordUsage('watch_save', current); renderWatched(); $('watch-address').textContent = 'Saved to your watchlist';
+    $('save-confirmation').hidden = false; $('saved-position-name').value = row.label;
+    $('save-confirmation-text').textContent = row.snapshotId
+      ? 'Saved in this browser. Open the dated reading again free; Refresh runs a new check.'
+      : 'Position saved in this browser. This reading has no saved link; reopening fills in the wallet for a new check.';
+    $('save-copy-link').hidden = !row.snapshotId;
+  }
   catch { setStatus('This browser cannot save a watchlist.', true); }
 });
 renderWatched();
+$('saved-position-name').addEventListener('input', () => {
+  if (!current) return;
+  const identity = watchIdentity({ address: current.address.toLowerCase(), coin: current.positions.headlineCoin, side: current.positions.headlineSide });
+  const rows = watched(); const row = rows.find(r => watchIdentity(r) === identity);
+  if (!row) return;
+  row.label = $('saved-position-name').value.trim().slice(0, 80);
+  try { localStorage.setItem(WATCH_KEY, JSON.stringify(rows)); renderWatched(); }
+  catch { setStatus('This browser could not save the position name.', true); }
+});
+$('save-copy-link').addEventListener('click', () => copyReadingLink($('save-copy-link')));
+$('open-saved-positions').addEventListener('click', () => {
+  showExamples(); $('watched').scrollIntoView({ block: 'center' }); $('watched').querySelector('button')?.focus({ preventScroll: true });
+});
 
 $('player-queue').addEventListener('click', e => { const a = e.target.closest('a[href]'); if (!a) return; e.preventDefault(); recordUsage('example_open'); openSnapshot(new URL(a.href).searchParams.get('s')); });

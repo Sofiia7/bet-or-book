@@ -34,7 +34,7 @@ Bet or Book answers one question per address, shows the numbers that decided it,
 - **The funding wallets**, with explorer links, when they hold the matching asset. They hold it; that is not the same as this account holding it, and the card says so.
 - **What could not be read**, every time: which sources were missing or cut short, how old the numbers are, and which rules read them.
 - **What we cannot see**, always: centralized exchanges, OTC, wallets with no on-chain link. A hedge there is invisible, so a bet is only ever "looks like a bet".
-- **One Share button**: a link that reopens *this* reading rather than starting a new one, a draft post, and the card as a picture (PNG, carrying those limits) - with a matching image for the link itself when it is pasted into X, Telegram or Discord.
+- **Save and Share**: save a named position in this browser, reopen its dated reading free, or refresh it manually. Share offers the exact reading link, copyable evidence text, an X draft with date and limits, and a PNG card. The link carries a matching preview when pasted into X, Telegram or Discord.
 - **A guess while it loads**: a live check takes a few seconds, and after the first moment the page offers an optional guess - bet, hedge, book or can't tell. When the answer arrives it says what you guessed against what the reading found, with a running count kept in your own browser only.
 - **Ranked boards** on the Explore screen, drawn from the readings already on file and free to open: the biggest bets, the biggest positions against their market's open interest, the best and the least covered shorts, and the market makers by how much of their own market they quote on both sides.
 
@@ -160,7 +160,7 @@ No logins, sessions, uploads, webhooks or SQL; the only user input is an address
 
 ## Stack
 
-Cloudflare Workers, Workers KV and two Durable Objects (the spend cap with its call ledger, and the rate limiter - both need an atomic read-modify-write that KV cannot promise), TypeScript, Vitest (672 tests on recorded real responses, including the Worker's own routes driven through real Requests and the real image renderer with no mocks, plus 9 that run the built Worker inside workerd through Miniflare). No frontend framework: one HTML page, one script file and a canvas for the share card. Two runtime dependencies, both for the one thing this Worker cannot do without them: [`satori`](https://github.com/vercel/satori) lays out a reading's social-preview picture and [`@resvg/resvg-wasm`](https://github.com/yisibl/resvg-js) rasterizes it to PNG - see [`docs/architecture.md`](docs/architecture.md) for why that render never runs on a crawler's request.
+Cloudflare Workers, Workers KV and two Durable Objects (the spend cap with its call ledger, and the rate limiter - both need an atomic read-modify-write that KV cannot promise), TypeScript, Vitest (676 tests on recorded real responses, including the Worker's own routes driven through real Requests and the real image renderer with no mocks, plus 9 that run the built Worker inside workerd through Miniflare). No frontend framework: one HTML page, one script file and a canvas for the share card. Two runtime dependencies, both for the one thing this Worker cannot do without them: [`satori`](https://github.com/vercel/satori) lays out a reading's social-preview picture and [`@resvg/resvg-wasm`](https://github.com/yisibl/resvg-js) rasterizes it to PNG - see [`docs/architecture.md`](docs/architecture.md) for why that render never runs on a crawler's request.
 
 ## License
 

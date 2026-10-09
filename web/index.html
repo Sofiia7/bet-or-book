@@ -281,7 +281,13 @@
   body.has-reading .hero .sub, body.has-reading .hero .eyebrow,
   body.has-reading #examples, body.has-reading #how-it-works { display: none; }
   body.has-reading #entry-controls, body.has-reading #recent, body.has-reading #watched { display: none; }
-  #reading-actions .share { flex: 1 1 220px; }
+  #reading-actions .share { flex: 1 1 160px; }
+  #reading-actions { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 16px; }
+  .save-share-controls { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+  #reading-actions button { font-size: 12px; }
+  #save-confirmation { margin: 0; }
+  #save-confirmation p { margin: 0 0 10px; }
+  #saved-position-name { width: 100%; max-width: 320px; }
   #reading-actions .share > summary { font-size: 12px; }
   #card, #examples, #gallery, #how-it-works { scroll-margin-top: 24px; }
 
@@ -419,18 +425,28 @@
        Nansen line is readable without opening it; the list is one click. -->
   <p class="open-question" id="open-question" hidden></p>
   <p class="search-help" id="risk-preview" hidden></p>
-  <div id="reading-actions" style="display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-top: 16px;">
+  <section id="reading-actions" aria-label="Save and share this reading">
+    <div class="save-share-controls">
+    <button id="watch-address">Save this position</button>
     <details class="share" id="share">
       <summary>Share this reading</summary>
       <div class="actions">
-        <button id="share-x">Share on X</button>
         <button id="copy-link">Copy link</button>
+        <button id="copy-reading">Copy reading</button>
+        <button id="share-x">Share on X</button>
         <button id="download-image">Download PNG</button>
       </div>
     </details>
+    </div>
+    <p class="search-help" id="share-note"></p>
+    <div class="box" id="save-confirmation" role="status" hidden>
+      <p id="save-confirmation-text"></p>
+      <label class="search-help" for="saved-position-name">Name this saved position (optional)</label>
+      <input id="saved-position-name" type="text" maxlength="80" placeholder="For example: ETH whale from my alert">
+      <div class="actions"><button id="save-copy-link">Copy saved reading link</button><button id="open-saved-positions">Open my saved positions</button></div>
+    </div>
     <button id="check-another" style="border: none; background: none; color: var(--link); cursor: pointer; padding: 10px 4px;">Check another</button>
-    <button id="watch-address">Watch this address</button>
-  </div>
+  </section>
   <div class="box" id="coverage" hidden>
     <p><strong>Not read this time</strong></p>
     <ul id="coverage-list"></ul>
