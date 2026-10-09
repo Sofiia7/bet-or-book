@@ -59,3 +59,10 @@
 - Проверки: 710 unit/API tests и 12 workerd tests; typecheck. Независимая разметка Book, пользовательские сессии, партнёр, credentials канала, коммерческие права и финальная подача остаются внешними задачами из таблицы выше.
 
 Релиз v10 опубликован: `1999a112-3a5b-4cd8-bb5f-6561991b8ab0`. Production: 25 основных + 12 Save/Share + 6 publisher browser checks; четыре PNG побайтно совпали с manifest, историческое превью доступно, publisher DTO содержит market definition/provenance. Платные production scans и новые monitor subscriptions в smoke не запускались. Лимиты cap 80 / reserve 40 / floor 100 сохранены.
+
+## Дополнение: подготовка финального демо
+
+- `npm run release:check` выполняет только GET: приложение/bundle, четыре текущих snapshot, API/widget и PNG. Проверяет ID, вопрос, реальную дату, текущие правила, completeness и точное совпадение PNG с manifest. Ошибка возвращает ненулевой exit code. Успех означает доступность сохранённого демо, не проверку KV writes, provider balance, WAF, спроса или заявки.
+- Production-проверка 9 октября в 17:23 UTC: 13/13, возраст наблюдений около 49.4 часов; это сохранённые данные 7 октября, а не live market state.
+- `refresh-featured.ts` фиксирует прежний asset/side и не заменяет пример другой крупнейшей позицией, закрытой позицией, older/partial/stale reading. Три regression tests прошли без платного refresh.
+- Сценарий ролика до 2:55 обновлён под Save, claim checker и widget; есть бесплатный путь при недоступном provider/KV. Чеклист и application draft согласованы с текущим пилотом. Запись, загрузка видео и отправка заявки ещё не выполнены.

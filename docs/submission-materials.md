@@ -6,6 +6,12 @@ Bet or Book is Hyperliquid position intelligence for readers of whale alerts. Pa
 
 HyperCore supplies positions, orders, fills, spot balances and market context. Nansen supplies cross-dex positions, cross-chain holdings, PnL and funding links. Cloudflare Workers, Durable Objects and KV provide atomic spend protection, request limits, saved readings and previews.
 
+## Current demonstrated workflow
+
+Named browser-local positions reopen saved readings for free and compare against the user's previous saved evidence. Four bounded claim checks travel in the shared link, static publisher widget and versioned read-only API. Copy reading includes the date, source limits and attribution. A limited in-app monitoring pilot supports four questions globally for 72 hours and uses the public credit budget; external notification delivery is not connected. No publisher partner or commercial licence is claimed. These features are implemented, while demand and business assumptions below remain unvalidated.
+
+The four current showcase observations are dated 7 October; v10 reinterpretation does not make them new market observations. Main previews ship in the Worker. New live snapshot persistence must be verified after the 9 October KV write-quota exhaustion before presenting a live-save workflow.
+
 ## Go to market and demand validation
 
 The initial audience is people evaluating whale alerts, authors explaining positions, and terminals or copytrading interfaces that need context beside a headline. Start with three public case studies linking to dated evidence cards and ask readers what the context changes. Seek a HypurrCollective listing and interview channel authors and terminal builders; these are planned channels, not existing partnerships. The October 7 internal audit reported 31 saved live readings in 30 days, roughly 17 apparently external readings, 278 listed saved readings and zero paying users. These are small, dated signals, not validated product-market fit. Willingness to pay and repeat use are untested; test paid embedding/API pilots with publishers before setting a price. Track repeat readers, verified interview feedback and actual pilot commitments, rather than crawler visits or saved scan rows. Meter checks to keep spending within the remaining data credits.

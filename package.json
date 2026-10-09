@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "test:runtime": "vitest run --config vitest.runtime.config.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
+    "release:check": "node --import tsx scripts/check-release.ts",
     "dev": "wrangler dev",
     "reexplain": "node --import tsx scripts/reexplain.ts",
     "build:web": "node --import tsx scripts/build-web.ts",

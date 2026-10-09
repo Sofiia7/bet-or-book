@@ -6,6 +6,7 @@ import { createNansenClient } from '../src/sources/nansen';
 import { WORST_CASE_CALLS } from '../src/budget';
 import { snapshotId } from '../src/snapshot';
 import type { Gallery } from '../src/gallery';
+import { featuredQuestion, usableFeaturedRefresh } from './featured-refresh-policy';
 
 const path = 'data/featured.json';
 const gallery = JSON.parse(readFileSync(path, 'utf8')) as Gallery;
@@ -17,6 +18,8 @@ const maxSpend = 60;
 const floor = 100;
 let refreshed = 0;
 for (const previous of [...gallery.entries.filter(e => !e.superseded)]) {
+  const focus = featuredQuestion(previous);
+  if (!focus) { console.log('Kept example: no selected open position to refresh'); continue; }
   if (spent + WORST_CASE_CALLS > maxSpend || (remaining !== null && remaining - WORST_CASE_CALLS < floor)) {
     console.log('Refresh stopped at the spend allowance or account floor'); break;
   }
@@ -28,9 +31,9 @@ for (const previous of [...gallery.entries.filter(e => !e.superseded)]) {
     const { at, path: endpoint, ...accounting } = meta;
     appendFileSync('data/nansen-calls.jsonl', JSON.stringify({ at: new Date(at).toISOString(), source: 'featured-refresh', endpoint, ...accounting }) + '\n');
   }, timeout);
-  const result = await checkAddress(previous.address, { nansen: client, signal: timeout });
-  if (result.degraded || result.source !== 'nansen') {
-    console.log(`Kept the previous example: incomplete refresh (${calls} calls)`); continue;
+  const result = await checkAddress(previous.address, { nansen: client, signal: timeout, focus });
+  if (!usableFeaturedRefresh(previous, { ...result, nansenCalls: calls })) {
+    console.log(`Kept the previous dated example: no newer complete reading of the same position (${calls} calls)`); continue;
   }
   const id = snapshotId(result.address, result.checkedAt, result.classifierVersion, result.focus);
   previous.superseded = true; previous.supersededBy = id;
