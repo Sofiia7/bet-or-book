@@ -8,7 +8,7 @@ Record the deployed site. Run `npm run release:check` first. Success proves save
 | 0:15-0:40 | Open the HYPE short example | This is a saved reading from the date shown. Matching spot at the same address covers the visible short; that does not guarantee safety. |
 | 0:40-1:10 | Open the funder-linked ETH example | Matching assets are at funding wallets. A transfer establishes a link, not common ownership. Those assets do not count as this account's hedge. |
 | 1:10-1:30 | Claim selector: funding-wallet ownership | The assertion is not established by this evidence. This check uses the same saved data without another provider request. |
-| 1:30-1:55 | Save, name the position, open saved list | A named position can be reopened free. Refresh is a separate new check. The small in-app monitoring pilot can pause when its data budget is unavailable. |
+| 1:30-1:55 | Save, name the position, open the Saved tab in the header | A named position is kept in this browser, under the Saved tab, and reopens free. Refresh is a separate new check. The small in-app monitoring pilot can pause when its data budget is unavailable. |
 | 1:55-2:20 | Copy reading, then Copy embed and widget | Share keeps the date, fact, limitation and exact reading. The widget and public API expose saved evidence; they cannot start a paid scan. |
 | 2:20-2:40 | Explore case studies; show archive label | Examples explain different questions. The archive preserves older readings and rules. Current showcase has no Book verdict; activity alone does not prove inventory. |
 | 2:40-2:55 | Closing on reading or repository | Hyperliquid activity plus Nansen positions, holdings and funding links. No wallet connection, no trades, and no claim to see hidden off-chain hedges. |
