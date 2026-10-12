@@ -209,6 +209,9 @@
   .list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
   .list button { width: 100%; display: grid; grid-template-columns: 34px 1fr auto; gap: 4px 12px; align-items: center; text-align: left; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 10px 4px; }
   /* The case cards sit inside a .list but are cards, not rows: their button is a pill, not the row grid above (it squeezed the label into 34px, one word per line). */
+  #case-study-list .box { position: relative; cursor: pointer; }
+  #case-study-list .box:hover { background: var(--hover); }
+  #case-study-list .box .chip::after { content: ""; position: absolute; inset: 0; border-radius: 8px; }
   #case-study-list .box .chip { width: auto; display: inline-block; text-align: left; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; margin-top: 10px; }
   /* boardRow (web/app.js) never draws a rank number - it has none to draw,
      since a board is already ranked by its own stat, not by position in a
@@ -309,7 +312,11 @@
   .explore-entry h2 { margin: 0 0 8px; }
   .explore-entry a { display: inline-block; margin-top: 16px; }
   body.exploring #workspace, body.exploring #explore-entry { display: none; }
-  #explore-title { font-size: 36px; margin: 30px 0 12px; }
+  #explore-title, #saved-title { font-size: 36px; margin: 30px 0 12px; }
+  #saved-view #watched { display: block; margin-top: 16px; }
+  #saved-view .watch-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: var(--panel); border-radius: 8px; padding: 12px; margin-top: 10px; }
+  #saved-view .watch-row .search-help { margin: 0; }
+  #saved-view .saved-empty { background: var(--panel); border-radius: 8px; padding: 16px; font-size: 14px; color: var(--muted); }
   #gallery > .chips { margin: 24px 0; }
   #gallery-sub { font-size: 12px; margin-bottom: 24px; }
   .explore-shortcut { display: inline-flex; align-items: center; justify-content: center; padding: 10px 8px; font-size: 14px; color: var(--link); text-decoration: underline; white-space: nowrap; }
@@ -343,7 +350,7 @@
 <body>
 <header class="site-header">
   <a class="brand" href="/">Bet or Book<span class="book">.</span></a>
-  <nav class="site-nav" aria-label="Main navigation"><a href="#examples" id="nav-examples">Examples</a><a href="#explore" id="nav-boards">Explore</a></nav>
+  <nav class="site-nav" aria-label="Main navigation"><a href="#examples" id="nav-examples">Examples</a><a href="#saved" id="nav-saved">Saved</a><a href="#explore" id="nav-boards">Explore</a></nav>
 </header>
 <main>
 <div id="workspace">
@@ -535,6 +542,12 @@
 </section>
 </div>
 <div class="explore-entry" id="explore-entry"><h2>Want to compare more wallets?</h2><p class="sub">Explore saved positions by size, coverage and market-making activity.</p><a href="#explore" id="explore-link">Explore readings →</a></div>
+<section id="saved-view" hidden aria-labelledby="saved-title">
+  <div class="reading-nav"><button id="saved-home">← Check a wallet</button><button id="saved-return" hidden>Back to your reading →</button></div>
+  <h1 id="saved-title" tabindex="-1">My saved positions</h1>
+  <p class="sub">Kept in this browser only, never on our server. Open a dated reading for free; Refresh runs a new check.</p>
+  <div class="examples" id="watched" role="region" aria-label="Your saved positions"></div>
+</section>
 <section id="gallery" hidden>
   <div class="reading-nav"><button id="explore-home">← Check a wallet</button><button id="explore-return" hidden>Back to your reading →</button></div>
   <h1 id="explore-title" tabindex="-1">Explore</h1>

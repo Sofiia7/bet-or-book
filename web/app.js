@@ -361,6 +361,7 @@ function kindOf(opts) {
 function renderResult(d, opts) {
   document.body.classList.remove('exploring');
   $('gallery').hidden = true;
+  $('saved-view').hidden = true;
   current = d;
   current.__kind = kindOf(opts);
   renderClaim(d);
@@ -984,6 +985,7 @@ $('check-another').addEventListener('click', () => {
 function showExamples() {
   document.body.classList.remove('exploring');
   $('gallery').hidden = true;
+  $('saved-view').hidden = true;
   // Supersede a pending request so it cannot reopen a card after going back.
   requestSeq++;
   clearTimeout(guessRevealTimer);
@@ -1026,6 +1028,7 @@ function openBoards(event) {
   clearTimeout(guessRevealTimer);
   $('guess').hidden = true;
   document.body.classList.add('exploring');
+  $('saved-view').hidden = true;
   $('gallery').hidden = false;
   $('explore-return').hidden = !current;
   setStatus('');
@@ -1035,6 +1038,34 @@ function openBoards(event) {
   ensureGallery();
 }
 $('nav-boards').addEventListener('click', openBoards);
+function openSaved(event) {
+  if (event) event.preventDefault();
+  takeOver();
+  clearTimeout(guessRevealTimer);
+  $('guess').hidden = true;
+  document.body.classList.add('exploring');
+  $('gallery').hidden = true;
+  $('saved-view').hidden = false;
+  $('saved-return').hidden = !current;
+  setStatus('');
+  renderWatched();
+  if (window.location.hash !== '#saved') window.history.pushState(null, '', window.location.pathname + window.location.search + '#saved');
+  window.scrollTo(0, 0);
+  $('saved-title').focus({ preventScroll: true });
+}
+$('nav-saved').addEventListener('click', openSaved);
+$('saved-home').addEventListener('click', () => {
+  showExamples();
+  window.scrollTo(0, 0);
+  $('address').focus({ preventScroll: true });
+});
+$('saved-return').addEventListener('click', () => {
+  if (!current) return;
+  renderResult(current, { kind: current.__kind });
+  showLink(current.snapshotId && current.snapshotSaved !== false ? current.snapshotId : null);
+  $('card').scrollIntoView({ block: 'start' });
+  $('card').focus({ preventScroll: true });
+});
 $('reading-boards').addEventListener('click', openBoards);
 $('explore-link').addEventListener('click', openBoards);
 $('search-explore').addEventListener('click', openBoards);
@@ -1060,6 +1091,7 @@ function selectExploreView(view) {
 for (const view of ['cases', 'ranked', 'all', 'archive']) $('explore-' + view).addEventListener('click', () => selectExploreView(view));
 window.addEventListener('popstate', () => {
   const id = new URLSearchParams(window.location.search).get('s');
+  if (window.location.hash === '#saved') return openSaved();
   if (window.location.hash === '#explore') {
     if (id && current?.snapshotId !== id) return openSnapshot(id, 'preserve').then(() => openBoards());
     return openBoards();
@@ -1289,7 +1321,9 @@ if (window.location.hash === '#operator') setUpOperator();
 const params = new URLSearchParams(window.location.search);
 const saved = params.get('s');
 const preset = params.get('address');
-if (window.location.hash === '#explore') {
+if (window.location.hash === '#saved') {
+  openSaved();
+} else if (window.location.hash === '#explore') {
   if (saved) openSnapshot(saved, 'preserve').then(() => openBoards());
   else openBoards();
 } else if (saved) {
@@ -1383,15 +1417,13 @@ function updateSavedPosition(d) {
   try { localStorage.setItem(WATCH_KEY, JSON.stringify(rows)); renderWatched(); } catch {}
 }
 function renderWatched() {
-  let box = $('watched');
-  if (!box) {
-    box = el('div', 'examples'); box.id = 'watched'; box.tabIndex = -1;
-    box.setAttribute('role', 'region'); box.setAttribute('aria-label', 'Your saved positions');
-    $('recent').insertAdjacentElement('afterend', box);
+  const box = $('watched');
+  const rows = watched(); box.replaceChildren();
+  $('nav-saved').textContent = rows.length ? 'Saved (' + rows.length + ')' : 'Saved';
+  if (!rows.length) {
+    box.append(el('p', 'saved-empty', 'Nothing saved yet. Open any reading and press "Save this position"; it will appear here.'));
+    return;
   }
-  const rows = watched(); box.hidden = rows.length === 0; box.replaceChildren();
-  if (!rows.length) return;
-  box.append(el('p', 'search-help', 'Saved positions · this browser only. Open a saved reading free; Refresh runs a new check.'));
   box.append(el('p', 'search-help', 'Optional monitoring: 4 pilot slots, about every 4 hours for 72 hours. Stores the public wallet and reading question on the server; alerts appear here. The shared budget can pause checks.'));
   rows.forEach(row => {
     const label = (row.label ? row.label + ' · ' : '') + (row.coin ? row.coin + ' ' + row.side + ' · ' : '') + shortAddr(row.address);
@@ -1453,8 +1485,6 @@ $('saved-position-name').addEventListener('input', () => {
   catch { setStatus('This browser could not save the position name.', true); }
 });
 $('save-copy-link').addEventListener('click', () => copyReadingLink($('save-copy-link'), $('save-copy-link').dataset.snapshotId));
-$('open-saved-positions').addEventListener('click', () => {
-  showExamples(); $('watched').scrollIntoView({ block: 'center' }); $('watched').focus({ preventScroll: true });
-});
+$('open-saved-positions').addEventListener('click', openSaved);
 
 $('player-queue').addEventListener('click', e => { const a = e.target.closest('a[href]'); if (!a) return; e.preventDefault(); recordUsage('example_open'); openSnapshot(new URL(a.href).searchParams.get('s')); });
