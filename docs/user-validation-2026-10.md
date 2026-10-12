@@ -1,21 +1,21 @@
-# Проверка понимания перед подачей
+# Comprehension check before submission
 
-Цель - 5-8 реальных сессий: читатели whale alerts, авторы аналитики и, если доступен, разработчик терминала. Сессии не проведены этим документом. Не отправлять приглашения автоматически и не записывать участника без согласия.
+The goal is 5 to 8 real sessions: readers of whale alerts, authors of market analysis and, if one is available, a terminal developer. This document does not claim that any session has taken place. Do not send invitations automatically and do not record a participant without consent.
 
-## Сессия, 15-20 минут
+## One session, 15-20 minutes
 
-1. Спросить, где человек читает whale alerts и как обычно проверяет их смысл. Не объяснять продукт заранее.
-2. Дать headline и адрес: попросить самостоятельно открыть чтение и пересказать, какая позиция рассматривается, когда измерена и что известно о matching assets.
-3. Показать по очереди HYPE long, HYPE short с own spot и ETH short с holdings у funders. Спросить: что инструмент доказал; чего не доказал; означает ли зелёный badge безопасность; подтверждает ли перевод общую собственность.
-4. Попросить найти дату, поделиться exact reading, сохранить позицию и объяснить разницу Open saved / Refresh. Зафиксировать ошибки и время до понятного ответа.
-5. Попросить второй собственный случай. Выяснить, в каком следующем событии человек вернулся бы к инструменту. Для автора - готов ли он использовать dated card в реальной следующей публикации; для терминала - готов ли обсуждать пилот.
+1. Ask where the person reads whale alerts and how they usually check what an alert means. Do not explain the product beforehand.
+2. Give a headline and an address. Ask them to open the reading on their own and say back which position is being looked at, when it was measured and what is known about the matching assets.
+3. Show, in turn, the HYPE long, the HYPE short with its own spot and the ETH short with holdings at funders. Ask: what did the tool prove; what did it not prove; does a green badge mean safety; does a transfer confirm common ownership.
+4. Ask them to find the date, share the exact reading, save the position and explain the difference between Open saved and Refresh. Record the mistakes and the time until they reach a clear answer.
+5. Ask for a second case of their own. Find out at which next event the person would come back to the tool. For an author: are they ready to use a dated card in their next real publication. For a terminal: are they ready to discuss a pilot.
 
-Не подсказывать до попытки. Записывать дословные реплики с согласия; отделять наблюдение от интерпретации исследователя. Совпадение с эвристикой не доказывает настоящую стратегию трейдера.
+Do not prompt before the person has tried. Record verbatim remarks with consent, and keep the observation apart from the researcher's interpretation. A match with a heuristic does not prove a trader's real strategy.
 
-## Журнал фактов
+## Fact log
 
-| Участник/роль, с согласия | Понял asset/side/date | Own vs funder | Badge не принят за совет | Время и затруднение | Второй кейс / конкретный следующий шаг |
+| Participant and role, with consent | Understood asset, side and date | Own versus funder | Did not take the badge for advice | Time and difficulty | Second case and concrete next step |
 | --- | --- | --- | --- | --- | --- |
-| Не проведено | - | - | - | - | - |
+| No session held | - | - | - | - | - |
 
-После сессий внести факты в submission-materials.md с датой и размером выборки. Не превращать тестовые проверки, crawlers или historical scans в пользователей. Выбрать одну наиболее частую проблему понимания для следующего исправления; не начинать новые подсистемы на основании комплимента интерфейсу.
+After the sessions, enter the facts in submission-materials.md with the date and the sample size. Do not turn test checks, crawlers or historical scans into users. Pick the one most frequent comprehension problem for the next fix, and do not start new subsystems because someone complimented the interface.
