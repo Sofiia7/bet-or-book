@@ -8,7 +8,7 @@ HyperCore supplies positions, orders, fills, spot balances and market context. N
 
 ## Current demonstrated workflow
 
-Named browser-local positions reopen saved readings for free and compare against the user's previous saved evidence. Four bounded claim checks travel in the shared link, static publisher widget and versioned read-only API. Copy reading includes the date, source limits and attribution. A limited in-app monitoring pilot supports four questions globally for 72 hours and uses the public credit budget; external notification delivery is not connected. No publisher partner or commercial licence is claimed. These features are implemented, while demand and business assumptions below remain unvalidated.
+Named browser-local positions, listed under the Saved tab, reopen saved readings for free and compare against the user's previous saved evidence. Four bounded claim checks travel in the shared link, static publisher widget and versioned read-only API. Copy reading includes the date, source limits and attribution. A limited in-app monitoring pilot supports four questions globally for 72 hours and uses the public credit budget; external notification delivery is not connected. No publisher partner or commercial licence is claimed. These features are implemented, while demand and business assumptions below remain unvalidated.
 
 The four current showcase observations are dated 7 October; v10 reinterpretation does not make them new market observations. Main previews ship in the Worker. New live snapshot persistence must be verified after the 9 October KV write-quota exhaustion before presenting a live-save workflow.
 
@@ -20,16 +20,16 @@ The initial audience is people evaluating whale alerts, authors explaining posit
 
 Development began September 17, 2026. Bet or Book was submitted to the Nansen Meridian Buildathon (September 14-27). The October 7 audit reports it was not among winners or honourable mentions and was listed in Nansen's Examples of API Builds. September source, examples and audits predate this entry. October work improves reliability, credit protection, rules, presentation and sharing. Confirm the dates, outcome and official links before signing the declaration.
 
-## Pitch script: approximately 2-3 minutes
+## Pitch script: up to 2 minutes
 
-Every week, someone posts a whale's hundred-million-dollar short. People read the headline as a view on price. But that short can be a directional bet, one side of a spot hedge, or inventory in a market maker's book. The number alone does not tell you which.
+The submission form accepts a pitch video of up to 2 minutes: introduce yourself, say what you are building and why you are the person to build it. About 235 words at an even pace.
 
-I built Bet or Book to make that difference visible. Paste a Hyperliquid address or wallet link and select the position you came to investigate. The tool reads public positions, orders, fills and balances. It gives a dated answer, the supporting numbers, and the evidence it could not obtain.
+Every week someone posts a whale's hundred-million-dollar short on Hyperliquid, and people read it as a view on price. But the same short can be a directional bet, one side of a spot hedge, or inventory in a market maker's book. The number alone cannot tell you which.
 
-The three main examples show different stories. A concentrated HYPE long looks directional. A HYPE short has matching spot at the same address. An ETH short coexists with matching assets in wallets that funded the account. A transfer does not establish ownership, so those assets do not become its hedge. The optional fourth example shows why busy maker-style trading alone does not prove inventory. The current showcase contains no Book verdict; older Book readings remain explicitly dated in the archive. Use the actual dates and figures on screen in the recorded demo.
+I'm Sofia, a solo builder from Serbia. I built Bet or Book to answer that question with evidence.
 
-The constellation carries these distinctions. The position is on the left, this address's matching holdings on the right, and funder holdings are dashed. Leverage, liquidation distance and funding describe position risk separately. A second reading shows what changed, including whether the account moved or the rules changed.
+You paste an address and choose the position. The tool reads public data from Hyperliquid and Nansen, and gives a dated answer, the numbers behind it, and what it could not see. For example, a two-hundred-million-dollar ETH short has three hundred million of matching ETH, but only in wallets that funded the account. A transfer is not ownership, so the tool says Unknown, not hedged.
 
-The first audience is people reading whale alerts and authors explaining them. Our distribution hypothesis is a dated evidence card beside the alert, then pilots with publishers and terminals. Demand is early: the October audit counted a few dozen live readings, and there are no paying users. I will test repeated use and paid pilots rather than claim traction from bots or historical scans.
+Why me: I built this alone, with AI coding assistants, in under four weeks. Honesty is the product. Every rule is versioned, every answer is dated, and I audited my own verdicts again and again and changed them when they were wrong. One example I first read as a market-making book now reads Unknown, and the card says why.
 
-The project is open source. It uses Hyperliquid, Nansen and Cloudflare, never trades, and cannot see off-chain hedges. Earlier work was submitted to the September Nansen buildathon; this entry discloses that history. Next comes distribution validation with actual readers.
+Traction is early: a few dozen live readings, no paying users. Next I test paid pilots with whale-alert publishers. It is open source, and it never trades. Bet or Book: check before you copy.
