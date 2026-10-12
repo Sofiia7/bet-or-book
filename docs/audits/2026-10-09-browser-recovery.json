@@ -1,0 +1,14 @@
+{
+  "baseURL": "http://localhost:8789",
+  "fixtureOnly": true,
+  "checkedAt": "2026-10-09T07:02:46.746Z",
+  "checks": [
+    "Slow message becomes visible after 8 seconds",
+    "Free saved example opens while the request is pending",
+    "Late response does not replace the chosen saved reading",
+    "Budget-off warning describes unavailable application coverage",
+    "Budget-off hides immediate retry and offers free examples",
+    "Free examples return to the home screen"
+  ],
+  "paidCalls": 0
+}

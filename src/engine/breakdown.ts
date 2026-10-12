@@ -14,7 +14,7 @@
  * has nothing to decide, and so the split can be tested without a canvas.
  */
 import type { PositionFeatures, HedgeFeatures, HedgeCoverage, LinkedHedgeFeatures } from './features';
-import { DEFAULT_THRESHOLDS } from './verdict';
+import { DEFAULT_THRESHOLDS, type SourceCoverage } from './verdict';
 
 /** A band of the position bar. They are drawn in this order and always sum
  * to the headline notional. */
@@ -91,6 +91,7 @@ export function exposureBreakdown(
   hedge: HedgeFeatures,
   linked: LinkedHedgeFeatures | null,
   hedgeCoverage: HedgeCoverage = 'complete',
+  positionsCoverage: SourceCoverage = 'complete',
 ): ExposureBreakdown {
   const headlineUsd = positions.headlineNotionalUsd;
   const applies = positions.nPositions > 0 && positions.headlineSide === 'short' && headlineUsd > 0;
@@ -104,8 +105,8 @@ export function exposureBreakdown(
   // three can be inferred from the segments below, which is the whole point
   // of this field (25.09 audit, A03).
   const unresolvedExposure = hedge.hasUnresolvedLiability || (positions.sameAssetOffsetShare ?? 0) > 0 ||
-    Boolean(positions.headlineCoin?.includes(':'));
-  const dataQuality: ExposureBreakdown['dataQuality'] = unresolvedExposure
+    (Boolean(positions.headlineCoin?.includes(':')) && positions.headlineUnderlyingVerified !== true);
+  const dataQuality: ExposureBreakdown['dataQuality'] = unresolvedExposure || positionsCoverage !== 'complete'
     ? 'unknown'
     : !applies
     ? 'measured'

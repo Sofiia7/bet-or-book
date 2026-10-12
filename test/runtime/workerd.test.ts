@@ -10,12 +10,13 @@
 // rather than the path taken to it.
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { Response } from 'miniflare';
+import { WORST_CASE_CALLS } from '../../src/budget';
 import type { Miniflare } from 'miniflare';
 import { buildWorker, budgetStub, removeBuild, startWorker, tempDir, type Upstream } from './harness';
 
 /** Four worst-case checks' worth: WORST_CASE_CALLS is 7. */
-const CAP = 28;
-const WORST_CASE = 7;
+const CAP = 4 * WORST_CASE_CALLS;
+const WORST_CASE = WORST_CASE_CALLS;
 const OPERATOR = 'operator-key-for-tests';
 
 const HL: Record<string, unknown> = {
@@ -122,6 +123,16 @@ afterEach(async () => {
 });
 
 describe('the spend cap, in a real Durable Object', () => {
+  it('core checks reserve per stage under contention and leave no unsettled successful holds', async () => {
+    const up = upstreams({ nansenDelayMs: 100 });
+    const mf = await start({ vars: { NANSEN_API_KEY: 'test-key', NANSEN_DAILY_CREDIT_CAP: '8', DEMO_KEY: OPERATOR }, upstream: up.handler });
+    const results = await Promise.all(Array.from({ length: 12 }, (_, i) => mf.dispatchFetch(`http://localhost/api/check?context=0&address=${address(i + 100)}`, { method: 'POST', headers: { 'x-demo-key': OPERATOR } })));
+    expect(results.every(r => r.status === 200)).toBe(true);
+    expect(up.seen.nansen).toBeGreaterThan(0); expect(up.seen.nansen).toBeLessThanOrEqual(8);
+    const budget = await budgetStub(mf);
+    expect(await budget.available(8)).toBe(8 - up.seen.nansen);
+    expect((await budget.report()).calls.attempted).toBe(up.seen.nansen);
+  }, 60_000); // Includes cold workerd startup, like the adjacent contention test.
   it('never lets overlapping checks hold or spend more than the cap, and charges exactly what was called', async () => {
     const up = upstreams({ nansenDelayMs: 400 });
     const mf = await start({
@@ -322,7 +333,8 @@ describe('a reading this region has not seen yet', () => {
     expect(early.headers.get('cache-control')).toBe('no-store');
     const { error } = (await early.json()) as { error: string };
     expect(error).not.toMatch(/never existed/);
-    expect(error).toMatch(/last minute/);
+    expect(error).toMatch(/may still be saving/);
+    expect(error).toMatch(/Try again shortly/);
 
     const picture = await mf.dispatchFetch(`http://localhost/api/og?id=${id}`);
     expect(picture.headers.get('cache-control')).toBe('public, max-age=60');

@@ -44,6 +44,8 @@ describe('27 September: a portfolio aggregate must not prove a selected position
     expect(positions.sameAssetOffsetShare).toBeGreaterThan(0.95);
     const input = { positions, orders: EMPTY_ORDERS, hedge: EMPTY_HEDGE };
     expect(computeVerdict(input).verdict).toBe('unknown');
+    // v9 measures the selected asset separately: unrelated BTC cancellation
+    // does not justify skipping the ETH spot search. No spot has been read yet.
     expect(hedgeCanChangeVerdict(input)).toBe(true);
     expect(computeVerdict({ ...input, positionsCoverage: 'partial' }).verdict).toBe('unknown');
   });

@@ -70,6 +70,8 @@ describe('a check leaves one line saying what it was and what it cost', () => {
     expect(e.rules).toEqual(expect.any(String));
     expect(e.nansenCalls).toBeGreaterThan(0);
     expect(e.credits).toBe(e.nansenCalls);
+    expect(e.creditsRemaining).toBe(900);
+    expect(e.creditsMeasuredAt).toEqual(expect.any(Number));
     expect(e.saved).toBe(true);
     expect(e.kvDegraded).toBe(false);
     expect(e.focus).toBe(false);

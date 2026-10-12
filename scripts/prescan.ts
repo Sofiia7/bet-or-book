@@ -45,9 +45,9 @@ const LEDGER = 'data/nansen-calls.jsonl';
 const CANDIDATES_FILE = 'data/prescan-candidates.json';
 const MAX_FAILED_IN_A_ROW = 5;
 /** The most Nansen calls one check can make (the full funder search). */
-const WORST_CASE_CALLS = 7;
+import { WORST_CASE_CALLS } from '../src/budget';
 /** What a check costs when its headline is a long: positions and PnL. */
-const LONG_CHECK_CALLS = 2;
+const LONG_CHECK_CALLS = 8;
 
 interface Candidate {
   address: string;

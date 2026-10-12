@@ -7,7 +7,7 @@ import type {
   LinkedHedgeFeatures,
   TradeFeatures,
 } from './features';
-import { DEFAULT_THRESHOLDS, type VerdictResult } from './verdict';
+import { DEFAULT_THRESHOLDS, type VerdictResult, type SourceCoverage } from './verdict';
 import type { PnlSummary, PositionSide } from '../types';
 
 export type EvidenceSource = 'Nansen' | 'Hyperliquid' | 'Nansen + Hyperliquid';
@@ -24,6 +24,7 @@ export interface EvidenceItem {
 }
 
 export interface EvidenceInput {
+  positionsCoverage?: SourceCoverage;
   verdict: VerdictResult;
   positions: PositionFeatures;
   orders: OrderFeatures;
@@ -472,6 +473,7 @@ function positionsNotCompleteSummary(input: EvidenceInput): string {
 /** Each reason a verdict can be withheld for says something specific; the
  * generic "not enough evidence" sentence is the fallback, not the rule. */
 const SUMMARY_BY_REASON: Record<string, ((input: EvidenceInput) => string) | undefined> = {
+  positions_stale: ({ positions: p }) => `The ${headlineText(p)} was measured outside the time window of this check. Its exposure cannot be established by combining those positions with newer holdings or quotes.`,
   perp_offset_unresolved: ({ positions: p }) =>
     `Some perpetual legs cancel within the portfolio. That does not establish the combined exposure of the ` +
     `${headlineText(p)} and its spot holdings, so this reading withholds a verdict.`,
@@ -536,7 +538,9 @@ export function explain(input: EvidenceInput): Explanation {
 
   if (p.nPositions === 0) {
     return {
-      summary: 'No open positions right now, so there is nothing to classify.',
+      summary: input.positionsCoverage === 'complete'
+        ? 'No open positions were found in this reading.'
+        : 'No open positions were found on the checked venues; positions on other venues are unverified.',
       evidence: present([{ label: 'Open positions', value: '0', source: posSource }, pnlItem(input.pnl)]),
     };
   }
@@ -573,6 +577,8 @@ export function explain(input: EvidenceInput): Explanation {
       { label: input.focus ? 'Selected position' : 'Largest position', value: headlineText(p), source: posSource },
       { label: 'Share of exposure', value: formatPct(p.headlineShare), source: posSource },
       { label: 'Net / gross exposure', value: formatPct(p.netToGross), source: posSource },
+      ...(input.verdict.reasons.includes('maker_flow_only')
+        ? [{ label: 'Fills, last 24h', value: fillsText(input.trades), source: 'Hyperliquid' as const }] : []),
       hedgeItem(input),
       linkedItem(input),
       pnlItem(input.pnl),

@@ -10,6 +10,7 @@
  * rules gave, with this reading's own numbers where they help.
  */
 import type { CheckResponse } from '../api/check';
+import { normalizeReason } from './reasons';
 import type { ReasonCode } from './verdict';
 import { formatPct, formatUsd } from './evidence';
 import { LOANS_READ_FROM_SCHEMA } from './observation';
@@ -29,8 +30,9 @@ const PAIR_OR_VIEWS =
 
 /** One per reason the rules can put first; the compiler holds this to the
  * rules' own list (ReasonCode), as it does the rule sentences. */
-const OPEN: Record<Exclude<ReasonCode, 'positions' | 'trades'>, (r: Reading) => string | null> = {
+const OPEN: Record<Exclude<ReasonCode, 'positions' | 'trades'> | 'balanced_book', (r: Reading) => string | null> = {
   'no open positions found': () => null,
+  positions_stale: () => 'the position and matching holdings at the same time. A fresh reading is needed.',
   orders: (r) =>
     `whether this ${coinOf(r)} ${r.positions.headlineSide ?? 'position'} is inventory the book will lay off or a ` +
     'view it chose to keep. One reading of its orders cannot tell; watching the quoting over days would.',
@@ -76,7 +78,7 @@ const OPEN: Record<Exclude<ReasonCode, 'positions' | 'trades'>, (r: Reading) => 
   linked_exposure_unverified: (r) =>
     `who controls the wallets that funded this account. A funding transfer shows where the money came from, ` +
     `not who holds the ${coinOf(r)} now.`,
-  'signals disagree: not enough evidence for book, hedge, or bet': () =>
+  'signals_disagree': () =>
     'which of the signs matters for this position. A second reading later may settle it.',
 };
 
@@ -87,7 +89,7 @@ export function openQuestion(r: Reading): string | null {
   if (r.historical) return 'how the current rules read this account. That needs a fresh check of it.';
   const reasons = r.verdict.reasons ?? [];
   if (r.verdict.verdict === 'book' && reasons.includes('orders')) return OPEN.orders(r);
-  const first = reasons[0];
+  const first = normalizeReason(reasons[0]);
   if (first === undefined || !(first in OPEN)) return null;
   return OPEN[first as keyof typeof OPEN](r);
 }

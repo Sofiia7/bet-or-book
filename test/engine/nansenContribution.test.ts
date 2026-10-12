@@ -3,9 +3,10 @@
 // kind of answer - rather than to hand-built inputs.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi, afterEach } from 'vitest';
+import { CLASSIFIER_VERSION } from '../../src/engine/verdict';
 import { nansenContribution } from '../../src/engine/nansenContribution';
 import { openQuestion } from '../../src/engine/openQuestion';
-import featuredData from '../../data/featured.json';
+import featuredData from '../fixtures/featured-september.json';
 import galleryData from '../../data/gallery.json';
 import type { Gallery } from '../../src/gallery';
 import type { CheckResponse } from '../../src/api/check';
@@ -15,7 +16,7 @@ import { testEnv, request } from '../support/worker';
 const featured = featuredData as unknown as Gallery;
 const gallery = galleryData as unknown as Gallery;
 // The readings the page shows; one read again is kept at its own id only.
-const shown = featured.entries.filter((e) => !e.superseded);
+const shown = featured.entries.filter((e) => !e.superseded).map(e => ({ ...e, classifierVersion: CLASSIFIER_VERSION }));
 const byReason = (reason: string) => shown.find((e) => e.verdict.reasons[0] === reason)!;
 const bet = byReason('directional_concentration');
 const hedged = byReason('hedge_leg');
@@ -185,7 +186,7 @@ describe('served with every reading', () => {
       nansen: { lead: string; calls: number };
     };
     expect(card.openQuestion).toMatch(/^who controls/);
-    expect(card.nansen.lead).toContain('without them this would read as');
+    expect(card.nansen.lead).toContain('funding wallets hold');
   });
 
   it('on a live check, counting the calls that check really made', async () => {

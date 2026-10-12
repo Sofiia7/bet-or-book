@@ -92,23 +92,19 @@ describe('the gallery list is rows, not cards', () => {
       entries: Array<{
         hedgeRatio: number;
         sizeVsOi: number | null;
-        headlineTwoSidedNotionalUsd: number;
+        headlineTwoSidedNotionalUsd: number | null;
         historical?: { reason: string };
       }>;
     };
     const row = list.entries[0];
     expect(typeof row.hedgeRatio).toBe('number');
     expect(row.sizeVsOi === null || typeof row.sizeVsOi === 'number').toBe(true);
-    expect(typeof row.headlineTwoSidedNotionalUsd).toBe('number');
+    expect(row.headlineTwoSidedNotionalUsd === null || typeof row.headlineTwoSidedNotionalUsd === 'number').toBe(true);
 
-    // A reading scanned before the 23.09 audit's L01 fix never recorded this
-    // number at all, not even as zero. Proving it is a number here, and not
-    // just on whichever row happens to be first, is what actually tests the
-    // `?? 0` default in galleryIndex() rather than coincidentally passing
-    // because today's first row happens to be a current one.
+    // Legacy absence stays absent: it cannot enter a comparable quoting ranking.
     const historicalRow = list.entries.find((e) => e.historical);
     expect(historicalRow).toBeDefined();
-    expect(typeof historicalRow!.headlineTwoSidedNotionalUsd).toBe('number');
+    expect(historicalRow!.headlineTwoSidedNotionalUsd).toBeNull();
   });
 
   it('carries hedgeCoverage, so a board can tell a real 0% from a read that never finished (25.09 audit, A01)', async () => {

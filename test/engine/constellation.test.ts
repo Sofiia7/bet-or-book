@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import featuredData from '../../data/featured.json';
+import featuredData from '../fixtures/featured-september.json';
 import {
   buildConstellationModel,
   constellationInputsForOg,

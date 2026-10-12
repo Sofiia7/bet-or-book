@@ -87,7 +87,7 @@ export interface NansenClient {
   perpPositions(address: string): Promise<NansenPerpPositions>;
   perpPnlSummary(address: string, fromDate: string, toDate: string): Promise<NansenPnlSummary>;
   /** `complete` is false when a full page came back and more holdings may exist. */
-  currentBalance(address: string): Promise<{ rows: NansenBalance[]; complete: boolean }>;
+  currentBalance(address: string, maxPages?: number): Promise<{ rows: NansenBalance[]; complete: boolean }>;
   relatedWallets(address: string, chain: string): Promise<{ rows: NansenRelatedWallet[]; complete: boolean }>;
 }
 
@@ -176,6 +176,8 @@ export function createNansenClient(
   async function post<T>(path: string, body: Record<string, unknown>): Promise<Envelope<T>> {
     if (refused) throw new Error('nansen refused an earlier call in this check');
 
+    for (let attempt = 0; attempt < 2; attempt++) {
+    if (checkSignal?.aborted) throw checkSignal.reason;
     let res: Response;
     try {
       res = await fetch(`${BASE_URL}/${path}`, {
@@ -189,6 +191,7 @@ export function createNansenClient(
       });
     } catch (err) {
       await record({ path, status: NO_ANSWER, creditsCost: null, creditsRemaining: null, at: Date.now(), requestId: null });
+      if (attempt === 0 && !checkSignal?.aborted) continue;
       throw err;
     }
 
@@ -203,9 +206,26 @@ export function createNansenClient(
       requestId: requestIdOf(res),
     });
     if (!res.ok) {
+      if (attempt === 0 && !refused && [429, 502, 503, 504].includes(res.status) && !checkSignal?.aborted) {
+        const raw = res.headers.get('retry-after');
+        const seconds = raw === null ? 0.25 : Number(raw);
+        const delay = Number.isFinite(seconds) ? Math.max(0, seconds * 1000) : Math.max(0, Date.parse(raw!) - Date.now());
+        // A long server cooldown should end this reading, not outlive its deadline.
+        if (Number.isFinite(delay) && delay <= 2000) {
+          await new Promise<void>((resolve, reject) => {
+            const finish = () => { checkSignal?.removeEventListener('abort', abort); resolve(); };
+            const timer = setTimeout(finish, delay);
+            const abort = () => { clearTimeout(timer); reject(checkSignal?.reason); };
+            checkSignal?.addEventListener('abort', abort, { once: true });
+          });
+          continue;
+        }
+      }
       throw new Error(`nansen ${path} failed: ${res.status}`);
     }
     return (await res.json()) as Envelope<T>;
+    }
+    throw new Error('nansen retry limit reached');
   }
 
   return {
@@ -213,14 +233,19 @@ export function createNansenClient(
     perpPnlSummary: async (address, fromDate, toDate) =>
       (await post<NansenPnlSummary>('profiler/perp-pnl-summary', { address, date: { from: fromDate, to: toDate } }))
         .data,
-    currentBalance: async (address) => {
+    currentBalance: async (address, maxPages = 1) => {
+      const rows: NansenBalance[] = [];
+      for (let page = 1; page <= Math.min(3, Math.max(1, maxPages)); page++) {
       const r = await post<NansenBalance[]>('profiler/address/current-balance', {
         address,
         chain: 'all',
         hide_spam_token: true,
-        pagination: { page: 1, per_page: PAGE_SIZE },
+        pagination: { page, per_page: PAGE_SIZE },
       });
-      return { rows: r.data, complete: isLastPage(r.pagination, r.data.length) };
+      rows.push(...r.data);
+      if (isLastPage(r.pagination, r.data.length)) return { rows, complete: true };
+      }
+      return { rows, complete: false };
     },
     relatedWallets: async (address, chain) => {
       const r = await post<NansenRelatedWallet[]>('profiler/address/related-wallets', {

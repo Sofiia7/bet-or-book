@@ -62,7 +62,8 @@ describe('formatPct', () => {
 describe('explain', () => {
   it('says there is nothing to classify when there are no positions', () => {
     const e = explain(input({ positions: positions({ nPositions: 0, headlineCoin: null, headlineSide: null, headlineNotionalUsd: 0 }), verdict: { verdict: 'unknown', strength: null, reasons: ['no open positions found'] } }));
-    expect(e.summary).toBe('No open positions right now, so there is nothing to classify.');
+    expect(e.summary).toContain('on the checked venues');
+    expect(e.summary).not.toContain('right now');
     expect(e.evidence[0]).toMatchObject({ label: 'Open positions', value: '0', source: 'Nansen' });
   });
 

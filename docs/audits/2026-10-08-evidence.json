@@ -1,0 +1,193 @@
+{
+  "audit": "2026-10-08",
+  "partialPositionsStillHedged": {
+    "coverage": "partial",
+    "verdict": {
+      "verdict": "hedged",
+      "strength": null,
+      "reasons": [
+        "hedge_leg"
+      ]
+    }
+  },
+  "unknownReasonChange": {
+    "before": {
+      "verdict": "unknown",
+      "strength": null,
+      "reasons": [
+        "hedge_not_checked"
+      ]
+    },
+    "after": {
+      "verdict": "unknown",
+      "strength": null,
+      "reasons": [
+        "linked_exposure_unverified"
+      ]
+    },
+    "comparison": {
+      "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+      "from": {
+        "observedAt": "2026-10-07T15:56:38.813Z",
+        "snapshotId": "12pk1a43rv3a1",
+        "classifierVersion": "v7"
+      },
+      "to": {
+        "observedAt": "2026-10-07T15:57:38.813Z",
+        "snapshotId": "12pk1a43rv3a1",
+        "classifierVersion": "v7"
+      },
+      "questionChanged": false,
+      "changes": [],
+      "verdictChange": null,
+      "rulesChanged": false
+    }
+  },
+  "linkedCoverageAttribution": {
+    "before": {
+      "verdict": "unknown",
+      "strength": null,
+      "reasons": [
+        "linked_holdings_not_checked"
+      ]
+    },
+    "after": {
+      "verdict": "looks_like_a_bet",
+      "strength": null,
+      "reasons": [
+        "directional_concentration"
+      ]
+    },
+    "comparison": {
+      "address": "0xf02d16a272a842f8bac1d9a9e773aba1933454c6",
+      "from": {
+        "observedAt": "2026-10-07T15:56:35.344Z",
+        "snapshotId": "3aus98sj8cz7u",
+        "classifierVersion": "v7"
+      },
+      "to": {
+        "observedAt": "2026-10-07T15:57:35.344Z",
+        "snapshotId": "3aus98sj8cz7u",
+        "classifierVersion": "v7"
+      },
+      "questionChanged": false,
+      "changes": [],
+      "verdictChange": {
+        "from": "unknown",
+        "to": "looks_like_a_bet",
+        "fromStrength": null,
+        "toStrength": null,
+        "fromRules": "v7",
+        "toRules": "v7",
+        "because": "the cause could not be established"
+      },
+      "rulesChanged": false
+    }
+  },
+  "emptyPartialClaimsNothingOpen": {
+    "coverage": "partial",
+    "headline": "Nothing open right now."
+  },
+  "acceptedNumericStringsSilentlyLost": {
+    "malformed": 0,
+    "accepted": 1,
+    "normalized": 0,
+    "stringCoverage": 0,
+    "numberCoverage": 1,
+    "caveat": "Synthetic upstream-shape probe; no evidence that current live Nansen responses use numeric strings."
+  },
+  "historicalBooksMappedToZero": [
+    {
+      "id": "2b2e7wqput6yt",
+      "rules": "v4",
+      "matched": 0
+    },
+    {
+      "id": "0g3k3s4caru82",
+      "rules": "v4",
+      "matched": 0
+    },
+    {
+      "id": "30ruql32gcpsp",
+      "rules": "v4",
+      "matched": 0
+    }
+  ],
+  "publicBudgetSimulation": [
+    {
+      "costPerFreshCheck": 3,
+      "successfulSequentialChecks": 8,
+      "spent": 24,
+      "publicCap": 40,
+      "reservation": 18
+    },
+    {
+      "costPerFreshCheck": 4,
+      "successfulSequentialChecks": 6,
+      "spent": 24,
+      "publicCap": 40,
+      "reservation": 18
+    },
+    {
+      "costPerFreshCheck": 7,
+      "successfulSequentialChecks": 4,
+      "spent": 28,
+      "publicCap": 40,
+      "reservation": 18
+    }
+  ],
+  "activeFeatured": [
+    {
+      "id": "0aio3f82kqsu9",
+      "verdict": {
+        "verdict": "looks_like_a_bet",
+        "strength": null,
+        "reasons": [
+          "directional_concentration"
+        ]
+      },
+      "checkedAt": "2026-10-07T15:56:28.231Z",
+      "calls": 4,
+      "size": 122144815.75128
+    },
+    {
+      "id": "3aus98sj8cz7u",
+      "verdict": {
+        "verdict": "hedged",
+        "strength": null,
+        "reasons": [
+          "hedge_leg"
+        ]
+      },
+      "checkedAt": "2026-10-07T15:56:32.708Z",
+      "calls": 3,
+      "size": 57335531.0794
+    },
+    {
+      "id": "12pk1a43rv3a1",
+      "verdict": {
+        "verdict": "unknown",
+        "strength": null,
+        "reasons": [
+          "linked_exposure_unverified"
+        ]
+      },
+      "checkedAt": "2026-10-07T15:56:36.807Z",
+      "calls": 7,
+      "size": 212147295.99362
+    },
+    {
+      "id": "3eq8gsnsfh8ci",
+      "verdict": {
+        "verdict": "unknown",
+        "strength": null,
+        "reasons": [
+          "maker_flow_only"
+        ]
+      },
+      "checkedAt": "2026-10-07T15:56:45.227Z",
+      "calls": 7,
+      "size": 66064518.40234
+    }
+  ]
+}

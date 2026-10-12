@@ -1,34 +1,25 @@
-# Demo recording - 50-60 seconds
+# Demo: dated evidence in under three minutes
 
-Updated for the landing page, constellation diagram, Full analysis and Explore on 26 September 2026.
+Record the deployed site. Run `npm run release:check` first. Success proves saved-demo availability, not provider balance or new snapshot persistence. Use actual on-screen dates and figures. Hide credentials, browser notifications and private tabs.
 
-Use the deployed site: https://bet-or-book.trade
+| Time | Action | Spoken point |
+| --- | --- | --- |
+| 0:00-0:15 | Landing; three case questions | A whale's short alone does not establish a bearish view. We check what the evidence supports. |
+| 0:15-0:40 | Open the HYPE short example | This is a saved reading from the date shown. Matching spot at the same address covers the visible short; that does not guarantee safety. |
+| 0:40-1:10 | Open the funder-linked ETH example | Matching assets are at funding wallets. A transfer establishes a link, not common ownership. Those assets do not count as this account's hedge. |
+| 1:10-1:30 | Claim selector: funding-wallet ownership | The assertion is not established by this evidence. This check uses the same saved data without another provider request. |
+| 1:30-1:55 | Save, name the position, open saved list | A named position can be reopened free. Refresh is a separate new check. The small in-app monitoring pilot can pause when its data budget is unavailable. |
+| 1:55-2:20 | Copy reading, then Copy embed and widget | Share keeps the date, fact, limitation and exact reading. The widget and public API expose saved evidence; they cannot start a paid scan. |
+| 2:20-2:40 | Explore case studies; show archive label | Examples explain different questions. The archive preserves older readings and rules. Current showcase has no Book verdict; activity alone does not prove inventory. |
+| 2:40-2:55 | Closing on reading or repository | Hyperliquid activity plus Nansen positions, holdings and funding links. No wallet connection, no trades, and no claim to see hidden off-chain hedges. |
 
-Before recording, hide notifications and credentials. If operator access is needed, configure /#operator before starting the recording. Copy this example address: `0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36`.
+Current free scenes:
 
-Record one real check. Do not present a saved reading or cached response as a fresh read. The verdict and amounts can change: show what arrives, not a predetermined outcome. If this address was checked in the previous ten minutes, wait for the cache to expire or clearly label the cached reading.
+- Own-spot HYPE short: https://bet-or-book.trade/?s=3aus98sj8cz7u
+- Funding-wallet ETH short: https://bet-or-book.trade/?s=12pk1a43rv3a1&claim=ownership
+- Directional HYPE long: https://bet-or-book.trade/?s=0aio3f82kqsu9
+- Publisher card: https://bet-or-book.trade/embed?s=12pk1a43rv3a1&claim=ownership
 
-| Time | Action |
-| --- | --- |
-| 0-5s | Show the headline, Check position and Explore positions. Paste the wallet address. |
-| 5-20s | Click Check position. Keep the real loading state and result visible. The guess prompt is optional; skip it if time is tight. |
-| 20-32s | Show the verdict, diagram and Evidence at a glance. Pause on From Nansen and Still open so the viewer sees what the data establishes and what it does not. |
-| 32-40s | Open Full analysis once. Briefly show the rule and data sources. |
-| 40-50s | Return through All examples and open the saved HYPE hedge or market-making book. Keep the saved timestamp visible. |
-| 50-60s | Click Explore positions or Explore ranked boards. Show the ranking and switch to All readings. End. |
+If recording a live check, replace one saved-example scene and explicitly say it is live. First confirm public budget, source availability and successful snapshot persistence. Do not splice a saved response into a live request or call a dated example current market data. The KV write quota was exhausted on 9 October; the four bundled previews work, but that does not prove new snapshots can be stored. Keep the free saved-reading version ready for provider failures.
 
-If the live request takes longer, shorten the contrast and Explore beats; do not hide a failure or pretend a saved result is fresh. Narration is optional under the official FAQ. The screen should explain the product on its own.
-
-## X post draft
-
-Attach the recording. This draft avoids stale dollar amounts:
-
-> Don't get rekt copytrading.
->
-> I built Bet or Book: check whether a Hyperliquid whale position looks like a bet, a hedge or market-making inventory, with the evidence and blind spots.
->
-> Built with @nansen_ai
-> https://github.com/Sofiia7/bet-or-book
-> https://bet-or-book.trade
-
-After posting, submit the X post URL, public GitHub URL and your email through https://nansen-ai.typeform.com/meridian-submit before 27 September 2026, 23:59 UTC.
+Record and upload the final video separately. This script does not establish that a video exists or that an entry was submitted.

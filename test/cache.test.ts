@@ -3,6 +3,14 @@ import { FakeKV } from './support/fakeKv';
 import { withCache } from '../src/cache';
 
 describe('withCache', () => {
+  it('retries incomplete cached results while still reusing complete results', async () => {
+    const kv = new FakeKV();
+    await kv.put('retry-reading', JSON.stringify({ degraded: true }));
+    const produce = vi.fn(async () => ({ degraded: false }));
+    expect(await withCache(kv, 'retry-reading', 60, produce, r => r.degraded)).toEqual({ degraded: false });
+    expect(await withCache(kv, 'retry-reading', 60, produce, r => r.degraded)).toEqual({ degraded: false });
+    expect(produce).toHaveBeenCalledTimes(1);
+  });
   it('calls the producer and stores the result on a miss', async () => {
     const kv = new FakeKV();
     const producer = vi.fn(async () => ({ value: 42 }));

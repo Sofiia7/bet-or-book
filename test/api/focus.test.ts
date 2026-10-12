@@ -45,9 +45,9 @@ describe('which position the features are about', () => {
     ]);
   });
 
-  it('offers at most five, so the list stays a choice rather than a dump', () => {
+  it('keeps every open leg available for asset search', () => {
     const many = Array.from({ length: 12 }, (_, i) => p(`C${i}`, 'long', 1_000_000 - i));
-    expect(computePositionFeatures(many).candidates).toHaveLength(5);
+    expect(computePositionFeatures(many).candidates).toHaveLength(12);
   });
 });
 

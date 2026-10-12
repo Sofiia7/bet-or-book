@@ -1,5 +1,5 @@
 import type { Position, PositionSide, RestingOrder, SpotHolding, Trade, LinkedWallet } from '../types';
-import { classifyHolding, isLendingReceipt, type AssetMatch } from './assets';
+import { classifyHolding, isLendingReceipt, canonicalAsset, type AssetMatch } from './assets';
 
 export interface PositionFeatures {
   nPositions: number;
@@ -30,6 +30,9 @@ export interface PositionFeatures {
    * says BTC and the largest position at the address is ETH; until this
    * existed the answer was always about the ETH. */
   candidates: PositionRef[];
+  headlineUnderlyingVerified?: boolean;
+  /** Same-underlying perp legs for the selected asset, not unrelated pairs. */
+  selectedPerpLegs?: { longUsd: number; shortUsd: number; opposingUsd: number; sameSideOtherUsd: number; netUsd: number };
 }
 
 /** One position, named the way a reader would ask for it. */
@@ -39,9 +42,6 @@ export interface PositionRef {
   sizeUsd: number;
 }
 
-/** How many positions are worth offering. More than a handful stops being a
- * choice and becomes a list to read. */
-const MAX_CANDIDATES = 5;
 
 export function computePositionFeatures(
   positions: Position[],
@@ -104,12 +104,18 @@ export function computePositionFeatures(
   // the gross that cancels. Summed over coins this separates a real offset
   // from a book that merely adds up to zero dollars across unrelated assets.
   const byCoin = new Map<string, { long: number; short: number }>();
+  const mainCoins = new Set([
+    ...positions.filter(p => !p.coin.includes(':')).map(p => p.coin.toUpperCase()),
+    ...[...(markPxByCoin?.keys() ?? [])].filter(c => !c.includes(':')).map(c => c.toUpperCase()),
+  ]);
   for (const p of positions) {
-    const e = byCoin.get(p.coin) ?? { long: 0, short: 0 };
+    const coin = canonicalAsset(p.coin, mainCoins);
+    const e = byCoin.get(coin) ?? { long: 0, short: 0 };
     e[p.side] += p.sizeUsd;
-    byCoin.set(p.coin, e);
+    byCoin.set(coin, e);
   }
   const offsetGrossUsd = [...byCoin.values()].reduce((sum, e) => sum + 2 * Math.min(e.long, e.short), 0);
+  const selected = byCoin.get(canonicalAsset(headline.coin, mainCoins))!;
 
   return {
     nPositions: positions.length,
@@ -117,7 +123,12 @@ export function computePositionFeatures(
     netUsd,
     netToGross,
     headlineCoin: headline.coin,
+    headlineUnderlyingVerified: !headline.coin.includes(':'),
     headlineSide: headline.side,
+    selectedPerpLegs: { longUsd: selected.long, shortUsd: selected.short,
+      opposingUsd: selected[headline.side === 'short' ? 'long' : 'short'],
+      sameSideOtherUsd: Math.max(0, selected[headline.side] - headline.sizeUsd),
+      netUsd: selected.long - selected.short },
     headlineNotionalUsd: headline.sizeUsd,
     headlineShare,
     headlineLiqDistancePct,
@@ -126,12 +137,12 @@ export function computePositionFeatures(
     netSide,
     candidates: [...positions]
       .sort((a, b) => b.sizeUsd - a.sizeUsd)
-      .slice(0, MAX_CANDIDATES)
       .map((p) => ({ coin: p.coin, side: p.side, sizeUsd: p.sizeUsd })),
   };
 }
 
 export interface OrderFeatures {
+  quoteEligibilityVersion?: number;
   restingOrders: number;
   bidShare: number;
   coinsBothSides: number;
@@ -175,7 +186,7 @@ export const EMPTY_ORDERS: OrderFeatures = {
 };
 
 export function computeOrderFeatures(orders: RestingOrder[], headlineCoin: string | null = null): OrderFeatures {
-  if (orders.length === 0) return { ...EMPTY_ORDERS };
+  if (orders.length === 0) return { ...EMPTY_ORDERS, quoteEligibilityVersion: 1 };
   const bids = orders.filter((o) => o.side === 'bid').length;
   const bidShare = bids / orders.length;
 
@@ -193,6 +204,7 @@ export function computeOrderFeatures(orders: RestingOrder[], headlineCoin: strin
   const headline = headlineCoin === null ? undefined : byCoin.get(headlineCoin);
 
   return {
+    quoteEligibilityVersion: 1,
     restingOrders: orders.length,
     bidShare,
     coinsBothSides: twoSided.length,

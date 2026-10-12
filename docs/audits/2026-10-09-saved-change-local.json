@@ -1,0 +1,16 @@
+{
+  "baseURL": "http://localhost:8789",
+  "fixtureOnly": true,
+  "checkedAt": "2026-10-09T11:01:41.627Z",
+  "checks": [
+    "Manual check compares the original saved reading to the new fixture",
+    "Previous link points to the user bookmark, without a provider call",
+    "Change is visible without expanding Full analysis",
+    "Original baseline persists after reload",
+    "320 px comparison fits",
+    "390 px comparison fits",
+    "1280 px comparison fits",
+    "A selected-position check against a largest-position baseline is not presented as a trading change",
+    "No browser errors in saved comparison"
+  ]
+}

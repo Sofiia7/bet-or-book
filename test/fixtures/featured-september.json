@@ -1,0 +1,1140 @@
+{
+ "scannedAt": "2026-09-26T06:27:44.365Z",
+ "finishedAt": "2026-09-26T06:40:19.373Z",
+ "universe": "Readings picked to show each kind of answer",
+ "entries": [
+  {
+   "address": "0x082e843a431aef031264dc232693dd710aedca88",
+   "verdict": {
+    "verdict": "looks_like_a_bet",
+    "strength": null,
+    "reasons": [
+     "directional_concentration"
+    ]
+   },
+   "positions": {
+    "nPositions": 1,
+    "grossUsd": 126367746.29088,
+    "netUsd": 126367746.29088,
+    "netToGross": 1,
+    "headlineCoin": "HYPE",
+    "headlineSide": "long",
+    "headlineNotionalUsd": 126367746.29088,
+    "headlineShare": 1,
+    "headlineLiqDistancePct": 0.19802439920692644,
+    "headlineLiqDistanceBasis": "mark",
+    "sameAssetOffsetShare": 0,
+    "netSide": "long",
+    "candidates": [
+     {
+      "coin": "HYPE",
+      "side": "long",
+      "sizeUsd": 126367746.29088
+     }
+    ]
+   },
+   "orders": {
+    "restingOrders": 0,
+    "bidShare": 0.5,
+    "coinsBothSides": 0,
+    "notionalUsd": 0,
+    "twoSidedNotionalUsd": 0,
+    "headlineTwoSided": false,
+    "headlineQuoteNotionalUsd": 0,
+    "headlineTwoSidedNotionalUsd": 0
+   },
+   "hedge": {
+    "hedgeUsd": 0,
+    "hedgeRatio": 0,
+    "unverifiedUsd": 0,
+    "unverifiedOnUnsupportedChainUsd": 0,
+    "unpricedMatches": 0,
+    "hedgeUsdBySource": {
+     "hyperliquidSpot": 0,
+     "onchain": 0
+    },
+    "lendingUsd": 0
+   },
+   "hedgeScope": "none",
+   "hedgeCoverage": "not-applicable",
+   "ordersCoverage": "complete",
+   "positionsCoverage": "complete",
+   "linkedHedge": null,
+   "linkedHedgeCoverage": "not-applicable",
+   "trades": {
+    "tradesPerDay": 0,
+    "crossedShare": 0,
+    "buyShare": 0.5,
+    "sampleSize": 0,
+    "cappedByApiLimit": false,
+    "notionalUsd": 0,
+    "spanHours": 0,
+    "headlineFills": 0,
+    "headlineShareOfFills": 0,
+    "headlineOpenedUsd": 0,
+    "headlineClosedUsd": 0
+   },
+   "pnl": {
+    "realizedPnlUsd": 0,
+    "winRate": 0,
+    "closedTrades": 0,
+    "windowDays": 30
+   },
+   "sizeVsOi": 0.06749460931076316,
+   "source": "nansen",
+   "mainDexPositionCount": 1,
+   "focus": null,
+   "positionsAsOf": "2026-09-26T06:27:46.691Z",
+   "classifierVersion": "v6",
+   "observationSchemaVersion": 5,
+   "assetRegistryVersion": 2,
+   "observedAt": "2026-09-26T06:27:46.691Z",
+   "interpretedAt": "2026-09-27T13:52:46.424Z",
+   "degraded": false,
+   "summary": "100% of the exposure is one $126.4M HYPE long. Spot cannot offset a long, and debts or other derivatives are not read here.",
+   "evidence": [
+    {
+     "label": "Largest position",
+     "value": "$126.4M HYPE long",
+     "source": "Nansen",
+     "decisive": true
+    },
+    {
+     "label": "Share of exposure",
+     "value": "100%",
+     "source": "Nansen"
+    },
+    {
+     "label": "Net / gross exposure",
+     "value": "100%",
+     "source": "Nansen"
+    },
+    {
+     "label": "Realized PnL, 30d",
+     "value": "no closed trades",
+     "source": "Nansen"
+    }
+   ],
+   "breakdown": {
+    "applies": false,
+    "coin": "HYPE",
+    "side": "long",
+    "headlineUsd": 126367746.29088,
+    "segments": [],
+    "excessUsd": 0,
+    "elsewhere": null,
+    "dataQuality": "measured"
+   },
+   "vitals": [
+    {
+     "label": "Leverage",
+     "value": "5x cross",
+     "source": "Nansen"
+    },
+    {
+     "label": "Distance to liquidation",
+     "value": "20% (from mark)",
+     "source": "Nansen"
+    },
+    {
+     "label": "Unrealized PnL",
+     "value": "$73.0M",
+     "source": "Nansen"
+    },
+    {
+     "label": "Funding since open",
+     "value": "$6.1M",
+     "source": "Nansen"
+    },
+    {
+     "label": "Size vs open interest",
+     "value": "6.7%",
+     "source": "Hyperliquid"
+    },
+    {
+     "label": "Position flow",
+     "value": "no fills",
+     "source": "Hyperliquid"
+    },
+    {
+     "label": "Earliest funding found",
+     "value": "353 days ago on arbitrum, by another wallet",
+     "source": "Nansen"
+    }
+   ],
+   "coverage": [
+    "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here"
+   ],
+   "coverageNotes": [
+    {
+     "text": "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
+     "failure": false
+    }
+   ],
+   "checkedAt": "2026-09-26T06:27:44.380Z",
+   "share": {
+    "limits": [
+     "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
+     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here"
+    ],
+    "more": 0,
+    "provenance": "Positions as of 26 Sept, 06:27 UTC · saved reading, rules v6",
+    "link": null,
+    "evidence": [
+     {
+      "label": "Largest position",
+      "value": "$126.4M HYPE long",
+      "source": "Nansen",
+      "decisive": true
+     },
+     {
+      "label": "Share of exposure",
+      "value": "100%",
+      "source": "Nansen"
+     },
+     {
+      "label": "Net / gross exposure",
+      "value": "100%",
+      "source": "Nansen"
+     },
+     {
+      "label": "Realized PnL, 30d",
+      "value": "no closed trades",
+      "source": "Nansen"
+     }
+    ]
+   },
+   "nansenCalls": 4,
+   "snapshotId": "17n56vckzhwtr",
+   "supersedes": "082e843a-mu71i2vu",
+   "snapshotClassifierVersion": "v5"
+  },
+  {
+   "address": "0xf02d16a272a842f8bac1d9a9e773aba1933454c6",
+   "verdict": {
+    "verdict": "hedged",
+    "strength": null,
+    "reasons": [
+     "hedge_leg"
+    ]
+   },
+   "positions": {
+    "nPositions": 1,
+    "grossUsd": 42022935.06026,
+    "netUsd": 42022935.06026,
+    "netToGross": 1,
+    "headlineCoin": "HYPE",
+    "headlineSide": "short",
+    "headlineNotionalUsd": 42022935.06026,
+    "headlineShare": 1,
+    "headlineLiqDistancePct": 0.45579198066177745,
+    "headlineLiqDistanceBasis": "mark",
+    "sameAssetOffsetShare": 0,
+    "netSide": "short",
+    "candidates": [
+     {
+      "coin": "HYPE",
+      "side": "short",
+      "sizeUsd": 42022935.06026
+     }
+    ]
+   },
+   "orders": {
+    "restingOrders": 0,
+    "bidShare": 0.5,
+    "coinsBothSides": 0,
+    "notionalUsd": 0,
+    "twoSidedNotionalUsd": 0,
+    "headlineTwoSided": false,
+    "headlineQuoteNotionalUsd": 0,
+    "headlineTwoSidedNotionalUsd": 0
+   },
+   "hedge": {
+    "hedgeUsd": 41556859.83551047,
+    "hedgeRatio": 0.9889090273185063,
+    "unverifiedUsd": 0,
+    "unverifiedOnUnsupportedChainUsd": 0,
+    "unpricedMatches": 0,
+    "hedgeUsdBySource": {
+     "hyperliquidSpot": 41556859.83551047,
+     "onchain": 0
+    },
+    "lendingUsd": 0
+   },
+   "hedgeScope": "all-chains",
+   "hedgeCoverage": "complete",
+   "ordersCoverage": "complete",
+   "positionsCoverage": "complete",
+   "linkedHedge": null,
+   "linkedHedgeCoverage": "not-applicable",
+   "trades": {
+    "tradesPerDay": 0,
+    "crossedShare": 0,
+    "buyShare": 0.5,
+    "sampleSize": 0,
+    "cappedByApiLimit": false,
+    "notionalUsd": 0,
+    "spanHours": 0,
+    "headlineFills": 0,
+    "headlineShareOfFills": 0,
+    "headlineOpenedUsd": 0,
+    "headlineClosedUsd": 0
+   },
+   "pnl": {
+    "realizedPnlUsd": -1693631.3802710003,
+    "winRate": 0.24461667684789248,
+    "closedTrades": 26192,
+    "windowDays": 30
+   },
+   "sizeVsOi": 0.022428837733359807,
+   "source": "nansen",
+   "mainDexPositionCount": 1,
+   "focus": null,
+   "positionsAsOf": "2026-09-26T06:40:18.035Z",
+   "classifierVersion": "v6",
+   "observationSchemaVersion": 5,
+   "assetRegistryVersion": 2,
+   "observedAt": "2026-09-26T06:40:18.035Z",
+   "interpretedAt": "2026-09-27T13:52:46.424Z",
+   "degraded": false,
+   "summary": "The $42.0M HYPE short is 99% covered by $41.6M of spot HYPE held by this address on Hyperliquid - other Nansen-supported chains were checked and found nothing.",
+   "evidence": [
+    {
+     "label": "Largest position",
+     "value": "$42.0M HYPE short",
+     "source": "Nansen"
+    },
+    {
+     "label": "Share of exposure",
+     "value": "100%",
+     "source": "Nansen"
+    },
+    {
+     "label": "Net / gross exposure",
+     "value": "100%",
+     "source": "Nansen"
+    },
+    {
+     "label": "Hedge found",
+     "value": "99% (Hyperliquid spot)",
+     "source": "Hyperliquid",
+     "decisive": true
+    },
+    {
+     "label": "Realized PnL, 30d",
+     "value": "-$1.7M",
+     "source": "Nansen"
+    }
+   ],
+   "breakdown": {
+    "applies": true,
+    "coin": "HYPE",
+    "side": "short",
+    "headlineUsd": 42022935.06026,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 41556859.83551047,
+      "share": 0.9889090273185063
+     },
+     {
+      "kind": "residual",
+      "usd": 466075.2247495279,
+      "share": 0.01109097268149371
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null,
+    "dataQuality": "measured"
+   },
+   "vitals": [
+    {
+     "label": "Leverage",
+     "value": "5x cross",
+     "source": "Nansen"
+    },
+    {
+     "label": "Distance to liquidation",
+     "value": "46% (from mark)",
+     "source": "Nansen"
+    },
+    {
+     "label": "Unrealized PnL",
+     "value": "-$3.8M",
+     "source": "Nansen"
+    },
+    {
+     "label": "Funding since open",
+     "value": "-$287K",
+     "source": "Nansen"
+    },
+    {
+     "label": "Size vs open interest",
+     "value": "2.2%",
+     "source": "Hyperliquid"
+    },
+    {
+     "label": "Position flow",
+     "value": "no fills",
+     "source": "Hyperliquid"
+    }
+   ],
+   "coverage": [
+    "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
+    "Borrowed on Hyperliquid under portfolio margin: 18,407,150 USDC. 453,316 HYPE of the spot held against the short is supplied as collateral. Spot balances are counted net of what is borrowed, and a loan taken anywhere else would not appear here"
+   ],
+   "coverageNotes": [
+    {
+     "text": "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
+     "failure": false
+    },
+    {
+     "text": "Borrowed on Hyperliquid under portfolio margin: 18,407,150 USDC. 453,316 HYPE of the spot held against the short is supplied as collateral. Spot balances are counted net of what is borrowed, and a loan taken anywhere else would not appear here",
+     "failure": false
+    }
+   ],
+   "checkedAt": "2026-09-26T06:40:15.633Z",
+   "share": {
+    "limits": [
+     "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
+     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
+     "Borrowed on Hyperliquid under portfolio margin: 18,407,150 USDC. 453,316 HYPE of the spot held against the short is supplied as collateral. Spot balances are counted net of what is borrowed, and a loan taken anywhere else would not appear here"
+    ],
+    "more": 0,
+    "provenance": "Positions as of 26 Sept, 06:40 UTC · saved reading, rules v6",
+    "link": null,
+    "evidence": [
+     {
+      "label": "Hedge found",
+      "value": "99% (Hyperliquid spot)",
+      "source": "Hyperliquid",
+      "decisive": true
+     },
+     {
+      "label": "Largest position",
+      "value": "$42.0M HYPE short",
+      "source": "Nansen"
+     },
+     {
+      "label": "Share of exposure",
+      "value": "100%",
+      "source": "Nansen"
+     },
+     {
+      "label": "Net / gross exposure",
+      "value": "100%",
+      "source": "Nansen"
+     }
+    ]
+   },
+   "nansenCalls": 3,
+   "snapshotId": "00dzwn0p8gh67",
+   "supersedes": "0x4uv7ru4tpka",
+   "snapshotClassifierVersion": "v5"
+  },
+  {
+   "address": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+   "verdict": {
+    "verdict": "unknown",
+    "strength": null,
+    "reasons": [
+     "linked_exposure_unverified"
+    ]
+   },
+   "positions": {
+    "nPositions": 21,
+    "grossUsd": 593436520.9696178,
+    "netUsd": 592037091.5620179,
+    "netToGross": 0.9976418212257759,
+    "headlineCoin": "ETH",
+    "headlineSide": "short",
+    "headlineNotionalUsd": 208173228.65467,
+    "headlineShare": 0.3507927491798703,
+    "headlineLiqDistancePct": 0.578034025922799,
+    "headlineLiqDistanceBasis": "mark",
+    "sameAssetOffsetShare": 0,
+    "netSide": "short",
+    "candidates": [
+     {
+      "coin": "ETH",
+      "side": "short",
+      "sizeUsd": 208173228.65467
+     },
+     {
+      "coin": "BTC",
+      "side": "short",
+      "sizeUsd": 146934870.06472
+     },
+     {
+      "coin": "HYPE",
+      "side": "short",
+      "sizeUsd": 65387479.027299
+     },
+     {
+      "coin": "ZEC",
+      "side": "short",
+      "sizeUsd": 40711335.84254
+     },
+     {
+      "coin": "SOL",
+      "side": "short",
+      "sizeUsd": 36550856.307
+     }
+    ]
+   },
+   "orders": {
+    "restingOrders": 0,
+    "bidShare": 0.5,
+    "coinsBothSides": 0,
+    "notionalUsd": 0,
+    "twoSidedNotionalUsd": 0,
+    "headlineTwoSided": false,
+    "headlineQuoteNotionalUsd": 0,
+    "headlineTwoSidedNotionalUsd": 0
+   },
+   "hedge": {
+    "hedgeUsd": 589.9511663531096,
+    "hedgeRatio": 0.0000028339434910324384,
+    "unverifiedUsd": 0,
+    "unverifiedOnUnsupportedChainUsd": 0,
+    "unpricedMatches": 0,
+    "hedgeUsdBySource": {
+     "hyperliquidSpot": 0,
+     "onchain": 589.9511663531096
+    },
+    "lendingUsd": 0
+   },
+   "hedgeScope": "all-chains",
+   "hedgeCoverage": "complete",
+   "ordersCoverage": "complete",
+   "positionsCoverage": "complete",
+   "linkedHedge": {
+    "linkedHedgeUsd": 395763085.3597369,
+    "linkedHedgeRatio": 1.9011238280607734,
+    "funders": [
+     {
+      "address": "0xb38e8c17e38363af6ebdcb3dae12e0243582891d",
+      "relation": "First Funder",
+      "chain": "arbitrum",
+      "matchingUsd": 41562695.11637258
+     },
+     {
+      "address": "0xed0c6079229e2d407672a117c22b62064f4a4312",
+      "relation": "First Funder",
+      "chain": "ethereum",
+      "matchingUsd": 354200390.24336433
+     }
+    ]
+   },
+   "linkedHedgeCoverage": "complete",
+   "trades": {
+    "tradesPerDay": 2000,
+    "crossedShare": 0.9555,
+    "buyShare": 0,
+    "sampleSize": 2000,
+    "cappedByApiLimit": true,
+    "notionalUsd": 1206280.6944500008,
+    "spanHours": 1.5694358333333334,
+    "headlineFills": 0,
+    "headlineShareOfFills": 0,
+    "headlineOpenedUsd": 0,
+    "headlineClosedUsd": 0
+   },
+   "pnl": {
+    "realizedPnlUsd": -15325236.326926002,
+    "winRate": 0.31512389711483857,
+    "closedTrades": 72197,
+    "windowDays": 30
+   },
+   "sizeVsOi": 0.07027827388270808,
+   "source": "nansen",
+   "mainDexPositionCount": 18,
+   "focus": null,
+   "positionsAsOf": "2026-09-26T06:27:53.647Z",
+   "classifierVersion": "v6",
+   "observationSchemaVersion": 5,
+   "assetRegistryVersion": 2,
+   "observedAt": "2026-09-26T06:27:53.647Z",
+   "interpretedAt": "2026-09-27T13:52:46.424Z",
+   "degraded": false,
+   "summary": "Less than 1% of the $208.2M ETH short is covered by ETH at this address. 2 wallets that funded it hold $395.8M of ETH, but funding does not establish ownership, so it is not counted as a hedge.",
+   "evidence": [
+    {
+     "label": "Largest position",
+     "value": "$208.2M ETH short",
+     "source": "Nansen"
+    },
+    {
+     "label": "Share of exposure",
+     "value": "35%",
+     "source": "Nansen"
+    },
+    {
+     "label": "Net / gross exposure",
+     "value": "100%",
+     "source": "Nansen"
+    },
+    {
+     "label": "Hedge found",
+     "value": "0.0% (Nansen-supported chains)",
+     "source": "Nansen"
+    },
+    {
+     "label": "Linked wallets",
+     "value": "$395.8M ETH in 2 wallets, owner unconfirmed",
+     "source": "Nansen",
+     "decisive": true
+    }
+   ],
+   "breakdown": {
+    "applies": true,
+    "coin": "ETH",
+    "side": "short",
+    "headlineUsd": 208173228.65467,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 589.9511663531096,
+      "share": 0.0000028339434910324384
+     },
+     {
+      "kind": "residual",
+      "usd": 208172638.70350364,
+      "share": 0.9999971660565089
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": {
+     "usd": 395763085.3597369,
+     "wallets": 2,
+     "ownership": "unverified"
+    },
+    "dataQuality": "measured"
+   },
+   "vitals": [
+    {
+     "label": "Leverage",
+     "value": "5x cross",
+     "source": "Nansen"
+    },
+    {
+     "label": "Distance to liquidation",
+     "value": "58% (from mark)",
+     "source": "Nansen"
+    },
+    {
+     "label": "Unrealized PnL",
+     "value": "-$26.8M",
+     "source": "Nansen"
+    },
+    {
+     "label": "Funding since open",
+     "value": "-$1.9M",
+     "source": "Nansen"
+    },
+    {
+     "label": "Size vs open interest",
+     "value": "7.0%",
+     "source": "Hyperliquid"
+    },
+    {
+     "label": "Position flow",
+     "value": "no fills (1.6h)",
+     "source": "Hyperliquid"
+    }
+   ],
+   "coverage": [
+    "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here"
+   ],
+   "coverageNotes": [
+    {
+     "text": "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
+     "failure": false
+    }
+   ],
+   "checkedAt": "2026-09-26T06:27:51.892Z",
+   "share": {
+    "limits": [
+     "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
+     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here"
+    ],
+    "more": 0,
+    "provenance": "Positions as of 26 Sept, 06:27 UTC · saved reading, rules v6",
+    "link": null,
+    "evidence": [
+     {
+      "label": "Linked wallets",
+      "value": "$395.8M ETH in 2 wallets, owner unconfirmed",
+      "source": "Nansen",
+      "decisive": true
+     },
+     {
+      "label": "Largest position",
+      "value": "$208.2M ETH short",
+      "source": "Nansen"
+     },
+     {
+      "label": "Share of exposure",
+      "value": "35%",
+      "source": "Nansen"
+     },
+     {
+      "label": "Net / gross exposure",
+      "value": "100%",
+      "source": "Nansen"
+     }
+    ]
+   },
+   "nansenCalls": 7,
+   "snapshotId": "34stjd0gtgkz1",
+   "supersedes": "07dr4tcn26rwx",
+   "snapshotClassifierVersion": "v5"
+  },
+  {
+   "address": "0xecb63caa47c7c4e77f60f1ce858cf28dc2b82b00",
+   "verdict": {
+    "verdict": "book",
+    "strength": "strong",
+    "reasons": [
+     "orders",
+     "trades"
+    ]
+   },
+   "positions": {
+    "nPositions": 134,
+    "grossUsd": 157815797.675236,
+    "netUsd": 125990218.49462198,
+    "netToGross": 0.7983371775865757,
+    "headlineCoin": "ETH",
+    "headlineSide": "short",
+    "headlineNotionalUsd": 52023382.35975,
+    "headlineShare": 0.3296462276026842,
+    "headlineLiqDistancePct": 0.8799650648621409,
+    "headlineLiqDistanceBasis": "mark",
+    "sameAssetOffsetShare": 0,
+    "netSide": "short",
+    "candidates": [
+     {
+      "coin": "ETH",
+      "side": "short",
+      "sizeUsd": 52023382.35975
+     },
+     {
+      "coin": "SOL",
+      "side": "short",
+      "sizeUsd": 14182427.7588
+     },
+     {
+      "coin": "BTC",
+      "side": "long",
+      "sizeUsd": 10129190.96624
+     },
+     {
+      "coin": "HYPE",
+      "side": "short",
+      "sizeUsd": 8383166.70709
+     },
+     {
+      "coin": "DOGE",
+      "side": "short",
+      "sizeUsd": 7402628.693248
+     }
+    ]
+   },
+   "orders": {
+    "restingOrders": 2730,
+    "bidShare": 0.5098901098901099,
+    "coinsBothSides": 123,
+    "notionalUsd": 229692301.16233864,
+    "twoSidedNotionalUsd": 222574213.75848514,
+    "headlineTwoSided": true,
+    "headlineQuoteNotionalUsd": 42207814.55576,
+    "headlineTwoSidedNotionalUsd": 41608599.34324001
+   },
+   "hedge": {
+    "hedgeUsd": 1580080.1669835765,
+    "hedgeRatio": 0.03037249973592777,
+    "unverifiedUsd": 0,
+    "unverifiedOnUnsupportedChainUsd": 0,
+    "unpricedMatches": 0,
+    "hedgeUsdBySource": {
+     "hyperliquidSpot": 1580080.1669835765,
+     "onchain": 0
+    },
+    "lendingUsd": 0
+   },
+   "hedgeScope": "hyperliquid",
+   "hedgeCoverage": "partial",
+   "ordersCoverage": "complete",
+   "positionsCoverage": "complete",
+   "linkedHedge": null,
+   "linkedHedgeCoverage": "not-applicable",
+   "trades": {
+    "tradesPerDay": 2000,
+    "crossedShare": 0.183,
+    "buyShare": 0.5865,
+    "sampleSize": 2000,
+    "cappedByApiLimit": true,
+    "notionalUsd": 1030873.6538920989,
+    "spanHours": 0.3718147222222222,
+    "headlineFills": 8,
+    "headlineShareOfFills": 0.004,
+    "headlineOpenedUsd": 0,
+    "headlineClosedUsd": 1853.1905699999998
+   },
+   "pnl": {
+    "realizedPnlUsd": -12816665.421540005,
+    "winRate": 0.4596588972240617,
+    "closedTrades": 2302825,
+    "windowDays": 30
+   },
+   "sizeVsOi": 0.01756290521808164,
+   "source": "nansen",
+   "mainDexPositionCount": 86,
+   "focus": null,
+   "positionsAsOf": "2026-09-26T06:27:58.992Z",
+   "classifierVersion": "v6",
+   "observationSchemaVersion": 5,
+   "assetRegistryVersion": 2,
+   "observedAt": "2026-09-26T06:27:58.992Z",
+   "interpretedAt": "2026-09-27T13:52:46.424Z",
+   "degraded": false,
+   "summary": "2,730 resting orders quote both sides of 123 markets; 2,000+ fills over 0.4 hours, 59% of them buys, 82% as maker.",
+   "evidence": [
+    {
+     "label": "Open positions",
+     "value": "134",
+     "source": "Nansen"
+    },
+    {
+     "label": "Net / gross exposure",
+     "value": "80%",
+     "source": "Nansen"
+    },
+    {
+     "label": "Resting orders",
+     "value": "2,730, two-sided in 123 markets",
+     "source": "Hyperliquid",
+     "decisive": true
+    },
+    {
+     "label": "Fills, last 24h",
+     "value": "2,000+",
+     "source": "Hyperliquid"
+    },
+    {
+     "label": "Realized PnL, 30d",
+     "value": "-$12.8M",
+     "source": "Nansen"
+    }
+   ],
+   "breakdown": {
+    "applies": true,
+    "coin": "ETH",
+    "side": "short",
+    "headlineUsd": 52023382.35975,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 1580080.1669835765,
+      "share": 0.03037249973592777
+     },
+     {
+      "kind": "not-checked",
+      "usd": 50443302.19276643,
+      "share": 0.9696275002640723
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null,
+    "dataQuality": "partial"
+   },
+   "vitals": [
+    {
+     "label": "Leverage",
+     "value": "15x cross",
+     "source": "Nansen"
+    },
+    {
+     "label": "Distance to liquidation",
+     "value": "88% (from mark)",
+     "source": "Nansen"
+    },
+    {
+     "label": "Unrealized PnL",
+     "value": "$318K",
+     "source": "Nansen"
+    },
+    {
+     "label": "Funding since open",
+     "value": "-$359K",
+     "source": "Nansen"
+    },
+    {
+     "label": "Size vs open interest",
+     "value": "1.8%",
+     "source": "Hyperliquid"
+    },
+    {
+     "label": "Position flow",
+     "value": "$2K closed (0.4h)",
+     "source": "Hyperliquid"
+    }
+   ],
+   "coverage": [],
+   "coverageNotes": [],
+   "checkedAt": "2026-09-26T06:27:57.378Z",
+   "share": {
+    "limits": [
+     "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address."
+    ],
+    "more": 0,
+    "provenance": "Positions as of 26 Sept, 06:27 UTC · saved reading, rules v6",
+    "link": null,
+    "evidence": [
+     {
+      "label": "Resting orders",
+      "value": "2,730, two-sided in 123 markets",
+      "source": "Hyperliquid",
+      "decisive": true
+     },
+     {
+      "label": "Open positions",
+      "value": "134",
+      "source": "Nansen"
+     },
+     {
+      "label": "Net / gross exposure",
+      "value": "80%",
+      "source": "Nansen"
+     },
+     {
+      "label": "Fills, last 24h",
+      "value": "2,000+",
+      "source": "Hyperliquid"
+     }
+    ]
+   },
+   "nansenCalls": 2,
+   "snapshotId": "1a896dimxf5ba",
+   "supersedes": "2b2e7wqput6yt",
+   "snapshotClassifierVersion": "v5"
+  },
+  {
+   "address": "0xf02d16a272a842f8bac1d9a9e773aba1933454c6",
+   "verdict": {
+    "verdict": "hedged",
+    "strength": null,
+    "reasons": [
+     "hedge_leg"
+    ]
+   },
+   "positions": {
+    "nPositions": 1,
+    "grossUsd": 43202939.77384,
+    "netUsd": 43202939.77384,
+    "netToGross": 1,
+    "headlineCoin": "HYPE",
+    "headlineSide": "short",
+    "headlineNotionalUsd": 43202939.77384,
+    "headlineShare": 1,
+    "headlineLiqDistancePct": 0.41913975997622205,
+    "headlineLiqDistanceBasis": "mark",
+    "sameAssetOffsetShare": 0,
+    "netSide": "short",
+    "candidates": [
+     {
+      "coin": "HYPE",
+      "side": "short",
+      "sizeUsd": 43202939.77384
+     }
+    ]
+   },
+   "orders": {
+    "restingOrders": 0,
+    "bidShare": 0.5,
+    "coinsBothSides": 0,
+    "notionalUsd": 0,
+    "twoSidedNotionalUsd": 0,
+    "headlineTwoSided": false,
+    "headlineQuoteNotionalUsd": 0,
+    "headlineTwoSidedNotionalUsd": 0
+   },
+   "hedge": {
+    "hedgeUsd": 41736450.90150828,
+    "hedgeRatio": 0.9660558082387786,
+    "unverifiedUsd": 0,
+    "unverifiedOnUnsupportedChainUsd": 0,
+    "unpricedMatches": 0,
+    "hedgeUsdBySource": {
+     "hyperliquidSpot": 41736450.90150828,
+     "onchain": 0
+    },
+    "lendingUsd": 0
+   },
+   "hedgeScope": "all-chains",
+   "hedgeCoverage": "complete",
+   "ordersCoverage": "complete",
+   "positionsCoverage": "complete",
+   "linkedHedge": null,
+   "trades": {
+    "tradesPerDay": 0,
+    "crossedShare": 0,
+    "buyShare": 0.5,
+    "sampleSize": 0,
+    "cappedByApiLimit": false,
+    "notionalUsd": 0,
+    "spanHours": 0,
+    "headlineFills": 0,
+    "headlineShareOfFills": 0,
+    "headlineOpenedUsd": 0,
+    "headlineClosedUsd": 0
+   },
+   "pnl": {
+    "realizedPnlUsd": -2388473.5096110003,
+    "winRate": 0.22213361994244704,
+    "closedTrades": 28843,
+    "windowDays": 30
+   },
+   "sizeVsOi": 0.02167503060048928,
+   "source": "nansen",
+   "focus": null,
+   "positionsAsOf": "2026-09-24T07:44:56.358Z",
+   "classifierVersion": "v5",
+   "observationSchemaVersion": 4,
+   "assetRegistryVersion": 2,
+   "observedAt": "2026-09-24T07:44:56.358Z",
+   "interpretedAt": "2026-09-24T07:44:54.796Z",
+   "degraded": false,
+   "summary": "The $43.2M HYPE short is 97% covered by $41.7M of spot HYPE held by this address on Hyperliquid - other Nansen-supported chains were checked and found nothing.",
+   "evidence": [
+    {
+     "label": "Largest position",
+     "value": "$43.2M HYPE short",
+     "source": "Nansen"
+    },
+    {
+     "label": "Share of exposure",
+     "value": "100%",
+     "source": "Nansen"
+    },
+    {
+     "label": "Net / gross exposure",
+     "value": "100%",
+     "source": "Nansen"
+    },
+    {
+     "label": "Hedge found",
+     "value": "97% (Hyperliquid spot)",
+     "source": "Hyperliquid",
+     "decisive": true
+    },
+    {
+     "label": "Realized PnL, 30d",
+     "value": "-$2.4M",
+     "source": "Nansen"
+    }
+   ],
+   "breakdown": {
+    "applies": true,
+    "coin": "HYPE",
+    "side": "short",
+    "headlineUsd": 43202939.77384,
+    "segments": [
+     {
+      "kind": "covered",
+      "usd": 41736450.90150828,
+      "share": 0.9660558082387786
+     },
+     {
+      "kind": "residual",
+      "usd": 1466488.8723317236,
+      "share": 0.03394419176122138
+     }
+    ],
+    "excessUsd": 0,
+    "elsewhere": null,
+    "dataQuality": "unknown"
+   },
+   "vitals": [
+    {
+     "label": "Leverage",
+     "value": "5x cross",
+     "source": "Nansen"
+    },
+    {
+     "label": "Distance to liquidation",
+     "value": "42% (from mark)",
+     "source": "Nansen"
+    },
+    {
+     "label": "Unrealized PnL",
+     "value": "-$5.0M",
+     "source": "Nansen"
+    },
+    {
+     "label": "Funding since open",
+     "value": "-$266K",
+     "source": "Nansen"
+    },
+    {
+     "label": "Size vs open interest",
+     "value": "2.2%",
+     "source": "Hyperliquid"
+    },
+    {
+     "label": "Position flow",
+     "value": "no fills",
+     "source": "Hyperliquid"
+    }
+   ],
+   "coverage": [
+    "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here"
+   ],
+   "coverageNotes": [
+    {
+     "text": "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here",
+     "failure": false
+    }
+   ],
+   "checkedAt": "2026-09-24T07:44:54.796Z",
+   "share": {
+    "limits": [
+     "Not visible to this tool at all: positions on centralized exchanges, OTC deals, and wallets with no on-chain link to this address.",
+     "No two-sided quoting found on the venues checked - the main dex and any HIP-3 dex this account holds a position on. A dex it only quotes, with no position of its own, would not appear here"
+    ],
+    "more": 0,
+    "provenance": "Positions as of 24 Sept, 07:44 UTC · checked live, rules v5",
+    "link": null,
+    "evidence": [
+     {
+      "label": "Hedge found",
+      "value": "97% (Hyperliquid spot)",
+      "source": "Hyperliquid",
+      "decisive": true
+     },
+     {
+      "label": "Largest position",
+      "value": "$43.2M HYPE short",
+      "source": "Nansen"
+     },
+     {
+      "label": "Share of exposure",
+      "value": "100%",
+      "source": "Nansen"
+     },
+     {
+      "label": "Net / gross exposure",
+      "value": "100%",
+      "source": "Nansen"
+     }
+    ]
+   },
+   "nansenCalls": 3,
+   "snapshotId": "0x4uv7ru4tpka",
+   "supersedes": "1ny4ncx4j6myd",
+   "superseded": true,
+   "supersededBy": "00dzwn0p8gh67"
+  }
+ ]
+}
