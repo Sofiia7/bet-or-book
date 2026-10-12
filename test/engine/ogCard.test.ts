@@ -90,7 +90,7 @@ describe('ogCardData', () => {
     expect(d.constellation).not.toBeNull();
     expect(d.constellation?.coverage).toBe(0);
     expect(d.constellation?.ghost).toBe(false);
-    expect(d.constellationStat).toEqual({ value: '—', label: 'spot coverage not applicable' });
+    expect(d.constellationStat).toEqual({ value: 'n/a', label: 'spot coverage not applicable' });
   });
 
   it('draws a constellation for a book verdict regardless of breakdown.applies, densely, using matched-both-sides coverage', () => {

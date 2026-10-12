@@ -106,6 +106,15 @@ export interface ObserveOptions {
   signal?: AbortSignal;
 }
 
+/** The reason a staged Nansen read was never sent, when the credit meter
+ * refused it or could not be reached (src/sources/stagedNansen.ts); null
+ * for any other failure, which is Nansen's own. */
+function budgetBlockReason(err: unknown): string | null {
+  const message = err instanceof Error ? err.message : String(err);
+  const m = /credit budget unavailable[^:]*: (.+)$/.exec(message);
+  return m ? m[1] : null;
+}
+
 export async function observe(address: string, opts: ObserveOptions): Promise<Observation> {
   const clock = opts.now ?? Date.now;
   const now = clock();
@@ -169,6 +178,10 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   if (!perpMeta) coverage.push('Open interest unavailable, so size versus open interest is not shown');
 
   let source: Observation['source'] = 'hyperliquid';
+  /** Set when the first paid stage was never sent because the credit meter
+   * refused it or could not be reached: a different fact from Nansen not
+   * answering, and the card says which. */
+  let budgetBlocked: string | null = null;
   let positions: Position[] | null = null;
   let pnl: PnlSummary | null = null;
   let measuredAt: number | null = null;
@@ -209,6 +222,7 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
       }
     } else {
       degraded = true;
+      budgetBlocked = budgetBlockReason(pos.reason);
       coverage.push('Nansen positions unavailable: positions read from Hyperliquid, main dex only');
     }
     if (opts.includeContext === false) {
@@ -573,7 +587,9 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   // still represented by the source-coverage fields used by the classifier.
   const nansenFailures = coverage.filter(text => /Nansen positions|Realized PnL|Holdings on other chains unavailable|Funding history unavailable|funding wallets.*unavailable|linked wallets.*unavailable/i.test(text));
   if (nansen && nansenFailures.length) {
-    const text = source === 'hyperliquid'
+    const text = budgetBlocked
+      ? `Nansen not used (${budgetBlocked}): main-dex positions only, no other chains, no linked wallets`
+      : source === 'hyperliquid'
       ? 'Nansen did not answer this time. This reading is Hyperliquid-only; cross-dex positions, PnL and funding links may be missing. Try again in a minute.'
       : 'Nansen could not complete every read this time. Some PnL, holdings or funding links may be missing. Try again in a minute.';
     const remove = new Set(nansenFailures);

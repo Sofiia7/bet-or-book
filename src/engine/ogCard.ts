@@ -180,7 +180,7 @@ export function ogCardData(input: OgCardInput): OgCardData {
   const constellation = showConstellation ? constellationInputsForOg(input) : null;
   const quality = input.breakdown?.dataQuality ?? (input.breakdown?.applies ? 'unknown' : 'measured');
   const constellationStat = constellation
-    ? { value: isLong ? '—' : constellation.coverage > 0 && constellation.coverage < 0.001 ? '<0.1%' : formatPct(constellation.coverage), label: isLong ? 'spot coverage not applicable' : quality === 'measured' ? constellationStatLabel(input.verdict.verdict) : 'found coverage' }
+    ? { value: isLong ? 'n/a' : constellation.coverage > 0 && constellation.coverage < 0.001 ? '<0.1%' : formatPct(constellation.coverage), label: isLong ? 'spot coverage not applicable' : quality === 'measured' ? constellationStatLabel(input.verdict.verdict) : 'found coverage' }
     : null;
 
   return {

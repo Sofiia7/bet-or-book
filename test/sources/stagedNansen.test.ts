@@ -18,3 +18,14 @@ it('does not send a paid request after a stage budget refusal', async () => {
   await expect(client.currentBalance('wallet', 3)).rejects.toThrow('credit budget');
   expect(fetch).not.toHaveBeenCalled();
 });
+it('names the reason when the credit meter itself cannot be reached', async () => {
+  const fetch = vi.spyOn(globalThis, 'fetch');
+  const reserve = async () => { throw new Error('Exceeded allowed rows read in Durable Objects free tier.'); };
+  const client = stagedNansen('test-key', { reserve } as unknown as SpendGuard, '2026-10-12', () => {}, new AbortController().signal);
+  await expect(client.perpPositions('0x' + '1'.repeat(40))).rejects.toThrow('credit budget unavailable for this stage: the credit meter could not be reached');
+  expect(fetch).not.toHaveBeenCalled();
+});
+it('names the refusal when the budget says no', async () => {
+  const client = stagedNansen('test-key', { reserve: async () => ({ ok: false, reason: "today's Nansen credits are used up" }) } as unknown as SpendGuard, '2026-10-12', () => {}, new AbortController().signal);
+  await expect(client.currentBalance('wallet', 1)).rejects.toThrow("credit budget unavailable for this stage: today's Nansen credits are used up");
+});

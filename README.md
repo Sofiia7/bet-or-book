@@ -12,11 +12,11 @@ Development began on 17 September 2026. The project was previously submitted to 
 
 Every week a post goes viral: "a whale just opened a $190M short". People copy it. Often the position is not what the headline makes of it:
 
-- The account behind one of those posts is a **market-making book**: 134 open positions, 2,730 resting orders quoting both sides of 123 markets - including its own $52.0M ETH short, $41.6M of that quoting genuinely matched in ETH itself, not just activity somewhere else in the account. That is a business, not a view on price (read on 26 September, after the fix in [L01](docs/audits/2026-09-23-full-audit.md) made "quoted elsewhere" stop counting as evidence about this position).
+- On 26 September the account behind one of those posts read as a **market-making book**: 134 open positions, 2,730 resting orders quoting both sides of 123 markets - including its own $52.0M ETH short, $41.6M of that quoting genuinely matched in ETH itself, not just activity somewhere else in the account. That is a business, not a view on price (read on 26 September, after the fix in [L01](docs/audits/2026-09-23-full-audit.md) made "quoted elsewhere" stop counting as evidence about this position).
 - Another was reported as hundreds of millions in bearish shorts, and the first version of this tool agreed it was hedged. It is not that simple: **next to none of its $208.2M ETH short is covered by anything that address holds**, and $395.8M of matching ETH sits in two wallets that funded it. A funding transfer is not ownership, one such funder turned out to be an exchange, and part of that ETH is an Aave deposit with an invisible loan against it.
 - And sometimes it really is a bet: **one $126.4M HYPE long, the account's entire exposure, nothing offsetting it**.
 
-All three are among the four readings at the top of the page, each dated 26 September and each opening for free.
+Those three stories are readings dated 26 September, kept in the archive. The four cards at the top of the page were re-read on 7 October with the current rules: the HYPE long ($122.1M) and the funder-linked ETH short ($212.1M, with $318.7M of matching ETH in two funding wallets) read the same way; the former Book example now reads Unknown, because busy two-sided trading alone does not prove inventory. Every card carries its date and opens for free.
 
 Bet or Book answers one question per address, shows the numbers that decided it, and says what it could not read.
 

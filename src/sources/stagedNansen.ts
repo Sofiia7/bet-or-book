@@ -5,8 +5,17 @@ import type { SpendGuard } from '../coordinator';
  * Recording the overall call report remains the caller's responsibility. */
 export function stagedNansen(key: string, budget: SpendGuard, day: string, record: (call: NansenCallMeta) => void, signal: AbortSignal): NansenClient {
   async function stage<T>(worst: number, run: (client: NansenClient) => Promise<T>): Promise<T> {
-    const reservation = await budget.reserve(day, worst);
-    if (!reservation.ok) throw new Error('Nansen credit budget unavailable for this stage');
+    // The meter lives in a Durable Object. When the platform refuses to
+    // read it (the free plan's daily row allowance is shared by every
+    // Worker on the account), the stage is not sent, and the card has to
+    // say that rather than "Nansen did not answer".
+    let reservation: Awaited<ReturnType<SpendGuard['reserve']>>;
+    try { reservation = await budget.reserve(day, worst); }
+    catch (err) {
+      console.error('spend guard unreachable', err);
+      throw new Error('Nansen credit budget unavailable for this stage: the credit meter could not be reached');
+    }
+    if (!reservation.ok) throw new Error('Nansen credit budget unavailable for this stage: ' + (reservation.reason ?? 'refused'));
     const calls: NansenCallMeta[] = [];
     const client = createNansenClient(key, call => { calls.push(call); record(call); }, signal);
     try { return await run(client); }

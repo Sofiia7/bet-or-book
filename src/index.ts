@@ -157,9 +157,12 @@ const LEDGER_MEMO_MS = 60_000;
 const PAGE_HEADERS = {
   'strict-transport-security': 'max-age=15552000',
   'content-type': 'text/html;charset=UTF-8',
+  // The one outside origin is Cloudflare Web Analytics: the zone injects
+  // its beacon into every HTML answer, and a policy that forbids it fills
+  // the console with errors and counts nothing.
   'content-security-policy':
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; " +
-    "img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+    "default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; " +
+    "img-src 'self' data: blob:; connect-src 'self' https://cloudflareinsights.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'strict-origin-when-cross-origin',
   'permissions-policy': 'camera=(), microphone=(), geolocation=()',
@@ -636,9 +639,18 @@ const worker = {
           if (!env.NANSEN_API_KEY) {
             nansenOffReason = 'no API key configured';
           } else if (includeContext) {
-            const reservation = await budget.reserve(day, WORST_CASE_CALLS);
-            if (reservation.ok) hold = reservation.id;
-            else nansenOffReason = reservation.reason;
+            // The meter is a Durable Object, and the free plan's daily row
+            // allowance for those is shared by every Worker on the account.
+            // When it cannot be read, the check still answers from
+            // Hyperliquid and the card says why Nansen was not asked.
+            try {
+              const reservation = await budget.reserve(day, WORST_CASE_CALLS);
+              if (reservation.ok) hold = reservation.id;
+              else nansenOffReason = reservation.reason;
+            } catch (err) {
+              console.error('spend guard unreachable', err);
+              nansenOffReason = 'the credit meter could not be reached';
+            }
           }
           // One deadline for the reader's wait, enforced both as a clock
           // the stages consult and as a signal on the sockets themselves.
@@ -736,17 +748,24 @@ const worker = {
               ...(lastKnown ? { creditsRemaining: lastKnown.creditsRemaining!, creditsMeasuredAt: lastKnown.at } : {}),
               ...(nansenOffReason !== undefined ? { nansenOff: nansenOffReason } : {}),
             };
-            if (hold !== null) {
-              // A refusal that still reports credits is about one endpoint,
-              // not about the balance, and must not stop tomorrow too.
-              const refused = calls.some((c) => meansOutOfCredits(c.status, c.creditsRemaining));
-              await budget.settle(hold, spent, lastKnown?.creditsRemaining ?? null, refused, lastKnown?.at);
+            try {
+              if (hold !== null) {
+                // A refusal that still reports credits is about one endpoint,
+                // not about the balance, and must not stop tomorrow too.
+                const refused = calls.some((c) => meansOutOfCredits(c.status, c.creditsRemaining));
+                await budget.settle(hold, spent, lastKnown?.creditsRemaining ?? null, refused, lastKnown?.at);
+              }
+              // What was actually called, counted in the same object as the
+              // money. It used to be a read-modify-write on one KV key, which
+              // loses counts whenever two checks finish together - and this is
+              // the number the buildathon submission rests on.
+              await budget.record(day, calls);
+            } catch (err) {
+              // A reading that exists is returned. An unsettled hold expires
+              // on its own and is charged at its worst case, the conservative
+              // side; a count that could not be recorded is a count lost.
+              console.error('spend guard unreachable after the check', err);
             }
-            // What was actually called, counted in the same object as the
-            // money. It used to be a read-modify-write on one KV key, which
-            // loses counts whenever two checks finish together - and this is
-            // the number the buildathon submission rests on.
-            await budget.record(day, calls);
           }
         }, url.searchParams.get('retry') === '1' ? r => r.degraded : undefined);
         counted(
@@ -913,20 +932,35 @@ const worker = {
     if (url.pathname === '/api/ledger') {
       if (!ledgerMemo || Date.now() - ledgerMemo.at > LEDGER_MEMO_MS) {
         const budget = spendGuard(env.NANSEN_BUDGET, { cap: 0, floor: 0 });
-        const report = await budget.report(BUILDATHON_WINDOW.from, BUILDATHON_WINDOW.to);
-        const live = {
-          calls: report.calls.attempted,
-          successful: report.calls.successful,
-          // Credits the API priced, and credits assumed for calls it did
-          // not. Two different kinds of number, reported as two.
-          creditsQuoted: report.calls.creditsQuoted,
-          creditsAssumed: report.calls.creditsAssumed,
-          byEndpoint: report.calls.byEndpoint,
-          byDay: report.byDay,
-        };
+        let live: { calls: number; successful: number; creditsQuoted: number; creditsAssumed: number; byEndpoint: Record<string, number>; byDay: Record<string, number> } | null = null;
+        let liveUnavailable: string | undefined;
+        try {
+          const report = await budget.report(BUILDATHON_WINDOW.from, BUILDATHON_WINDOW.to);
+          live = {
+            calls: report.calls.attempted,
+            successful: report.calls.successful,
+            // Credits the API priced, and credits assumed for calls it did
+            // not. Two different kinds of number, reported as two.
+            creditsQuoted: report.calls.creditsQuoted,
+            creditsAssumed: report.calls.creditsAssumed,
+            byEndpoint: report.calls.byEndpoint,
+            byDay: report.byDay,
+          };
+        } catch (err) {
+          // The counts live in a Durable Object. When the platform will not
+          // read it, the scripted ledger still answers, and the body says
+          // the live part is missing rather than the route failing whole.
+          console.error('ledger report unavailable', err);
+          liveUnavailable = "the Worker's own call counts could not be read right now";
+        }
         ledgerMemo = {
           at: Date.now(),
-          body: { totalCalls: scriptedLedger.calls + live.calls, scripted: scriptedLedger, live },
+          body: {
+            totalCalls: scriptedLedger.calls + (live?.calls ?? 0),
+            scripted: scriptedLedger,
+            live,
+            ...(liveUnavailable ? { liveUnavailable } : {}),
+          },
         };
       }
       return Response.json(ledgerMemo.body, { headers: { 'cache-control': 'public, max-age=60' } });

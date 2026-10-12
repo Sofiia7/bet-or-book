@@ -226,6 +226,24 @@ describe('the demo keeps a reserve the public path cannot reach', () => {
   });
 });
 
+describe('the call ledger when its Durable Object cannot be read', () => {
+  it('still answers with the scripted ledger and says the live part is missing', async () => {
+    // What the platform throws when the free plan's daily row allowance,
+    // shared by every Worker on the account, is used up (12 October).
+    const refusing = {
+      idFromName: () => 'nansen-budget',
+      get: () => ({ fetch: async () => { throw new Error('Exceeded allowed rows read in Durable Objects free tier.'); } }),
+    } as unknown as DurableObjectNamespace;
+    const env = testEnv({ NANSEN_BUDGET: refusing });
+    const res = await worker.fetch(request('/api/ledger'), env);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { totalCalls: number; scripted: { calls: number }; live: unknown; liveUnavailable?: string };
+    expect(body.live).toBeNull();
+    expect(body.liveUnavailable).toMatch(/could not be read/);
+    expect(body.totalCalls).toBe(body.scripted.calls);
+  });
+});
+
 describe('the page it serves', () => {
   it('does not allow inline script', async () => {
     const res = await worker.fetch(request('/'), testEnv());

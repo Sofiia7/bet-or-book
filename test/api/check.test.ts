@@ -361,6 +361,22 @@ describe('checkAddress (offline, real fixtures)', () => {
     expect(result.coverage.some((c) => c.includes('Nansen did not answer'))).toBe(true);
   });
 
+  it('says Nansen was not asked when the credit meter refused or could not be reached', async () => {
+    route();
+    // What stagedNansen throws when its reservation fails before any paid
+    // request: a different fact from Nansen not answering, and the card
+    // must not tell the reader to try again in a minute for it.
+    const nansen = {
+      ...fakeNansen({ positions: syntheticPositions([]) }),
+      perpPositions: vi.fn(async () => { throw new Error('Nansen credit budget unavailable for this stage: the credit meter could not be reached'); }),
+    };
+    const result = await checkAddress(ABRAXAS, { nansen });
+    expect(result.source).toBe('hyperliquid');
+    expect(result.degraded).toBe(true);
+    expect(result.coverage).toContain('Nansen not used (the credit meter could not be reached): main-dex positions only, no other chains, no linked wallets');
+    expect(result.coverage.some((c) => c.includes('Nansen did not answer'))).toBe(false);
+  });
+
   it('falls back when a number in the Nansen answer is not a number', async () => {
     route();
     const broken = syntheticPositions([{ coin: 'ETH', size: -25_000, valueUsd: 100_000_000 }]);

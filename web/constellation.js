@@ -260,7 +260,7 @@ function constellationInputsFor(d) {
  * so one formatter covers hedged, unknown, long and book alike - only the
  * label below it (constellationStatLabelFor) changes per verdict. */
 function constellationStatFor(d, inputs) {
-  if (d.verdict.verdict !== 'book' && d.positions.headlineSide === 'long') return '—';
+  if (d.verdict.verdict !== 'book' && d.positions.headlineSide === 'long') return 'n/a';
   return inputs.coverage > 0 && inputs.coverage < 0.001 ? '<0.1%' : fmtPct(inputs.coverage);
 }
 

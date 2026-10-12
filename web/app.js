@@ -230,7 +230,7 @@ async function renderChanged(d) {
   // A grade is part of the answer: "Book (strong)" to "Book (likely)" is a
   // change, and "did not change" under two different versions of the rules
   // says so rather than reading as the same rules agreeing twice.
-  const named = (verdict, strength, qualifier) => (VERDICTS[verdict] || VERDICTS.unknown).label + (strength ? ' (' + strength + ')' : '') + (qualifier ? ' — ' + qualifier : '');
+  const named = (verdict, strength, qualifier) => (VERDICTS[verdict] || VERDICTS.unknown).label + (strength ? ' (' + strength + ')' : '') + (qualifier ? ' · ' + qualifier : '');
   const vc = c.verdictChange;
   $('changed-because').textContent = vc
     ? named(vc.from, vc.fromStrength, vc.fromQualifier) === named(vc.to, vc.toStrength, vc.toQualifier)
