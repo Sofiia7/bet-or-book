@@ -32,7 +32,7 @@
     "miniflare": "5.20261006.0-alpha",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2",
-    "vitest": "^5.0.1",
+    "vitest": "^5.1.0",
     "wrangler": "4.148.0"
   },
   "engines": {
