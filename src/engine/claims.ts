@@ -9,8 +9,10 @@ export const CLAIMS = {
 } as const;
 export type Claim = keyof typeof CLAIMS;
 export interface ClaimResult { status: 'Evidence supports' | 'Evidence conflicts' | 'Not established'; explanation: string }
+/** Runs in the page too (web/app.js renderClaim): hasOwnProperty, not
+ * Object.hasOwn, which a browser such as Safari before 15.4 does not have. */
 export function isClaim(value: unknown): value is Claim {
-  return typeof value === 'string' && Object.hasOwn(CLAIMS, value);
+  return typeof value === 'string' && Object.prototype.hasOwnProperty.call(CLAIMS, value);
 }
 
 /** Evaluates a bounded assertion against saved evidence, never infers intent. */

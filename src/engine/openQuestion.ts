@@ -12,11 +12,11 @@
 import type { CheckResponse } from '../api/check';
 import { normalizeReason } from './reasons';
 import type { ReasonCode } from './verdict';
-import { formatPct, formatUsd } from './evidence';
+import { formatPct, formatUsd, plural, withheldByUnpriced, PRICE_GAPS } from './evidence';
 import { LOANS_READ_FROM_SCHEMA } from './observation';
 
 type Reading = Pick<CheckResponse, 'verdict' | 'positions' | 'hedge' | 'historical'> &
-  Partial<Pick<CheckResponse, 'observationSchemaVersion'>>;
+  Partial<Pick<CheckResponse, 'observationSchemaVersion' | 'positionsVenues'>>;
 
 const coinOf = (r: Reading) => r.positions.headlineCoin ?? 'the asset';
 
@@ -57,17 +57,29 @@ const OPEN: Record<Exclude<ReasonCode, 'positions' | 'trades'> | 'balanced_book'
   over_covered: (r) =>
     `what the ${coinOf(r)} beyond the short is for: a view on ${coinOf(r)}, or collateral for something not read here.`,
   hedge_not_checked: () => 'the holdings this reading could not finish. Checking again may complete them.',
+  // Holdings with no price have no dollars, so when they are what withheld the
+  // verdict (an unpriced look-alike token) "the $0 of holdings" would say
+  // nothing true; the question is what they are worth.
   unrecognised_assets: (r) =>
-    `what the ${formatUsd(r.hedge.unverifiedUsd ?? 0)} of holdings named like ${coinOf(r)} really are: their ` +
-    'contracts are not ones this tool recognises.',
+    withheldByUnpriced(r)
+      ? `how much is held in ${plural(r.hedge.unpricedMatches, 'holding')} named like ${coinOf(r)} that could not be ` +
+        `priced. ${PRICE_GAPS}; checking again may price ${r.hedge.unpricedMatches === 1 ? 'it' : 'them'}.`
+      : `what the ${formatUsd(r.hedge.unverifiedUsd ?? 0)} of holdings named like ${coinOf(r)} really are: their ` +
+        'contracts are not ones this tool recognises.',
   maker_flow_only: (r) =>
     `whether the account quotes the ${coinOf(r)} market itself over time. Busy trading describes the account, ` +
     'not this position.',
   partial_offset: (r) => `what the uncovered ${formatPct(Math.max(0, 1 - r.hedge.hedgeRatio))} of the position is for.`,
   quotes_not_checked: () => 'the resting orders on the venue that did not answer. Checking again may read them.',
-  positions_not_complete: () =>
-    'the positions on other Hyperliquid dexes, which only Nansen reads here. Checking again when Nansen answers ' +
-    'would complete them.',
+  // A reading made before positions came from every dex fell back to the
+  // main dex when Nansen did not answer, and keeps the words it was given.
+  positions_not_complete: (r) =>
+    !r.positionsVenues
+      ? 'the positions on other Hyperliquid dexes, which only Nansen reads here. Checking again when Nansen answers ' +
+        'would complete them.'
+      : !r.positionsVenues.registryRead
+        ? 'the list of Hyperliquid dexes, which did not load. Checking again may complete it.'
+        : 'the positions on the Hyperliquid dexes that did not answer. Checking again may complete them.',
   directional_concentration: () => UNSEEN_HEDGE,
   directional_portfolio: () => UNSEEN_HEDGE,
   offset_not_measured: () => PAIR_OR_VIEWS,

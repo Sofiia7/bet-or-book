@@ -1,6 +1,7 @@
 // Sums data/nansen-calls.jsonl into data/ledger.json, which the Worker
-// bundles and serves at /api/ledger next to its own live KV day counters.
-// Run it after any script that spends credits, before a deploy.
+// bundles and serves at /api/ledger as the September call archive. Nothing
+// appends to the .jsonl any more (a check makes no Nansen call), so this only
+// rebuilds the same summary from the same archive.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { summarizeLedger, type LedgerLine } from '../src/ledger';
 

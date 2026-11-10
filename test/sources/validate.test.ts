@@ -4,10 +4,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   checkFills,
-  checkNansenBalances,
   checkOrders,
   checkPerpMeta,
-  checkRelatedWallets,
   checkSpotBalances,
   checkSpotMeta,
 } from '../../src/sources/validate';
@@ -21,21 +19,12 @@ import fills from '../fixtures/hyperliquid/fills-24h.json';
 import abxFills from '../fixtures/hyperliquid/abraxas/fills-24h.json';
 import spotMeta from '../fixtures/hyperliquid/spot-meta.json';
 import perpMeta from '../fixtures/hyperliquid/meta-and-asset-ctxs.json';
-import abxBalances from '../fixtures/nansen/current-balance-abraxas-all.json';
-import funderBalances from '../fixtures/nansen/current-balance-abraxas-funder-all.json';
-import funderEthBalances from '../fixtures/nansen/current-balance-abraxas-funder-eth-all.json';
-import relArb from '../fixtures/nansen/related-wallets-abraxas-arbitrum.json';
-import relEth from '../fixtures/nansen/related-wallets-abraxas-ethereum.json';
 
 describe('real answers', () => {
   it('pass whole: not one recorded row is refused', () => {
     for (const raw of [orders, abxOrders]) expect(checkOrders(raw).malformed).toBe(0);
     for (const raw of [spot, abxSpot, marginSpot]) expect(checkSpotBalances(raw).malformed).toBe(0);
     for (const raw of [fills, abxFills]) expect(checkFills(raw).malformed).toBe(0);
-    for (const raw of [abxBalances, funderBalances, funderEthBalances]) {
-      expect(checkNansenBalances(raw.data).malformed).toBe(0);
-    }
-    for (const raw of [relArb, relEth]) expect(checkRelatedWallets(raw.data).malformed).toBe(0);
     expect(checkSpotMeta(spotMeta).malformed).toBe(0);
     expect(() => checkPerpMeta(perpMeta)).not.toThrow();
   });
@@ -110,21 +99,6 @@ describe('a broken row', () => {
     expect(read.malformed).toBe(5);
   });
 
-  it('is a Nansen balance below zero, or with no chain', () => {
-    const ok = { chain: 'ethereum', token_symbol: 'WETH', token_amount: 1, value_usd: 2500 };
-    const unpriced = { ...ok, value_usd: null };
-    const read = checkNansenBalances([ok, unpriced, { ...ok, token_amount: -1 }, { ...ok, value_usd: -3 }, { ...ok, chain: '' }]);
-    expect(read.rows).toEqual([ok, unpriced]);
-    expect(read.malformed).toBe(3);
-  });
-
-  it('is a funding link to something that is not an address, or at a time that is not one', () => {
-    const ok = { address: '0xb38e8c17e38363af6ebdcb3dae12e0243582891d', relation: 'First Funder', chain: 'arbitrum', block_timestamp: '2024-01-01T00:00:00' };
-    const read = checkRelatedWallets([ok, { ...ok, address: '0x123' }, { ...ok, block_timestamp: 'yesterday' }, { ...ok, relation: '' }]);
-    expect(read.rows).toEqual([ok]);
-    expect(read.malformed).toBe(3);
-  });
-
   it('in spot metadata leaves that token unpriced rather than priced as another', () => {
     const [meta, contexts] = spotMeta as [{ tokens: unknown[]; universe: unknown[] }, unknown[]];
     const read = checkSpotMeta([{ ...meta, tokens: [...meta.tokens, { name: 'BAD', index: 'x' }], universe: [...meta.universe, { name: '@x', tokens: [1] }] }, contexts]);
@@ -142,7 +116,5 @@ describe('a broken envelope', () => {
     shape(() => checkSpotBalances({ balances: {} }));
     shape(() => checkSpotMeta([{ tokens: [], universe: [] }]));
     shape(() => checkPerpMeta([{}, []]));
-    shape(() => checkNansenBalances(undefined));
-    shape(() => checkRelatedWallets({}));
   });
 });

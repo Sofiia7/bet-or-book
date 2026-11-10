@@ -1,4 +1,4 @@
-import type { Position, RestingOrder, SpotHolding, Trade, LinkedWallet, PnlSummary, ServiceStatus } from '../types';
+import type { Position, RestingOrder, SpotHolding, Trade, PnlSummary, ServiceStatus } from '../types';
 import type {
   HlClearinghouseState,
   HlOpenOrder,
@@ -7,8 +7,6 @@ import type {
   HlSpotAssetCtx,
   HlFill,
 } from './hyperliquid';
-import type { NansenPerpPositions, NansenBalance, NansenRelatedWallet, NansenPnlSummary } from './nansen';
-import { isValidAddress } from '../guard';
 
 /**
  * An HTTP 200 is not a contract. An upstream can answer with a body of the
@@ -202,64 +200,12 @@ export function normalizeTrades(fills: HlFill[]): Trade[] {
   }));
 }
 
-export function normalizeNansenPositions(data: NansenPerpPositions): Position[] {
-  return arrayOf(data?.asset_positions, 'asset_positions').map((entry) => {
-    const { position: p } = entry as NansenPerpPositions['asset_positions'][number];
-    const size = finite(p?.size, 'size');
-    return {
-      coin: text(p.token_symbol, 'token_symbol'),
-      side: size >= 0 ? 'long' : 'short',
-      sizeUsd: Math.abs(finite(p.position_value_usd, 'position_value_usd')),
-      entryPx: finite(p.entry_price_usd, 'entry_price_usd'),
-      leverage: finite(p.leverage_value, 'leverage_value'),
-      leverageType: p.leverage_type === 'isolated' ? 'isolated' : 'cross',
-      liquidationPx: p.liquidation_price_usd === null ? null : finite(p.liquidation_price_usd, 'liquidation_price_usd'),
-      unrealizedPnlUsd: finite(p.unrealized_pnl_usd, 'unrealized_pnl_usd'),
-      cumFundingUsd: finite(p.cumulative_funding_since_open_usd, 'cumulative_funding_since_open_usd'),
-    };
-  });
-}
-
-/**
- * On-chain balances from Nansen.
- *
- * Every row is tagged `onchain` whether or not it carries a contract, so a
- * row that arrives without one is an unidentified on-chain token rather than
- * a Hyperliquid ticker. The old code inferred the namespace from whether an
- * address was present, and a malformed row calling itself WETH was accepted
- * by name alone (audit A01, 21.09).
- *
- * A row is kept whenever it carries a real, positive amount - whether or not
- * `value_usd` came back priced. It used to be filtered on `value_usd` alone,
- * so 1,000 tokens of a real contract with `value_usd: null` vanished before
- * the hedge search ever saw them, and a complete page of holdings read as an
- * account with nothing there (23.09 audit, L05). `normalizeSpotHoldings`
- * already treats an unpriced Hyperliquid balance this way; this is the same
- * rule for the on-chain side.
- */
-export function normalizeNansenBalances(rows: NansenBalance[]): SpotHolding[] {
-  return (arrayOf(rows, 'balances') as NansenBalance[])
-    .filter((r) => Number.isFinite(r?.token_amount) && r.token_amount > 0)
-    .map((r) => {
-      const priced = Number.isFinite(r.value_usd) && r.value_usd > 0;
-      return {
-        coin: typeof r.token_symbol === 'string' ? r.token_symbol : '',
-        valueUsd: priced ? r.value_usd : 0,
-        priced,
-        source: 'onchain' as const,
-        amount: r.token_amount,
-        chain: typeof r.chain === 'string' ? r.chain : undefined,
-        tokenAddress: typeof r.token_address === 'string' ? r.token_address : undefined,
-      };
-    });
-}
-
 const SHARED_SERVICE_LABEL =
   /binance|coinbase|okx|bybit|kraken|bitfinex|kucoin|gate\.io|htx|huobi|mexc|bitget|crypto\.com|exchange|hot wallet|deposit|bridge|cex/i;
 
 /**
  * Addresses confirmed to be shared services by a public block explorer, for
- * the case Nansen answers with no label at all - which is most of the time.
+ * the case the source answers with no label at all - which is most of the time.
  * This list is a backstop for addresses seen funding several accounts, not
  * the mechanism: an address missing from it is `unverified`, never proven
  * private. Sources are public explorer labels, recorded with each entry.
@@ -277,38 +223,32 @@ export function knownServiceName(address: string): string | null {
   return KNOWN_SERVICE_ADDRESSES[address.toLowerCase()] ?? null;
 }
 
-function serviceStatusOf(address: string, label: string | null | undefined): ServiceStatus {
+export function serviceStatusOf(address: string, label: string | null | undefined): ServiceStatus {
   if (knownServiceName(address)) return 'service';
   if (label === null || label === undefined || label.trim() === '') return 'unverified';
   return SHARED_SERVICE_LABEL.test(label) ? 'service' : 'not-service';
 }
 
-export function normalizeRelatedWallets(rows: NansenRelatedWallet[]): LinkedWallet[] {
-  return (arrayOf(rows, 'relatedWallets') as NansenRelatedWallet[])
-    // An address from an upstream becomes a request path and a line on a
-    // card. It is checked on the way in rather than trusted for having
-    // arrived over TLS: anything that is not 20 bytes of hex is not an
-    // address, whatever the row calls it.
-    .filter((r) => typeof r?.address === 'string' && isValidAddress(r.address))
-    .map((r) => ({
-    address: r.address.toLowerCase(),
-    relation: r.relation,
-    chain: r.chain,
-    // The label is read here only to decide whether following this link can
-    // mean anything, and is dropped: Nansen's rules prohibit showing labels
-    // publicly, and nothing downstream of this function ever sees one.
-    serviceStatus: serviceStatusOf(r.address, r.address_label),
-    fundedAt: Number.isFinite(Date.parse(r.block_timestamp)) ? Date.parse(r.block_timestamp) : null,
-  }));
-}
-
-/** A PnL body is three numbers, and an empty object has none of them. It
- * used to pass straight through and put `$NaN` on the card. */
-export function normalizeNansenPnl(s: NansenPnlSummary, windowDays: number): PnlSummary {
-  return {
-    realizedPnlUsd: finite(s?.realized_pnl_usd, 'realized_pnl_usd'),
-    winRate: finite(s.win_rate, 'win_rate'),
-    closedTrades: finite(s.closed_trade_count, 'closed_trade_count'),
-    windowDays,
-  };
+/** The 30-day PnL from Hyperliquid's `portfolio`: the change in the
+ * cumulative perp PnL over `perpMonth`, last point minus first, which counts
+ * unrealized PnL as well as closed trades. Anything but a list with a
+ * `perpMonth` entry whose `pnlHistory` has at least two `[timestamp, "number"]`
+ * points is a missing PnL (UpstreamShapeError), never a PnL of zero. */
+export function normalizePortfolioPnl(raw: unknown, windowDays: 30): PnlSummary {
+  const month = arrayOf(raw, 'portfolio').find((entry) => Array.isArray(entry) && entry[0] === 'perpMonth') as
+    | [string, { pnlHistory?: unknown } | null]
+    | undefined;
+  if (month === undefined) throw new UpstreamShapeError('portfolio has no perpMonth');
+  const points = arrayOf(month[1]?.pnlHistory, 'perpMonth pnlHistory');
+  if (points.length < 2) throw new UpstreamShapeError('perpMonth pnlHistory has fewer than two points');
+  const values = points.map((point) => {
+    if (!Array.isArray(point) || point.length !== 2) throw new UpstreamShapeError('perpMonth pnlHistory point is not a pair');
+    const [at, value] = point as [unknown, unknown];
+    if (typeof at !== 'number' || !Number.isFinite(at)) throw new UpstreamShapeError('perpMonth pnlHistory timestamp is not a number');
+    if (typeof value !== 'string') throw new UpstreamShapeError('perpMonth pnlHistory value is not a string');
+    return finite(value, 'perpMonth pnlHistory value');
+  });
+  const pnlUsd = values[values.length - 1] - values[0];
+  if (!Number.isFinite(pnlUsd)) throw new UpstreamShapeError('perpMonth pnlHistory change is not a finite number');
+  return { basis: 'realized-and-unrealized', pnlUsd, windowDays };
 }

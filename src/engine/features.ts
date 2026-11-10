@@ -233,8 +233,10 @@ export interface HedgeFeatures {
    * does. The first is a gap in this tool, the second a judgement about the
    * token. */
   unverifiedOnUnsupportedChainUsd: number;
-  /** Matching holdings that no price could be put on. Their size is unknown,
-   * so they are counted, not valued. */
+  /** Matching holdings that no price could be put on, and on-chain holdings
+   * named like the asset whose contract is not recognised (a look-alike
+   * staking token) that no price could be put on either. Their size is
+   * unknown, so they are counted, not valued. */
   unpricedMatches: number;
   /** Which endpoint each counted dollar came from. The card used to sign the
    * whole figure "Nansen" whenever Nansen had been asked, including the part
@@ -248,8 +250,10 @@ export interface HedgeFeatures {
 /** What a hedge ratio was measured over: `none` when the headline is not a
  * short (spot cannot offset it, so the ratio is zero by definition),
  * `all-chains` when the account's balances on every chain were read,
- * `hyperliquid` when only its Hyperliquid spot was. */
-export type HedgeScope = 'none' | 'hyperliquid' | 'all-chains';
+ * `hyperliquid` when only its Hyperliquid spot was, `known-tokens` when its
+ * Hyperliquid spot plus the registry tokens on Ethereum, Arbitrum and HyperEVM
+ * were read from public nodes. */
+export type HedgeScope = 'none' | 'hyperliquid' | 'all-chains' | 'known-tokens';
 
 /** How completely the account's own matching holdings were established.
  * `partial` and `missing` can only ever hide holdings, never invent them, so
@@ -288,12 +292,20 @@ export function computeHedgeFeatures(
   const hedgeUsd = sum(counted);
   const unknownContract = by('unknown-contract');
   const unsupportedChain = by('unsupported-chain');
+  // Any unrecognised on-chain contract holding that has no price - today only
+  // the look-alike watchlist, since the nodes are asked about nothing else
+  // outside the registry - has no dollars to put in `unverifiedUsd` (its value
+  // is 0), so the gap would vanish: a restaking farm held as rsETH, read while
+  // Hyperliquid's ETH mark is missing, would show nothing at all. Counted with
+  // the unpriced matches, which the verdict already reads as "size unknown,
+  // no verdict".
+  const unpricedUnknown = unknownContract.filter((h) => h.source === 'onchain' && h.priced === false);
   return {
     hedgeUsd,
     hedgeRatio: hedgeUsd / headlineNotionalUsd,
     unverifiedUsd: sum(unknownContract) + sum(unsupportedChain),
     unverifiedOnUnsupportedChainUsd: sum(unsupportedChain),
-    unpricedMatches: by('unpriced').length,
+    unpricedMatches: by('unpriced').length + unpricedUnknown.length,
     hedgeUsdBySource: {
       hyperliquidSpot: sum(counted.filter((h) => h.source === 'hyperliquid-spot')),
       onchain: sum(counted.filter((h) => h.source === 'onchain')),

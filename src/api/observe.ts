@@ -4,44 +4,54 @@
  * here. Rules and words are src/engine/interpret.ts, and see nothing but the
  * Observation this returns.
  *
- * Reads in stages so that every Nansen credit is spent only where its answer
- * can still change the verdict: positions and PnL always; the account's own
- * balances on other chains only when a hedge could move the answer; linked
- * wallets only when those balances leave it open. Deciding whether a stage
- * is worth paying for needs the features read so far, which is why the
- * features are computed here, as the reads come in, rather than after them.
+ * Positions come from Hyperliquid itself, every perp dex of it
+ * (src/sources/positions.ts), and cost nothing. Balances on other chains come
+ * from public nodes (src/sources/onchain.ts), read only when a hedge could
+ * move the answer. The 30-day PnL is Hyperliquid's own `portfolio`, one
+ * request, read when context is requested. The funding links and a long's
+ * funding history come from a block explorer (src/sources/explorer.ts), read
+ * only where the answer can still change the verdict or is asked for: linked
+ * wallets only when the account's own balances leave the answer open, funding
+ * history only when context is requested. Deciding whether a read is worth
+ * making needs the features read so far, which is why the features are
+ * computed here, as the reads come in, rather than after them.
  */
 import {
-  getClearinghouseState,
   getOpenOrders,
   getSpotBalances,
   getSpotMeta,
   getPerpMetaAndAssetCtxs,
   getUserFillsByTime,
   getPerpDexRegistry,
+  getPortfolio,
   getQuoteMid,
   dexOf,
 } from '../sources/hyperliquid';
 import {
-  normalizePositions,
   normalizeOrders,
   normalizeTrades,
   buildSpotPriceIndex,
   normalizeSpotHoldings,
   duplicateSpotTokenNames,
-  normalizeNansenPositions,
-  normalizeNansenBalances,
-  normalizeRelatedWallets,
-  normalizeNansenPnl,
+  normalizePortfolioPnl,
 } from '../sources/normalize';
-import type { NansenClient } from '../sources/nansen';
+import { readFundingLinks, type ChainRead, type ExplorerConfig, type FundingChain } from '../sources/explorer';
+import { isRequestBudgetExceeded, requestBudgetOf, REQUEST_LIMIT_REASON } from '../requestBudget';
+import { readAllDexPositions, type PositionsReader } from '../sources/positions';
+import {
+  CHAIN_NAMES,
+  HOLDINGS_CHAINS,
+  readOnchainHoldings,
+  underlyingPricesFrom,
+  type HoldingsChain,
+  type OnchainHoldings,
+  type UnderlyingPrices,
+} from '../sources/onchain';
 import type { HlOpenOrder, HlPerpAssetCtx, HlPerpMeta, HlSpotBalance } from '../sources/hyperliquid';
 import {
   checkFills,
-  checkNansenBalances,
   checkOrders,
   checkPerpMeta,
-  checkRelatedWallets,
   checkSpotBalances,
   checkSpotMeta,
   type Checked,
@@ -59,20 +69,27 @@ import {
   type LinkedHedgeFeatures,
 } from '../engine/features';
 import { hedgeCanChangeVerdict, DEFAULT_THRESHOLDS, type SourceCoverage } from '../engine/verdict';
-import { spotHedgesPerp } from '../engine/assets';
+import {
+  NATIVE_PLACEHOLDER,
+  isWatchlistToken,
+  nativeToken,
+  registryTokens,
+  spotHedgesPerp,
+  watchlistTokens,
+} from '../engine/assets';
 import { parsePerpVenues } from '../marketRegistry';
 import { quoteGeometry } from '../engine/quoteDiagnostics';
 import { marketDefinition } from '../engine/marketIdentity';
 import { formatUsd, formatPct } from '../engine/evidence';
 import { computeVitals, type VitalsItem } from '../engine/vitals';
 import { OBSERVATION_SCHEMA_VERSION, ASSET_REGISTRY_VERSION, type Observation } from '../engine/observation';
-import type { Position, SpotHolding, LinkedWallet, PnlSummary } from '../types';
+import type { Position, SpotHolding, PnlSummary } from '../types';
 
 const TRADES_WINDOW_HOURS = 24;
 const PNL_WINDOW_DAYS = 30;
 const MAX_FUNDERS = 2;
 /** How small a long's own portfolio has to be before its funding history is
- * worth two credits: past this, the account is not the shape a single
+ * worth two requests: past this, the account is not the shape a single
  * viral post highlights, and the signal says less about any one position
  * in it (audit L02a, mirrors the bet rule's own position-count bar). */
 const MAX_POSITIONS_FOR_FUNDING_CONTEXT = 5;
@@ -88,57 +105,158 @@ export const CHECK_DEADLINE_MS = 45_000;
 const STALE_DATA_MS = 15 * 60_000;
 
 export interface ObserveOptions {
-  /** Optional PnL/funding context is paid only when explicitly requested. */
+  /** Optional PnL/funding context, read unless this is false: the PnL is one
+   * Hyperliquid request, a long's funding history two or three explorer
+   * requests. */
   includeContext?: boolean;
-  /** null runs Hyperliquid-only: no key, credit cap reached, or a test. */
-  nansen: NansenClient | null;
-  /** Why `nansen` is null, in words for the card. */
-  nansenOffReason?: string;
+  /** How the block explorer is reached for the funding links. Without a key
+   * only Ethereum can be read, and Arbitrum is said to be not read. */
+  explorer?: ExplorerConfig;
   /** The position the reader asked about, rather than the largest one. */
   focus?: { coin: string; side: 'long' | 'short' } | null;
   now?: () => number;
-  /** Absolute time past which no further paid stage is started. */
+  /** Absolute time past which no further optional read is started. */
   deadline?: number;
   /** Aborts requests already in flight when that time runs out. The
    * deadline on its own only stops new stages from starting: a pair of
    * reads that had already begun could still run for two upstream timeouts
    * past it (audit R04). */
   signal?: AbortSignal;
+  /** Reads the account's positions on every Hyperliquid dex. A live read by
+   * default; the Worker passes one that reuses a complete reading of the
+   * same address for a minute (src/sources/positions.ts). */
+  readPositions?: PositionsReader;
 }
 
-/** The reason a staged Nansen read was never sent, when the credit meter
- * refused it or could not be reached (src/sources/stagedNansen.ts); null
- * for any other failure, which is Nansen's own. */
-function budgetBlockReason(err: unknown): string | null {
-  const message = err instanceof Error ? err.message : String(err);
-  const m = /credit budget unavailable[^:]*: (.+)$/.exec(message);
-  return m ? m[1] : null;
+/** Requests the account's holdings on other chains need: one per chain. */
+const HOLDINGS_RESERVE = 3;
+/** Requests the funder search needs: the explorer's three reads (Ethereum, Arbitrum,
+ * and the Ethereum-chain label of the Arbitrum sender), then 2 funders x 3 chains. */
+const LINKS_RESERVE = 9;
+/** The block explorer's chains by name, for the card. */
+const FUNDING_CHAIN_NAMES: Record<FundingChain, string> = { ethereum: 'Ethereum', arbitrum: 'Arbitrum' };
+const KEPT_FOR_VERDICT = 'the check kept its remaining requests for the reads that decide the verdict';
+/** "A", "A and B", "A, B and C". */
+function listText(items: string[]): string {
+  return items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
+/** The recognised tokens in the order the scope note lists them. The
+ * registry's own order is by chain and address, so it is not used for display;
+ * a symbol the registry gains that is not listed here is added at the end. */
+const TOKEN_DISPLAY_ORDER = ['ETH', 'WETH', 'stETH', 'wstETH', 'rETH', 'cbETH', 'weETH', 'aEthWETH', 'WBTC', 'cbBTC', 'HYPE', 'WHYPE'];
+const TOKEN_DISPLAY_NAMES: Record<string, string> = { aEthWETH: 'Aave WETH deposits' };
+/** The look-alike staking tokens in the order the scope note lists them. */
+const LOOKALIKE_DISPLAY_ORDER = ['rsETH', 'ezETH', 'mETH', 'ETHx', 'osETH'];
+
+/** What a holdings read from public nodes covers, said whenever one ran: the
+ * chains it did read, in their usual order, the tokens recognised on those
+ * chains, the look-alike staking tokens looked for on them (never counted as
+ * cover), and no others. */
+function knownTokensNote(read: HoldingsChain[]): string {
+  const chainsRead = HOLDINGS_CHAINS.filter((c) => read.includes(c));
+  const present = new Set<string>();
+  const lookalikes = new Set<string>();
+  for (const chain of chainsRead) {
+    const native = nativeToken(chain);
+    if (native) present.add(native.symbol);
+    for (const token of registryTokens(chain)) present.add(token.symbol);
+    for (const token of watchlistTokens(chain)) lookalikes.add(token.symbol);
+  }
+  const ordered = (set: Set<string>, order: string[]) => [
+    ...order.filter((symbol) => set.has(symbol)),
+    ...[...set].filter((symbol) => !order.includes(symbol)),
+  ];
+  const tokens = ordered(present, TOKEN_DISPLAY_ORDER).map((symbol) => TOKEN_DISPLAY_NAMES[symbol] ?? symbol).join(', ');
+  // Said only for the chains actually read, like the recognised list: a
+  // chain that was not read looked for nothing.
+  const lookedFor =
+    lookalikes.size > 0
+      ? `look-alike staking tokens (${ordered(lookalikes, LOOKALIKE_DISPLAY_ORDER).join(', ')}) ` +
+        'were looked for but are never counted as cover; '
+      : '';
+  return (
+    `Balances on other chains: only the tokens this tool recognises (${tokens}) on ` +
+    `${listText(chainsRead.map((c) => CHAIN_NAMES[c]))} were read; ${lookedFor}other tokens and other chains were not`
+  );
+}
+
+/** A funding wallet's holding the read could not value - no Hyperliquid mark
+ * for its underlying, or no liquid-staking rate - left out at $0, which is
+ * not a finding that the wallet holds none. */
+const UNPRICED_FUNDER_NOTE =
+  'A funding wallet holds tokens this tool recognises that could not be priced, so its holdings may be understated';
+
+/** The chains of a holdings read that the request limit refused, by name. */
+const refusedChains = (read: OnchainHoldings): string[] =>
+  read.failed.filter((f) => f.reason === 'limit').map((f) => CHAIN_NAMES[f.chain]);
+
+/** The underlyings (ETH, BTC, HYPE) of holdings left unpriced because
+ * Hyperliquid's mark for them was not read, registry tokens and look-alike
+ * staking tokens alike. A holding unpriced for another reason - a
+ * liquid-staking rate that did not answer - is not one of them. */
+function unmarkedUnderlyings(holdings: OnchainHoldings['holdings'], prices: UnderlyingPrices): string[] {
+  const missing = new Set<string>();
+  for (const { priced, chain, tokenAddress } of holdings) {
+    if (priced !== false || chain === undefined || tokenAddress === undefined) continue;
+    const underlying =
+      tokenAddress === NATIVE_PLACEHOLDER
+        ? nativeToken(chain)?.underlying
+        : (registryTokens(chain).find((t) => t.tokenAddress === tokenAddress) ??
+            watchlistTokens(chain).find((t) => t.tokenAddress === tokenAddress))?.underlying;
+    if (underlying !== undefined && prices[underlying as keyof UnderlyingPrices] === undefined) missing.add(underlying);
+  }
+  return (['ETH', 'BTC', 'HYPE'] as const).filter((u) => missing.has(u));
+}
+
+/** How many requests a check must keep back from the descriptive reads so the
+ * ones that decide the verdict still fit: the orders still to be read on named
+ * dexes, and for a short the holdings reads that can still offset it, plus the
+ * funder search (the explorer's three reads, then the funders' holdings). */
+function ruleReserve(pendingOrderDexes: number, side: 'long' | 'short' | null): number {
+  return pendingOrderDexes + (side === 'short' ? HOLDINGS_RESERVE + LINKS_RESERVE : 0);
+}
+
+/** What the card says about one explorer chain that was not read in full;
+ * null for a chain read to the end. */
+function fundingChainNote(read: ChainRead): string | null {
+  const name = FUNDING_CHAIN_NAMES[read.chain];
+  if (read.status === 'read') {
+    return read.complete
+      ? null
+      : `Funding links on ${name}: the first page held no incoming transaction with a value, so the earliest funder may be missing`;
+  }
+  if (read.reason === 'limit') return `Funding links on ${name} were not read: ${REQUEST_LIMIT_REASON}`;
+  if (read.reason === 'no-key') return `Funding links on ${name} were not read: no explorer key is configured`;
+  return `Funding links on ${name} could not be read`;
 }
 
 export async function observe(address: string, opts: ObserveOptions): Promise<Observation> {
   const clock = opts.now ?? Date.now;
   const now = clock();
-  // Four paid stages at the 20 s Nansen timeout, plus the free reads, can
-  // outlast any reader's patience and hold a budget reservation the whole
-  // time. Past the deadline the remaining paid stages are skipped and said
-  // to be skipped, which is a partial answer rather than a slow wrong one.
+  // The optional reads, each at its own timeout, plus the free reads, can
+  // outlast any reader's patience. Past the deadline the remaining optional
+  // reads are skipped and said to be skipped, which is a partial answer
+  // rather than a slow wrong one.
   //
   // One clock, the caller's: mixing an injected `now` with a direct
   // Date.now() made the time budget untestable and the two could disagree.
   const deadline = opts.deadline ?? now + CHECK_DEADLINE_MS;
   const outOfTime = () => clock() > deadline;
-  const day = (daysAgo: number) => new Date(now - daysAgo * 86_400_000).toISOString().slice(0, 10);
   const coverage: string[] = [];
   const coverageNotes: Array<{ text: string; failure: boolean }> = [];
-  const nansen = opts.nansen;
+  const explorer: ExplorerConfig = opts.explorer ?? {};
 
-  // The free reads go first: if Hyperliquid is down, the check fails before a
-  // single credit is spent.
-  // Orders and spot balances must answer. Fills and spot prices may fail,
-  // but then their coverage is explicitly incomplete. Perp metadata only
-  // decorates the card and may be unavailable.
+  // Hyperliquid's own reads go first: if it is down, the check fails before
+  // any other source is asked.
+  // Orders, spot balances and positions must answer. Fills and spot prices
+  // may fail, but then their coverage is explicitly incomplete. Perp
+  // metadata decorates the card and prices the on-chain holdings (marks), and
+  // may be unavailable; unpriced holdings are then said to be unpriced.
   const signal = opts.signal;
-  const [rawOrders, spotBalances, spotMetaPair, rawFills, perpMetaRes, mainDexRes] = await Promise.all([
+  const budget = requestBudgetOf(signal);
+  const readPositions: PositionsReader = opts.readPositions ?? ((a, s) => readAllDexPositions(a, { signal: s }));
+  const [rawOrders, spotBalances, spotMetaPair, rawFills, perpMetaRes, positionsRead] = await Promise.all([
     getOpenOrders(address, undefined, signal),
     getSpotBalances(address, signal),
     getSpotMeta(signal).then(v => ({ ok: true as const, v }), () => ({ ok: false as const, v: null })),
@@ -148,12 +266,10 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
       (v) => ({ ok: true as const, v }),
       () => ({ ok: false as const, v: null }),
     ),
-    // Free, always fired, tolerant of failure - used only for the
-    // Nansen-contribution comparison line and, if Nansen fails, the fallback.
-    getClearinghouseState(address, signal).then(
-      (v) => ({ ok: true as const, v }),
-      () => ({ ok: false as const, v: null }),
-    ),
+    // Every dex: the main one must answer, or this rejects and the check
+    // fails like any source that is down; a named dex that does not answer
+    // makes the reading partial and is named below.
+    readPositions(address, signal),
   ]);
   // Every answer's shape is checked before any of it is used
   // (src/sources/validate.ts). A wrong envelope throws here, which fails the
@@ -177,14 +293,7 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   }
   if (!perpMeta) coverage.push('Open interest unavailable, so size versus open interest is not shown');
 
-  let source: Observation['source'] = 'hyperliquid';
-  /** Set when the first paid stage was never sent because the credit meter
-   * refused it or could not be reached: a different fact from Nansen not
-   * answering, and the card says which. */
-  let budgetBlocked: string | null = null;
-  let positions: Position[] | null = null;
   let pnl: PnlSummary | null = null;
-  let measuredAt: number | null = null;
   // Set wherever a source that feeds a rule could not be read in full.
   let degraded = false;
   /** A coverage note. `failure` marks the ones that make the answer worth
@@ -197,72 +306,24 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   if (spotMetaMissing) note('Spot prices unavailable: balances are kept as unpriced; coverage cannot be established from them', true);
   if (fillsMissing) note('Recent fills unavailable: trading activity and position flow could not be read', true);
 
-  if (nansen && outOfTime()) {
-    // The free reads alone can use up the budget when Hyperliquid is slow,
-    // and the first paid stage used to start regardless.
-    note('This check ran out of time before it could read positions from Nansen', true);
-  } else if (nansen) {
-    const [pos, pnlRes] = await Promise.allSettled([
-      nansen.perpPositions(address),
-      opts.includeContext === false ? Promise.resolve(null) : nansen.perpPnlSummary(address, day(PNL_WINDOW_DAYS), day(0)),
-    ]);
-    // A 200 with the wrong body has to end up in the same place as a failed
-    // request, not in a TypeError that skips the fallback entirely.
-    if (pos.status === 'fulfilled') {
-      try {
-        positions = normalizeNansenPositions(pos.value);
-        source = 'nansen';
-        measuredAt = Number.isFinite(pos.value.timestamp) && pos.value.timestamp > 0 ? pos.value.timestamp : null;
-      } catch (err) {
-        console.error('nansen positions', err);
-        degraded = true;
-        coverage.push(
-          'Nansen positions came back in an unexpected shape: positions read from Hyperliquid, main dex only',
-        );
-      }
-    } else {
-      degraded = true;
-      budgetBlocked = budgetBlockReason(pos.reason);
-      coverage.push('Nansen positions unavailable: positions read from Hyperliquid, main dex only');
-    }
-    if (opts.includeContext === false) {
-      note('Optional PnL and funding-age context not requested; this does not affect exposure evidence');
-    } else if (pnlRes.status === 'fulfilled' && pnlRes.value !== null) {
-      try {
-        pnl = normalizeNansenPnl(pnlRes.value, PNL_WINDOW_DAYS);
-      } catch (err) {
-        console.error('nansen pnl', err);
-        coverage.push('Realized PnL came back in an unexpected shape');
-      }
-    } else {
-      coverage.push('Realized PnL unavailable');
-    }
-  } else if (nansen === null) {
-    const why = opts.nansenOffReason ? ` (${opts.nansenOffReason})` : '';
-    // A cheaper check is still a check with sources missing from it, and the
-    // answer it produces is not worth the ten-minute cache of a whole one.
-    note(`Nansen not used${why}: main-dex positions only, no other chains, no linked wallets`, true);
+  // A dex that was not read, or a list of dexes that was not read, is a
+  // place a position could be that nobody looked: the reading is partial
+  // there, and no rule may treat it as the whole portfolio.
+  const positions: Position[] = positionsRead.positions;
+  const positionsCoverage: SourceCoverage = positionsRead.coverage;
+  const measuredAt =
+    typeof positionsRead.measuredAt === 'number' && Number.isFinite(positionsRead.measuredAt) && positionsRead.measuredAt > 0
+      ? positionsRead.measuredAt
+      : null;
+  for (const dex of positionsRead.failed) {
+    note(`Positions on the ${dex} dex could not be read, so this reading may be missing positions there`, true);
   }
-  let mainDexPositionCount: number | null = null;
-  if (source === 'nansen' && mainDexRes.ok) {
-    try {
-      mainDexPositionCount = normalizePositions(mainDexRes.v).length;
-    } catch (err) {
-      console.error('main-dex comparison', err);
-      // Purely informational; a malformed answer here must not affect the
-      // check or its verdict in any way.
-    }
+  if (!positionsRead.venues.registryRead) {
+    note('The list of Hyperliquid dexes could not be read: positions on named (HIP-3) dexes are not included', true);
   }
-  // Nansen reports every HIP-3 dex; Hyperliquid's own clearinghouse answers
-  // for the main perp dex only. A fallback reading is therefore part of the
-  // portfolio, not the portfolio, and no rule may treat it as the whole.
-  let positionsCoverage: SourceCoverage = 'complete';
-  if (positions === null) {
-    const state = mainDexRes.ok ? mainDexRes.v : await getClearinghouseState(address, signal);
-    positions = normalizePositions(state);
-    measuredAt = Number.isFinite(state.time) && state.time > 0 ? state.time : null;
-    positionsCoverage = 'partial';
-    coverage.push('Positions read from Hyperliquid alone: a position on a HIP-3 dex would not appear here');
+
+  if (opts.includeContext === false) {
+    note('Optional PnL and funding-age context not requested; this does not affect exposure evidence');
   }
 
   // A timestamp from the source is the time the numbers describe; checkedAt
@@ -283,12 +344,56 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   // is rather than from where the position was opened.
   const markPxByCoin = new Map<string, number>();
   const contextByCoin = new Map<string, HlPerpAssetCtx>();
-  const dexes = [...new Set(positions.map(p => dexOf(p.coin)).filter((d): d is string => d !== null))];
-  const dexMetadata = await Promise.allSettled(dexes.map(dex => getPerpMetaAndAssetCtxs(signal, dex)));
+  // Only the headline reads a named dex's marks (its liquidation distance) and
+  // asset context (its vitals), so market data is read for its dex alone. The
+  // headline is picked first, from the main dex's marks, which only matter for
+  // a headline on the main dex.
+  const mainMarks = new Map<string, number>();
+  if (perpMeta) {
+    perpMeta[0].universe.forEach((asset, i) => {
+      const markPx = Number(perpMeta[1][i]?.markPx);
+      if (Number.isFinite(markPx) && markPx > 0) mainMarks.set(asset.name, markPx);
+    });
+  }
+  const firstPick = computePositionFeatures(positions, mainMarks, opts.focus);
+  const headlineDex = dexOf(firstPick.headlineCoin || '');
+  const hip3Dexes = [...new Set(positions.map((p) => dexOf(p.coin)).filter((d): d is string => d !== null))];
   const metadata = perpMeta ? [perpMeta] : [];
-  for (const result of dexMetadata) {
-    if (result.status !== 'fulfilled') continue;
-    try { metadata.push(checkPerpMeta(result.value)); } catch { /* risk metrics stay unavailable */ }
+  // What the descriptive reads leave for the ones that decide the verdict,
+  // before the named dexes' orders are read.
+  const reserveBeforeOrders = ruleReserve(hip3Dexes.length, firstPick.headlineSide);
+  if (headlineDex !== null && budget && !budget.affords(1, reserveBeforeOrders)) {
+    note(`Market data for the ${headlineDex} dex was not read: ${KEPT_FOR_VERDICT}`);
+  } else if (headlineDex !== null) {
+    try { metadata.push(checkPerpMeta(await getPerpMetaAndAssetCtxs(signal, headlineDex))); } catch { /* risk metrics stay unavailable */ }
+  }
+
+  // The 30-day PnL is Hyperliquid's own `portfolio`, one request, and is
+  // context: asked for only when the reading wants it, and never a reason to
+  // lose the check or to lower a verdict. Like the other descriptive reads it
+  // gives way to the reads that decide the verdict, and is skipped when the
+  // check is out of time; either is said, as context.
+  if (opts.includeContext !== false) {
+    if (outOfTime()) {
+      note('PnL was not read: this check ran out of time');
+    } else if (budget && !budget.affords(1, reserveBeforeOrders)) {
+      note(`PnL was not read: ${KEPT_FOR_VERDICT}`);
+    } else {
+      try {
+        const raw = await getPortfolio(address, signal);
+        // A 200 with the wrong body is a missing PnL, not a TypeError that
+        // loses the check, and never a PnL of zero.
+        try {
+          pnl = normalizePortfolioPnl(raw, PNL_WINDOW_DAYS);
+        } catch (err) {
+          console.error('hyperliquid portfolio', err);
+          coverage.push('PnL came back in an unexpected shape');
+        }
+      } catch (err) {
+        console.error('hyperliquid portfolio', err);
+        coverage.push('PnL unavailable');
+      }
+    }
   }
   for (const [perpUniverse, perpAssetCtxs] of metadata) {
     perpUniverse.universe.forEach((asset, i) => {
@@ -303,15 +408,17 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   let definition: Observation['marketDefinition'];
   if (venue) {
     try {
-      const entry = parsePerpVenues(await getPerpDexRegistry(signal)).find(v => v.name === venue);
+      const entry = parsePerpVenues(positionsRead.registry ?? await getPerpDexRegistry(signal)).find(v => v.name === venue);
       definition = marketDefinition(positionFeatures.headlineCoin!, entry ?? null, now);
       positionFeatures.headlineUnderlyingVerified = definition.status === 'documented';
       marketProvenance = { venue, status: 'complete', listed: !!entry, deployer: entry?.deployer || null, oracleUpdater: entry?.oracleUpdater || null,
         underlyingVerified: positionFeatures.headlineUnderlyingVerified === true, at: new Date(now).toISOString() };
-    } catch {
+    } catch (err) {
       definition = marketDefinition(positionFeatures.headlineCoin!, null, now);
       marketProvenance = { venue, status: 'missing', listed: null, deployer: null, oracleUpdater: null, underlyingVerified: false, at: new Date(now).toISOString() };
-      note('HIP-3 venue registry unavailable; deployer and oracle updater are not established');
+      note(isRequestBudgetExceeded(err)
+        ? `The HIP-3 venue registry was not read: ${REQUEST_LIMIT_REASON}; deployer and oracle updater are not established`
+        : 'HIP-3 venue registry unavailable; deployer and oracle updater are not established');
     }
   }
   // Asking about a position that is not open is worth saying out loud: the
@@ -336,18 +443,18 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
     coverageNotes.push({ text, failure: true });
   }
 
-  // frontendOpenOrders answers for one perp dex and spot. Nansen reports
-  // positions on every HIP-3 dex as well, so without asking those by name an
-  // account quoting both sides of a HIP-3 market reads as quoting nothing -
-  // which is one of the conditions for calling a position a clean bet.
+  // frontendOpenOrders answers for one perp dex and spot. The positions come
+  // from every HIP-3 dex as well, so without asking those by name an account
+  // quoting both sides of a HIP-3 market reads as quoting nothing - which is
+  // one of the conditions for calling a position a clean bet.
   const resting = normalizeOrders(ordersRead.rows);
   let malformedOrders = ordersRead.malformed;
   let ordersCoverage: SourceCoverage = 'complete';
-  const hip3Dexes = [...new Set(positions.map((p) => dexOf(p.coin)).filter((d): d is string => d !== null))];
   if (hip3Dexes.length > 0) {
     const perDex = await Promise.allSettled(hip3Dexes.map((dex) => getOpenOrders(address, dex, signal)));
     perDex.forEach((r, i) => {
       let read: Checked<HlOpenOrder> | null = null;
+      const refused = r.status === 'rejected' && isRequestBudgetExceeded(r.reason);
       if (r.status === 'fulfilled') {
         try {
           read = checkOrders(r.value);
@@ -364,7 +471,12 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
         // answered with something that is not a list of orders - has not
         // been shown to be quiet.
         ordersCoverage = 'partial';
-        note(`Resting orders on the ${hip3Dexes[i]} dex could not be read`, true);
+        note(
+          refused
+            ? `Resting orders on the ${hip3Dexes[i]} dex were not read: ${REQUEST_LIMIT_REASON}`
+            : `Resting orders on the ${hip3Dexes[i]} dex could not be read`,
+          true,
+        );
       }
     });
   }
@@ -381,11 +493,13 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   const orderFeatures = computeOrderFeatures(resting, positionFeatures.headlineCoin);
   let quoteMid: number | null = null;
   if (orderFeatures.headlineTwoSided && positionFeatures.headlineCoin && !outOfTime()) {
-    try { quoteMid = await getQuoteMid(positionFeatures.headlineCoin, signal); } catch { /* descriptive fallback to mark, never changes verdict */ }
+    if (budget && !budget.affords(1, ruleReserve(0, positionFeatures.headlineSide))) {
+      note(`The order book mid was not read: ${KEPT_FOR_VERDICT}`);
+    } else try { quoteMid = await getQuoteMid(positionFeatures.headlineCoin, signal); } catch { /* descriptive fallback to mark, never changes verdict */ }
   }
   // A HIP-3 dex this account merely quotes on, with no open position, is not
-  // in `hip3Dexes` at all - nothing here asks Hyperliquid to name every dex
-  // that exists, only the ones a position points at. "Complete" is therefore
+  // in `hip3Dexes` at all - orders are asked for only on the dexes a position
+  // points at, not on every dex there is. "Complete" is therefore
   // a claim about the venues checked, not about every venue there is. It
   // only matters once the venues checked come back quiet - a bet or book
   // rule is about to read that silence as "quotes nothing" - so the caveat
@@ -412,32 +526,50 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   const hasLiability = spotRead.rows.some(b => Number(b.total) < 0 && positionFeatures.headlineCoin !== null && spotHedgesPerp(b.coin, positionFeatures.headlineCoin, { source: 'hyperliquid-spot' }));
   const hedgeMatters = hedgeCanChangeVerdict({ positions: positionFeatures, orders: orderFeatures, trades: tradeSignal, hedge: { hasUnresolvedLiability: hasLiability } });
 
+  // The registry tokens and the look-alike staking tokens on Ethereum,
+  // Arbitrum and HyperEVM are priced with the main dex's own marks, already in
+  // hand: no request is spent on prices.
+  const prices = underlyingPricesFrom(mainMarks);
   let ownChain: SpotHolding[] = [];
   let otherChainsRead = false;
   // Only a short can be offset by spot, so for anything else there is no
   // hedge to look for. For a short, Hyperliquid balances alone are a partial
-  // answer until Nansen fills in the other chains.
+  // answer until the public nodes fill in the other chains.
   let hedgeCoverage: HedgeCoverage = positionFeatures.headlineSide === 'short' ? 'partial' : 'not-applicable';
-  if (nansen && hedgeMatters && outOfTime()) {
+  if (hedgeMatters && outOfTime()) {
     note('This check ran out of time before it could read holdings on other chains', true);
-  } else if (nansen && hedgeMatters) {
-    try {
-      const bal = await nansen.currentBalance(address, 3);
-      const read = checkNansenBalances(bal.rows);
-      ownChain = normalizeNansenBalances(read.rows);
-      otherChainsRead = true;
-      hedgeCoverage = bal.complete && read.malformed === 0 ? 'complete' : 'partial';
-      if (!bal.complete) note('Holdings on other chains: first 300 tokens only', true);
-      if (read.malformed > 0) {
-        note(
-          `${read.malformed} of the account's balances on other chains came back malformed and were left out, ` +
-            'so the cover found there is a floor',
-          true,
-        );
-      }
-    } catch {
-      hedgeCoverage = 'missing';
-      note('Holdings on other chains unavailable', true);
+  } else if (hedgeMatters) {
+    const own = await readOnchainHoldings(address, prices, signal);
+    ownChain = own.holdings;
+    otherChainsRead = own.read.length > 0;
+    // A chain not read, or a token on one that came back unreadable, can
+    // only have hidden cover: the read is complete only when neither happened.
+    hedgeCoverage =
+      own.read.length === 0
+        ? 'missing'
+        : own.read.length === HOLDINGS_CHAINS.length && own.unreadTokens === 0
+          ? 'complete'
+          : 'partial';
+    if (otherChainsRead) note(knownTokensNote(own.read));
+    for (const { chain, reason } of own.failed) {
+      note(
+        reason === 'limit'
+          ? `Holdings on ${CHAIN_NAMES[chain]} were not read: ${REQUEST_LIMIT_REASON}`
+          : `Holdings on ${CHAIN_NAMES[chain]} could not be read`,
+        true,
+      );
+    }
+    if (own.unreadTokens > 0) {
+      note(
+        own.unreadTokens === 1
+          ? '1 token balance on other chains came back unreadable and was left out, so the cover found there is a floor'
+          : `${own.unreadTokens} token balances on other chains came back unreadable and were left out, so the cover ` +
+              'found there is a floor',
+        true,
+      );
+    }
+    for (const coin of unmarkedUnderlyings(own.holdings, prices)) {
+      note(`Holdings on other chains could not be priced: Hyperliquid's ${coin} price was not read`, true);
     }
   }
   const [spotMeta, spotAssetCtxs] = spotMetaRead.meta;
@@ -488,27 +620,30 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   }
 
   const hedgeScope: HedgeScope =
-    positionFeatures.headlineSide !== 'short' ? 'none' : otherChainsRead ? 'all-chains' : 'hyperliquid';
+    positionFeatures.headlineSide !== 'short' ? 'none' : otherChainsRead ? 'known-tokens' : 'hyperliquid';
 
+  // A short this lightly covered could have its cover in a wallet that funded
+  // it. The funding links are the explorer's; a chain it cannot read (no key
+  // for Arbitrum, a refusal, the request limit) leaves the search partial,
+  // which no rule reads as clean.
   const funderLookupWorthIt =
-    nansen !== null && hedgeMatters && hedgeFeatures.hedgeRatio < DEFAULT_THRESHOLDS.hedged.linkedLookupBelowRatio;
+    hedgeMatters && hedgeFeatures.hedgeRatio < DEFAULT_THRESHOLDS.hedged.linkedLookupBelowRatio;
   let linkedHedge: LinkedHedgeFeatures | null = null;
   let linkedHedgeCoverage: HedgeCoverage = 'not-applicable';
   if (funderLookupWorthIt && outOfTime()) {
     note('This check ran out of time before it could look at the wallets that funded the account', true);
     linkedHedgeCoverage = 'missing';
   } else if (funderLookupWorthIt) {
-    const result = await readLinkedHedge(nansen!, address, positionFeatures, note);
+    const result = await readLinkedHedge(explorer, address, positionFeatures, prices, note, signal);
     linkedHedge = result.features;
     linkedHedgeCoverage = result.coverage;
   }
 
   // Spot cannot hedge a long, so the funder search above never runs for one
-  // - but a long's own funding history is Nansen context a hedge search can
-  // never reach, and it is cheap to ask for exactly the small, simple
-  // accounts a viral post usually highlights (audit L02a).
+  // - but a long's own funding history is context a hedge search can never
+  // reach, and it is cheap to ask for exactly the small, simple accounts a
+  // viral post usually highlights (audit L02a).
   const fundingContextWorthIt =
-    nansen !== null &&
     opts.includeContext !== false &&
     positionFeatures.headlineSide === 'long' &&
     positionFeatures.nPositions > 0 &&
@@ -517,7 +652,7 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   if (fundingContextWorthIt && outOfTime()) {
     note('This check ran out of time before it could look at when the account was first funded', true);
   } else if (fundingContextWorthIt) {
-    fundingContext = await readFundingContext(nansen!, address, now, note);
+    fundingContext = await readFundingContext(explorer, address, now, note, signal);
   }
 
   const headlineContext = contextByCoin.get(positionFeatures.headlineCoin ?? '');
@@ -537,7 +672,8 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
     headline: headlinePosition,
     headlineLiqDistancePct: positionFeatures.headlineLiqDistancePct,
     headlineLiqDistanceBasis: positionFeatures.headlineLiqDistanceBasis,
-    positionsSource: source === 'nansen' ? 'Nansen' : 'Hyperliquid',
+    // Every position record comes from Hyperliquid's own dexes.
+    positionsSource: 'Hyperliquid',
     sizeVsOi,
     headlineOpenedUsd: tradeFeatures.headlineOpenedUsd,
     headlineClosedUsd: tradeFeatures.headlineClosedUsd,
@@ -568,14 +704,20 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
       if (values.every((value): value is number => value !== null)) vitals.push({ label: `${label}, ${span}`, value: formatUsd(values.reduce((sum, value) => sum + value, 0)), source: 'Hyperliquid' });
     }
   }
-  if (mainDexRes.ok) {
-    const main = mainDexRes.v as { marginSummary?: { accountValue?: unknown; totalNtlPos?: unknown; totalMarginUsed?: unknown }; withdrawable?: unknown };
-    const equity = finiteField(main.marginSummary?.accountValue);
-    const notional = finiteField(main.marginSummary?.totalNtlPos);
+  {
+    // Only the positions in the main-dex answer were checked on the way in;
+    // everything else in it is read as unknown and shown only if it is a
+    // real number.
+    const main = positionsRead.mainState as
+      | { marginSummary?: { accountValue?: unknown; totalNtlPos?: unknown; totalMarginUsed?: unknown }; withdrawable?: unknown }
+      | null
+      | undefined;
+    const equity = finiteField(main?.marginSummary?.accountValue);
+    const notional = finiteField(main?.marginSummary?.totalNtlPos);
     if (equity !== null && equity > 0 && notional !== null) vitals.push({ label: 'Main-dex account leverage', value: (notional / equity).toFixed(1) + 'x', source: 'Hyperliquid' });
-    const withdrawable = finiteField(main.withdrawable);
+    const withdrawable = finiteField(main?.withdrawable);
     if (withdrawable !== null) vitals.push({ label: 'Main-dex withdrawable', value: formatUsd(withdrawable), source: 'Hyperliquid' });
-    const margin = finiteField(main.marginSummary?.totalMarginUsed);
+    const margin = finiteField(main?.marginSummary?.totalMarginUsed);
     if (margin !== null) vitals.push({ label: 'Main-dex margin used', value: formatUsd(margin), source: 'Hyperliquid' });
   }
   if (fillsMissing) {
@@ -583,21 +725,6 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
     if (flow) flow.value = 'Unavailable this time';
   }
 
-  // One source outage should make one readable note, with the exact gaps
-  // still represented by the source-coverage fields used by the classifier.
-  const nansenFailures = coverage.filter(text => /Nansen positions|Realized PnL|Holdings on other chains unavailable|Funding history unavailable|funding wallets.*unavailable|linked wallets.*unavailable/i.test(text));
-  if (nansen && nansenFailures.length) {
-    const text = budgetBlocked
-      ? `Nansen not used (${budgetBlocked}): main-dex positions only, no other chains, no linked wallets`
-      : source === 'hyperliquid'
-      ? 'Nansen did not answer this time. This reading is Hyperliquid-only; cross-dex positions, PnL and funding links may be missing. Try again in a minute.'
-      : 'Nansen could not complete every read this time. Some PnL, holdings or funding links may be missing. Try again in a minute.';
-    const remove = new Set(nansenFailures);
-    if (source === 'hyperliquid') coverage.filter(c => c.startsWith('Positions read from Hyperliquid alone')).forEach(c => remove.add(c));
-    for (let i = coverage.length - 1; i >= 0; i--) if (remove.has(coverage[i])) coverage.splice(i, 1);
-    for (let i = coverageNotes.length - 1; i >= 0; i--) if (remove.has(coverageNotes[i].text)) coverageNotes.splice(i, 1);
-    note(text, true);
-  }
   for (let i = coverage.length - 1; i >= 0; i--) if (coverage.indexOf(coverage[i]) !== i) coverage.splice(i, 1);
     for (let i = coverageNotes.length - 1; i >= 0; i--) {
       if (coverageNotes.findIndex(n => n.text === coverageNotes[i].text) !== i) coverageNotes.splice(i, 1);
@@ -626,8 +753,15 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
     trades: tradeFeatures,
     pnl,
     sizeVsOi,
-    source,
-    mainDexPositionCount,
+    // Every read is Hyperliquid's, the public nodes' or the explorer's: none
+    // is Nansen's any more. 'nansen' stays on the readings saved before.
+    source: 'hyperliquid',
+    positionsVenues: {
+      asked: positionsRead.venues.asked,
+      answered: positionsRead.venues.answered,
+      registryRead: positionsRead.venues.registryRead,
+    },
+    mainDexPositionCount: positionsRead.mainDexCount,
     focus,
     positionsAsOf: measuredAt === null ? null : new Date(measuredAt).toISOString(),
     observationSchemaVersion: OBSERVATION_SCHEMA_VERSION,
@@ -641,55 +775,37 @@ export async function observe(address: string, opts: ObserveOptions): Promise<Ob
   };
 }
 
-/** Two credits for the funding links, then one per funder followed: First
- * Funders only, never an exchange or bridge, at most two. Returns null when
- * no link is worth following. */
+/** The funding links on Ethereum and Arbitrum, read from the block explorer
+ * (two requests, and a third for the label of an Arbitrum sender), then each
+ * funder followed read from public nodes, one request per chain: First
+ * Funders only, never an exchange or bridge, at most two. Returns null when no
+ * link is worth following. */
 async function readLinkedHedge(
-  nansen: NansenClient,
+  explorer: ExplorerConfig,
   address: string,
   positionFeatures: PositionFeatures,
+  prices: UnderlyingPrices,
   note: (text: string, failure?: boolean) => void,
+  signal?: AbortSignal,
 ): Promise<{ features: LinkedHedgeFeatures | null; coverage: HedgeCoverage }> {
-  const links: LinkedWallet[] = [];
-  const related = await Promise.allSettled([
-    nansen.relatedWallets(address, 'arbitrum'),
-    nansen.relatedWallets(address, 'ethereum'),
-  ]);
-  let linksTruncated = false;
-  let chainsFailed = 0;
-  for (const r of related) {
-    if (r.status === 'fulfilled') {
-      try {
-        const read = checkRelatedWallets(r.value.rows);
-        links.push(...normalizeRelatedWallets(read.rows));
-        // A funder left out - to a page cut short or to a row that failed
-        // validation - is a funder whose holdings were never looked at,
-        // exactly the "truncated-or-malformed" pairing the balance step
-        // below already tracks under one flag (spec review, third pass
-        // after A06).
-        if (!r.value.complete || read.malformed > 0) linksTruncated = true;
-        if (read.malformed > 0) note(`${read.malformed} funding links came back malformed on one chain and were left out`, true);
-      } catch (err) {
-        console.error('nansen related wallets', err);
-        note('Linked wallets came back in an unexpected shape on one chain', true);
-        chainsFailed++;
-      }
-    } else {
-      note('Linked wallets unavailable on one chain', true);
-      chainsFailed++;
-    }
-  }
-  if (linksTruncated) {
-    note('Funding links: first 100 only, or rows that came back malformed, so this is not every wallet that funded the account', true);
+  const { links, chains } = await readFundingLinks(address, explorer, signal);
+  for (const read of chains) {
+    const text = fundingChainNote(read);
+    if (text !== null) note(text, true);
   }
   // How completely the search for candidates itself ran, before any
-  // candidate is even chosen: every chain failing outright leaves nothing to
-  // go on, the same as a balance read that fails outright below; one chain
-  // down, or a page cut short, still leaves something real to trust, so it
-  // ranks the same as a truncated read rather than a failed one (spec review
-  // after 25.09 audit, A06).
+  // candidate is even chosen: no chain read leaves nothing to go on, the same
+  // as a balance read that fails outright below; one chain not read, or read
+  // but cut short, still leaves something real to trust, so it ranks the same
+  // as a truncated read rather than a failed one (spec review after 25.09
+  // audit, A06).
+  const readChains = chains.filter((c) => c.status === 'read');
   const enumerationCoverage: HedgeCoverage =
-    chainsFailed === related.length ? 'missing' : chainsFailed > 0 || linksTruncated ? 'partial' : 'complete';
+    readChains.length === 0
+      ? 'missing'
+      : readChains.length === chains.length && readChains.every((c) => c.status === 'read' && c.complete)
+        ? 'complete'
+        : 'partial';
 
   const firstFunders = links.filter((w) => w.relation === 'First Funder' && w.address !== address.toLowerCase());
   const skipped = firstFunders.filter((w) => w.serviceStatus === 'service').length;
@@ -704,46 +820,64 @@ async function readLinkedHedge(
   // defaults to for a lookup it never even tried.
   if (candidates.length === 0) return { features: null, coverage: enumerationCoverage };
 
-  // Nansen returns address_label: null for most addresses, so "no label" is
-  // the normal answer, not evidence that a wallet is private. Say so on the
-  // card: an unlabelled funder may well be an exchange deposit address.
+  // The explorer labels few addresses, so "no exchange label" is the normal
+  // answer, not evidence that a wallet is private. Say so on the card: an
+  // unlabelled funder may well be an exchange deposit address.
   const unverified = candidates.filter((w) => w.serviceStatus === 'unverified').length;
   if (unverified > 0) {
     note(
       unverified === 1
-        ? '1 funding wallet carries no Nansen label: whether it is a private wallet or an exchange address is unverified'
-        : `${unverified} funding wallets carry no Nansen label: whether they are private wallets or exchange addresses is unverified`,
+        ? '1 funding wallet has no exchange label here: whether it is a private wallet or an exchange address is unverified'
+        : `${unverified} funding wallets have no exchange label here: whether they are private wallets or exchange addresses is unverified`,
     );
   }
 
-  const balances = await Promise.allSettled(candidates.map((w) => nansen.currentBalance(w.address)));
+  // Started in order, so a request limit reached here refuses the last
+  // funder's chains rather than an arbitrary one. A node that does not answer,
+  // or answers with something that is not a balance, is a chain not read
+  // (src/sources/onchain.ts); nothing here throws.
+  const reads = await Promise.all(candidates.map((w) => readOnchainHoldings(w.address, prices, signal)));
   let truncatedFunder = false;
   let failedFunder = false;
   const linked = candidates.flatMap((wallet, i) => {
-    const b = balances[i];
-    if (b.status !== 'fulfilled') {
-      note('One linked wallet could not be read', true);
+    const read = reads[i];
+    // A chain the request limit refused is named with that reason; one that
+    // failed for any other reason is not a fact about the limit.
+    const refused = refusedChains(read);
+    const failedOtherwise = read.failed.some((f) => f.reason !== 'limit');
+    if (read.read.length === 0) {
       failedFunder = true;
+      note(
+        !failedOtherwise
+          ? `One linked wallet was not read: ${REQUEST_LIMIT_REASON}`
+          : refused.length > 0
+            ? `One linked wallet could not be read; its holdings on ${listText(refused)} were not read: ${REQUEST_LIMIT_REASON}`
+            : 'One linked wallet could not be read',
+        true,
+      );
       return [];
     }
-    // The main data is already in hand at this point. A funder balance is
-    // extra context, and an extra source answering with the wrong shape
-    // used to throw here, outside any guard, and lose the whole check.
-    try {
-      const read = checkNansenBalances(b.value.rows);
-      const holdings = normalizeNansenBalances(read.rows);
-      if (!b.value.complete || read.malformed > 0) truncatedFunder = true;
-      return [{ wallet, holdings }];
-    } catch (err) {
-      console.error('nansen funder balances', err);
-      note('One funding wallet came back in an unexpected shape and was left out', true);
-      failedFunder = true;
-      return [];
+    if (read.failed.length > 0 || read.unreadTokens > 0) {
+      truncatedFunder = true;
+      note(
+        refused.length > 0 && !failedOtherwise && read.unreadTokens === 0
+          ? `A funding wallet's holdings on ${listText(refused)} were not read: ${REQUEST_LIMIT_REASON}, so its ` +
+              'holdings may be understated'
+          : "A funding wallet's holdings on some chains or tokens could not be read, so its holdings may be understated" +
+              (refused.length > 0 ? `; on ${listText(refused)} they were not read: ${REQUEST_LIMIT_REASON}` : ''),
+        true,
+      );
     }
+    // computeLinkedHedge counts priced matches only, so a holding the read
+    // could not value would vanish from the search while it read complete.
+    // A look-alike staking token is never cover, priced or not, so one the
+    // read could not value loses the search nothing and is not counted here.
+    if (read.holdings.some((h) => h.priced === false && !isWatchlistToken(h.chain, h.tokenAddress))) {
+      truncatedFunder = true;
+      note(UNPRICED_FUNDER_NOTE, true);
+    }
+    return [{ wallet, holdings: read.holdings }];
   });
-  if (truncatedFunder) {
-    note('A funding wallet was not read in full - its first 100 tokens only, or rows that came back malformed - so its holdings may be understated', true);
-  }
   // A candidate whose balance could not be read at all can only have hidden
   // a funder's holding, never invented one - so this coverage state follows
   // the exact same logic hedgeCoverage already uses for the account's own
@@ -771,12 +905,11 @@ async function readLinkedHedge(
   };
 }
 
-const FUNDING_CONTEXT_CHAINS = ['arbitrum', 'ethereum'] as const;
-
 /** When a long's own wallet was first funded, and by what kind of address -
- * two calls, only for a small account. Never a hedge: a hedge search does
- * not apply to a long at all, so this is the one piece of Nansen context a
- * lone long can still carry.
+ * two explorer requests (three when an Arbitrum sender is looked up), only for
+ * a small account. Never a hedge: a hedge
+ * search does not apply to a long at all, so this is the one piece of funding
+ * context a lone long can still carry.
  *
  * Named "Earliest funding found" rather than "First funded" - and scoped to
  * the chain it was found on - because it is neither the account's first
@@ -787,32 +920,22 @@ const FUNDING_CONTEXT_CHAINS = ['arbitrum', 'ethereum'] as const;
  * so a one-day-old Ethereum record could read as the account's age even
  * when Arbitrum was never actually checked (23.09 audit, L09). */
 async function readFundingContext(
-  nansen: NansenClient,
+  explorer: ExplorerConfig,
   address: string,
   now: number,
   note: (text: string, failure?: boolean) => void,
+  signal?: AbortSignal,
 ): Promise<VitalsItem | null> {
-  const related = await Promise.allSettled(
-    FUNDING_CONTEXT_CHAINS.map((chain) => nansen.relatedWallets(address, chain)),
-  );
-  const links: LinkedWallet[] = [];
-  const uncheckedChains: string[] = [];
-  related.forEach((r, i) => {
-    if (r.status === 'fulfilled') {
-      try {
-        const read = checkRelatedWallets(r.value.rows);
-        links.push(...normalizeRelatedWallets(read.rows));
-        if (read.malformed > 0) note(`${read.malformed} funding records came back malformed on one chain and were left out`);
-      } catch (err) {
-        console.error('nansen related wallets (funding context)', err);
-        note('Funding history came back in an unexpected shape on one chain');
-        uncheckedChains.push(FUNDING_CONTEXT_CHAINS[i]);
-      }
-    } else {
-      note('Funding history unavailable on one chain');
-      uncheckedChains.push(FUNDING_CONTEXT_CHAINS[i]);
-    }
-  });
+  const { links, chains } = await readFundingLinks(address, explorer, signal);
+  // Context, not a failure: no verdict turns on a long's funding history.
+  for (const read of chains) {
+    const text = fundingChainNote(read);
+    if (text !== null) note(text);
+  }
+  // A chain not read at all, and a chain read but cut short (its first page
+  // held nothing with a value and more lay behind it): in both the earliest
+  // funding on that chain may be missing, so both are named in the qualifier.
+  const uncheckedChains = chains.filter((c) => c.status !== 'read' || !c.complete).map((c) => c.chain);
   // The earliest First Funder found, whichever of the two chains it is on -
   // not "the earliest across every chain", which nothing here checked.
   const first = links
@@ -828,7 +951,7 @@ async function readFundingContext(
         ? 'an unlabelled wallet'
         : 'another wallet';
   const scope = uncheckedChains.length > 0 ? `, ${uncheckedChains.join(' and ')} not read` : '';
-  return { label: 'Earliest funding found', value: `${when} on ${first.chain}${scope}, by ${who}`, source: 'Nansen' };
+  return { label: 'Earliest funding found', value: `${when} on ${first.chain}${scope}, by ${who}`, source: 'Explorer' };
 }
 
 /** A coin amount the way a reader counts it: whole units once there are a

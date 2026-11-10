@@ -17,7 +17,7 @@ const changedReading = { ...baseline, snapshotId: 'replay-new-reading', snapshot
 const focusedReading = { ...changedReading, snapshotId: 'replay-focused-reading',
   focus: { coin: baseline.positions.headlineCoin!, side: baseline.positions.headlineSide! } };
 const fixture = present(interpret({ ...sample, source: 'hyperliquid', degraded: true,
-  positionsCoverage: 'partial', coverage: ['Nansen not used: budget unavailable in this local UI fixture'],
+  positionsCoverage: 'partial', coverage: ['Funding links on Arbitrum were not read in this local UI fixture'],
 }, sample.checkedAt));
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || '/', 'http://localhost:8789');
@@ -39,7 +39,7 @@ const server = createServer(async (req, res) => {
       res.end(JSON.stringify(url.searchParams.has('coin') ? focusedReading : changedReading)); return;
     }
     // Address ending in 1 exercises the slow path; other addresses return
-    // the budget-off fixture immediately. These are fixtures, not checks.
+    // the degraded fixture immediately. These are fixtures, not checks.
     if (url.searchParams.get('address')?.endsWith('1')) await new Promise(resolve => setTimeout(resolve, 20000));
     const card = { ...fixture, address: url.searchParams.get('address') || sample.address,
       headline: readingHeadline(fixture), takeaway: evidenceTakeaway(fixture), nansen: null,

@@ -11,7 +11,10 @@ import { computeVerdict, CLASSIFIER_VERSION } from '../src/engine/verdict';
 import { words } from '../src/engine/interpret';
 import { verdictInputOf } from '../src/engine/observation';
 import { snapshotId } from '../src/snapshot';
-import type { Gallery } from '../src/gallery';
+import type { Gallery, GalleryRow } from '../src/gallery';
+import { landingExamples } from '../src/landing';
+import { VERDICT_STYLES } from '../src/engine/presentation';
+import { extractPageFunction } from './support/pageScript';
 
 const featured = featuredData as unknown as Gallery;
 const gallery = galleryData as unknown as Gallery;
@@ -21,6 +24,8 @@ const gallery = galleryData as unknown as Gallery;
 const shown = featured.entries.filter((e) => !e.superseded);
 const replaced = featured.entries.filter((e) => e.superseded);
 const page = readFileSync(new URL('../web/index.html', import.meta.url), 'utf8');
+const APP = readFileSync(new URL('../web/app.js', import.meta.url), 'utf8');
+const EXPLORE = readFileSync(new URL('../web/explore.js', import.meta.url), 'utf8');
 
 /** What the page's own chip says a position is, the way web/app.js formats it. */
 function positionText(e: Gallery['entries'][number]): string {
@@ -29,15 +34,22 @@ function positionText(e: Gallery['entries'][number]): string {
   return `${money} ${e.positions.headlineCoin} ${e.positions.headlineSide}`;
 }
 
+/** The example cards the Worker puts into the page, from the page it serves. */
+async function servedQueue(): Promise<string> {
+  const html = await (await worker.fetch(request('/'), testEnv())).text();
+  return html.split('id="player-queue">')[1]?.split('</div>')[0] ?? '';
+}
+const textOf = (html: string) => html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+
 describe('the demonstration readings', () => {
   it('serves every featured tile and its saved-reading link in the initial HTML', async () => {
     const response = await worker.fetch(request('/'), testEnv());
     const html = await response.text();
     const examples = html.split('id="player-queue">')[1]?.split('</div>')[0] ?? '';
-    expect(examples.match(/class="queue-row"/g)).toHaveLength(shown.length);
+    expect(examples.match(/<a class="card-position queue-row" href="/g)).toHaveLength(shown.length);
     for (const entry of shown) {
       expect(examples).toContain(`href="/?s=${entry.snapshotId}"`);
-      expect(examples).toContain(positionText(entry));
+      expect(textOf(examples)).toContain(positionText(entry));
     }
     expect(html).not.toContain('<!--FEATURED_EXAMPLES-->');
   });
@@ -163,6 +175,159 @@ describe('the player strip at the top of the page', () => {
   it('still has one of each kind of answer for the player to show, each a different real position', () => {
     const texts = shown.map(positionText);
     expect(new Set(texts).size).toBe(shown.length);
+  });
+});
+
+/**
+ * The example cards have two producers: the Worker draws them into the page
+ * as links (src/landing.ts), and web/explore.js redraws them as buttons the
+ * moment the gallery loads. Any difference between the two shows as the
+ * cards changing in front of the reader. Here the browser's own code
+ * (renderPlayer and exampleCard, cut out of web/explore.js, with the helpers
+ * they are handed from web/app.js) runs against a stand-in for the DOM, and
+ * what it builds is compared with what the Worker served, element for
+ * element and text for text.
+ */
+type FakeNode = {
+  tag: string;
+  className: string | null;
+  children: Array<FakeNode | string>;
+  listeners: string[];
+  append: (...children: Array<FakeNode | string>) => void;
+  replaceChildren: (...children: Array<FakeNode | string>) => void;
+  addEventListener: (type: string) => void;
+};
+function fakeEl(tag: string, cls?: string | null, text?: unknown): FakeNode {
+  const node: FakeNode = {
+    tag,
+    className: cls || null,
+    children: text === undefined ? [] : [String(text)],
+    listeners: [],
+    append: (...children) => { node.children.push(...children); },
+    replaceChildren: (...children) => { node.children = children; },
+    addEventListener: (type) => { node.listeners.push(type); },
+  };
+  return node;
+}
+const escapeText = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const serialize = (n: FakeNode | string): string =>
+  typeof n === 'string' ? escapeText(n) : `<${n.tag}${n.className ? ` class="${n.className}"` : ''}>${n.children.map(serialize).join('')}</${n.tag}>`;
+
+/** web/explore.js renderPlayer() run for real on `rows`: the queue it builds. */
+function clientQueue(rows: GalleryRow[]): FakeNode {
+  const cut = (source: string, names: string[]) => names.map((name) => extractPageFunction(source, name)).join('\n');
+  const body = [
+    cut(APP, ['verdictOf', 'badgeText', 'fmtUsd', 'readingTitleParts', 'shortAddr', 'fmtDay']),
+    cut(EXPLORE, ['playerList', 'exampleCard', 'renderPlayer']),
+    'renderPlayer();',
+  ].join('\n');
+  const queue = fakeEl('div');
+  const $ = (id: string) => {
+    if (id !== 'player-queue') throw new Error(`renderPlayer reached for #${id}`);
+    return queue;
+  };
+  // VERDICTS is what scripts/build-web.ts puts in the shipped script.
+  new Function('VERDICTS', 'el', '$', 'gallery', 'recordUsage', 'openSnapshot', body)(VERDICT_STYLES, fakeEl, $, { featured: rows }, () => {}, () => {});
+  return queue;
+}
+/** The server's cards with the client's root element: a link becomes the button that replaces it. */
+const asButtons = (html: string) =>
+  html.replace(/<a class="card-position queue-row" href="\/\?s=[^"]+">/g, '<button class="card-position queue-row">').replace(/<\/a>/g, '</button>');
+
+describe('the example cards before and after the gallery loads', () => {
+  it('are the same cards, element for element, whichever side drew them', async () => {
+    const list = (await (await worker.fetch(request('/api/gallery'), testEnv())).json()) as { featured: GalleryRow[] };
+    const served = await servedQueue();
+    const drawn = clientQueue(list.featured).children.map(serialize).join('');
+    expect(drawn).toBe(asButtons(served));
+    // The first three in the row, any others in the fold under them.
+    expect(served.match(/<a class="card-position queue-row"/g)).toHaveLength(list.featured.length);
+    if (list.featured.length > 3) expect(served.split('<details class="fold deeper-example">')[0].match(/<a class="card-position/g)).toHaveLength(3);
+  });
+
+  it('open the reading they name: the link on the server card, a click handler on the browser card', async () => {
+    const list = (await (await worker.fetch(request('/api/gallery'), testEnv())).json()) as { featured: GalleryRow[] };
+    const served = await servedQueue();
+    expect([...served.matchAll(/href="\/\?s=([^"]+)"/g)].map((m) => m[1])).toEqual(list.featured.map((r) => r.snapshotId));
+    const cards: FakeNode[] = [];
+    const walk = (n: FakeNode | string) => {
+      if (typeof n === 'string') return;
+      if (n.tag === 'button') cards.push(n);
+      n.children.forEach(walk);
+    };
+    clientQueue(list.featured).children.forEach(walk);
+    expect(cards).toHaveLength(list.featured.length);
+    for (const card of cards) expect(card.listeners).toEqual(['click']);
+    // A history entry of its own, so Back returns to Check (test/web-screens.test.ts).
+    expect(EXPLORE).toMatch(/recordUsage\('example_open'\);\s*openSnapshot\(e\.snapshotId, 'push'\);/);
+  });
+
+  it('agree on a row the featured set does not have today: no question, no description, no open position', async () => {
+    const list = (await (await worker.fetch(request('/api/gallery'), testEnv())).json()) as { featured: GalleryRow[] };
+    const [first, second, third, fourth] = [0, 1, 2, 3].map((i) => list.featured[i % list.featured.length]);
+    const variants: GalleryRow[] = [
+      { ...first, question: undefined },
+      { ...second, description: undefined },
+      { ...third, positions: { ...third.positions, nPositions: 0, headlineNotionalUsd: 0, headlineCoin: null, headlineSide: null } },
+      { ...fourth, verdict: { verdict: 'unknown', strength: null }, badgeQualifier: 'assets sit with funders' },
+    ];
+    // Each verdict's own summary when a row has none, and a reading from
+    // every month of the year: both sides keep a table of their own.
+    for (const verdict of Object.keys(VERDICT_STYLES) as Array<keyof typeof VERDICT_STYLES>) {
+      variants.push({ ...first, description: undefined, verdict: { verdict, strength: null } });
+    }
+    for (let month = 0; month < 12; month++) {
+      variants.push({ ...first, checkedAt: new Date(Date.UTC(2026, month, month + 1, 23, 59)).toISOString() });
+    }
+    for (const v of variants) {
+      expect(clientQueue([v]).children.map(serialize).join(''), v.snapshotId).toBe(asButtons(landingExamples([v])));
+    }
+    expect(textOf(landingExamples([variants[2]]))).toContain('No open positions');
+    expect(landingExamples([variants[2]])).not.toContain('null');
+  });
+
+  it('agree on the verdict label with a strength, on every verdict, and with a qualifier on an Unknown', async () => {
+    // Every featured row today has no strength, so without these the two
+    // sides could word "(strong)" differently, or one of them drop it, and
+    // nothing would notice: the 27.09 flash. 'likely' and 'strong' are the
+    // two strengths the classifier gives (VerdictStrength).
+    const list = (await (await worker.fetch(request('/api/gallery'), testEnv())).json()) as { featured: GalleryRow[] };
+    const base = list.featured[0];
+    const variants: GalleryRow[] = [];
+    for (const verdict of Object.keys(VERDICT_STYLES) as Array<keyof typeof VERDICT_STYLES>) {
+      for (const strength of ['likely', 'strong'] as const) variants.push({ ...base, verdict: { verdict, strength }, badgeQualifier: null });
+    }
+    variants.push({ ...base, verdict: { verdict: 'unknown', strength: 'likely' }, badgeQualifier: 'assets sit with funders' });
+    for (const v of variants) {
+      const served = landingExamples([v]);
+      const label = served.match(/<span class="cp-verdict badge [a-z]+">([^<]+)<\/span>/)?.[1];
+      expect(label, `${v.verdict.verdict} ${v.verdict.strength}`).toBe(
+        `${VERDICT_STYLES[v.verdict.verdict].label} (${v.verdict.strength})` + (v.badgeQualifier ? ` · ${v.badgeQualifier}` : ''),
+      );
+      expect(clientQueue([v]).children.map(serialize).join(''), `${v.verdict.verdict} ${v.verdict.strength}`).toBe(asButtons(served));
+    }
+  });
+
+  it('agree on the amount at the edges of each unit: dollars, thousands, millions, billions', async () => {
+    const list = (await (await worker.fetch(request('/api/gallery'), testEnv())).json()) as { featured: GalleryRow[] };
+    const base = list.featured[0];
+    const amounts: Array<[number, string]> = [[830, '$830'], [950000, '$950K'], [999600, '$1.0M'], [1.2e9, '$1.2B']];
+    for (const [usd, text] of amounts) {
+      const v: GalleryRow = { ...base, positions: { ...base.positions, headlineNotionalUsd: usd } };
+      const served = landingExamples([v]);
+      expect(served).toContain(`<span class="cp-amount">${text} <span class="cp-asset">`);
+      expect(clientQueue([v]).children.map(serialize).join(''), String(usd)).toBe(asButtons(served));
+    }
+  });
+
+  it('agree on the "More evidence cases" fold, whatever the number of featured readings', async () => {
+    const list = (await (await worker.fetch(request('/api/gallery'), testEnv())).json()) as { featured: GalleryRow[] };
+    const five = [0, 1, 2, 3, 4].map((i) => ({ ...list.featured[i % list.featured.length], snapshotId: `case${i}` }));
+    const served = landingExamples(five);
+    const [row, fold] = served.split('<details class="fold deeper-example"><summary>More evidence cases</summary>');
+    expect(row.match(/<a class="card-position/g)).toHaveLength(3);
+    expect(fold.match(/<a class="card-position/g)).toHaveLength(2);
+    expect(clientQueue(five).children.map(serialize).join('')).toBe(asButtons(served));
   });
 });
 

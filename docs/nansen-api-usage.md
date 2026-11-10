@@ -1,5 +1,7 @@
 # Nansen API usage, in full
 
+> **Historical: the September 2026 build; Nansen is no longer used.** This page accounts for the Nansen calls of the build submitted to the Nansen Meridian Buildathon (14-27 September). The current code makes no Nansen call and holds no Nansen key; the credit meter described below is retired, and `/api/ledger` serves the static archive (`data/ledger.json`). Present-tense statements below describe that build.
+
 The [README](../README.md) has the total. This is every call accounted for, including the eight that did not return data and what each one taught.
 
 Every scripted call is logged in [`data/nansen-calls.jsonl`](../data/nansen-calls.jsonl) and summed in [`data/ledger.json`](../data/ledger.json); the deployed page adds its own calls from the budget Durable Object and serves the total at `/api/ledger`. Requests attempted, requests answered, credits the API itself priced and credits assumed for a call it did not price are four separate numbers, because a total that mixes a quoted figure with an assumed one is not a measurement.

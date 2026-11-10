@@ -17,8 +17,9 @@ const social = await satori({ type: 'div', props: {
     { type: 'div', props: { style: { display: 'flex', fontSize: 54, fontWeight: 700, marginTop: 42 }, children: "Look beyond the whale alert." } },
     { type: 'div', props: { style: { display: 'flex', fontSize: 30, lineHeight: 1.4, marginTop: 24, color: '#a3a8b6' }, children: 'A directional bet, a hedge, or trading inventory? Read the evidence behind a Hyperliquid position.' } },
     { type: 'div', props: { style: { display: 'flex', justifyContent: 'space-between', marginTop: 'auto', fontSize: 22, color: '#858a99' }, children: [
+      // The standing picture for any link with no picture of its own yet, whatever the reading
+      // behind it used, so it makes no claim about a source: the address only.
       { type: 'span', props: { children: 'bet-or-book.trade' } },
-      { type: 'span', props: { children: 'Hyperliquid · Powered by Nansen API' } },
     ] } },
   ],
 } }, { width: 1200, height: 630, fonts: [

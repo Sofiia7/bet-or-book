@@ -15,7 +15,7 @@ try { returningReader = localStorage.getItem('betOrBook:hasRead') === '1'; } cat
 let repeatRecorded = false;
 let usageSent = 0;
 function recordUsage(action, d) {
-  // Test traffic and the operator reserve are not product engagement.
+  // Test traffic and the operator's own checks are not product engagement.
   if (['localhost', '127.0.0.1', '::1', '[::1]'].includes(window.location.hostname)
     || window.location.hash === '#operator' || operatorKey() || usageSent >= 25) return;
   usageSent++;
@@ -94,12 +94,98 @@ function fmtPct(x) {
 function fmtTime(iso) {
   return new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) + ' UTC';
 }
+/** The day alone, "07 Oct" or "26 Sept" (UTC), as an example card's footer
+ * gives it. The months are spelled out here rather than left to the
+ * browser's Intl data, whose short months differ between versions ("Sep",
+ * "Sept"): src/landing.ts draws the server's card with the same table, and
+ * the two cards must read the same. */
+function fmtDay(iso) {
+  const d = new Date(iso);
+  return String(d.getUTCDate()).padStart(2, '0') + ' ' + ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()];
+}
 function verdictOf(d) {
   return VERDICTS[d.verdict.verdict] || VERDICTS.unknown;
 }
 function badgeText(d) {
   const base = verdictOf(d).label + (d.verdict.strength ? ' (' + d.verdict.strength + ')' : '');
   return d.verdict.verdict === 'unknown' && d.badgeQualifier ? base + ' · ' + d.badgeQualifier : base;
+}
+// The warning over a reading whose sources did not all answer, and whether the
+// page treats it as the case where live coverage is out altogether. A note the
+// server wrote about Nansen is shown as it stands: "stopped partway" is the
+// one where some of it was read, so the "unavailable" sentence, which says
+// none was, never replaces it.
+//
+// A reading made after positions were read from every Hyperliquid dex carries
+// positionsVenues, and its source is 'hyperliquid' also when Nansen was
+// never asked (every check the site starts leaves context off). It says
+// nothing then about a Nansen read, so without a Nansen note the warning is
+// the first note that says something failed, or the generic line. A reading
+// stored before has only source, which then did mean Nansen was asked and
+// did not answer, and keeps the old sentence.
+function sourceWarning(d) {
+  const note = (d.coverage || []).find(line => /Nansen not used|Nansen stopped partway|Nansen did not answer|Nansen could not complete/.test(line));
+  let text;
+  if (note) {
+    text = note;
+  } else if (d.positionsVenues) {
+    const failed = (Array.isArray(d.coverageNotes) ? d.coverageNotes : []).find(n => n && n.failure);
+    text = failed ? failed.text : 'Incomplete reading · some sources could not be read.';
+  } else {
+    text = d.source === 'hyperliquid'
+      ? 'Hyperliquid positions only · balances on other chains and linked wallets could not be read.'
+      : 'Incomplete reading · some sources could not be read.';
+  }
+  const unavailable = /credits|budget|no API key configured/.test(note || '');
+  // A known-tokens reading read the balances on other chains from public
+  // nodes, with or without Nansen; only the links between wallets are missing.
+  if (unavailable && !/Nansen stopped partway/.test(note)) {
+    text = d.hedgeScope === 'known-tokens'
+      ? 'Full live coverage is temporarily unavailable. Linked wallets were not read, so this reading does not settle the wallet’s exposure.'
+      : 'Full live coverage is temporarily unavailable. This reading covers Hyperliquid positions only; balances on other chains and linked wallets were not read, so it does not settle the wallet’s exposure.';
+  }
+  return { text, unavailable };
+}
+// Where the positions of a reading came from, for the line under it. A reading
+// made after positions were read from every Hyperliquid dex carries how many
+// were asked and answered; one stored before has only `source`, which then
+// said whether Nansen or Hyperliquid's own endpoint supplied them, and keeps it.
+function positionsSource(d) {
+  const v = d.positionsVenues;
+  // Without the list of dexes only the main one was asked, so "1 of 1" would
+  // read as everything.
+  if (v && v.registryRead === false) return 'positions from Hyperliquid, main dex only (dex list not read)';
+  if (v) return 'positions from Hyperliquid, ' + v.answered + ' of ' + v.asked + (v.asked === 1 ? ' dex' : ' dexes');
+  return d.source === 'nansen' ? 'positions from Nansen' : 'positions from Hyperliquid main dex';
+}
+// The meta line's count of Nansen calls. A reading made now makes none and
+// says nothing about Nansen; a reading made with Nansen (or an older one that
+// recorded calls) keeps its line exactly.
+function nansenCallsNote(d) {
+  if (typeof d.nansenCalls !== 'number') return '';
+  if (d.nansenCalls === 0 && d.source !== 'nansen') return '';
+  return ' · ' + plural(d.nansenCalls, 'Nansen API call');
+}
+// Whether a reading was made since the funding links moved to the Blockscout
+// explorer: its scope is known-tokens, or it carries positionsVenues and a
+// source other than Nansen. The same rule the server uses (src/engine/evidence.ts,
+// madeWithExplorer), and not `source` alone: the old Worker said 'hyperliquid'
+// whenever the Nansen positions call had not succeeded, and such a reading can
+// still carry funders, which came from Nansen.
+function madeWithExplorer(d) {
+  return d.hedgeScope === 'known-tokens' || (d.positionsVenues !== undefined && d.source !== 'nansen');
+}
+// Who the linked wallets are credited to, under the list of funders. A reading
+// made with Nansen keeps its Nansen sentence; one made since took the links
+// from the Blockscout explorer and the balances from public nodes.
+function fundersCredit(d) {
+  const who = madeWithExplorer(d) ? 'Blockscout (funding links) and public nodes (balances)' : 'Powered by Nansen API';
+  return 'Linked wallets: ' + who + '. Funding links are observed; common ownership is unverified.';
+}
+// The source printed on the "Held elsewhere" tile: the same as the server gives
+// the "Linked wallets" row (src/engine/evidence.ts, linkedItem).
+function elsewhereSource(d) {
+  return (madeWithExplorer(d) ? 'Explorer + On-chain' : 'Nansen') + ' · ownership unverified';
 }
 function headlineFor(d) {
   if ((d.verdict.reasons || []).includes('positions_stale')) return 'The position data is out of date for this check.';
@@ -135,6 +221,118 @@ function positionText(d) {
   const p = d.positions;
   return p.nPositions === 0 ? 'No open positions' : fmtUsd(p.headlineNotionalUsd) + ' ' + p.headlineCoin + ' ' + p.headlineSide;
 }
+/** A reading's name in two parts: the amount, and the asset with its side
+ * ("$122.1M", "HYPE long"). Pure, so test/web-screens.test.ts runs it. */
+function readingTitleParts(d) {
+  const p = d && d.positions;
+  if (!p || !p.nPositions) return { amount: 'No open positions', assetSide: '' };
+  return { amount: fmtUsd(p.headlineNotionalUsd), assetSide: p.headlineCoin + ' ' + p.headlineSide };
+}
+/** The same name on one line, as the breadcrumb shows it. */
+function readingTitle(d) {
+  const t = readingTitleParts(d);
+  return t.assetSide ? t.amount + ' ' + t.assetSide : t.amount;
+}
+
+// ---- which screen is showing ----
+//
+// Four screens: Check, a reading, Explore and Saved. A reading also knows
+// the screen it was opened from: that tab stays lit in the header, and the
+// breadcrumb leads back to it. The two helpers below decide what the frame
+// shows and touch no DOM, so test/web-screens.test.ts runs them on their own;
+// setScreen() and renderSavedCount() apply what they say.
+
+/** The active header tab and the breadcrumb for a screen. `from` only
+ * matters for a reading; anything that is not Explore or Saved (a link
+ * opened cold included) counts as Check. */
+function screenState(screen, from, title) {
+  const labels = { check: 'Check a wallet', explore: 'Explore', saved: 'Saved' };
+  if (screen === 'reading') {
+    const origin = from === 'explore' || from === 'saved' ? from : 'check';
+    return { activeTab: origin, breadcrumb: { originLabel: labels[origin], originScreen: origin, current: title || '' } };
+  }
+  if (screen === 'explore' || screen === 'saved') {
+    return { activeTab: screen, breadcrumb: { originLabel: labels.check, originScreen: 'check', current: labels[screen] } };
+  }
+  return { activeTab: 'check', breadcrumb: null };
+}
+/** The Saved tab's badge text, or null when there is nothing to count. */
+function savedCountBadge(n) {
+  return n > 0 ? String(n) : null;
+}
+/**
+ * The screen a reading about to show counts as opened from.
+ *
+ * - `historyFrom`: the origin stored with the reading's own history entry
+ *   (the browser's Back and Forward), or one worked out for that move. It
+ *   wins: the entry knows where the reading came from, whatever screen is
+ *   being left now.
+ * - `sameReading` (the reading on show coming back, as with "Back to your
+ *   reading") or `showing === 'reading'` (a reading redrawn in place: Check
+ *   live, Try again, another of its positions): the kept origin,
+ *   `keptFrom`, stays.
+ * - Otherwise the screen it was opened on, `showing`. A history move with
+ *   nothing stored passes no `showing` and so counts as Check, like a link
+ *   opened cold.
+ */
+function readingOrigin({ showing, keptFrom, sameReading, historyFrom }) {
+  const isOrigin = (s) => s === 'check' || s === 'explore' || s === 'saved';
+  if (isOrigin(historyFrom)) return historyFrom;
+  if ((sameReading || showing === 'reading') && isOrigin(keptFrom)) return keptFrom;
+  return showing === 'explore' || showing === 'saved' ? showing : 'check';
+}
+/** Whether a screen change takes the page to its top and focus to the new
+ * heading. Every one does, except the same account's reading redrawn in
+ * place, where the reader stays where they were. `prev` and `next` are
+ * `{ screen, reading }`, `reading` being the address of the reading shown. */
+function movesToTop(prev, next) {
+  return !(prev.screen === 'reading' && next.screen === 'reading' && !!next.reading && prev.reading === next.reading);
+}
+/** The screen the reading on show was opened from: 'check', 'explore' or
+ * 'saved'. Also on body[data-from] while a reading is showing, and in the
+ * reading's history entry (showLink). */
+let readingFrom = 'check';
+/** The address of the reading last put on the reading screen. */
+let readingOnShow = null;
+/**
+ * Puts the frame in step with the screen now showing: body[data-screen]
+ * (and body[data-from] on a reading), the lit header tab, the breadcrumb.
+ * Every screen change ends here and starts at the top with focus on the
+ * new screen's heading (on a reading, its title) - except a reading redrawn
+ * in place (movesToTop).
+ */
+function setScreen(screen, from) {
+  const state = screenState(screen, screen === 'reading' ? from : readingFrom, screen === 'reading' && current ? readingTitle(current) : '');
+  const prev = { screen: document.body.dataset.screen, reading: readingOnShow };
+  const next = { screen, reading: screen === 'reading' && current ? current.address : null };
+  if (screen === 'reading') readingFrom = state.breadcrumb.originScreen;
+  readingOnShow = next.reading;
+  document.body.dataset.screen = screen;
+  if (screen === 'reading') document.body.dataset.from = readingFrom;
+  else delete document.body.dataset.from;
+  // On a reading the lit tab is where it came from, not the page showing:
+  // "true" marks it as the current item of the set, and the breadcrumb's
+  // last item stays the one "page".
+  for (const [tab, id] of [['check', 'nav-examples'], ['explore', 'nav-boards'], ['saved', 'nav-saved']]) {
+    if (tab === state.activeTab) $(id).setAttribute('aria-current', screen === 'reading' ? 'true' : 'page');
+    else $(id).removeAttribute('aria-current');
+  }
+  const crumb = state.breadcrumb;
+  $('breadcrumb').hidden = !crumb;
+  if (crumb) {
+    $('breadcrumb-origin').dataset.screen = crumb.originScreen;
+    $('breadcrumb-origin').setAttribute('href', crumb.originScreen === 'check' ? '/' : '#' + crumb.originScreen);
+    $('breadcrumb-origin-label').textContent = crumb.originLabel;
+    $('breadcrumb-current').textContent = crumb.current;
+  }
+  if (!movesToTop(prev, next)) return;
+  window.scrollTo(0, 0);
+  const heading = screen === 'reading' ? $('reading-title')
+    : screen === 'explore' ? $('explore-title')
+      : screen === 'saved' ? $('saved-title')
+        : $('hero-title');
+  heading.focus({ preventScroll: true });
+}
 function explorerLink(address, chain) {
   const a = el('a', 'mono', shortAddr(address));
   if (ADDRESS_RE.test(address) && EXPLORERS[chain]) {
@@ -148,10 +346,13 @@ function setStatus(text, isError) {
   const s = $('status');
   s.textContent = text;
   s.className = 'status' + (isError ? ' error' : '');
-  const exploreStatus = $('explore-reading-status');
-  exploreStatus.textContent = text;
-  exploreStatus.className = s.className;
-  exploreStatus.hidden = !text;
+  // Explore and Saved hide the Check screen's line with the rest of it, so
+  // each repeats it: "Turn Monitor off before removing" is said on Saved.
+  for (const mirror of [$('explore-reading-status'), $('saved-status')]) {
+    mirror.textContent = text;
+    mirror.className = s.className;
+    mirror.hidden = !text;
+  }
 }
 
 /**
@@ -170,6 +371,9 @@ function renderClaim(d) {
   pendingClaim = null;
   $('claim-choice').value = isClaim(choice) ? choice : '';
   $('claim-checker').open = isClaim(choice);
+  // The checker sits in Full analysis: a link that asks about an assertion
+  // opens both, or the answer it asked for would be two clicks away.
+  if (isClaim(choice)) $('full-analysis').open = true;
   $('claim-result').hidden = !isClaim(choice);
   if (isClaim(choice)) {
     const result = checkClaim(d, choice);
@@ -189,9 +393,9 @@ $('claim-choice').addEventListener('change', () => {
 async function renderChanged(d) {
   const box = $('changed');
   box.hidden = true;
-  const saved = watched().find(row => row.snapshotId === d.snapshotId && row.address === d.address.toLowerCase());
-  const previousId = saved?.previousSnapshotId || d.supersedes;
-  if (!previousId || !d.snapshotId || d.snapshotSaved === false || previousId === d.snapshotId) return;
+  const saved = savedRowFor(d);
+  const previousId = previousReadingId(d, saved && saved.previousSnapshotId);
+  if (!previousId) return;
   const comparisonKey = previousId + ':' + d.snapshotId;
   $('changed-list').replaceChildren();
   $('changed-title').textContent = saved?.previousSnapshotId ? 'Since your previous saved reading' : 'Since the previous reading';
@@ -297,17 +501,200 @@ function renderPicker(d, kind) {
 // test/web-app-verdict-sync.test.ts checks this real filter, not dead constants.
 const MATERIAL_GAP_SHARE = 0.1;
 
+// ---- the reading screen ----
+//
+// A reading is a header (the date, the position, Save / Share / Check live)
+// and six numbered sections: Verdict, Evidence, Since last read, Blind spots,
+// Spot coverage and Full analysis, then the "What next?" panel. A section
+// with nothing to show is hidden, and the CSS counter that numbers them
+// skips it, so the numbers stay consecutive. The helpers below decide what
+// each section has from the reading alone and touch no DOM, so
+// test/web-reading.test.ts runs them on stored readings; renderResult and
+// the render* functions it calls fill the sections by the same rules.
+
+/** What the Spot coverage illustration draws: a book's matched quotes
+ * ('book'), a long, which spot holdings cannot offset ('long'), what covers
+ * a short ('cover'), or nothing at all (null). */
+function breakdownKind(d) {
+  const b = d.breakdown;
+  if (d.verdict.verdict === 'book' && d.orders) return Number.isFinite(d.orders.headlineTwoSidedNotionalUsd) ? 'book' : null;
+  if ((!b || !b.applies) && d.positions.nPositions > 0 && d.positions.headlineSide === 'long') return 'long';
+  return b && b.applies && b.segments.length ? 'cover' : null;
+}
+/** The earlier reading "Since last read" compares this one with: the one a
+ * saved position kept (`savedPreviousId`), else the one this reading
+ * replaced. Null when there is none, or when this reading itself was not
+ * saved and so cannot be compared. */
+function previousReadingId(d, savedPreviousId) {
+  const previousId = savedPreviousId || d.supersedes;
+  if (!previousId || !d.snapshotId || d.snapshotSaved === false || previousId === d.snapshotId) return null;
+  return previousId;
+}
+/**
+ * The Evidence section's tiles: the row the verdict turned on, then one
+ * more, at most three in all.
+ *
+ * The decisive number leads the card on its own (25.09 audit, the "hero
+ * numbers" redesign) - it is no longer suppressed just because the diagram
+ * repeats the same fact. That is a real tradeoff, not a settled one: in most
+ * cases the tile and the diagram do say the same thing twice, and the
+ * diagram is kept anyway as the visual backup for that repetition.
+ * drawCard() and the OG preview use the diagram or a decisive tile, while
+ * the interactive card can show both.
+ */
+function heroTilesFor(d) {
+  const heroTiles = (d.evidence || []).filter((item) => item.decisive).slice(0, 2);
+  // A reason of linked_exposure_unverified already put the funders' figure
+  // into heroTiles above, as the "Linked wallets" evidence tile (src/engine
+  // /evidence.ts's DECISIVE_LABEL_BY_REASON) built from this same linkedHedge
+  // data. Pushing the elsewhere tile too would show the identical dollar
+  // amount and wallet count twice in a row (confirmed against the stored
+  // 34stjd0gtgkz1 reading, $395.8M in 2 wallets, in data/featured.json).
+  const alreadyShowsFunderHoldings = (d.verdict.reasons || []).includes('linked_exposure_unverified');
+  if (alreadyShowsFunderHoldings && heroTiles.length < 2) {
+    const ownSpot = (d.evidence || []).find(item => item.label === 'Hedge found');
+    if (ownSpot) heroTiles.push(ownSpot);
+  }
+  if (d.breakdown && d.breakdown.elsewhere && !alreadyShowsFunderHoldings) {
+    heroTiles.push({
+      label: 'Held elsewhere',
+      value: fmtUsd(d.breakdown.elsewhere.usd) + ' in ' + plural(d.breakdown.elsewhere.wallets, 'wallet') + ' that funded this account',
+      source: elsewhereSource(d),
+      decisive: true,
+    });
+  }
+  for (const item of (d.evidence || [])) {
+    if (heroTiles.length >= 2) break;
+    if (['Largest position', 'Position asked about', 'Share of exposure'].includes(item.label)) continue;
+    if (!heroTiles.some((shown) => shown.label === item.label)) heroTiles.push(item);
+  }
+  return heroTiles;
+}
+/** Leverage and distance to liquidation, the two position figures Blind
+ * spots previews. */
+function riskItems(d) {
+  return (d.vitals || []).filter(item => /leverage|liquidation/i.test(item.label)).slice(0, 2);
+}
+/** The reading's coverage notes in two lists. A source that failed cost
+ * this answer something, so it stays in sight in Blind spots (`failures`);
+ * a note that only describes what was found goes one click down, in Full
+ * analysis (`remarks`). A reading saved before notes said which kind they
+ * were keeps every one of them in sight, the cautious way round. */
+function coverageLists(d) {
+  const flagged = Array.isArray(d.coverageNotes) ? d.coverageNotes : [];
+  const notes = [
+    ...flagged,
+    ...(d.coverage || [])
+      .filter((text) => !flagged.some((n) => n.text === text))
+      .map((text) => ({ text, failure: true })),
+  ];
+  return {
+    failures: notes.filter((n) => n.failure).map((n) => n.text),
+    remarks: notes.filter((n) => !n.failure).map((n) => n.text),
+  };
+}
+/** Whether the open question already names all three things the standing
+ * limit lists: exchanges, OTC deals and unlinked wallets. */
+function repeatsStandingLimit(question) {
+  const q = (question || '').toLowerCase();
+  return /exchange/.test(q) && /over.the.counter|otc/.test(q) && /wallet/.test(q) && /link/.test(q);
+}
+/**
+ * Which parts of Blind spots show. The standing limit ("Not visible to this
+ * tool: ...") is true of every reading, so it goes with the reading's own
+ * blind spots: beside them, unless the open question already says it, and
+ * in Full analysis (#analysis-limit) when the reading has none of its own -
+ * a reading with no open position, say. Either way it shows once.
+ */
+function blindSpotParts(d) {
+  const parts = {
+    openQuestion: !!d.openQuestion,
+    whatChanges: !!d.whatChanges,
+    standingLimit: false,
+    risks: riskItems(d).length > 0,
+    notRead: coverageLists(d).failures.length > 0,
+  };
+  parts.standingLimit = (parts.openQuestion || parts.whatChanges || parts.risks || parts.notRead) && !repeatsStandingLimit(d.openQuestion);
+  return parts;
+}
+/** Which of the six sections have something to show. `savedPreviousId` is
+ * the earlier reading a saved position kept (previousReadingId). The
+ * Evidence section's Nansen line (#nansen-preview) is always hidden, so the
+ * tiles alone decide it. */
+function readingSections(d, savedPreviousId) {
+  const blind = blindSpotParts(d);
+  return {
+    verdict: true,
+    evidence: heroTilesFor(d).length > 0,
+    changed: previousReadingId(d, savedPreviousId) !== null,
+    blindSpots: blind.openQuestion || blind.whatChanges || blind.standingLimit || blind.risks || blind.notRead,
+    coverage: breakdownKind(d) !== null,
+    analysis: true,
+  };
+}
+/** How many columns the Evidence panel uses for `n` tiles when at most
+ * `maxColumns` fit: the most that fill every row, so the last row is never
+ * short (4 tiles go 4 or 2 across, never 3 and 1; 3 tiles go 3 across or
+ * one under another). */
+function statColumns(n, maxColumns) {
+  const count = Math.floor(n);
+  const max = Math.floor(maxColumns);
+  if (!(count >= 1) || !(max >= 1)) return 1;
+  for (let columns = Math.min(count, max); columns > 1; columns--) {
+    if (count % columns === 0) return columns;
+  }
+  return 1;
+}
+/** The "What next?" panel's way back, to the screen the reading was opened
+ * from, in the breadcrumb's own words (screenState), so the two always
+ * name the same place; anything else counts as Check. */
+function backLabel(from) {
+  return 'Back to ' + screenState('reading', from, '').breadcrumb.originLabel;
+}
+/** Whether the "The position asked about ..." line shows under the header:
+ * only when a position was asked about and the picker is not already
+ * saying which. Otherwise it would only repeat the title and the address. */
+function subjectVisible(d, pickerShown) {
+  return !pickerShown && !!(d && d.focus);
+}
+/** What a key press does to the Share menu: Escape closes it while open. */
+function shareMenuAction(key, isOpen) {
+  return isOpen && (key === 'Escape' || key === 'Esc') ? 'close' : 'none';
+}
+/**
+ * The Share dropdown: a native <details> (`share`) whose <summary>
+ * (`toggle`) opens it with a click, Enter or Space. It closes when an item
+ * in `menu` is chosen, on Escape, on a click outside it and when focus
+ * leaves it for another control. After a choice or Escape, focus goes back
+ * to the summary rather than to the page the hidden item would leave it on.
+ */
+function setUpShareMenu(share, toggle, menu, doc) {
+  const close = (focusToggle) => {
+    share.open = false;
+    if (focusToggle) toggle.focus();
+  };
+  menu.addEventListener('click', (event) => {
+    if (share.open && event.target.closest('button')) close(true);
+  });
+  doc.addEventListener('click', (event) => {
+    if (share.open && !share.contains(event.target)) close(false);
+  });
+  doc.addEventListener('keydown', (event) => {
+    if (shareMenuAction(event.key, share.open) === 'close') close(true);
+  });
+  share.addEventListener('focusout', (event) => {
+    if (share.open && event.relatedTarget && !share.contains(event.relatedTarget)) close(false);
+  });
+}
+
 function renderBreakdown(d) {
   const box = $('breakdown');
-  const isBook = d.verdict.verdict === 'book' && !!d.orders;
-  if (isBook && !Number.isFinite(d.orders.headlineTwoSidedNotionalUsd)) { box.hidden = true; return; }
+  const kind = breakdownKind(d);
+  box.hidden = kind === null;
+  if (kind === null) return;
+  const isBook = kind === 'book';
+  const isLong = kind === 'long';
   const b = d.breakdown;
-  const isLong = !isBook && (!b || !b.applies) && d.positions.nPositions > 0 && d.positions.headlineSide === 'long';
-  if (!isBook && (!b || !b.applies || !b.segments.length) && !isLong) {
-    box.hidden = true;
-    return;
-  }
-  box.hidden = false;
 
   // Sourced from `d.positions`, never from `b`, even when not isBook: an
   // ancient stored reading from before `breakdown` existed at all can have
@@ -359,11 +746,24 @@ function kindOf(opts) {
 }
 
 function renderResult(d, opts) {
+  // Read before anything below changes the screen or `current`: the reading
+  // remembers where it was opened from (readingOrigin has the rules).
+  const openedFrom = readingOrigin({
+    showing: document.body.dataset.screen,
+    keptFrom: readingFrom,
+    sameReading: !!current && d === current,
+    historyFrom: opts && opts.from,
+  });
   document.body.classList.remove('exploring');
   $('gallery').hidden = true;
   $('saved-view').hidden = true;
   current = d;
   current.__kind = kindOf(opts);
+  // A new card starts folded, with the Share menu shut: what the last one
+  // had open says nothing about what the reader wants from this one. A link
+  // that asks about an assertion opens Full analysis again (renderClaim).
+  $('full-analysis').open = false;
+  $('share').open = false;
   renderClaim(d);
   if (current.__kind === 'live') updateSavedPosition(d);
   const readingKey = d.snapshotId || d.address + ':' + d.checkedAt;
@@ -382,11 +782,20 @@ function renderResult(d, opts) {
   $('card').hidden = false;
   document.body.classList.add('has-reading');
   $('reading-nav').hidden = false;
-  // A new card starts folded: what the last one had open says nothing about
-  // what the reader wants from this one.
-  for (const id of ['full-analysis']) $(id).open = false;
-  $('share').open = true;
+  // Which numbered sections have anything to show, settled before any of
+  // them is drawn: the coverage illustration measures its own box, which
+  // reads 0 inside a section still hidden from the previous reading.
+  backfillSavedRow(d);
+  const savedRow = savedRowFor(d);
+  const sections = readingSections(d, savedRow && savedRow.previousSnapshotId);
+  $('section-verdict').hidden = !sections.verdict;
+  $('section-evidence').hidden = !sections.evidence;
+  $('section-changed').hidden = !sections.changed;
+  $('section-blind-spots').hidden = !sections.blindSpots;
+  $('section-coverage').hidden = !sections.coverage;
+  $('section-analysis').hidden = !sections.analysis;
   $('save-confirmation').hidden = true;
+  $('share-status').textContent = '';
   $('copy-embed').hidden = !savedReadingLink(d, window.location.origin);
   $('share-note').textContent = savedReadingLink(d, window.location.origin)
     ? 'Shares this dated reading and its evidence. Opening the link is free.'
@@ -413,6 +822,30 @@ function renderResult(d, opts) {
     }
     $('status').insertAdjacentElement('afterend', p);
   }
+
+  // The header: the position as the title ("$122.1M" and, muted, "HYPE
+  // long"), the address and the reading's age under it, and the date above
+  // it. "Check live" can be answered from the ten-minute cache, and a card
+  // that looks new when it is nine minutes old is the wrong thing to hand a
+  // reader watching a position move, so the age is always said.
+  const title = readingTitleParts(d);
+  $('reading-title').replaceChildren(title.amount, ...(title.assetSide ? [' ', el('span', 'reading-asset', title.assetSide)] : []));
+  const ageMin = Math.floor((Date.now() - new Date(d.checkedAt).getTime()) / 60000);
+  const relativeAge = ageMin < 1 ? 'just now' : ageMin < 60 ? plural(ageMin, 'minute') + ' ago' : ageMin < 1440 ? plural(Math.floor(ageMin / 60), 'hour') + ' ago' : plural(Math.floor(ageMin / 1440), 'day') + ' ago';
+  const shownAddress = el('span', 'mono', shortAddr(d.address));
+  shownAddress.title = d.address;
+  $('reading-meta').replaceChildren(shownAddress, ' · read ' + relativeAge);
+  const kind = kindOf(opts);
+  $('snapshot-text').textContent = (kind === 'gallery' ? 'Gallery scan snapshot' : kind === 'saved' ? 'Saved reading' : 'Live reading') + ' · ' + fmtTime(d.checkedAt);
+  // An entry whose observation predates the current rules keeps the verdict
+  // the older rules gave it. Saying which rules read a card is the
+  // difference between history and a current answer (audit A06).
+  const historical = kind === 'gallery' && d.historical;
+  $('snapshot-note').hidden = !historical;
+  $('snapshot-note').textContent = historical
+    ? 'Read by the rules of the time (' + (d.classifierVersion || 'earlier') + '). ' + d.historical.reason
+    : '';
+
   $('badge').textContent = badgeText(d);
   // Faded and dashed when the rules that gave it are no longer in force, on
   // the card as it already was in the list.
@@ -422,18 +855,15 @@ function renderResult(d, opts) {
   $('takeaway').textContent = d.takeaway || '';
   $('summary').textContent = d.summary || '';
   $('source-warning').hidden = !d.degraded;
-  $('source-warning-text').textContent = d.source === 'hyperliquid'
-    ? 'Positions from Hyperliquid main dex · other venues could not be verified.'
-    : 'Incomplete reading · some sources could not be read.';
-  const sourceNote = (d.coverage || []).find(text => /Nansen not used|Nansen did not answer|Nansen could not complete/.test(text));
-  if (sourceNote) $('source-warning-text').textContent = sourceNote;
-  const unavailable = /credits|budget|no API key configured/.test(sourceNote || '');
-  $('source-free-examples').hidden = !unavailable;
-  $('try-again').hidden = unavailable;
-  if (unavailable) $('source-warning-text').textContent = 'Full live coverage is temporarily unavailable. This reading covers the main venue only; it does not settle the wallet’s exposure.';
-  $('watch-address').textContent = watched().some(row => row.address === d.address && row.coin === d.positions.headlineCoin && row.side === d.positions.headlineSide) ? 'Saved to your watchlist' : 'Save this position';
-  $('what-changes').hidden = !d.whatChanges;
-  $('what-changes').textContent = d.whatChanges ? 'What would change this: ' + d.whatChanges : '';
+  const warning = sourceWarning(d);
+  $('source-warning-text').textContent = warning.text;
+  $('source-free-examples').hidden = !warning.unavailable;
+  $('try-again').hidden = warning.unavailable;
+  $('watch-address').textContent = watched().some(row => row.address === d.address && row.coin === d.positions.headlineCoin && row.side === d.positions.headlineSide) ? 'Saved' : 'Save';
+  // The lead-in is its own element, as "Still open:" is, so Blind spots can
+  // set both as labels; the text reads the same.
+  if (d.whatChanges) $('what-changes').replaceChildren(el('strong', null, 'What would change this: '), d.whatChanges);
+  else $('what-changes').replaceChildren();
 
   // Closed by default, so the summary above is the whole answer for a
   // reader who does not ask for more. Opening it says the rule in words
@@ -450,15 +880,19 @@ function renderResult(d, opts) {
   // What the reading leaves open, and what Nansen added to it - both worked
   // out on the server from the reading itself (src/engine/openQuestion.ts,
   // src/engine/nansenContribution.ts). A reading saved before they existed
-  // simply has neither.
-  $('open-question').hidden = !d.openQuestion;
+  // simply has neither. Blind spots sets what is not visible on one side
+  // and what would change the answer on the other (blindSpotParts has the
+  // rules). The universal limit shows once: beside the reading's own blind
+  // spots, or in Full analysis when the open question already says it or
+  // there is nothing beside it.
+  const blind = blindSpotParts(d);
+  $('open-question').hidden = !blind.openQuestion;
   $('open-question').replaceChildren(el('strong', null, 'Still open: '), d.openQuestion || '');
-  // Keep the universal limit visible unless the open question already
-  // covers all three blind spots. The full analysis then carries it.
-  const question = (d.openQuestion || '').toLowerCase();
-  const repeatsLimit = /exchange/.test(question) && /over.the.counter|otc/.test(question) && /wallet/.test(question) && /link/.test(question);
-  $('standing-limit').hidden = repeatsLimit;
-  $('analysis-limit').hidden = !repeatsLimit;
+  $('what-changes').hidden = !blind.whatChanges;
+  $('standing-limit').hidden = !blind.standingLimit;
+  $('analysis-limit').hidden = blind.standingLimit;
+  $('blind-spots-open').hidden = !(blind.openQuestion || blind.standingLimit || blind.notRead);
+  $('blind-spots-change').hidden = !(blind.whatChanges || blind.risks);
   const nz = d.nansen;
   $('nansen').hidden = !nz;
   // Sources are already beside the facts. Keep the provider breakdown in
@@ -477,7 +911,9 @@ function renderResult(d, opts) {
     const value = item.label === 'Hedge found' && /^0\.0%/.test(item.value) && d.hedge && d.hedge.hedgeRatio > 0
       ? item.value.replace(/^0\.0%/, '<0.1%')
       : item.value;
-    box.append(el('div', 'stat-label', item.label), el('div', 'stat-value', value), el('div', 'stat-source', item.source));
+    // A value that reads as a phrase ("$395.8M ETH in 2 wallets, owner
+    // unconfirmed") is set a size down in the Evidence panel, and wraps.
+    box.append(el('div', 'stat-label', item.label), el('div', 'stat-value' + (value.length > 20 ? ' stat-value-long' : ''), value), el('div', 'stat-source', item.source));
     return box;
   };
   $('stats').replaceChildren(...(d.evidence || []).map(item => tile({ ...item, decisive: false })));
@@ -511,9 +947,10 @@ function renderResult(d, opts) {
   }));
 
   renderPicker(d, kindOf(opts));
-  // Which position this answer is about, said before the answer. The
-  // picker says it when there is a choice to offer; otherwise this line does.
-  $('subject').hidden = !$('picker').hidden;
+  // Which position this answer is about, said before the answer when it is
+  // not simply the title: the picker says it when there is a choice to
+  // offer, otherwise this line does for a position that was asked about.
+  $('subject').hidden = !subjectVisible(d, !$('picker').hidden);
   $('subject').replaceChildren(
     el('span', 'muted', d.focus ? 'The position asked about' : 'The position'),
     ' ',
@@ -524,43 +961,16 @@ function renderResult(d, opts) {
   renderChanged(d);
   renderBreakdown(d);
 
-  // The decisive number now leads the card on its own (25.09 audit, the
-  // "hero numbers" redesign) - it is no longer suppressed just because the
-  // diagram repeats the same fact. That is a real tradeoff, not a settled
-  // one: in most cases the tile and the diagram now do say the same thing
-  // twice, and the diagram is kept anyway as the visual backup for that
-  // repetition. drawCard() and the OG preview use the diagram or a decisive
-  // tile, while the interactive card can show both.
-  const heroTiles = (d.evidence || []).filter((item) => item.decisive).slice(0, 2);
-  // A reason of linked_exposure_unverified already put the funders' figure
-  // into heroTiles above, as the "Linked wallets" evidence tile (src/engine
-  // /evidence.ts's DECISIVE_LABEL_BY_REASON) built from this same linkedHedge
-  // data. Pushing the elsewhere tile too would show the identical dollar
-  // amount and wallet count twice in a row (confirmed against the stored
-  // 34stjd0gtgkz1 reading, $395.8M in 2 wallets, in data/featured.json).
-  const alreadyShowsFunderHoldings = (d.verdict.reasons || []).includes('linked_exposure_unverified');
-  if (alreadyShowsFunderHoldings && heroTiles.length < 2) {
-    const ownSpot = (d.evidence || []).find(item => item.label === 'Hedge found');
-    if (ownSpot) heroTiles.push(ownSpot);
-  }
-  if (d.breakdown && d.breakdown.elsewhere && !alreadyShowsFunderHoldings) {
-    heroTiles.push({
-      label: 'Held elsewhere',
-      value: fmtUsd(d.breakdown.elsewhere.usd) + ' in ' + plural(d.breakdown.elsewhere.wallets, 'wallet') + ' that funded this account',
-      source: 'Nansen · ownership unverified',
-      decisive: true,
-    });
-  }
-  for (const item of (d.evidence || [])) {
-    if (heroTiles.length >= 2) break;
-    if (['Largest position', 'Position asked about', 'Share of exposure'].includes(item.label)) continue;
-    if (!heroTiles.some((shown) => shown.label === item.label)) heroTiles.push(item);
-  }
+  // The Evidence panel: its rows are always full (statColumns), however
+  // many of the columns the width allows the CSS picks.
+  const heroTiles = heroTilesFor(d);
   $('decisive').hidden = heroTiles.length === 0;
   $('decisive').replaceChildren(...heroTiles.map(tile));
+  for (const most of [2, 3, 4]) $('decisive').style.setProperty('--stat-cols-' + most, String(statColumns(heroTiles.length, most)));
 
   const funders = d.linkedHedge && Array.isArray(d.linkedHedge.funders) ? d.linkedHedge.funders : [];
   $('funders').hidden = funders.length === 0;
+  $('funders-credit').textContent = fundersCredit(d);
   $('funders-list').replaceChildren(...funders.map((f) => {
     const li = el('li');
     li.append(
@@ -570,19 +980,9 @@ function renderResult(d, opts) {
     return li;
   }));
 
-  // A source that failed cost this answer something, so it stays in sight
-  // next to the answer. A note that only describes what was found goes one
-  // click down. A reading saved before notes said which kind they were
-  // keeps every one of them in sight, the cautious way round.
-  const flagged = Array.isArray(d.coverageNotes) ? d.coverageNotes : [];
-  const notes = [
-    ...flagged,
-    ...(d.coverage || [])
-      .filter((text) => !flagged.some((n) => n.text === text))
-      .map((text) => ({ text, failure: true })),
-  ];
-  const failures = notes.filter((n) => n.failure).map((n) => n.text);
-  const remarks = notes.filter((n) => !n.failure).map((n) => n.text);
+  // A source that failed stays in sight, in Blind spots; a note that only
+  // describes what was found goes one click down (coverageLists).
+  const { failures, remarks } = coverageLists(d);
   $('coverage').hidden = failures.length === 0;
   $('coverage-list').replaceChildren(...failures.map((c) => el('li', null, c)));
   $('notes').hidden = remarks.length === 0;
@@ -590,8 +990,8 @@ function renderResult(d, opts) {
 
   const meta = $('meta');
   meta.replaceChildren();
-  const calls = typeof d.nansenCalls === 'number' ? ' · ' + plural(d.nansenCalls, 'Nansen API call') : '';
-  const src = d.source === 'nansen' ? 'positions from Nansen' : 'positions from Hyperliquid main dex';
+  const calls = nansenCallsNote(d);
+  const src = positionsSource(d);
   // When the source says it measured the positions, that is the time the
   // numbers describe. "Checked" is only when this page asked.
   const measured =
@@ -599,12 +999,7 @@ function renderResult(d, opts) {
       ? ' · positions as of ' + fmtTime(d.positionsAsOf)
       : '';
   const rules = d.classifierVersion ? ' · rules ' + d.classifierVersion : '';
-  // "Check live" can be answered from the ten-minute cache, and a card that
-  // looks new when it is nine minutes old is the wrong thing to hand a
-  // reader watching a position move.
-  const ageMin = Math.floor((Date.now() - new Date(d.checkedAt).getTime()) / 60000);
-  const relativeAge = ageMin < 1 ? 'just now' : ageMin < 60 ? plural(ageMin, 'minute') + ' ago' : ageMin < 1440 ? plural(Math.floor(ageMin / 60), 'hour') + ' ago' : plural(Math.floor(ageMin / 1440), 'day') + ' ago';
-  const age = kindOf(opts) === 'live' && ageMin >= 1 ? ' · cached, ' + plural(ageMin, 'minute') + ' old' : '';
+  const age = kind === 'live' && ageMin >= 1 ? ' · cached, ' + plural(ageMin, 'minute') + ' old' : '';
   meta.append('Checked ' + fmtTime(d.checkedAt) + measured + age + calls + ' · ' + src + rules + ' · ');
   const hs = el('a', null, 'view on Hypurrscan');
   if (ADDRESS_RE.test(d.address)) {
@@ -617,31 +1012,10 @@ function renderResult(d, opts) {
   // Whatever is on screen, the address field says which account it is about.
   $('address').value = d.address;
 
-  const kind = kindOf(opts);
-  $('snapshot-text').textContent = '';
   if (d.focus) {
     $('picker-chips').setAttribute('aria-label', 'asked about ' + d.focus.coin + ' ' + d.focus.side);
   }
-  $('snapshot').hidden = kind === 'live';
-  if (kind === 'gallery') {
-    // An entry whose observation predates the current rules keeps the
-    // verdict the older rules gave it. Saying which rules read a card is
-    // the difference between history and a current answer (audit A06).
-    $('snapshot-text').textContent = d.historical
-      ? 'Snapshot from the gallery scan, ' +
-        fmtTime(d.checkedAt) +
-        ', read by the rules of the time (' +
-        (d.classifierVersion || 'earlier') +
-        '). ' +
-        d.historical.reason
-      : 'Snapshot from the gallery scan, ' + fmtTime(d.checkedAt) + '.';
-  } else if (kind === 'saved') {
-    $('snapshot-text').textContent =
-      'Saved · ' + fmtTime(d.checkedAt) + '.';
-  }
-  $('snapshot').hidden = false;
-  $('snapshot-text').textContent += (kind === 'live' ? 'Read ' + fmtTime(d.checkedAt) + '. ' : ' ') + relativeAge + '.';
-  const risks = (d.vitals || []).filter(item => /leverage|liquidation/i.test(item.label)).slice(0, 2);
+  const risks = riskItems(d);
   $('risk-preview').hidden = risks.length === 0;
   $('risk-preview').textContent = risks.map(item => item.label + ': ' + item.value).join(' · ');
 
@@ -657,6 +1031,9 @@ function renderResult(d, opts) {
     });
     renderRecent();
   }
+  // The "What next?" panel leads back where the breadcrumb does.
+  $('reading-back').textContent = backLabel(openedFrom);
+  setScreen('reading', openedFrom);
 }
 
 // Every request gets a number. Enter, the Check button and "Check live" can
@@ -670,8 +1047,8 @@ let requestSeq = 0;
 let busy = false;
 
 /** Abandons whatever is in flight. Nothing is cancelled on the server - the
- * credits are spent either way and the budget still settles - but its answer
- * will not be painted over the reading the reader has moved to. */
+ * check still runs to its end - but its answer will not be painted over the
+ * reading the reader has moved to. */
 function takeOver() {
   requestSeq++;
   setBusy(false);
@@ -680,13 +1057,27 @@ function takeOver() {
 
 /** Keeps the address bar pointing at what is on screen. Opening a card used
  * to leave the previous reading's link in the bar, so copying it shared the
- * wrong one. */
+ * wrong one. A reading's entry also keeps `{ from }`, the screen it was
+ * opened from, so the browser's Back button brings it back with the same
+ * origin (routeHistory); nothing else goes into the history state. */
 function showLink(id) {
   const claim = current?.snapshotId === id && isClaim($('claim-choice').value) ? '&claim=' + $('claim-choice').value : '';
   const next = id ? '/?s=' + encodeURIComponent(id) + claim : '/';
-  if (window.location.pathname + window.location.search + window.location.hash !== next) {
-    window.history.replaceState(null, '', next);
+  const from = id && document.body.dataset.screen === 'reading' ? readingFrom : null;
+  const keptFrom = (window.history.state && window.history.state.from) || null;
+  if (window.location.pathname + window.location.search + window.location.hash !== next || keptFrom !== from) {
+    window.history.replaceState(from ? { from } : null, '', next);
   }
+}
+/** The history entry of a reading just put on screen. 'push', for every
+ * opening the reader makes (a card, a chip, a check's answer): an entry of
+ * its own after the screen it was opened from, which keeps its own entry, so
+ * Back returns there. 'replace', for a cold link, a move through history and
+ * a reading redrawn in place: the entry showing becomes the reading's, and
+ * nothing is added. 'preserve': the history is left as it is. */
+function linkReading(id, navigation) {
+  if (navigation === 'push') window.history.pushState(null, '', window.location.href);
+  if (navigation !== 'preserve') showLink(id);
 }
 
 function setBusy(on) {
@@ -698,12 +1089,12 @@ function setBusy(on) {
   $('check-live').disabled = on;
 }
 
-// ---- the operator key for the demo reserve ----
+// ---- the operator key ----
 //
-// Part of the daily cap is kept out of the public path so a busy afternoon
-// cannot leave the demo on Hyperliquid-only data, and the key that reaches
-// it goes in a request header, never a URL: a query string ends up in
-// history, logs and a screen recording's own address bar (23.09 audit, S03).
+// A check that carries the operator key skips the public rate limits, so a
+// busy afternoon cannot stop a demo or a recording. The key goes in a request
+// header, never a URL: a query string ends up in history, logs and a screen
+// recording's own address bar (23.09 audit, S03).
 // This is the operator's way to set it: open /#operator once, before
 // recording, and paste the key. It is checked there and then, kept in this
 // browser only, sent only with a check, and never shown.
@@ -721,7 +1112,7 @@ async function setUpOperator() {
   // Off the address bar first, so not even the word lingers there.
   window.history.replaceState(null, '', window.location.pathname + window.location.search);
   const entered = window.prompt(
-    'Operator key for the demo reserve. It stays in this browser, is sent only as a request header with a ' +
+    'Operator key for this browser: it lets its checks bypass the rate limits. It stays in this browser, is sent only as a request header with a ' +
       'check, and is never shown. Leave it empty to remove it.',
     '',
   );
@@ -743,7 +1134,7 @@ async function setUpOperator() {
   try {
     const res = await fetch('/api/demo-access', { method: 'POST', headers: { 'x-demo-key': key } });
     if (res.status === 204) {
-      setStatus('Operator key accepted: checks from this browser can use the demo reserve.', false);
+      setStatus('Operator key accepted: checks from this browser bypass the rate limits.', false);
     } else {
       window.localStorage.removeItem(OPERATOR_KEY);
       setStatus('The server did not accept that operator key, so it was not kept.', true);
@@ -753,9 +1144,10 @@ async function setUpOperator() {
   }
 }
 
-// Starting a check spends money, so it is a POST: a GET is something a
+// Starting a check does the work and spends the site's request allowance, so
+// it is a POST: a GET is something a
 // crawler, a link preview or a browser prefetch can trigger on its own, and
-// used to run the paid branch when they did.
+// used to run the check when they did.
 //
 // `retryDelays` is for a saved reading that answers 404. KV can take up to a
 // minute to show a new write in a region that has not seen it, and a link
@@ -782,9 +1174,9 @@ async function load(url, onData, failureText, method, notice, retryDelays) {
   // A notice about the input - "three addresses here, using the first" - is
   // about to be replaced by the progress line one statement later, which is
   // how it became unreadable. It travels with the request instead.
-  // A saved reading is opened, not read again: saying Nansen is being asked
-  // when nothing is would misdescribe a free lookup as a paid check.
-  const doing = method === 'POST' ? 'Reading positions from Nansen and orders from Hyperliquid...' : 'Opening the saved reading...';
+  // A saved reading is opened, not read again: saying a source is being asked
+  // when nothing is would misdescribe a free lookup as a new check.
+  const doing = method === 'POST' ? 'Reading positions and orders from Hyperliquid, balances from public nodes, wallet links from Blockscout...' : 'Opening the saved reading...';
   setStatus((notice ? notice + ' ' : '') + doing, false);
   const slowTimer = isLiveCheck ? setTimeout(() => { if (seq === requestSeq && busy) $('slow-check').hidden = false; }, 8000) : null;
   try {
@@ -863,6 +1255,24 @@ function askForPicture(d, isRetry) {
     });
 }
 
+/**
+ * A live check's answer: drawn, linked in the address bar and its picture
+ * asked for. A live reading is worth linking to, so the address in the bar
+ * becomes the link to this reading rather than to the account - but only
+ * once the server says it really saved one; leaving the previous reading's
+ * id in the bar would be worse than none. Opened from Check or Saved, the
+ * reading gets a history entry of its own, so Back returns to that screen.
+ * A reading redrawn in place (Check live, Try again, Load context, another
+ * position) takes over its own entry, so Back still leads to the screen it
+ * was opened from.
+ */
+function showLiveReading(data) {
+  const navigation = document.body.dataset.screen === 'reading' ? 'replace' : 'push';
+  renderResult(data, { kind: 'live' });
+  linkReading(data.snapshotId && data.snapshotSaved !== false ? data.snapshotId : null, navigation);
+  askForPicture(data);
+}
+
 function runCheck(selectedAddress) {
   if (busy) return;
   const raw = $('address').value;
@@ -898,18 +1308,10 @@ function runCheck(selectedAddress) {
   return load(
     '/api/check?context=0&address=' + encodeURIComponent(addr),
     (data) => {
-      renderResult(data, { kind: 'live' });
-      // A live reading is worth linking to, so the address in the bar
-      // becomes the link to this reading rather than to the account - but
-      // only once the server says it really saved one.
-      if (data.snapshotId && data.snapshotSaved !== false) {
-        showLink(data.snapshotId);
-        askForPicture(data);
-      } else {
-        // Nothing was saved, so there is nothing to link to. Leaving the
-        // previous reading's id in the bar would be worse than none.
-        showLink(null);
-      }
+      // load() leaves the notice up on success; once the answer is in it
+      // must not still say the wallet is being checked.
+      setStatus('Checked wallet ' + addr + '.');
+      showLiveReading(data);
     },
     'Something went wrong. Try again shortly.',
     'POST',
@@ -926,28 +1328,31 @@ function checkPosition(address, position) {
     '&side=' + encodeURIComponent(position.side);
   return load(
     query,
-    (data) => {
-      renderResult(data, { kind: 'live' });
-      showLink(data.snapshotId && data.snapshotSaved !== false ? data.snapshotId : null);
-      askForPicture(data);
-    },
+    showLiveReading,
     'Something went wrong. Try again shortly.',
     'POST',
   );
 }
 
-function openSnapshot(id, navigation = 'replace') {
+/** Opens a saved reading. `navigation` is how it enters the browser's
+ * history (linkReading): 'push' for an opening the reader makes, 'replace'
+ * or 'preserve' only for the cold page load and routeHistory. `historyFrom`
+ * is given only by a move through the browser's history (routeHistory): the
+ * origin that entry stands for. */
+function openSnapshot(id, navigation = 'push', historyFrom) {
   takeOver();
   return load(
     '/api/snapshot?id=' + encodeURIComponent(id),
     (data) => {
+      // The reading on show opened again (as "Open a free saved example"
+      // while it is showing) is redrawn in place: a second identical entry
+      // would make Back need two presses. Read before renderResult changes
+      // the screen and `current`.
+      const again = navigation === 'push' && document.body.dataset.screen === 'reading' && current?.snapshotId === id;
       // The server says which of the two this is: a gallery card opened by
       // its link is still a gallery card, with the gallery's own wording.
-      renderResult(data, { kind: data.kind === 'gallery' ? 'gallery' : 'saved' });
-      if (navigation === 'push') window.history.pushState(null, '', window.location.href);
-      if (navigation !== 'preserve') showLink(id);
-      $('card').scrollIntoView({ block: 'start' });
-      $('card').focus({ preventScroll: true });
+      renderResult(data, { kind: data.kind === 'gallery' ? 'gallery' : 'saved', from: historyFrom });
+      linkReading(id, again ? 'replace' : navigation);
     },
     'That link points at a reading that is no longer saved. Check the address again to make a new one.',
     'GET',
@@ -974,13 +1379,26 @@ $('check-live').addEventListener('click', () => {
     runCheck();
   }
 });
-$('check-another').addEventListener('click', () => {
-  showExamples();
+/** How the page scrolls to a part of itself: smoothly, or at once for a
+ * reader who asked the system for less motion (the stylesheet's
+ * prefers-reduced-motion block covers the rest). */
+function scrollMotion() {
+  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+}
+/** "Check a wallet" in the closing panel of a reading, Explore and Saved: to
+ * Check the way the Check tab goes (goCheck, a history entry of its own, so
+ * Back returns to the screen left), with the address field empty and
+ * ready. */
+function checkAnother(event) {
+  goCheck(event);
   $('address').value = '';
   $('address-choices').hidden = true;
   $('address').focus({ preventScroll: true });
-  $('address').scrollIntoView({ behavior: 'smooth', block: 'center' });
-});
+  $('address').scrollIntoView({ behavior: scrollMotion(), block: 'center' });
+}
+$('check-another').addEventListener('click', checkAnother);
+$('explore-check').addEventListener('click', checkAnother);
+$('saved-check').addEventListener('click', checkAnother);
 
 function showExamples() {
   document.body.classList.remove('exploring');
@@ -1000,22 +1418,44 @@ function showExamples() {
   setStatus('');
   showLink(null);
   renderPlayer();
+  setScreen('check');
+}
+/** The Check screen as a place to go to (header tab, logo, footer,
+ * breadcrumb): a history entry of its own, so Back returns to the screen
+ * left behind through the popstate routing below. */
+function goCheck(event) {
+  if (event) event.preventDefault();
+  // Already on Check (and not still opening a linked reading): back to the
+  // top only. showExamples() would clear the field and drop the answer to
+  // a live check still running, which is already under way.
+  if (document.body.dataset.screen === 'check' && !new URLSearchParams(window.location.search).has('s')) return setScreen('check');
+  if (window.location.pathname + window.location.search + window.location.hash !== '/') window.history.pushState(null, '', '/');
+  showExamples();
+}
+/** Back to a screen by name, through the same handlers as its tab: the
+ * breadcrumb's way back from a reading to the screen it was opened from. */
+function goToScreen(screen, event) {
+  if (screen === 'explore') return openBoards(event);
+  if (screen === 'saved') return openSaved(event);
+  return goCheck(event);
 }
 $('back-examples').addEventListener('click', () => {
   showExamples();
-  $('examples').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  $('examples').scrollIntoView({ behavior: scrollMotion(), block: 'start' });
   $('player-queue').querySelector('button')?.focus({ preventScroll: true });
 });
-$('nav-examples').addEventListener('click', (event) => {
-  event.preventDefault();
-  showExamples();
-  $('examples').scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
+$('nav-examples').addEventListener('click', goCheck);
+$('site-logo').addEventListener('click', goCheck);
+$('footer-check').addEventListener('click', goCheck);
+$('footer-explore').addEventListener('click', openBoards);
+$('footer-saved').addEventListener('click', openSaved);
+$('breadcrumb-origin').addEventListener('click', (event) => goToScreen($('breadcrumb-origin').dataset.screen, event));
+$('reading-back').addEventListener('click', (event) => goToScreen(readingFrom, event));
 $('nav-how-it-works').addEventListener('click', (event) => {
   // A native fragment navigation emits popstate, whose page routing resets
   // the address. This section only needs scrolling, with no history change.
   event.preventDefault();
-  $('how-it-works').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  $('how-it-works').scrollIntoView({ behavior: scrollMotion(), block: 'start' });
 });
 let galleryPromise = null;
 function ensureGallery() {
@@ -1033,8 +1473,7 @@ function openBoards(event) {
   $('explore-return').hidden = !current;
   setStatus('');
   if (window.location.hash !== '#explore') window.history.pushState(null, '', window.location.pathname + window.location.search + '#explore');
-  window.scrollTo(0, 0);
-  $('explore-title').focus({ preventScroll: true });
+  setScreen('explore');
   ensureGallery();
 }
 $('nav-boards').addEventListener('click', openBoards);
@@ -1050,8 +1489,7 @@ function openSaved(event) {
   setStatus('');
   renderWatched();
   if (window.location.hash !== '#saved') window.history.pushState(null, '', window.location.pathname + window.location.search + '#saved');
-  window.scrollTo(0, 0);
-  $('saved-title').focus({ preventScroll: true });
+  setScreen('saved');
 }
 $('nav-saved').addEventListener('click', openSaved);
 $('saved-home').addEventListener('click', () => {
@@ -1063,8 +1501,6 @@ $('saved-return').addEventListener('click', () => {
   if (!current) return;
   renderResult(current, { kind: current.__kind });
   showLink(current.snapshotId && current.snapshotSaved !== false ? current.snapshotId : null);
-  $('card').scrollIntoView({ block: 'start' });
-  $('card').focus({ preventScroll: true });
 });
 $('reading-boards').addEventListener('click', openBoards);
 $('explore-link').addEventListener('click', openBoards);
@@ -1078,8 +1514,6 @@ $('explore-return').addEventListener('click', () => {
   if (!current) return;
   renderResult(current, { kind: current.__kind });
   showLink(current.snapshotId && current.snapshotSaved !== false ? current.snapshotId : null);
-  $('card').scrollIntoView({ block: 'start' });
-  $('card').focus({ preventScroll: true });
 });
 function selectExploreView(view) {
   for (const [key, panel] of [['cases', 'case-studies'], ['ranked', 'boards-fold'], ['all', 'all-readings'], ['archive', 'archive']]) {
@@ -1089,16 +1523,25 @@ function selectExploreView(view) {
   if (view === 'archive') $('archive').open = true;
 }
 for (const view of ['cases', 'ranked', 'all', 'archive']) $('explore-' + view).addEventListener('click', () => selectExploreView(view));
-window.addEventListener('popstate', () => {
+/**
+ * The screen for the history entry the browser has just moved to (Back,
+ * Forward). A reading comes back with the origin its entry stored (`state`
+ * from showLink), else the kept origin when it is the reading still in
+ * memory, else Check: the screen being left says nothing about where a
+ * reading was opened from.
+ */
+function routeHistory(state) {
   const id = new URLSearchParams(window.location.search).get('s');
   if (window.location.hash === '#saved') return openSaved();
+  const historyFrom = id ? readingOrigin({ showing: null, keptFrom: readingFrom, sameReading: current?.snapshotId === id, historyFrom: state && state.from }) : null;
   if (window.location.hash === '#explore') {
-    if (id && current?.snapshotId !== id) return openSnapshot(id, 'preserve').then(() => openBoards());
+    if (id && current?.snapshotId !== id) return openSnapshot(id, 'preserve', historyFrom).then(() => openBoards());
     return openBoards();
   }
-  if (id) openSnapshot(id);
-  else showExamples();
-});
+  if (id) return openSnapshot(id, 'replace', historyFrom);
+  return showExamples();
+}
+window.addEventListener('popstate', (event) => routeHistory(event.state));
 
 $('guess-chips').addEventListener('click', (e) => {
   const btn = e.target.closest('button');
@@ -1141,6 +1584,20 @@ window.addEventListener('resize', () => {
 $('share').addEventListener('toggle', () => {
   if ($('share').open && current) askForPicture(current);
 });
+setUpShareMenu($('share'), $('share-toggle'), $('share-menu'), document);
+
+/** What a share button says back ("Copied") for a moment: on the button
+ * and, since a choice in the Share menu closes it, in the status line under
+ * the reading's header, where it is seen and announced. */
+function shareFeedback(btn, text, ms, restore) {
+  const status = $('share-status');
+  btn.textContent = text;
+  if ($('share-menu').contains(btn)) status.textContent = text;
+  setTimeout(() => {
+    btn.textContent = restore();
+    if (status.textContent === text) status.textContent = '';
+  }, ms);
+}
 
 async function copyReadingLink(btn, savedId) {
   if (!current) return;
@@ -1154,12 +1611,21 @@ async function copyReadingLink(btn, savedId) {
   try {
     await navigator.clipboard.writeText(link);
     recordUsage('share_copy', current);
-    btn.textContent = 'Copied';
-    setTimeout(() => { btn.textContent = btn.id === 'save-copy-link' ? 'Copy saved reading link'
-      : savedReadingLink(current || {}, window.location.origin) ? 'Copy link' : 'Copy wallet link'; }, 1500);
+    shareFeedback(btn, 'Copied', 1500, () => btn.id === 'save-copy-link' ? 'Copy saved reading link'
+      : savedReadingLink(current || {}, window.location.origin) ? 'Copy link' : 'Copy wallet link');
   } catch (e) {
     window.prompt('Copy this link:', link);
   }
+}
+
+/** The credit at the end of a share text and a post. The server works it out
+ * from the sources the reading used (src/engine/attribution.ts) and sends it
+ * as `attribution.post`; a reading saved before that has no such field, and
+ * is credited by its `source`, as it always was. */
+function postCredit(d) {
+  const credit = d.attribution && d.attribution.post;
+  if (typeof credit === 'string' && credit !== '') return credit;
+  return d.source === 'nansen' ? 'Powered by @nansen_ai' : 'Data: Hyperliquid';
 }
 
 /** The card's own summary, plus the link that reopens it, sized for a post
@@ -1180,7 +1646,7 @@ function shareTextData(d, compact) {
   return { position: positionText(d), verdict: compact ? verdictOf(d).label : badgeText(d),
     headline: claimReading ? CLAIMS[claim] + ': ' + claimReading.status + '. ' + claimReading.explanation : headlineFor(d),
     readAt: fmtTime(d.checkedAt), limitation: compact ? limit : d.openQuestion ? 'Still open: ' + d.openQuestion : d.takeaway || limit,
-    attribution: d.source === 'nansen' ? 'Powered by @nansen_ai' : 'Data: Hyperliquid',
+    attribution: postCredit(d),
     link: link && isClaim(claim) ? link + '&claim=' + encodeURIComponent(claim) : link };
 }
 function postText(d) {
@@ -1192,7 +1658,7 @@ $('copy-reading').addEventListener('click', async () => {
   const btn = $('copy-reading');
   try {
     await navigator.clipboard.writeText(text); recordUsage('share_copy', current);
-    btn.textContent = 'Reading copied'; setTimeout(() => { btn.textContent = 'Copy reading'; }, 1500);
+    shareFeedback(btn, 'Reading copied', 1500, () => 'Copy reading as text');
   } catch { window.prompt('Copy this reading:', text); }
 });
 $('copy-link').addEventListener('click', () => copyReadingLink($('copy-link')));
@@ -1201,7 +1667,7 @@ $('copy-embed').addEventListener('click', async () => {
   const claim = $('claim-choice').value;
   const url = window.location.origin + '/embed?s=' + encodeURIComponent(current.snapshotId) + (isClaim(claim) ? '&claim=' + claim : '');
   const code = '<iframe src="' + url + '" title="Bet or Book dated position evidence" width="100%" height="600" loading="lazy" style="border:0;border-radius:12px"></iframe>';
-  try { await navigator.clipboard.writeText(code); $('copy-embed').textContent = 'Embed copied'; setTimeout(() => { $('copy-embed').textContent = 'Copy embed'; }, 1500); }
+  try { await navigator.clipboard.writeText(code); shareFeedback($('copy-embed'), 'Embed copied', 1500, () => 'Copy embed code'); }
   catch { window.prompt('Copy this embed code:', code); }
 });
 
@@ -1228,13 +1694,11 @@ $('share-x').addEventListener('click', () => {
   canvas.toBlob(async (blob) => {
     try {
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-      btn.textContent = 'Opened X - paste the image (Ctrl+V) before posting';
-      setTimeout(() => { btn.textContent = 'Share on X'; }, 4000);
+      shareFeedback(btn, 'Opened X - paste the image (Ctrl+V) before posting', 4000, () => 'Share on X');
     } catch (e) {
       // The tab with the text is already open either way; only the image
       // did not make it to the clipboard, so there is nothing to undo here.
-      btn.textContent = 'Opened X · use Download PNG to attach the card';
-      setTimeout(() => { btn.textContent = 'Share on X'; }, 5000);
+      shareFeedback(btn, 'Opened X · use Download PNG to attach the card', 5000, () => 'Share on X');
     }
   }, 'image/png');
 });
@@ -1279,7 +1743,7 @@ function renderRecent() {
     const label = r.verdict === 'unknown' && r.badgeQualifier ? v.label + ' · ' + r.badgeQualifier : v.label;
     const b = el('button', 'chip', r.headline + ' · ' + label);
     b.title = 'Checked ' + fmtTime(r.checkedAt);
-    b.addEventListener('click', () => openSnapshot(r.id));
+    b.addEventListener('click', () => openSnapshot(r.id, 'push'));
     return b;
   }));
 }
@@ -1314,22 +1778,25 @@ function recordGuess(matched) {
 
 const {drawConstellation, constellationInputsFor, constellationStatFor, constellationStatLabelFor, constellationQualityNoteFor, constellationQualityFlagFor} = createConstellation({fmtPct});
 const {drawCard}=createShareCard({getCurrent:()=>current, $, verdictOf, badgeText, headlineFor, fmtTime, shortAddr, drawConstellation, constellationInputsFor, constellationStatFor, constellationStatLabelFor, constellationQualityNoteFor, constellationQualityFlagFor});
-const {loadGallery, renderPlayer}=createExplore({$, el, verdictOf, badgeText, positionText, shortAddr, plural, fmtUsd, fmtPct, fmtTime, recordUsage, openSnapshot, getCurrent:()=>current, publishGallery:g=>{gallery=g;}, timedFetch, VERDICTS, PAGE_SIZE, MATERIAL_GAP_SHARE});
+const {loadGallery, renderPlayer}=createExplore({$, el, verdictOf, badgeText, positionText, readingTitleParts, shortAddr, plural, fmtUsd, fmtPct, fmtTime, fmtDay, recordUsage, openSnapshot, getCurrent:()=>current, publishGallery:g=>{gallery=g;}, timedFetch, VERDICTS, PAGE_SIZE, MATERIAL_GAP_SHARE});
 
 // Explore loads its list on demand; the bundled example links work immediately.
 if (window.location.hash === '#operator') setUpOperator();
 const params = new URLSearchParams(window.location.search);
 const saved = params.get('s');
 const preset = params.get('address');
+let opening = null;
 if (window.location.hash === '#saved') {
   openSaved();
 } else if (window.location.hash === '#explore') {
-  if (saved) openSnapshot(saved, 'preserve').then(() => openBoards());
+  if (saved) opening = openSnapshot(saved, 'preserve').then(() => openBoards());
   else openBoards();
 } else if (saved) {
   // A saved reading opens as itself. No check runs, so nothing is spent and
-  // nothing can have changed between the link being written and read.
-  openSnapshot(saved);
+  // nothing can have changed between the link being written and read. A
+  // shared link has no history state and counts as opened from Check; a
+  // reload keeps the origin its entry stored.
+  opening = openSnapshot(saved, 'replace', window.history.state && window.history.state.from);
 } else if (preset) {
   // Filling the field is not running the check: a `?address=` link used to
   // spend a check the moment it opened in a browser, no click involved, so
@@ -1340,38 +1807,36 @@ if (window.location.hash === '#saved') {
   setStatus('Address filled in from the link. Press Check to run it.');
   $('check').focus();
 }
+// The header tabs fade from one screen to the next, but not on the way in:
+// the markup starts with Check lit, and a cold /#explore, /#saved or a
+// reading opened from them would show the light sliding over. Transitions
+// are on (body[data-ready]) once the first screen is set and its style is
+// applied (the read of offsetWidth), so nothing is left to animate.
+Promise.resolve(opening).catch(() => {}).then(() => {
+  void document.body.offsetWidth;
+  document.body.dataset.ready = '';
+});
 renderRecent();
 recordUsage('landing_view');
 
-// Put the question, answer, decisive facts and actions before the picture.
-// The longer explanation and all account-level risk metrics remain available.
-$('subject').insertAdjacentElement('afterend', $('snapshot'));
-$('headline').insertAdjacentElement('afterend', $('takeaway'));
-$('takeaway').insertAdjacentElement('afterend', document.querySelector('.evidence-preview'));
-document.querySelector('.evidence-preview').insertAdjacentElement('afterend', $('reading-actions'));
-$('reading-actions').insertAdjacentElement('afterend', $('risk-preview'));
-$('risk-preview').insertAdjacentElement('afterend', $('changed'));
-$('changed').insertAdjacentElement('afterend', $('open-question'));
-$('open-question').insertAdjacentElement('afterend', $('claim-checker'));
-$('full-analysis').querySelector('summary').insertAdjacentElement('afterend', $('summary'));
 $('try-again').addEventListener('click', () => {
   if (!current || busy) return;
   let url = '/api/check?context=0&address=' + encodeURIComponent(current.address) + '&retry=1';
   if (current.focus) url += '&coin=' + encodeURIComponent(current.focus.coin) + '&side=' + current.focus.side;
-  load(url, data => { renderResult(data, { kind: 'live' }); showLink(data.snapshotSaved !== false ? data.snapshotId : null); askForPicture(data); }, 'Could not complete the reading. Try again shortly.', 'POST');
+  load(url, showLiveReading, 'Could not complete the reading. Try again shortly.', 'POST');
 });
 $('load-context').addEventListener('click', () => {
   if (!current || busy) return;
   let url = '/api/check?context=1&address=' + encodeURIComponent(current.address);
   if (current.focus) url += '&coin=' + encodeURIComponent(current.focus.coin) + '&side=' + current.focus.side;
-  load(url, data => { renderResult(data, { kind: 'live' }); showLink(data.snapshotSaved !== false ? data.snapshotId : null); askForPicture(data); }, 'Optional context could not be loaded.', 'POST');
+  load(url, showLiveReading, 'Optional context could not be loaded.', 'POST');
 });
 $('source-free-examples').addEventListener('click', () => { showExamples(); $('examples').scrollIntoView({ block: 'start' }); });
 $('use-example').addEventListener('click', () => {
   recordUsage('example_open');
   const link = $('player-queue').querySelector('a[href]');
-  if (!link && gallery?.featured?.[0]) return openSnapshot(gallery.featured[0].snapshotId);
-  if (link) openSnapshot(new URL(link.href, window.location.origin).searchParams.get('s'));
+  if (!link && gallery?.featured?.[0]) return openSnapshot(gallery.featured[0].snapshotId, 'push');
+  if (link) openSnapshot(new URL(link.href, window.location.origin).searchParams.get('s'), 'push');
 });
 $('waiting-example').addEventListener('click', () => $('use-example').click());
 $('address').addEventListener('input', () => { $('address-choices').hidden = true; });
@@ -1401,11 +1866,24 @@ function watched() {
         monitorExpires: typeof row.monitorExpires === 'string' ? row.monitorExpires : null,
         monitorEvents: Array.isArray(row.monitorEvents) ? row.monitorEvents.slice(0, 5).filter(e => e && typeof e.snapshotId === 'string' && typeof e.at === 'string' && Array.isArray(e.changes) && e.changes.every(c => typeof c === 'string')) : [],
         checkedAt: typeof row.checkedAt === 'string' ? row.checkedAt : null,
-        label: typeof row.label === 'string' ? row.label.trim().slice(0, 80) : '' }))
+        label: typeof row.label === 'string' ? row.label.trim().slice(0, 80) : '',
+        // The row's copy of its saved reading (withReadingSummary), kept
+        // only when it is well formed; a row saved before it existed has none.
+        // hasOwnProperty, not Object.hasOwn: a browser without it (Safari
+        // before 15.4) would throw here, watched() would return [], and the
+        // next Save would write that empty list over every saved row.
+        verdict: typeof row.verdict === 'string' && Object.prototype.hasOwnProperty.call(VERDICTS, row.verdict) ? row.verdict : null,
+        notionalUsd: typeof row.notionalUsd === 'number' && Number.isFinite(row.notionalUsd) ? row.notionalUsd : null,
+        summary: typeof row.summary === 'string' && row.summary.length <= 160 ? row.summary : null }))
       .slice(0, 12) : [];
   } catch { return []; }
 }
 const watchIdentity = row => row.address + ':' + (row.coin || '') + ':' + (row.side || '');
+/** The saved position this very reading is, if the reader saved it: it may
+ * keep an earlier reading of its own to compare with (previousReadingId). */
+function savedRowFor(d) {
+  return watched().find(row => row.snapshotId === d.snapshotId && row.address === d.address.toLowerCase());
+}
 const monitoring = createMonitoring({ read: watched, write: rows => localStorage.setItem(WATCH_KEY, JSON.stringify(rows)), render: renderWatched, status: setStatus, fetchJson: timedFetch });
 function updateSavedPosition(d) {
   if (!d.snapshotId || d.snapshotSaved === false) return;
@@ -1413,43 +1891,188 @@ function updateSavedPosition(d) {
   const rows = watched();
   const row = rows.find(r => watchIdentity(r) === identity);
   if (!row || (row.checkedAt && Date.parse(d.checkedAt) < Date.parse(row.checkedAt))) return;
-  Object.assign(row, advanceSavedReading(row, d));
+  Object.assign(row, withReadingSummary(advanceSavedReading(row, d), d));
   try { localStorage.setItem(WATCH_KEY, JSON.stringify(rows)); renderWatched(); } catch {}
 }
-function renderWatched() {
+/** `text` in at most `max` characters: whole when it fits; otherwise cut
+ * after the last whole word that leaves room for an ellipsis, which says it
+ * was cut (inside a word only when there is no space to cut at). Pure. */
+function cutAtWord(text, max) {
+  if (text.length <= max) return text;
+  const room = text.slice(0, max - 1);
+  const end = text[max - 1] === ' ' ? room.length : room.lastIndexOf(' ');
+  return (end > 0 ? room.slice(0, end) : room).trimEnd() + '…';
+}
+/**
+ * A saved row's copy of what its saved reading says, for its card on Saved:
+ * the verdict, the headline position's amount and the headline the reading
+ * screen shows (cut to the 160 characters watched() keeps, at a word,
+ * cutAtWord). Written only when the row is saved at this very reading, so
+ * the copy always describes `row.snapshotId`: a saved reading never changes
+ * under its id. Pure.
+ */
+function withReadingSummary(row, d) {
+  if (!row.snapshotId || row.snapshotId !== d.snapshotId || d.snapshotSaved === false) return row;
+  return { ...row, verdict: d.verdict.verdict, notionalUsd: d.positions.headlineNotionalUsd, summary: cutAtWord(headlineFor(d), 160) };
+}
+/** A row saved before it kept a copy of its reading gets one the first time
+ * that reading is opened (renderResult): nothing is fetched for it. */
+function backfillSavedRow(d) {
+  const rows = watched();
+  const row = rows.find(r => r.snapshotId === d.snapshotId && r.address === d.address.toLowerCase());
+  if (!row || row.verdict || d.snapshotSaved === false) return;
+  Object.assign(row, withReadingSummary(row, d));
+  try { localStorage.setItem(WATCH_KEY, JSON.stringify(rows)); renderWatched(); } catch {}
+}
+/** The number of saved positions on the Saved tab, hidden at zero. */
+function renderSavedCount() {
+  const badge = savedCountBadge(watched().length);
+  $('saved-count').textContent = badge || '';
+  $('saved-count').hidden = badge === null;
+}
+/**
+ * What a saved position's card says, from the row kept in this browser
+ * (watched()): the position, the address, the saved reading and its time,
+ * the reader's name for it, the monitor state and, when the row keeps one
+ * (withReadingSummary), a copy of what the saved reading says. With the
+ * copy, the card is the other screens' position card: the verdict with its
+ * dot (`verdictClass`), the amount (`title`) and the position (`asset`),
+ * the reader's name under them (`name`), the headline (`summary`). Its
+ * verdict label is the plain one from VERDICTS ("Unknown", "Book"): unlike
+ * the other screens' cards it carries no strength suffix and no Unknown
+ * qualifier, because the row keeps only the verdict key. Without
+ * it - a row saved before the copy existed - the card claims no verdict:
+ * its label says what opening it gives, the title is the name or the
+ * position. `monitoring` is whether the position is being monitored (it has
+ * a monitor token). Pure, so test/web-explore.test.ts runs it on its own.
+ */
+function savedCardModel(row, { monitoring }) {
+  const position = row.coin && row.side ? row.coin + ' ' + row.side : '';
+  const verdict = row.snapshotId && typeof row.verdict === 'string' && Object.prototype.hasOwnProperty.call(VERDICTS, row.verdict) ? VERDICTS[row.verdict] : null;
+  const amount = row.snapshotId && position && Number.isFinite(row.notionalUsd) ? fmtUsd(row.notionalUsd) : '';
+  return {
+    title: amount || row.label || position || 'Saved wallet',
+    asset: amount ? position : '',
+    name: amount ? row.label : '',
+    summary: verdict && typeof row.summary === 'string' ? row.summary : '',
+    meta: [amount || !row.label ? '' : position, shortAddr(row.address), row.checkedAt ? fmtTime(row.checkedAt) : ''].filter(Boolean).join(' · '),
+    verdictLabel: verdict ? verdict.label : row.snapshotId ? 'Saved reading' : 'No saved reading',
+    verdictClass: verdict ? verdict.cls : '',
+    // Monitoring starts from a saved reading (web/monitor.js); one already
+    // running can always be stopped.
+    actions: [...(row.snapshotId || monitoring ? ['monitor'] : []), 'refresh', 'remove'],
+    monitorOn: !!monitoring,
+  };
+}
+/** The panel that closes the Saved screen. With nothing saved it is the
+ * whole screen, so it says so; otherwise it invites one more. Pure. */
+function savedEmptyState(n) {
+  const empty = !(n > 0);
+  return {
+    empty,
+    ctaTitle: empty ? 'Nothing saved yet' : 'Track another position',
+    ctaText: 'Check a wallet, then press Save on the reading.',
+  };
+}
+/** How the controls of a saved position name it for a screen reader, as
+ * they always have: the reader's name, the position, the address. */
+function savedRowName(row) {
+  return (row.label ? row.label + ' · ' : '') + (row.coin ? row.coin + ' ' + row.side + ' · ' : '') + shortAddr(row.address);
+}
+/** The accessible name of a saved card's open area, which stands in for
+ * what the area shows: the card's name (savedRowName), the amount and the
+ * verdict when the row keeps them, "No saved reading" when there is none,
+ * the summary sentence the card shows, the time of the reading, and what
+ * opening does. One helper, so drawing and renaming name the card the same
+ * way. */
+function savedOpenLabel(row, model) {
+  return [
+    savedRowName(row),
+    ...(model.asset ? [model.title] : []),
+    ...(model.verdictClass || !row.snapshotId ? [model.verdictLabel] : []),
+    ...(model.summary ? [model.summary] : []),
+    ...(row.checkedAt ? ['read ' + fmtTime(row.checkedAt)] : []),
+    row.snapshotId ? 'Open saved reading' : 'Check address',
+  ].join(' · ');
+}
+/** Draws a saved card's open area from its row, and names it (savedOpenLabel):
+ * on the first draw and again after a rename. */
+function fillSavedOpen(open, row) {
+  const model = savedCardModel(row, { monitoring: !!row.monitorToken });
+  const title = el('span', 'cp-amount', model.title);
+  if (model.asset) title.append(' ', el('span', 'cp-asset', model.asset));
+  const footer = el('span', 'cp-footer');
+  footer.append(el('span', 'cp-meta', model.meta), el('span', 'cp-open', row.snapshotId ? 'Open →' : 'Check address →'));
+  open.replaceChildren(
+    model.verdictClass ? el('span', 'cp-verdict badge ' + model.verdictClass, model.verdictLabel) : el('span', 'mono-label', model.verdictLabel),
+    title,
+    ...(model.name ? [el('span', 'saved-name', model.name)] : []),
+    ...(model.summary ? [el('span', 'cp-summary', model.summary)] : []),
+    footer,
+  );
+  open.setAttribute('aria-label', savedOpenLabel(row, model));
+}
+/**
+ * The Saved screen's cards, one per saved position, on the position-card
+ * pattern: a part that opens the saved reading (fillSavedOpen), and under
+ * it, as its sibling rather than inside it, the name field and the Monitor
+ * switch, Refresh and Remove.
+ *
+ * `focus`, after a control redrew the list: `{ identity, control }` puts
+ * focus on that card's 'monitor' switch or 'open' area again, `{ heading:
+ * true }` on the Saved heading; without it, focus is left alone.
+ */
+function renderWatched(focus) {
   const box = $('watched');
   const rows = watched(); box.replaceChildren();
-  $('nav-saved').textContent = rows.length ? 'Saved (' + rows.length + ')' : 'Saved';
-  if (!rows.length) {
-    box.append(el('p', 'saved-empty', 'Nothing saved yet. Open any reading and press "Save this position"; it will appear here.'));
-    return;
-  }
-  box.append(el('p', 'search-help', 'Optional monitoring: 4 pilot slots, about every 4 hours for 72 hours. Stores the public wallet and reading question on the server; alerts appear here. The shared budget can pause checks.'));
+  renderSavedCount();
+  const state = savedEmptyState(rows.length);
+  box.hidden = state.empty;
+  $('saved-pilot').hidden = state.empty;
+  $('saved-next-title').textContent = state.ctaTitle;
+  $('saved-next-text').textContent = state.ctaText;
   rows.forEach(row => {
-    const label = (row.label ? row.label + ' · ' : '') + (row.coin ? row.coin + ' ' + row.side + ' · ' : '') + shortAddr(row.address);
-    const group = el('div', 'watch-row');
-    const b = el('button', 'chip', label + (row.snapshotId ? ' · Open saved' : ' · Check address'));
-    b.addEventListener('click', () => {
+    const label = savedRowName(row);
+    const model = savedCardModel(row, { monitoring: !!row.monitorToken });
+    const card = el('div', 'card-position saved-card');
+    const open = el('button', 'saved-open');
+    fillSavedOpen(open, row);
+    open.addEventListener('click', () => {
       if (row.snapshotId) openSnapshot(row.snapshotId, 'push');
       else { showExamples(); $('address').value = row.address; $('address').focus(); setStatus('Address filled in. Press Check to run a reading.'); }
     });
-    const refresh = el('button', 'chip', 'Refresh'); refresh.setAttribute('aria-label', 'Refresh ' + label + ' with a new check');
+    const refresh = el('button', 'btn-secondary', 'Refresh'); refresh.setAttribute('aria-label', 'Refresh ' + label + ' with a new check');
     refresh.addEventListener('click', () => { if (busy) return; if (row.coin && row.side) checkPosition(row.address, row); else { $('address').value = row.address; runCheck(); } });
-    const remove = el('button', 'chip', 'Remove'); remove.setAttribute('aria-label', 'Remove ' + label);
-    remove.addEventListener('click', () => { if (row.monitorToken) { setStatus('Stop monitoring before removing this saved position.', true); return; } try { localStorage.setItem(WATCH_KEY, JSON.stringify(watched().filter(a => watchIdentity(a) !== watchIdentity(row)))); } catch {} renderWatched(); });
+    const remove = el('button', 'btn-ghost danger', 'Remove'); remove.setAttribute('aria-label', 'Remove ' + label);
+    remove.addEventListener('click', () => {
+      if (row.monitorToken) { setStatus('Turn Monitor off before removing this saved position.', true); return; }
+      const before = watched();
+      const at = before.findIndex(a => watchIdentity(a) === watchIdentity(row));
+      const after = before.filter(a => watchIdentity(a) !== watchIdentity(row));
+      try { localStorage.setItem(WATCH_KEY, JSON.stringify(after)); } catch {}
+      // Focus goes to the card that took this one's place, or to the heading.
+      const next = at >= 0 ? after[at] : null;
+      renderWatched(next ? { identity: watchIdentity(next), control: 'open' } : { heading: true });
+    });
     const name = el('input', 'watch-label'); name.type = 'text'; name.maxLength = 80;
     name.value = row.label || ''; name.placeholder = 'Name this position'; name.setAttribute('aria-label', 'Name saved position ' + label);
+    // Renamed in place, not drawn again, so the field keeps focus.
     name.addEventListener('input', () => {
       const rows = watched(); const saved = rows.find(r => watchIdentity(r) === watchIdentity(row));
       if (!saved) return;
       saved.label = name.value.trim().slice(0, 80);
-      try { localStorage.setItem(WATCH_KEY, JSON.stringify(rows)); b.textContent = (saved.label ? saved.label + ' · ' : '') + (row.coin ? row.coin + ' ' + row.side + ' · ' : '') + shortAddr(row.address) + (row.snapshotId ? ' · Open saved' : ' · Check address'); }
+      try { localStorage.setItem(WATCH_KEY, JSON.stringify(rows)); fillSavedOpen(open, saved); }
       catch { setStatus('This browser could not save the position name.', true); }
     });
-    group.append(b, refresh, name, monitoring.button(row), remove, monitoring.notices(row));
-    if (row.checkedAt) group.append(el('span', 'search-help', ' Read ' + fmtTime(row.checkedAt)));
-    box.append(group);
+    const controls = { monitor: model.actions.includes('monitor') ? monitoring.button(row, label) : null, refresh, remove };
+    const actions = el('div', 'cp-actions');
+    actions.append(name, ...model.actions.map(action => controls[action]));
+    card.append(open, actions);
+    if (model.monitorOn) card.append(monitoring.notices(row));
+    box.append(card);
+    if (focus && focus.identity === watchIdentity(row)) (focus.control === 'monitor' && controls.monitor ? controls.monitor : open).focus();
   });
+  if (focus && focus.heading) $('saved-title').focus();
 }
 $('watch-address').addEventListener('click', () => {
   if (!current || !ADDRESS_RE.test(current.address)) return;
@@ -1458,10 +2081,10 @@ $('watch-address').addEventListener('click', () => {
   const rows = watched();
   const existing = rows.find(saved => watchIdentity(saved) === watchIdentity(candidate));
   if (!existing && rows.length >= 12) { setStatus('Your 12 saved-position slots are full. Remove one before saving another; existing readings and monitor controls are kept.', true); return; }
-  const row = advanceSavedReading(existing || { ...candidate, snapshotId: null, label: '', previousSnapshotId: null }, current);
+  const row = withReadingSummary(advanceSavedReading(existing || { ...candidate, snapshotId: null, label: '', previousSnapshotId: null }, current), current);
   try {
     localStorage.setItem(WATCH_KEY, JSON.stringify([row, ...rows.filter(a => watchIdentity(a) !== watchIdentity(row))]));
-    recordUsage('watch_save', current); renderWatched(); $('watch-address').textContent = 'Saved to your watchlist';
+    recordUsage('watch_save', current); renderWatched(); $('watch-address').textContent = 'Saved';
     $('save-confirmation').hidden = false; $('saved-position-name').value = row.label;
     $('save-confirmation-text').textContent = row.snapshotId
       ? row.snapshotId !== current.snapshotId || current.snapshotSaved === false
@@ -1487,4 +2110,4 @@ $('saved-position-name').addEventListener('input', () => {
 $('save-copy-link').addEventListener('click', () => copyReadingLink($('save-copy-link'), $('save-copy-link').dataset.snapshotId));
 $('open-saved-positions').addEventListener('click', openSaved);
 
-$('player-queue').addEventListener('click', e => { const a = e.target.closest('a[href]'); if (!a) return; e.preventDefault(); recordUsage('example_open'); openSnapshot(new URL(a.href).searchParams.get('s')); });
+$('player-queue').addEventListener('click', e => { const a = e.target.closest('a[href]'); if (!a) return; e.preventDefault(); recordUsage('example_open'); openSnapshot(new URL(a.href).searchParams.get('s'), 'push'); });

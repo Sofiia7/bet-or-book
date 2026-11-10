@@ -92,9 +92,18 @@ export interface LinkedWallet {
   fundedAt: number | null;
 }
 
-export interface PnlSummary {
+/** Nansen's 30-day realized PnL. No longer read; saved readings still carry
+ * it, in this shape, with no `basis`. */
+export interface RealizedPnl {
   realizedPnlUsd: number;
   winRate: number;
   closedTrades: number;
   windowDays: number;
 }
+
+/** A reading's PnL over a window. A saved reading made while Nansen supplied
+ * it has the first shape (`basis` absent); a new one has the second: the
+ * change in Hyperliquid's cumulative perp PnL, realized and unrealized. */
+export type PnlSummary =
+  | (RealizedPnl & { basis?: 'realized-closed' })
+  | { basis: 'realized-and-unrealized'; pnlUsd: number; windowDays: number };

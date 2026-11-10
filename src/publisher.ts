@@ -3,6 +3,7 @@ import { readingHeadline, evidenceTakeaway, VERDICT_STYLES } from './engine/pres
 import { formatUsd } from './engine/evidence';
 import { CLAIMS, checkClaim, isClaim } from './engine/claims';
 import { PERMANENT_LIMIT } from './engine/share';
+import { attributionOf } from './engine/attribution';
 
 const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 /** Stable read-only pilot DTO. No live requests, account keys or budget metadata. */
@@ -14,7 +15,10 @@ export function publisherReading(r: CheckResponse, id: string, origin: string, a
     takeaway: evidenceTakeaway(r), historical: !!r.historical, incomplete: r.degraded,
     market: { definition: r.marketDefinition ?? null, provenance: r.marketProvenance ?? null },
     evidence: r.evidence, limits: [PERMANENT_LIMIT, ...(r.coverageNotes ?? []).filter(n => n.failure).map(n => n.text)],
-    attribution: r.source === 'nansen' ? 'Powered by Nansen API' : 'Hyperliquid API',
+    // The sources this reading used, worked out here from the reading itself
+    // (not from a stored field): a reading saved before the field existed is
+    // credited by the same rule.
+    attribution: attributionOf(r).publisher,
     claim: claim ? { assertion: CLAIMS[claim], ...checkClaim(r, claim) } : null,
     link: origin + '/?s=' + encodeURIComponent(id) + (claim ? '&claim=' + claim : '') };
 }

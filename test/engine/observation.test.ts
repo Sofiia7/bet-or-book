@@ -3,9 +3,17 @@
 // what the current rules read cannot be re-judged, and saying so is the
 // whole point.
 import { describe, expect, it } from 'vitest';
-import { missingForCurrentRules, legacySourceCoverage, OBSERVATION_SCHEMA_VERSION } from '../../src/engine/observation';
+import { missingForCurrentRules, legacySourceCoverage, verdictInputOf, OBSERVATION_SCHEMA_VERSION } from '../../src/engine/observation';
 import { EMPTY_HEDGE, EMPTY_ORDERS } from '../../src/engine/features';
+import { computeVerdict } from '../../src/engine/verdict';
+import { interpret, present, words } from '../../src/engine/interpret';
+import featuredData from '../../data/featured.json';
+import type { Gallery } from '../../src/gallery';
 import type { CheckResponse } from '../../src/api/check';
+
+// The bundled demonstration readings were made before `positionsVenues`
+// existed: real stored observations, one of each kind of answer.
+const stored = (featuredData as unknown as Gallery).entries.filter((e) => !e.superseded);
 
 const base = (over: Partial<CheckResponse> = {}): CheckResponse =>
   ({
@@ -82,6 +90,34 @@ describe('an observation is checked against what the rules now read', () => {
 
 });
 
+describe('a stored observation written before positionsVenues was recorded', () => {
+  it('a stored observation without positionsVenues still reads', () => {
+    expect(stored.length).toBeGreaterThan(0);
+    for (const e of stored) {
+      expect(e, e.address).not.toHaveProperty('positionsVenues');
+      // The same functions a live reading goes through give the same answer.
+      expect(computeVerdict(verdictInputOf(e)), e.address).toEqual(e.verdict);
+      expect(words(e).evidence, e.address).toEqual(e.evidence);
+      expect(missingForCurrentRules(e), e.address).toEqual(
+        missingForCurrentRules({ ...e, positionsVenues: { asked: 1, answered: 1, registryRead: true } }),
+      );
+      // Presenting it does not invent the field, not even as `undefined`.
+      const shown = present(interpret(e, e.interpretedAt), { kind: 'live' });
+      expect(Object.keys(shown), e.address).not.toContain('positionsVenues');
+      expect(shown.evidence, e.address).toEqual(e.evidence);
+    }
+  });
+
+  it('carries positionsVenues through present() when the observation has it', () => {
+    const positionsVenues = { asked: 5, answered: 4, registryRead: true };
+    const e = stored[0];
+    const shown = present(interpret({ ...e, positionsVenues }, e.interpretedAt), { kind: 'live' });
+    expect(shown.positionsVenues).toEqual(positionsVenues);
+    // The position tiles now say where the positions were really read.
+    expect(shown.evidence.find((i) => i.label === 'Largest position')?.source).toBe('Hyperliquid');
+  });
+});
+
 describe('coverage fields a scan predates are read back from its own notes', () => {
   it('reads a failed HIP-3 order read out of the notes it wrote at the time', () => {
     const failed = base({
@@ -103,5 +139,12 @@ describe('coverage fields a scan predates are read back from its own notes', () 
   it('leaves a clean scan complete', () => {
     const clean = base({ ordersCoverage: undefined, positionsCoverage: undefined });
     expect(legacySourceCoverage(clean)).toEqual({ orders: 'complete', positions: 'complete' });
+  });
+});
+
+describe('a known-tokens reading is checked like an all-chains one', () => {
+  it('lists a missing unverifiedUsd', () => {
+    const e = base({ hedge: { hedgeUsd: 5e5, hedgeRatio: 0.5 } as never, hedgeScope: 'known-tokens', observationSchemaVersion: undefined });
+    expect(missingForCurrentRules(e)).toContain('hedge.unverifiedUsd');
   });
 });

@@ -1,0 +1,22 @@
+{
+  "frozenAt": "2026-11-10",
+  "note": "The calls the Worker itself made to Nansen during the September build, as the retired credit meter counted them. Read once from production /api/ledger before the stage 3 release; nothing counts them any more.",
+  "calls": 55,
+  "successful": 55,
+  "creditsQuoted": 55,
+  "creditsAssumed": 0,
+  "byEndpoint": {
+    "profiler/perp-positions": 13,
+    "profiler/perp-pnl-summary": 13,
+    "profiler/address/current-balance": 17,
+    "profiler/address/related-wallets": 12
+  },
+  "byDay": {
+    "2026-09-21": 3,
+    "2026-09-22": 19,
+    "2026-09-23": 15,
+    "2026-09-25": 7,
+    "2026-09-26": 9,
+    "2026-09-27": 2
+  }
+}

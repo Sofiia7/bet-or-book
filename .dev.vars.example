@@ -1,14 +1,19 @@
-# Copy to .dev.vars for local runs with live Nansen reads. Without a key
-# every check runs Hyperliquid-only and says so on the card.
+# Copy to .dev.vars for local runs. Every value is optional.
 #
 # .dev.vars is git-ignored. Never commit a real key: put it in the deployed
-# Worker with `npx wrangler secret put NANSEN_API_KEY`.
-NANSEN_API_KEY=
+# Worker with `npx wrangler secret put <NAME>`.
 
-# Optional. Lets one request reach past the public cap into the reserve kept
-# for the demo (see NANSEN_DEMO_RESERVE in wrangler.toml) and skip the public
-# rate limits, via the `x-demo-key` request header - never a query string,
-# which ends up in browser history, access logs and a screen recording's own
-# URL bar (23.09 audit, S03). An empty value here never grants the reserve to
-# anyone: e.g. `curl -H "x-demo-key: $KEY" -X POST ".../api/check?address=..."`.
+# A Blockscout PRO API key (https://dev.blockscout.com), for the funding
+# links. Sent only in the Authorization header. Without it Ethereum is read
+# from the keyless public explorer and Arbitrum funding links are said to be
+# not read. The scripts (scripts/prescan.ts, scripts/refresh-featured.ts) read
+# it from here too.
+BLOCKSCOUT_API_KEY=
+
+# Optional. Lets one request skip the public rate limits, via the
+# `x-demo-key` request header - never a query string, which ends up in
+# browser history, access logs and a screen recording's own URL bar (23.09
+# audit, S03). Such a request is tagged `demo` in telemetry. An empty value
+# here lets no one through: e.g.
+# `curl -H "x-demo-key: $KEY" -X POST ".../api/check?address=..."`.
 DEMO_KEY=

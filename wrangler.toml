@@ -6,27 +6,32 @@ compatibility_flags = ["nodejs_compat"]
 
 # The page and its script are served as text by the Worker. The script is a
 # file of its own so the page's CSP can forbid inline script entirely.
-# The two fonts and the static fallback picture are raw bytes: satori needs
-# a font as an ArrayBuffer, and a PNG is never text. `.wasm` needs no rule of
-# its own - Wrangler compiles it to a WebAssembly.Module at build time.
+# The fonts and the static fallback picture are raw bytes: satori needs a
+# font as an ArrayBuffer, a PNG is never text, and the page's own Geist
+# woff2 files are served exactly as they are. One Data rule holds all three
+# globs: Wrangler ignores a second rule of the same type unless the first
+# says `fallthrough = true`, and the build then fails on the .woff2 import.
+# `.wasm` needs no rule of its own - Wrangler compiles it to a
+# WebAssembly.Module at build time.
 rules = [
   { type = "Text", globs = ["**/*.html", "**/web/app.min.js"], fallthrough = false },
-  { type = "Data", globs = ["**/*.woff", "**/*.png"], fallthrough = false },
+  { type = "Data", globs = ["**/*.woff", "**/*.woff2", "**/*.png"], fallthrough = false },
 ]
 
 [[routes]]
 pattern = "bet-or-book.trade"
 custom_domain = true
 
-# Results and the per-day call counts the ledger reports. Not the spend cap:
-# KV is eventually consistent and its read-modify-write is not a transaction.
+# Results: cached checks, saved readings and drawn pictures.
 [[kv_namespaces]]
 binding = "KV"
 id = "864e48a08ae343af924217c67a0669b2"
 
-# One object holds the Nansen spend cap for the whole Worker; one per client
-# address counts requests. A Durable Object serves one request at a time,
-# which is what makes reserve-then-settle and the rate limit actually hold.
+# NansenBudget is the retired Nansen credit meter: a check makes no Nansen
+# call (stage 3), and it answers 410 to anything. It keeps its binding and
+# class because deleting a Durable Object class takes a migration. One
+# RequestGate per client address counts requests; a Durable Object's input
+# and output gates are what make that count hold under concurrency.
 [[durable_objects.bindings]]
 name = "NANSEN_BUDGET"
 class_name = "NansenBudget"
@@ -53,9 +58,9 @@ crons = ["0 * * * *"]
 
 # Logs, and the measurements built on them. Every check, picture and saved
 # reading leaves one JSON line (src/telemetry.ts): latency, cache hit or
-# fresh, degraded, the reason that decided the verdict, credits spent,
-# budget refusals, failed saves. Workers Logs indexes the fields, and its
-# query builder gives P50/P95 and counts over them (docs/architecture.md,
+# fresh, degraded, the reason that decided the verdict, failed saves.
+# Workers Logs indexes the fields, and its query builder gives P50/P95 and
+# counts over them (docs/architecture.md,
 # "What the Worker counts"). Traces were left off until there was something
 # to correlate them against (audit C03); with those events in place, one
 # request in ten is traced, which at this site's traffic stays far inside
@@ -67,16 +72,13 @@ enabled = true
 enabled = true
 head_sampling_rate = 0.1
 
-[vars]
-# Preserve the remaining account credits for live checks through judging.
-# Public checks can use 40 credits per day; the other 40 require DEMO_KEY.
-# The account floor separately stops spending at 100 remaining credits.
-NANSEN_DAILY_CREDIT_CAP = "80"
-NANSEN_CREDIT_FLOOR = "100"
-# Credits of the cap that public checks may not reach, so an afternoon of
-# visitors cannot leave the demo with a Hyperliquid-only answer. Reaching
-# them needs the DEMO_KEY secret, which is not set by default.
-NANSEN_DEMO_RESERVE = "40"
+# No plain-text variables. Secrets, set with `npx wrangler secret put <NAME>`
+# (.dev.vars locally, see .dev.vars.example):
+#   BLOCKSCOUT_API_KEY  optional; the funding links come from the Blockscout
+#                       explorer, and without it Ethereum is read keyless and
+#                       Arbitrum is said to be not read
+#   DEMO_KEY            optional; the `x-demo-key` header that skips the
+#                       public rate limits
 
 [build]
 command = "npm run build:web"

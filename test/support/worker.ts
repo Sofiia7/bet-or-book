@@ -3,7 +3,7 @@
 //
 // The 21.09 audit noted that nothing exercised the Worker's own routing:
 // every test reached past it into checkAddress or the engine. That is where
-// HEAD spending credits, a snapshot id promised after a failed write and a
+// HEAD starting a check, a snapshot id promised after a failed write and a
 // missing origin check all live, so that is where they have to be tested.
 //
 // This is not the Cloudflare runtime. Storage gates, eviction and request
@@ -11,6 +11,29 @@
 // run; what this harness proves is the routing and the wiring.
 import { NansenBudget, RequestGate } from '../../src/coordinator';
 import { FakeKV } from './fakeKv';
+import perpDexs from '../fixtures/hyperliquid/perp-dexs.json';
+
+/** What a named (HIP-3) dex answers for an account with nothing on it. */
+export function emptyDexState(time = Date.now()) {
+  return {
+    assetPositions: [],
+    marginSummary: { accountValue: '0.0', totalMarginUsed: '0.0', totalNtlPos: '0.0', totalRawUsd: '0.0' },
+    withdrawable: '0.0',
+    time,
+  };
+}
+
+/**
+ * Hyperliquid's answer to a request of the position read
+ * (src/sources/positions.ts): the registry capture for `perpDexs` (ten named
+ * dexes), `main` for the main dex, an empty state for every named dex.
+ * Undefined for any other request, which the caller answers itself.
+ */
+export function positionsAnswer(body: { type?: unknown; dex?: unknown }, main: unknown): unknown {
+  if (body.type === 'perpDexs') return perpDexs;
+  if (body.type === 'clearinghouseState') return body.dex === undefined ? main : emptyDexState();
+  return undefined;
+}
 
 class FakeStorage {
   private store = new Map<string, unknown>();
@@ -47,10 +70,7 @@ class FakeNamespace {
 
 export interface TestEnv {
   KV: FakeKV;
-  NANSEN_API_KEY?: string;
-  NANSEN_DAILY_CREDIT_CAP: string;
-  NANSEN_CREDIT_FLOOR: string;
-  NANSEN_DEMO_RESERVE?: string;
+  BLOCKSCOUT_API_KEY?: string;
   DEMO_KEY?: string;
   NANSEN_BUDGET: DurableObjectNamespace;
   REQUEST_GATE: DurableObjectNamespace;
@@ -59,9 +79,7 @@ export interface TestEnv {
 export function testEnv(over: Partial<TestEnv> = {}): TestEnv {
   return {
     KV: new FakeKV(),
-    NANSEN_DAILY_CREDIT_CAP: '300',
-    NANSEN_CREDIT_FLOOR: '0',
-    NANSEN_BUDGET: new FakeNamespace((ctx) => new NansenBudget(ctx)) as unknown as DurableObjectNamespace,
+    NANSEN_BUDGET: new FakeNamespace(() => new NansenBudget()) as unknown as DurableObjectNamespace,
     REQUEST_GATE: new FakeNamespace(() => new RequestGate()) as unknown as DurableObjectNamespace,
     ...over,
   };

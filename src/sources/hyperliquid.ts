@@ -1,3 +1,6 @@
+import { chargeRequest, requestBudgetOf } from '../requestBudget';
+import { RETRY_MAX_WAIT_MS, RETRY_STATUSES, pause, retryWaitMs } from './retry';
+
 const BASE_URL = 'https://api.hyperliquid.xyz/info';
 /** Without a timeout a hanging response holds the check open for minutes;
  * failing fast lets the page say "try again shortly". */
@@ -126,20 +129,40 @@ function deadlineFor(signal?: AbortSignal): AbortSignal {
 }
 
 async function postInfo<T>(body: Record<string, unknown>, signal?: AbortSignal): Promise<T> {
-  const res = await fetch(BASE_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal: deadlineFor(signal),
-  });
+  const send = (): Promise<Response> =>
+    fetch(BASE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: deadlineFor(signal),
+    });
+  chargeRequest(signal, 'hyperliquid');
+  let res = await send();
+  // One retry, only while the check still has time left: a second request
+  // after the deadline would answer nobody.
+  // The retry is a request like any other: it is sent only when the check's
+  // budget affords it, and charged.
+  if (!res.ok && RETRY_STATUSES.has(res.status) && !signal?.aborted && (requestBudgetOf(signal)?.affords(1) ?? true)) {
+    const wait = retryWaitMs(res);
+    if (wait <= RETRY_MAX_WAIT_MS) {
+      await res.body?.cancel().catch(() => {});
+      await pause(wait, signal);
+      if (!signal?.aborted) {
+        chargeRequest(signal, 'hyperliquid');
+        res = await send();
+      }
+    }
+  }
   if (!res.ok) {
     throw new Error(`hyperliquid ${String(body.type)} failed: ${res.status}`);
   }
   return res.json() as Promise<T>;
 }
 
-export async function getClearinghouseState(user: string, signal?: AbortSignal): Promise<HlClearinghouseState> {
-  return postInfo<HlClearinghouseState>({ type: 'clearinghouseState', user }, signal);
+/** `dex` names a HIP-3 perp dex ("xyz"); empty or absent asks for the main
+ * dex, which Hyperliquid answers when the field is left out. */
+export async function getClearinghouseState(user: string, signal?: AbortSignal, dex?: string): Promise<HlClearinghouseState> {
+  return postInfo<HlClearinghouseState>({ type: 'clearinghouseState', user, ...(dex ? { dex } : {}) }, signal);
 }
 
 /** Resting orders. Without `dex` Hyperliquid answers for one perp dex and
@@ -173,6 +196,44 @@ export async function getPerpMetaAndAssetCtxs(signal?: AbortSignal, dex?: string
 
 export async function getPerpDexRegistry(signal?: AbortSignal): Promise<unknown> {
   return postInfo<unknown>({ type: 'perpDexs' }, signal);
+}
+
+/** The named perp dexes in a `perpDexs` answer, in registry order (the main
+ * dex, the registry's `null` entry, is not one of them). Reads only the names:
+ * the registry's other fields are not needed to ask a dex for positions, and
+ * one odd field on one venue must not make every reading partial. A list that
+ * cannot be read throws rather than coming back shorter, since a missing dex
+ * would be a missing position. */
+export function dexNamesOf(raw: unknown): string[] {
+  if (!Array.isArray(raw)) throw new Error('hyperliquid perpDexs: not a list');
+  const names: string[] = [];
+  for (const entry of raw) {
+    if (entry === null) continue;
+    const name = typeof entry === 'object' ? (entry as { name?: unknown }).name : undefined;
+    if (typeof name !== 'string' || !/^[a-z0-9_-]{1,32}$/i.test(name)) {
+      throw new Error('hyperliquid perpDexs: invalid dex name');
+    }
+    names.push(name);
+  }
+  // A registry with no named dex is not a registry read: HIP-3 dexes exist, so
+  // an answer without one would pass for a complete read of the main dex only.
+  if (names.length === 0) throw new Error('hyperliquid perpDexs: no named dex');
+  return names;
+}
+
+/** One period of `portfolio`: cumulative account value and PnL since the
+ * period's start, as `[timestampMs, "decimal string"]` points, and volume. */
+export interface HlPortfolioPeriod {
+  accountValueHistory: Array<[number, string]>;
+  pnlHistory: Array<[number, string]>;
+  vlm: string;
+}
+
+/** The account's value and PnL over time, for `day, week, month, allTime` and
+ * the same four for perps alone (`perpDay` ... `perpAllTime`): a list of
+ * `[period, history]` pairs. One request. */
+export async function getPortfolio(user: string, signal?: AbortSignal): Promise<Array<[string, HlPortfolioPeriod]>> {
+  return postInfo<Array<[string, HlPortfolioPeriod]>>({ type: 'portfolio', user }, signal);
 }
 
 export async function getUserFillsByTime(

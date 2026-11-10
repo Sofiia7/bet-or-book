@@ -5,12 +5,10 @@ import { describe, expect, it } from 'vitest';
 import { spotHedgesPerp, classifyHolding } from '../../src/engine/assets';
 import { computeHedgeFeatures } from '../../src/engine/features';
 import {
-  normalizeNansenBalances,
   normalizeSpotHoldings,
   buildSpotPriceIndex,
   duplicateSpotTokenNames,
 } from '../../src/sources/normalize';
-import type { NansenBalance } from '../../src/sources/nansen';
 import type { HlSpotMeta, HlSpotAssetCtx, HlSpotBalance } from '../../src/sources/hyperliquid';
 import type { SpotHolding } from '../../src/types';
 
@@ -49,16 +47,6 @@ describe('where a holding came from is stated, not guessed', () => {
     ]);
     expect(hedge.hedgeRatio).toBe(0);
     expect(hedge.unverifiedUsd).toBe(1_000_000);
-  });
-
-  it('tags every normalized Nansen balance as on-chain, contract or not', () => {
-    const rows = [
-      { chain: 'ethereum', token_address: WETH, token_symbol: 'WETH', token_amount: 1, value_usd: 10 },
-      { chain: 'ethereum', token_symbol: 'WETH', token_amount: 1, value_usd: 20 },
-    ] as NansenBalance[];
-    const holdings = normalizeNansenBalances(rows);
-    expect(holdings.map((h) => h.source)).toEqual(['onchain', 'onchain']);
-    expect(holdings[1].tokenAddress).toBeUndefined();
   });
 
   it('tags Hyperliquid spot balances as its own namespace', () => {

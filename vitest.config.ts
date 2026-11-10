@@ -18,8 +18,9 @@ const textAssets: Plugin = {
 };
 
 /**
- * The same problem one asset type further: the two fonts and the fallback
- * picture are a `Data` rule in wrangler.toml (raw ArrayBuffer), and
+ * The same problem one asset type further: the fonts (Inter .woff, Geist
+ * .woff2) and the fallback picture are the `Data` rule in wrangler.toml
+ * (raw ArrayBuffer), and
  * `@resvg/resvg-wasm/index_bg.wasm` is imported the way Wrangler compiles a
  * `.wasm` file - a WebAssembly.Module, not the wasm-bindgen JS glue Vite
  * tries to load it as by default (which fails outright: `Cannot find
@@ -58,7 +59,7 @@ const workerAssets: Plugin = {
         export default await WebAssembly.compile(bytes);
       `;
     }
-    if (/\.woff$/.test(id) || /\.png$/.test(id)) {
+    if (/\.woff2?$/.test(id) || /\.png$/.test(id)) {
       const buf = readFileSync(id);
       const b64 = buf.toString('base64');
       return `const b = Buffer.from(${JSON.stringify(b64)}, 'base64'); export default b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);`;

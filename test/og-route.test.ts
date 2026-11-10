@@ -11,13 +11,14 @@
 // for, rather than from a gallery whose pictures were uploaded beforehand.
 import { describe, expect, it, vi, afterEach } from 'vitest';
 
-const renders = vi.hoisted(() => ({ count: 0 }));
+const renders = vi.hoisted(() => ({ count: 0, footers: [] as string[] }));
 vi.mock('../src/engine/ogRender', async (importOriginal) => {
   const real = await importOriginal<typeof import('../src/engine/ogRender')>();
   return {
     ...real,
     renderOgPng: async (...args: Parameters<typeof real.renderOgPng>) => {
       renders.count++;
+      renders.footers.push(args[0].footerRight);
       return real.renderOgPng(...args);
     },
   };
@@ -81,6 +82,7 @@ const b64 = async (res: Response) => Buffer.from(new Uint8Array(await res.arrayB
 afterEach(() => {
   vi.restoreAllMocks();
   renders.count = 0;
+  renders.footers.length = 0;
 });
 
 describe('the crawler never waits on a render (23.09 audit, S04)', () => {
@@ -186,6 +188,29 @@ describe('drawing is a separate request, whose failure nothing displays', () => 
     const warm = await worker.fetch(request(`/api/og?id=${id}`, { method: 'POST' }), env);
     expect(warm.status).toBe(204);
     expect(renders.count).toBe(1);
+  }, 15_000);
+});
+
+describe('the picture credits the sources its reading used', () => {
+  it('draws a reading made without Nansen with the sources it named, and not Nansen', async () => {
+    const env = testEnv();
+    const id = await liveReading(env);
+    renders.footers.length = 0;
+    const warm = await worker.fetch(request(`/api/og?id=${id}`, { method: 'POST' }), env);
+    expect(warm.status).toBe(204);
+    expect(renders.footers).toHaveLength(1);
+    expect(renders.footers[0]).toMatch(/^Data: Hyperliquid API/);
+    expect(renders.footers[0]).not.toMatch(/nansen/i);
+  }, 15_000);
+
+  it('draws an old reading made with Nansen again, on demand, with its Nansen credit', async () => {
+    const env = testEnv();
+    const list = (await (await worker.fetch(request('/api/gallery'), env)).json()) as {
+      entries: Array<{ snapshotId: string }>;
+    };
+    const warm = await worker.fetch(request(`/api/og?id=${list.entries[0].snapshotId}`, { method: 'POST' }), env);
+    expect(warm.status).toBe(204);
+    expect(renders.footers).toEqual(['Powered by Nansen API']);
   }, 15_000);
 });
 

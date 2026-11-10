@@ -34,3 +34,18 @@ it('rejects arbitrary assertions and inherited properties in shared URL paramete
   expect(isClaim('constructor')).toBe(false);
   expect(isClaim('<script>')).toBe(false);
 });
+it('reads a claim the same way in a browser without Object.hasOwn (Safari before 15.4), prototype keys included', () => {
+  // isClaim runs in the page on every reading (renderClaim); there a throw
+  // would stop the reading from being drawn at all.
+  const hasOwn = Object.hasOwn;
+  try {
+    // @ts-expect-error: the method is taken away on purpose.
+    delete Object.hasOwn;
+    expect(isClaim('ownership')).toBe(true);
+    expect(isClaim('inventory')).toBe(true);
+    for (const key of ['constructor', 'toString', 'hasOwnProperty', '__proto__', 'valueOf']) expect(isClaim(key), key).toBe(false);
+    expect(isClaim(undefined)).toBe(false);
+  } finally {
+    Object.hasOwn = hasOwn;
+  }
+});

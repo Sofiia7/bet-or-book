@@ -29,14 +29,17 @@ export async function runBrowserRegression(browser, tab, baseURL) {
   await tab.playwright.getByRole('button', { name: 'Check position', exact: true }).click();
   assert(await tab.playwright.locator('#address-choice-buttons button').count() === 2, 'Multiple addresses require a choice');
   assert(!await tab.playwright.locator('#check-progress').isVisible(), 'Address choice does not start a paid check');
-  await tab.playwright.getByRole('link', { name: 'Explore', exact: true }).click();
-  await tab.playwright.getByRole('button', { name: '$212.1M ETH short · Open saved reading', exact: true }).waitFor({ state: 'visible' });
+  // The header's Explore tab: the footer has an Explore link of its own.
+  await tab.playwright.getByRole('navigation', { name: 'Main navigation', exact: true }).getByRole('link', { name: 'Explore', exact: true }).click();
+  // A case study is a position card: the whole card is the button, named by its text.
+  const fundersCase = tab.playwright.locator('#case-study-list').getByRole('button', { name: /\$212\.1M ETH short/ });
+  await fundersCase.waitFor({ state: 'visible' });
   assert(await tab.playwright.locator('#case-studies').isVisible(), 'Explore starts with case studies');
   await tab.playwright.getByRole('button', { name: 'Archive', exact: true }).click();
   await tab.playwright.locator('#archive-list li').first().waitFor({ state: 'visible' });
   assert(await tab.playwright.locator('#archive-list li').count() > 0, 'Archive opens separately');
-  await tab.playwright.getByRole('button', { name: 'Recent case studies', exact: true }).click();
-  await tab.playwright.getByRole('button', { name: '$212.1M ETH short · Open saved reading', exact: true }).click();
+  await tab.playwright.getByRole('button', { name: 'Case studies', exact: true }).click();
+  await fundersCase.click();
   await tab.playwright.locator('#card').waitFor({ state: 'visible' });
   assert((await tab.playwright.locator('#headline').innerText()).includes('Ownership is unverified'), 'Funder headline keeps ownership boundary');
   await tab.back();
@@ -48,19 +51,22 @@ export async function runBrowserRegression(browser, tab, baseURL) {
   assert(await tab.playwright.locator('#takeaway').isVisible(), 'Evidence takeaway is visible');
   const clipboard = await tab.clipboard.read();
   try {
+    await tab.playwright.locator('#share-toggle').click();
     await tab.playwright.getByRole('button', { name: 'Copy link', exact: true }).click();
+    assert(!await tab.playwright.locator('#share-menu').isVisible(), 'Choosing a share item closes the Share menu');
     assert((await tab.clipboard.readText()).endsWith('/?s=12pk1a43rv3a1'), 'Share copies the saved reading link');
   } finally { if (clipboard.length) await tab.clipboard.write(clipboard); else await tab.clipboard.writeText(''); }
   for (const width of [320, 390, 1280]) {
     await viewport.set({ width, height: 844 });
     await fits(width + ' px reading', width);
   }
-  await tab.playwright.locator('#card').press('Tab');
-  assert(await tab.playwright.evaluate(() => document.activeElement.id) === 'check-live', 'Keyboard reaches the first reading action');
+  await tab.playwright.locator('#reading-title').press('Tab');
+  assert(await tab.playwright.evaluate(() => document.activeElement.id) === 'watch-address', 'Keyboard reaches the first reading action');
   await tab.goto(baseURL + '/?s=0tx322smj5om6');
   await tab.playwright.locator('#card').waitFor({ state: 'visible' });
   assert(await tab.playwright.locator('#source-warning').isVisible(), 'Incomplete reading keeps its warning');
-  assert((await tab.playwright.locator('#snapshot-text').innerText()).includes('rules of the time'), 'Archive keeps historical rules and date');
+  assert((await tab.playwright.locator('#snapshot-text').innerText()).includes('UTC'), 'Archive keeps its date');
+  assert((await tab.playwright.locator('#snapshot-note').innerText()).includes('rules of the time'), 'Archive keeps historical rules');
   const errors = await tab.dev.logs({ levels: ['error'], limit: 20 });
   assert(errors.length === 0, 'No browser JavaScript errors');
   return { baseURL, checkedAt: new Date().toISOString(), checks };

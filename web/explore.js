@@ -1,4 +1,4 @@
-export function createExplore({$, el, verdictOf, badgeText, positionText, shortAddr, plural, fmtUsd, fmtPct, fmtTime, recordUsage, openSnapshot, getCurrent, publishGallery, timedFetch, VERDICTS, PAGE_SIZE, MATERIAL_GAP_SHARE}) {
+export function createExplore({$, el, verdictOf, badgeText, positionText, readingTitleParts, shortAddr, plural, fmtUsd, fmtPct, fmtTime, fmtDay, recordUsage, openSnapshot, getCurrent, publishGallery, timedFetch, VERDICTS, PAGE_SIZE, MATERIAL_GAP_SHARE}) {
 let gallery=null; let galleryFilter="all"; let galleryShown=PAGE_SIZE;
 function playerList() {
   return (gallery && gallery.featured) || [];
@@ -7,38 +7,68 @@ function playerList() {
 function renderPlayer() {
   const list = playerList();
   if (list.length === 0) return;
-  const descriptions = {
+  // Verdict and position are enough to scan an example. The full diagram
+  // belongs to the opened reading, where its labels and evidence fit.
+  const rows = list.map((e) => {
+    const card = exampleCard(e);
+    // The reading opens at the top of the page with its breadcrumb in view;
+    // setScreen() in web/app.js scrolls and moves focus. Opening one is a
+    // history entry of its own, so Back returns to Check.
+    card.addEventListener('click', () => {
+      recordUsage('example_open');
+      openSnapshot(e.snapshotId, 'push');
+    });
+    return card;
+  });
+  const extra = el('details', 'fold deeper-example');
+  extra.append(el('summary', null, 'More evidence cases'), ...rows.slice(3));
+  $('player-queue').replaceChildren(...rows.slice(0, 3), ...(rows.length > 3 ? [extra] : []));
+}
+
+/**
+ * One example as a position card. src/landing.ts exampleCard() puts the
+ * same card into the page as a link before any script runs; this one
+ * replaces it as a button once the gallery loads. The two must match element
+ * for element and text for text, or the cards change in front of the reader:
+ * test/featured.test.ts runs both on the same rows and compares them.
+ */
+function exampleCard(e) {
+  const summaries = {
     looks_like_a_bet: 'A concentrated directional position, with no visible offset found.',
     hedged: 'Matching holdings at this address cover the short.',
     unknown: 'The available evidence leaves an open question.',
     book: 'Orders on both sides of the market point to trading inventory.',
   };
+  const title = readingTitleParts(e);
+  const amount = el('span', 'cp-amount', title.amount);
+  if (title.assetSide) amount.append(' ', el('span', 'cp-asset', title.assetSide));
+  const footer = el('span', 'cp-footer');
+  footer.append(el('span', 'cp-meta', shortAddr(e.address) + ' · ' + fmtDay(e.checkedAt)), el('span', 'cp-open', 'Open →'));
+  const card = el('button', 'card-position queue-row');
+  card.append(
+    el('span', 'cp-verdict badge ' + verdictOf(e).cls, badgeText(e)),
+    amount,
+    ...(e.question ? [el('span', 'example-question', e.question)] : []),
+    el('span', 'cp-summary', e.description || summaries[e.verdict.verdict]),
+    footer,
+  );
+  return card;
+}
 
-  // Verdict and position are enough to scan an example. The full diagram
-  // belongs to the opened reading, where its labels and evidence fit.
-  const rows = list.map((e) => {
-    const row = el('button', 'queue-row');
-    row.append(
-      el('strong', 'example-question', e.question || 'What does this position reveal?'),
-      el('span', 'badge ' + verdictOf(e).cls, badgeText(e)),
-      el('span', 'queue-pos', positionText(e)),
-      el('span', 'example-note', e.description || descriptions[e.verdict.verdict]),
-      el('span', 'example-date', 'Read ' + fmtTime(e.checkedAt)),
-      el('span', 'example-open', 'Open the reading →'),
-    );
-    row.addEventListener('click', async () => {
+/**
+ * Explore's case studies: the hand-picked readings, up to eight, as the same
+ * position cards the Check screen shows (exampleCard above), two to a row.
+ * Opening one is a history entry of its own, so Back returns to Explore.
+ */
+function renderCaseStudies() {
+  $('case-study-list').replaceChildren(...((gallery && gallery.featured) || []).slice(0, 8).map((e) => {
+    const card = exampleCard(e);
+    card.addEventListener('click', () => {
       recordUsage('example_open');
-      await openSnapshot(e.snapshotId);
-      if (getCurrent() && getCurrent().snapshotId === e.snapshotId) {
-        $('card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        $('card').focus({ preventScroll: true });
-      }
+      openSnapshot(e.snapshotId, 'push');
     });
-    return row;
-  });
-  const extra = el('details', 'fold deeper-example');
-  extra.append(el('summary', null, 'More evidence cases'), ...rows.slice(3));
-  $('player-queue').replaceChildren(...rows.slice(0, 3), ...(rows.length > 3 ? [extra] : []));
+    return card;
+  }));
 }
 
 let archiveShown = PAGE_SIZE;
@@ -72,14 +102,11 @@ function galleryRow(e, rank) {
         (e.historical ? ' · read by earlier rules (' + (e.classifierVersion || 'v1') + ')' : ''),
     ),
   );
-  b.addEventListener('click', async () => {
+  b.addEventListener('click', () => {
     // Whatever check is in the air was about a different account; the
     // snapshot load takes the next request number, so its answer cannot
     // land on this card (audit R03).
-    await openSnapshot(e.snapshotId, 'push');
-    if (getCurrent() && getCurrent().snapshotId === e.snapshotId) {
-      $('card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    openSnapshot(e.snapshotId, 'push');
   });
   li.append(b);
   return li;
@@ -143,12 +170,8 @@ function boardRow(e, board) {
     el('span', 'row-meta', board.stat(e) + ' · ' + shortAddr(e.address) + ' · ' + fmtTime(e.checkedAt) +
       (e.historical ? ' · earlier rules ' + (e.classifierVersion || 'v1') : ' · ' + e.classifierVersion)),
   );
-  b.addEventListener('click', async () => {
-    await openSnapshot(e.snapshotId, 'push');
-    if (getCurrent() && getCurrent().snapshotId === e.snapshotId) {
-      $('card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      $('card').focus({ preventScroll: true });
-    }
+  b.addEventListener('click', () => {
+    openSnapshot(e.snapshotId, 'push');
   });
   li.append(b);
   return li;
@@ -161,7 +184,8 @@ function renderBoards(rows) {
     const matches = rows.filter((e) => !e.historical && board.filter(e)).sort(board.sort).slice(0, BOARD_SIZE);
     if (matches.length === 0) continue;
     const section = el('div', 'board');
-    section.append(el('h3', null, board.title), el('p', 'board-note', board.note));
+    // An H2: the next level under the screen's H1, Explore.
+    section.append(el('h2', null, board.title), el('p', 'board-note', board.note));
     const list = el('ol', 'list');
     list.append(...matches.map((e) => boardRow(e, board)));
     section.append(list);
@@ -215,17 +239,14 @@ async function loadGallery() {
     $('examples-status').textContent = 'The full gallery could not load. You can still open these saved examples.';
     $('explore-status').textContent = 'Saved readings could not load. Reload the page to try again.';
     $('explore-return').hidden = !getCurrent();
-    if (document.body.classList.contains('exploring')) (getCurrent() ? $('explore-return') : $('explore-home')).focus();
+    // Only while Explore itself is showing (`exploring` is also true on
+    // Saved). The breadcrumb's "Check a wallet" is the way out now that the
+    // old per-screen button is no longer drawn.
+    if (!$('gallery').hidden) (getCurrent() ? $('explore-return') : $('breadcrumb-origin')).focus();
     return;
   }
   renderPlayer();
-  $('case-study-list').replaceChildren(...(gallery.featured || []).slice(0, 8).map(e => {
-    const article = el('div', 'box');
-    const b = el('button', 'chip', positionText(e) + ' · Open saved reading');
-    b.addEventListener('click', () => { recordUsage('example_open'); openSnapshot(e.snapshotId, 'push'); });
-    article.append(el('h3', null, e.question || 'What does this position reveal?'), el('p', 'example-note', e.description || ''), el('p', 'example-date', 'Read ' + fmtTime(e.checkedAt)), b);
-    return article;
-  }));
+  renderCaseStudies();
 
   // An account can close its position between the ranking and its check;
   // with nothing open it is not one of the biggest positions any more.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { explain, formatUsd, formatPct, type EvidenceInput } from '../../src/engine/evidence';
+import { explain, formatUsd, formatPct, madeWithExplorer, type EvidenceInput } from '../../src/engine/evidence';
 import { EMPTY_HEDGE, EMPTY_ORDERS, type PositionFeatures } from '../../src/engine/features';
 
 function positions(overrides: Partial<PositionFeatures>): PositionFeatures {
@@ -443,10 +443,210 @@ describe('explain', () => {
     expect(e.evidence).toContainEqual(expect.objectContaining({ label: 'Realized PnL, 30d', value: 'no closed trades', source: 'Nansen' }));
   });
 
+  it('says what the 30-day PnL is made of when it comes from Hyperliquid', () => {
+    const e = explain(input({ pnl: { basis: 'realized-and-unrealized', pnlUsd: 85_200_826.21, windowDays: 30 } }));
+    expect(e.evidence).toContainEqual({ label: 'Perp PnL, 30d (realized and unrealized)', value: '$85.2M', source: 'Hyperliquid' });
+    expect(e.evidence.some((i) => i.label.startsWith('Realized PnL'))).toBe(false);
+  });
+
+  it('shows a loss over the window with its sign', () => {
+    const e = explain(input({ pnl: { basis: 'realized-and-unrealized', pnlUsd: -13_104_465.5, windowDays: 30 } }));
+    expect(e.evidence).toContainEqual({ label: 'Perp PnL, 30d (realized and unrealized)', value: '-$13.1M', source: 'Hyperliquid' });
+  });
+
+  it('keeps the old Nansen tile for a saved reading that has no basis', () => {
+    // Saved readings carry the shape Nansen's PnL was stored in; they render
+    // exactly as they did.
+    const saved = { realizedPnlUsd: 7_700_000, winRate: 0.598, closedTrades: 80, windowDays: 30 };
+    const e = explain(input({ pnl: saved }));
+    expect(e.evidence).toContainEqual({ label: 'Realized PnL, 30d', value: '$7.7M', source: 'Nansen' });
+    const again = explain(input({ pnl: { ...saved, basis: 'realized-closed' } }));
+    expect(again.evidence).toContainEqual({ label: 'Realized PnL, 30d', value: '$7.7M', source: 'Nansen' });
+  });
+
+  it('puts the new PnL tile where the old one stood, with no positions open', () => {
+    const e = explain(
+      input({
+        positions: positions({ nPositions: 0, headlineCoin: null, headlineSide: null, headlineNotionalUsd: 0 }),
+        verdict: { verdict: 'unknown', strength: null, reasons: ['no open positions found'] },
+        pnl: { basis: 'realized-and-unrealized', pnlUsd: 1_500_000, windowDays: 30 },
+      }),
+    );
+    expect(e.evidence.map((i) => i.label)).toEqual(['Open positions', 'Perp PnL, 30d (realized and unrealized)']);
+  });
+
   it('labels positions read from Hyperliquid when Nansen was not used', () => {
     const e = explain(input({ source: 'hyperliquid', pnl: null, hedgeScope: 'hyperliquid' }));
     expect(e.evidence[0]).toMatchObject({ label: 'Largest position', value: '$100.0M ETH short', source: 'Hyperliquid' });
     expect(e.evidence).toContainEqual(expect.objectContaining({ label: 'Hedge found', value: '0% (Hyperliquid spot)', source: 'Hyperliquid' }));
     expect(e.evidence.length).toBeLessThanOrEqual(5);
+  });
+
+  it('labels position tiles Hyperliquid when positionsVenues is present, even if source is nansen', () => {
+    // Nansen can still have supplied the PnL or the funding links, so `source`
+    // stays 'nansen' on the reading; the positions themselves came from the
+    // Hyperliquid dexes, and the tile has to say so.
+    const positionsVenues = { asked: 7, answered: 7, registryRead: true };
+    const e = explain(input({ source: 'nansen', positionsVenues }));
+    expect(e.evidence[0]).toMatchObject({ label: 'Largest position', source: 'Hyperliquid' });
+    expect(e.evidence).toContainEqual(expect.objectContaining({ label: 'Share of exposure', source: 'Hyperliquid' }));
+    expect(e.evidence).toContainEqual(expect.objectContaining({ label: 'Net / gross exposure', source: 'Hyperliquid' }));
+    // The PnL row is Nansen's own number and keeps saying so.
+    expect(e.evidence).toContainEqual(expect.objectContaining({ label: 'Realized PnL, 30d', source: 'Nansen' }));
+
+    const none = explain(input({
+      source: 'nansen',
+      positionsVenues,
+      positions: positions({ nPositions: 0, headlineCoin: null, headlineSide: null, headlineNotionalUsd: 0 }),
+      verdict: { verdict: 'unknown', strength: null, reasons: ['no open positions found'] },
+    }));
+    expect(none.evidence[0]).toMatchObject({ label: 'Open positions', value: '0', source: 'Hyperliquid' });
+  });
+
+  it('still labels them Nansen for a stored reading without positionsVenues and source nansen', () => {
+    // A reading made before positionsVenues existed came from Nansen's
+    // positions endpoint when `source` says so, and keeps that label.
+    const e = explain(input({ source: 'nansen' }));
+    expect(e.evidence[0]).toMatchObject({ label: 'Largest position', source: 'Nansen' });
+    expect(e.evidence).toContainEqual(expect.objectContaining({ label: 'Share of exposure', source: 'Nansen' }));
+    expect(e.evidence).toContainEqual(expect.objectContaining({ label: 'Net / gross exposure', source: 'Nansen' }));
+  });
+});
+
+describe('known-tokens scope', () => {
+  const cases = (by: { hyperliquidSpot: number; onchain: number } | null, ratio: number, extra: Partial<EvidenceInput> = {}) =>
+    explain(
+      input({
+        hedgeScope: 'known-tokens',
+        source: 'hyperliquid',
+        verdict: { verdict: 'looks_like_a_bet', strength: 'likely', reasons: [] },
+        positions: positions({ headlineNotionalUsd: 100_000_000 }),
+        hedge: {
+          ...EMPTY_HEDGE, hedgeUsd: ratio * 100_000_000, hedgeRatio: ratio, unverifiedUsd: 0, lendingUsd: 0,
+          ...(by ? { hedgeUsdBySource: by } : {}),
+        },
+        ...extra,
+      }),
+    );
+  const hedgeTile = (e: ReturnType<typeof explain>) => e.evidence.find((i) => i.label === 'Hedge found');
+  const allText = (e: ReturnType<typeof explain>) => [e.summary, ...e.evidence.map((i) => `${i.label} ${i.value} ${i.source}`)].join('\n');
+
+  it('names where nothing was found, and counts the source as Hyperliquid + On-chain', () => {
+    const e = cases({ hyperliquidSpot: 0, onchain: 0 }, 0);
+    expect(e.summary).toContain(
+      'no ETH was found at this address on Hyperliquid or among the tokens this tool recognises on Ethereum, Arbitrum and HyperEVM.',
+    );
+    expect(hedgeTile(e)).toMatchObject({ value: '0% (Ethereum, Arbitrum, HyperEVM)', source: 'Hyperliquid + On-chain' });
+    expect(allText(e)).not.toContain('Nansen-supported');
+  });
+
+  it('says on-chain only when the cover is all read from nodes', () => {
+    const e = cases({ hyperliquidSpot: 0, onchain: 30_000_000 }, 0.3);
+    expect(e.summary).toContain('covered by ETH at this address on Ethereum, Arbitrum or HyperEVM.');
+    expect(hedgeTile(e)).toMatchObject({ value: '30% (Ethereum, Arbitrum, HyperEVM)', source: 'On-chain' });
+    expect(allText(e)).not.toContain('Nansen-supported');
+  });
+
+  it('says both when the cover is split', () => {
+    const e = cases({ hyperliquidSpot: 20_000_000, onchain: 10_000_000 }, 0.3);
+    expect(e.summary).toContain('at this address on Hyperliquid and on Ethereum, Arbitrum or HyperEVM.');
+    expect(hedgeTile(e)).toMatchObject({ value: '30% (Hyperliquid + other chains)', source: 'Hyperliquid + On-chain' });
+    expect(allText(e)).not.toContain('Nansen-supported');
+  });
+
+  it('says the recognised tokens were checked and held none when the cover is all Hyperliquid spot', () => {
+    const e = cases({ hyperliquidSpot: 30_000_000, onchain: 0 }, 0.3, { hedgeCoverage: 'complete' });
+    expect(e.summary).toContain(
+      'on Hyperliquid - the recognised tokens on Ethereum, Arbitrum and HyperEVM were checked and held none.',
+    );
+    expect(hedgeTile(e)).toMatchObject({ value: '30% (Hyperliquid spot)', source: 'Hyperliquid' });
+    expect(allText(e)).not.toContain('Nansen-supported');
+  });
+
+  it('does not claim all three chains were checked when the read was not complete', () => {
+    for (const hedgeCoverage of ['partial', 'missing'] as const) {
+      const e = cases({ hyperliquidSpot: 30_000_000, onchain: 0 }, 0.3, { hedgeCoverage });
+      expect(e.summary).toContain('on Hyperliquid - the recognised tokens on the chains that answered held none.');
+      expect(e.summary).not.toContain('were checked and held none');
+    }
+  });
+
+  it('uses the same search-scope phrase in the book-less summary', () => {
+    const s = cases({ hyperliquidSpot: 0, onchain: 0 }, 0, {
+      verdict: { verdict: 'looks_like_a_bet', strength: 'likely', reasons: ['directional_concentration'] },
+      positions: positions({ nPositions: 3, netToGross: 0.8, headlineShare: 0.5 }),
+    }).summary;
+    expect(s).toContain(
+      'no ETH was found at this address on Hyperliquid or among the tokens this tool recognises on Ethereum, Arbitrum and HyperEVM',
+    );
+    expect(s).not.toContain('Nansen-supported');
+  });
+
+  it('states a partial read of the recognised tokens as a gap', () => {
+    const e = cases({ hyperliquidSpot: 0, onchain: 0 }, 0, {
+      verdict: { verdict: 'unknown', strength: null, reasons: ['hedge_not_checked'] },
+      hedgeCoverage: 'partial',
+    });
+    expect(e.summary).toContain('its holdings on some of Ethereum, Arbitrum and HyperEVM could not be read');
+  });
+
+  it('credits linked wallets to Explorer + On-chain only for known-tokens', () => {
+    const linkedHedge = {
+      linkedHedgeUsd: 60_000_000,
+      linkedHedgeRatio: 0.6,
+      funders: [{ address: '0x1', relation: 'First Funder', chain: 'ethereum', matchingUsd: 60_000_000 }],
+    };
+    const verdict = { verdict: 'unknown' as const, strength: null, reasons: ['linked_exposure_unverified'] };
+    const known = cases({ hyperliquidSpot: 0, onchain: 0 }, 0, { linkedHedge, verdict });
+    expect(known.evidence.find((i) => i.label === 'Linked wallets')?.source).toBe('Explorer + On-chain');
+    const old = explain(input({ linkedHedge, verdict }));
+    expect(old.evidence.find((i) => i.label === 'Linked wallets')?.source).toBe('Nansen');
+  });
+
+  // A reading made now whose own node reads all failed has scope
+  // 'hyperliquid', yet its funder search ran on the explorer and the nodes:
+  // the source follows the reading's own shape, not its scope.
+  it('credits linked wallets to Explorer + On-chain on a new hyperliquid-scope reading, and to Nansen on an old one', () => {
+    const linkedHedge = {
+      linkedHedgeUsd: 60_000_000,
+      linkedHedgeRatio: 0.6,
+      funders: [{ address: '0x1', relation: 'First Funder', chain: 'ethereum', matchingUsd: 60_000_000 }],
+    };
+    const verdict = { verdict: 'unknown' as const, strength: null, reasons: ['linked_exposure_unverified'] };
+    const venues = { asked: 11, answered: 11, registryRead: true };
+    const linked = (e: { evidence: Array<{ label: string; source: string }> }) =>
+      e.evidence.find((i) => i.label === 'Linked wallets')?.source;
+    const fresh = explain(input({ hedgeScope: 'hyperliquid', positionsVenues: venues, source: 'hyperliquid', linkedHedge, verdict }));
+    expect(linked(fresh)).toBe('Explorer + On-chain');
+    const saved = explain(input({ hedgeScope: 'hyperliquid', positionsVenues: venues, source: 'nansen', linkedHedge, verdict }));
+    expect(linked(saved)).toBe('Nansen');
+  });
+
+  it('leaves every all-chains sentence as it was', () => {
+    const e = explain(
+      input({
+        verdict: { verdict: 'looks_like_a_bet', strength: 'likely', reasons: [] },
+        hedge: { ...EMPTY_HEDGE, hedgeUsd: 0, hedgeRatio: 0, unverifiedUsd: 0, lendingUsd: 0 },
+      }),
+    );
+    expect(e.summary).toContain('at this address on Nansen-supported chains');
+  });
+});
+
+// One rule tells a reading made since the funding links moved to the block explorer from an older one,
+// and every place that names where the links came from (the Linked wallets row, the credit lines, the
+// page) uses it: known-tokens scope, or positionsVenues with a source other than Nansen.
+describe('madeWithExplorer', () => {
+  const venues = { asked: 11, answered: 11, registryRead: true };
+  it('is true for a known-tokens reading and for a reading with positionsVenues and a source other than Nansen', () => {
+    expect(madeWithExplorer({ source: 'hyperliquid', hedgeScope: 'known-tokens' })).toBe(true);
+    expect(madeWithExplorer({ source: 'hyperliquid', hedgeScope: 'hyperliquid', positionsVenues: venues })).toBe(true);
+    expect(madeWithExplorer({ source: 'hyperliquid', hedgeScope: 'none', positionsVenues: venues })).toBe(true);
+  });
+  it('is false for an older reading, whatever its source says', () => {
+    expect(madeWithExplorer({ source: 'nansen', hedgeScope: 'all-chains' })).toBe(false);
+    expect(madeWithExplorer({ source: 'nansen', hedgeScope: 'hyperliquid', positionsVenues: venues })).toBe(false);
+    expect(madeWithExplorer({ source: 'hyperliquid', hedgeScope: 'all-chains' })).toBe(false);
+    expect(madeWithExplorer({ source: 'hyperliquid', hedgeScope: 'hyperliquid' })).toBe(false);
   });
 });

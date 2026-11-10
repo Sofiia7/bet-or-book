@@ -15,6 +15,7 @@ import type { VerdictResult } from '../engine/verdict';
 import type { EvidenceItem } from '../engine/evidence';
 import type { ShareCard } from '../engine/share';
 import type { NansenContribution } from '../engine/nansenContribution';
+import type { Attribution } from '../engine/attribution';
 import type { ExposureBreakdown } from '../engine/breakdown';
 import type { Observation } from '../engine/observation';
 import { interpret, present } from '../engine/interpret';
@@ -46,13 +47,18 @@ export interface CheckResult extends Observation {
   /** What this card says once it leaves the page as a picture. Built
    * server-side so the page, the image and the API cannot drift apart. */
   share?: ShareCard;
+  /** The credit line for each place a reading is shared, worked out from the
+   * sources it used (src/engine/attribution.ts). Absent on a reading saved
+   * before it existed; the page then credits by `source`, as it always did. */
+  attribution?: Attribution;
   /** The position split into what stands against it, for the diagram. The
    * arithmetic is done here so the drawing has nothing to decide. */
   breakdown?: ExposureBreakdown;
 }
 
 /** What /api/check and the gallery serve: the result plus how many Nansen
- * calls producing it took, counted by the caller's recorder. */
+ * calls producing it took - none for a reading made now, and what the
+ * caller's recorder counted for one saved before. */
 export type CheckResponse = CheckResult & {
   nansenCalls: number;
   /** Where this exact reading can be opened again. See src/snapshot.ts.

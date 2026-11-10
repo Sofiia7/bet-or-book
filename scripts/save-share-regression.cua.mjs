@@ -16,7 +16,8 @@ export async function runSaveShareRegression(browser, tab, baseURL) {
     await name.pressSequentially('Audit Save Share');
     await tab.playwright.getByRole('button', { name: 'Copy saved reading link', exact: true }).click();
     assert(await tab.clipboard.readText() === baseURL + '/?s=12pk1a43rv3a1', 'Saved confirmation copies the exact dated reading link');
-    await tab.playwright.getByRole('button', { name: 'Copy reading', exact: true }).click();
+    await tab.playwright.locator('#share-toggle').click();
+    await tab.playwright.getByRole('button', { name: 'Copy reading as text', exact: true }).click();
     const text = await tab.clipboard.readText();
     assert(text.includes('Read 07 Oct, 15:56 UTC'), 'Copied reading includes its original date');
     assert(text.includes('Still open:') && text.includes('not who holds the ETH now'), 'Copied reading includes the ownership limitation');
@@ -37,7 +38,8 @@ export async function runSaveShareRegression(browser, tab, baseURL) {
     assert(await saved.isVisible(), 'Saved name persists after reload');
     await saved.click();
     await tab.playwright.locator('#card').waitFor({ state: 'visible' });
-    assert((await tab.playwright.locator('#snapshot-text').innerText()).includes('07 Oct, 15:56 UTC'), 'Reopening restores the original reading date');
+    // The eyebrow is drawn in capitals (text-transform), which innerText applies.
+    assert((await tab.playwright.locator('#snapshot-text').textContent()).includes('07 Oct, 15:56 UTC'), 'Reopening restores the original reading date');
     await tab.playwright.locator('#watch-address').click();
     await name.press('ControlOrMeta+A');
     await name.press('Backspace');

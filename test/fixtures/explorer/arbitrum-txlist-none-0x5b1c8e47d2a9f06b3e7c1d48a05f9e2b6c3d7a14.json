@@ -1,0 +1,11 @@
+{
+  "note": "trimmed to the fields the reader uses (rows cut to blockNumber, timeStamp, from, to, value, isError, txreceipt_status) from a keyed capture of 2026-11-10",
+  "capturedAt": "2026-11-10T13:52:38.788Z",
+  "chain": "arbitrum",
+  "url": "https://api.blockscout.com/v2/api?chain_id=42161&module=account&action=txlist&address=0x5b1c8e47d2a9f06b3e7c1d48a05f9e2b6c3d7a14&sort=asc&page=1&offset=8",
+  "answer": {
+    "status": "0",
+    "message": "No transactions found",
+    "result": []
+  }
+}

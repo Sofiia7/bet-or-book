@@ -2,14 +2,14 @@ import type { KVLike } from './kv';
 
 /**
  * Checks in flight in this isolate, by key. Ten visitors pasting the same
- * whale address at once used to be ten cache misses, ten checks and ten
- * times the Nansen credits; now the first one does the work and the rest
- * wait for its answer.
+ * whale address at once used to be ten cache misses and ten checks, each
+ * one a few dozen upstream requests; now the first one does the work and
+ * the rest wait for its answer.
  *
  * This is a per-isolate map, not a distributed lock: two isolates can still
- * start the same check. That is fine, because the spend cap that has to hold
- * absolutely lives in a Durable Object (src/coordinator.ts) and this only
- * has to stop the obvious waste.
+ * start the same check. That is fine: a check costs upstream requests, not
+ * money, and the rate limits (src/coordinator.ts) bound how many start; this
+ * only has to stop the obvious waste.
  *
  * Every entry is removed in a `finally`, so a producer that throws leaves
  * nothing behind for the next caller to wait on.
