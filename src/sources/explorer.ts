@@ -146,7 +146,7 @@ async function getJson(request: ExplorerRequest, chain: FundingChain, signal?: A
   chargeRequest(signal, 'explorer');
   let res = await send();
   // The retry is a request like any other: sent only when the budget affords it, and charged.
-  if (!res.ok && RETRY_STATUSES.has(res.status) && !signal?.aborted && (requestBudgetOf(signal)?.affords(1) ?? true)) {
+  if (!res.ok && EXPLORER_RETRY_STATUSES.has(res.status) && !signal?.aborted && (requestBudgetOf(signal)?.affords(1) ?? true)) {
     const wait = retryWaitMs(res);
     if (wait <= RETRY_MAX_WAIT_MS) {
       await res.body?.cancel().catch(() => {});
@@ -435,6 +435,14 @@ export async function readFirstFunder(
 
 const FUNDING_CHAINS: FundingChain[] = ['ethereum', 'arbitrum'];
 
+/** The shared retry statuses plus 500. Blockscout's Arbitrum instance answers
+ * `500 {"error":"Internal server error","source":"upstream"}` now and then for
+ * a request that succeeds a moment later (measured 2026-11-10 on the same
+ * address: about 1 in 4 from Cloudflare's edge, 1 in 10 from a workstation,
+ * for page sizes from 8 to 50), and the first production check lost the
+ * Arbitrum link to it. One retry, charged like any send. */
+const EXPLORER_RETRY_STATUSES = new Set([...RETRY_STATUSES, 500]);
+
 function notReadReason(err: unknown): 'error' | 'limit' | 'no-key' {
   if (isRequestBudgetExceeded(err)) return 'limit';
   if (err instanceof ExplorerUnavailable) return 'no-key';
@@ -452,7 +460,16 @@ export async function readFundingLinks(
   const links: LinkedWallet[] = [];
   const chains = settled.map((outcome, i): ChainRead => {
     const chain = FUNDING_CHAINS[i]!;
-    if (outcome.status === 'rejected') return { chain, status: 'not-read', reason: notReadReason(outcome.reason) };
+    if (outcome.status === 'rejected') {
+      const reason = notReadReason(outcome.reason);
+      // The card says only "could not be read"; the log says why. The message carries the
+      // status or the shape rule, never the request, its key or the explorer's own text.
+      if (reason === 'error') {
+        const err = outcome.reason;
+        console.warn(`explorer ${chain} not read: ${err instanceof Error ? `${err.name}: ${err.message}` : 'unknown error'}`);
+      }
+      return { chain, status: 'not-read', reason };
+    }
     if (outcome.value.link !== null) links.push(outcome.value.link);
     return { chain, status: 'read', complete: outcome.value.complete };
   });

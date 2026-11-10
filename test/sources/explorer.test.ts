@@ -287,10 +287,25 @@ describe('readFirstFunder', () => {
       await expect(readFirstFunder(ABRAXAS, 'ethereum', {})).rejects.toBeInstanceOf(UpstreamShapeError);
     });
 
-    it.each([402, 403, 404, 500])('rejects an HTTP %i without a retry', async (status) => {
+    it.each([402, 403, 404])('rejects an HTTP %i without a retry', async (status) => {
       const fn = stubFetch(challenge(status));
       await expect(readFirstFunder(ABRAXAS, 'ethereum', {})).rejects.toThrow(`explorer ethereum answered ${status}`);
       expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    it('retries a 500 once and reads the answer that follows, charging both sends', async () => {
+      const fn = stubFetch(challenge(500), json(abraxas()));
+      const { signal, budget } = budgetedSignal(5);
+      const read = await readFirstFunder(ABRAXAS, 'ethereum', {}, signal);
+      expect(read.link?.address).toBe(ETH_FUNDER);
+      expect(fn).toHaveBeenCalledTimes(2);
+      expect(budget.used()).toBe(2);
+    });
+
+    it('rejects a 500 that is still a 500 after its one retry', async () => {
+      const fn = stubFetch(challenge(500), challenge(500), json(abraxas()));
+      await expect(readFirstFunder(ABRAXAS, 'ethereum', {})).rejects.toThrow('explorer ethereum answered 500');
+      expect(fn).toHaveBeenCalledTimes(2);
     });
 
     it('rejects a 429 that is still a 429 after its one retry', async () => {
@@ -498,6 +513,24 @@ describe('readFirstFunder', () => {
         { chain: 'arbitrum', status: 'not-read', reason: 'error' },
       ]);
       expect(read.links).toEqual([]);
+    });
+
+    it('says in the log why a chain was not read, with the status and without the key', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      stubFetch(json(abraxas()), challenge(403));
+      await readFundingLinks(ABRAXAS, { apiKey: KEY });
+      const lines = warn.mock.calls.map((c) => String(c[0]));
+      expect(lines).toEqual(['explorer arbitrum not read: Error: explorer arbitrum answered 403']);
+      expect(lines.join(' ')).not.toContain(KEY);
+      warn.mockRestore();
+    });
+
+    it('does not log a chain that was refused for the budget or a missing key', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      stubFetch(json(abraxas()));
+      await readFundingLinks(ABRAXAS, {});
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
     });
   });
 
@@ -1022,10 +1055,27 @@ describe('readFirstFunder', () => {
         expect(String((err as Error).message)).not.toContain('Invalid API Key');
       });
 
-      it.each([402, 403, 404, 500])('rejects an HTTP %i without a retry', async (status) => {
+      it.each([402, 403, 404])('rejects an HTTP %i without a retry', async (status) => {
         const fn = stubFetch(challenge(status));
         await expect(readFirstFunder(ABRAXAS, 'arbitrum', { apiKey: KEY })).rejects.toThrow(`explorer arbitrum answered ${status}`);
         expect(fn).toHaveBeenCalledTimes(1);
+      });
+
+      it('retries the upstream 500 Blockscout gives now and then, charging both sends, and reads the answer that follows', async () => {
+        const upstream = new Response('{"error":"Internal server error","source":"upstream"}', { status: 500, headers: { 'content-type': 'application/json' } });
+        const fn = stubFetch(upstream, json(arbitrum()), json(labelPageFor(ARB_FUNDER, null)));
+        const { signal, budget } = budgetedSignal(5);
+        const read = await readFirstFunder(ABRAXAS, 'arbitrum', { apiKey: KEY }, signal);
+        expect(read.link?.address).toBe(ARB_FUNDER);
+        expect(fn).toHaveBeenCalledTimes(3);
+        expect(budget.used()).toBe(3);
+      });
+
+      it('rejects a 500 that is still a 500 after its one retry, with the status and no key in the message', async () => {
+        const fn = stubFetch(challenge(500), challenge(500), json(arbitrum()));
+        const err = await readFirstFunder(ABRAXAS, 'arbitrum', { apiKey: KEY }).catch((e: unknown) => e);
+        expect(String((err as Error).message)).toBe('explorer arbitrum answered 500');
+        expect(fn).toHaveBeenCalledTimes(2);
       });
 
       it('retries a 429 once, charging both sends, and reads the answer that follows', async () => {
@@ -1177,7 +1227,6 @@ describe('readFirstFunder', () => {
 
     describe('a lookup that does not work is not an error of the chain read', () => {
       it.each([
-        ['an HTTP 500', () => json({ error: 'Internal server error', source: 'upstream' }, 500)],
         ['an HTTP 403 challenge page', () => challenge(403)],
         ['an HTTP 402', () => json({ message: 'payment required' }, 402)],
         ['an HTTP 302', () => new Response(null, { status: 302, headers: { location: 'https://elsewhere.example/' } })],
@@ -1207,10 +1256,16 @@ describe('readFirstFunder', () => {
         expect(calls).toBe(2);
       });
 
-      it('does not retry a failed lookup beyond the shared 429 retry', async () => {
-        const fn = stubFetch(json(arbitrum()), json({ error: 'Internal server error' }, 500), json(binanceLabel()));
+      it('gives a failed lookup the one shared retry and no more: a second 500 leaves the link unverified', async () => {
+        const fn = stubFetch(json(arbitrum()), json({ error: 'Internal server error' }, 500), json({ error: 'Internal server error' }, 500), json(binanceLabel()));
         expect((await read()).link?.serviceStatus).toBe('unverified');
-        expect(fn).toHaveBeenCalledTimes(2);
+        expect(fn).toHaveBeenCalledTimes(3);
+      });
+
+      it('retries a 500 of the lookup once and reads the answer that follows', async () => {
+        const fn = stubFetch(json(arbitrum()), json({ error: 'Internal server error', source: 'upstream' }, 500), json(binanceLabel()));
+        expect((await read()).link?.serviceStatus).toBe('service');
+        expect(fn).toHaveBeenCalledTimes(3);
       });
 
       it('retries a 429 of the lookup once, as every explorer send does, and reads the answer that follows', async () => {
