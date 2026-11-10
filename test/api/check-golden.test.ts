@@ -1,33 +1,36 @@
 // The whole of what a check returns, pinned for a dozen paths through it,
-// on recorded real Hyperliquid and Nansen answers and a fixed clock.
+// on recorded real Hyperliquid, explorer and node answers and a fixed clock.
+//
+// Positions come from Hyperliquid's own dexes. Where a path was recorded with
+// Nansen's positions for Abraxas, or with positions made up for the case, the
+// reading is handed those same positions (test/support/positions.ts), so the
+// path still pins what it pinned. Where no positions are handed in, the check
+// reads every dex through the routed answers below, as it does live.
 //
 // Written before check.ts was split into observation, rules and
 // presentation, so the split could be held to exactly what the one long
 // function produced: every field, every sentence, every note, in every
-// path - the main one, a failed source, no Nansen at all, a chosen
+// path - the main one, a failed source, no explorer key, a chosen
 // position, an expired deadline, and the rest. A change here is a change
 // in what a reader sees, and has to be one somebody meant.
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { checkAddress, type CheckOptions } from '../../src/api/check';
-import {
-  createNansenClient,
-  type NansenClient,
-  type NansenPerpPositions,
-  type NansenPnlSummary,
-  type NansenBalance,
-  type NansenRelatedWallet,
-} from '../../src/sources/nansen';
+import type { NansenPerpPositions, NansenBalance } from '../support/nansenFixtures';
+import type { HlClearinghouseState } from '../../src/sources/hyperliquid';
+import { allDexFrom } from '../support/positions';
+import { holdingsFromNansen, onchainAnswers } from '../support/onchain';
+import { EXPLORER_KEY, abraxasPages, explorerAnswers, type ExplorerPages } from '../support/explorer';
+import perpDexs from '../fixtures/hyperliquid/perp-dexs.json';
 import abxClearinghouse from '../fixtures/hyperliquid/abraxas/clearinghouse.json';
+import abxXyz from '../fixtures/hyperliquid/abraxas/clearinghouse-xyz.json';
 import abxOrders from '../fixtures/hyperliquid/abraxas/open-orders.json';
 import abxSpot from '../fixtures/hyperliquid/abraxas/spot-balances.json';
 import abxFills from '../fixtures/hyperliquid/abraxas/fills-24h.json';
 import spotMeta from '../fixtures/hyperliquid/spot-meta.json';
 import perpMeta from '../fixtures/hyperliquid/meta-and-asset-ctxs.json';
 import abxPositions from '../fixtures/nansen/perp-positions-abraxas.json';
-import abxPnl from '../fixtures/nansen/perp-pnl-summary-abraxas.json';
+import abxPortfolio from '../fixtures/hyperliquid/portfolio-abraxas.json';
 import abxBalances from '../fixtures/nansen/current-balance-abraxas-all.json';
-import abxRelArb from '../fixtures/nansen/related-wallets-abraxas-arbitrum.json';
-import abxRelEth from '../fixtures/nansen/related-wallets-abraxas-ethereum.json';
 import funderArbBalances from '../fixtures/nansen/current-balance-abraxas-funder-all.json';
 import funderEthBalances from '../fixtures/nansen/current-balance-abraxas-funder-eth-all.json';
 
@@ -37,43 +40,68 @@ const FUNDER_ETH = '0xed0c6079229e2d407672a117c22b62064f4a4312';
 const NOW = Date.parse('2026-09-18T15:00:00.000Z');
 const clock = () => NOW;
 
+/** What a named dex with nothing on it answers. */
+const EMPTY_DEX = {
+  assetPositions: [],
+  marginSummary: { accountValue: '0.0', totalMarginUsed: '0.0', totalNtlPos: '0.0', totalRawUsd: '0.0' },
+  withdrawable: '0.0',
+  time: abxClearinghouse.time,
+};
+
 const HL: Record<string, unknown> = {
-  clearinghouseState: abxClearinghouse,
+  perpDexs,
   frontendOpenOrders: abxOrders,
   spotClearinghouseState: abxSpot,
   spotMetaAndAssetCtxs: spotMeta,
   metaAndAssetCtxs: perpMeta,
   userFillsByTime: abxFills,
+  portfolio: abxPortfolio.portfolio,
 };
 
-const NANSEN: Record<string, unknown> = {
-  [`profiler/perp-positions|${ABRAXAS}|`]: abxPositions,
-  [`profiler/perp-pnl-summary|${ABRAXAS}|`]: abxPnl,
-  [`profiler/address/current-balance|${ABRAXAS}|all`]: abxBalances,
-  [`profiler/address/related-wallets|${ABRAXAS}|arbitrum`]: abxRelArb,
-  [`profiler/address/related-wallets|${ABRAXAS}|ethereum`]: abxRelEth,
-  [`profiler/address/current-balance|${FUNDER_ARB}|all`]: funderArbBalances,
-  [`profiler/address/current-balance|${FUNDER_ETH}|all`]: funderEthBalances,
-};
-
-function route(opts: { failNansen?: string[]; hip3Orders?: 'fail' | unknown[] } = {}) {
+/** `failDex` names one named dex that will not answer for positions. The
+ * public nodes answer what the Nansen balance fixtures say each wallet holds
+ * of the registry tokens; `holdings` replaces the account's own. */
+function route(
+  opts: {
+    hip3Orders?: 'fail' | unknown[];
+    registry?: 'fail';
+    failDex?: string;
+    holdings?: NansenBalance[];
+    /** The explorer's pages. Abraxas's captures by default, the label lookup
+     * included: on the Ethereum chain Blockscout tags the Arbitrum funder
+     * 0xb38e...891d as a Binance hot wallet (the keyed capture of 2026-11-10),
+     * so the search skips it as an exchange and follows only 0xed0c...4312. */
+    explorer?: ExplorerPages;
+  } = {},
+) {
+  const explorer = explorerAnswers(opts.explorer ?? abraxasPages({ labelled: true }));
+  const onchain = onchainAnswers({
+    [ABRAXAS]: holdingsFromNansen(opts.holdings ?? (abxBalances.data as NansenBalance[])),
+    [FUNDER_ARB]: holdingsFromNansen(funderArbBalances.data as NansenBalance[]),
+    [FUNDER_ETH]: holdingsFromNansen(funderEthBalances.data as NansenBalance[]),
+  });
   global.fetch = vi.fn(async (url: string | URL, init?: RequestInit) => {
     const u = String(url);
     const body = JSON.parse(String(init?.body ?? '{}'));
+    const node = onchain(u, body);
+    if (node) return node;
+    const funding = explorer(u);
+    if (funding) return funding;
     if (u.includes('api.hyperliquid.xyz')) {
       if (body.type === 'frontendOpenOrders' && body.dex) {
         if (opts.hip3Orders === 'fail') return new Response('{}', { status: 503 });
         return new Response(JSON.stringify(opts.hip3Orders ?? []), { status: 200 });
       }
+      if (body.type === 'perpDexs' && opts.registry === 'fail') return new Response('{}', { status: 500 });
+      if (body.type === 'clearinghouseState') {
+        if (opts.failDex !== undefined && body.dex === opts.failDex) return new Response('{}', { status: 500 });
+        const state = body.dex === undefined ? abxClearinghouse : body.dex === 'xyz' ? abxXyz : EMPTY_DEX;
+        return new Response(JSON.stringify(state), { status: 200 });
+      }
       if (!(body.type in HL)) throw new Error(`unrouted Hyperliquid ${body.type}`);
       return new Response(JSON.stringify(HL[body.type]), { status: 200 });
     }
-    const key = `${u.split('/api/v1/')[1]}|${String(body.address).toLowerCase()}|${body.chain ?? ''}`;
-    if (opts.failNansen?.includes(key)) {
-      return new Response('{}', { status: 500, headers: { 'x-nansen-credits-cost': '0' } });
-    }
-    if (!(key in NANSEN)) throw new Error(`unrouted Nansen ${key}`);
-    return new Response(JSON.stringify(NANSEN[key]), { status: 200, headers: { 'x-nansen-credits-cost': '1' } });
+    throw new Error(`unrouted request ${u}`);
   }) as unknown as typeof fetch;
 }
 
@@ -113,110 +141,108 @@ const weth = (valueUsd: number): NansenBalance => ({
   value_usd: valueUsd,
 });
 
-/** A client answering from memory, so a path can be driven without routing
- * every call through fetch. */
-function fake(opts: {
-  positions: NansenPerpPositions | Record<string, unknown>;
-  balances?: NansenBalance[];
-  relatedFromFixtures?: boolean;
-}): NansenClient {
-  return {
-    perpPositions: async () => opts.positions as NansenPerpPositions,
-    perpPnlSummary: async () => abxPnl.data as unknown as NansenPnlSummary,
-    currentBalance: async () => ({ rows: opts.balances ?? [], complete: true }),
-    relatedWallets: async (_address, chain) => ({
-      rows: (opts.relatedFromFixtures
-        ? ((chain === 'arbitrum' ? abxRelArb : abxRelEth) as { data: NansenRelatedWallet[] }).data
-        : []) as NansenRelatedWallet[],
-      complete: true,
-    }),
-  };
-}
+/** Both funding-link chains, read with a key. */
+const KEYED: Partial<CheckOptions> = { explorer: { apiKey: EXPLORER_KEY } };
+/** No funding page names anyone: the funder search runs and finds no one. */
+const NOBODY: ExplorerPages = {};
 
-const run = (options: Partial<CheckOptions> & Pick<CheckOptions, 'nansen'>) =>
-  checkAddress(ABRAXAS, { now: clock, ...options });
+/** The reading every dex would give for an account holding `list`. */
+const holding = (list: NansenPerpPositions) => async () =>
+  allDexFrom(list, abxClearinghouse as HlClearinghouseState);
+
+/** Abraxas's positions as Nansen reported them on 18 September. */
+const abraxasPositions = holding(abxPositions.data as unknown as NansenPerpPositions);
+
+const run = (options: Partial<CheckOptions>) => checkAddress(ABRAXAS, { now: clock, ...options });
 
 afterEach(() => vi.restoreAllMocks());
 
 describe('a check, whole, on recorded real answers', () => {
-  it('abraxas: the full paid path, own balances and both funders', async () => {
+  it('abraxas: the full path, the Arbitrum funder is tagged as an exchange and skipped', async () => {
     route();
-    expect(await run({ nansen: createNansenClient('k') })).toMatchSnapshot();
+    expect(await run({ ...KEYED, readPositions: abraxasPositions })).toMatchSnapshot();
   });
 
-  it('abraxas: Nansen positions fail, Hyperliquid main dex instead', async () => {
-    route({ failNansen: [`profiler/perp-positions|${ABRAXAS}|`] });
-    expect(await run({ nansen: createNansenClient('k') })).toMatchSnapshot();
+  it('abraxas: the full path when the label lookup says nothing, so both funders are followed', async () => {
+    // The lookup that finds no label (a refusal, a timeout, an address Blockscout
+    // does not tag) leaves the Arbitrum funder unverified, and the search follows
+    // it: the fail-safe path, and what the full path read before the label lookup.
+    route({ explorer: abraxasPages() });
+    expect(await run({ ...KEYED, readPositions: abraxasPositions })).toMatchSnapshot();
   });
 
-  it('abraxas: Nansen not used, and why', async () => {
+  it('abraxas: no explorer key, so the Arbitrum funding links are not read', async () => {
     route();
-    expect(await run({ nansen: null, nansenOffReason: "today's Nansen credits are used up" })).toMatchSnapshot();
+    expect(await run({})).toMatchSnapshot();
+  });
+
+  it('abraxas: one named dex does not answer for its positions', async () => {
+    // Every other dex answers, xyz with Abraxas's own positions there. Read a
+    // minute after the capture, so the gap, not the age, is what the card
+    // turns on.
+    route({ failDex: 'flx' });
+    expect(
+      await run({ ...KEYED, now: () => abxClearinghouse.time + 60_000 }),
+    ).toMatchSnapshot();
   });
 
   it('abraxas: asked about its second-largest position', async () => {
     route();
-    const full = await run({ nansen: createNansenClient('k') });
+    const full = await run({ ...KEYED, readPositions: abraxasPositions });
     const second = full.positions.candidates[1];
     route();
-    expect(await run({ nansen: createNansenClient('k'), focus: { coin: second.coin, side: second.side } })).toMatchSnapshot();
+    expect(
+      await run({ ...KEYED, readPositions: abraxasPositions, focus: { coin: second.coin, side: second.side } }),
+    ).toMatchSnapshot();
   });
 
   it('abraxas: asked about a position that is not open', async () => {
     route();
-    expect(await run({ nansen: createNansenClient('k'), focus: { coin: 'DOGE', side: 'long' } })).toMatchSnapshot();
+    expect(
+      await run({ ...KEYED, readPositions: abraxasPositions, focus: { coin: 'DOGE', side: 'long' } }),
+    ).toMatchSnapshot();
   });
 
-  it('abraxas: the deadline already passed, so no paid stage starts', async () => {
+  it('abraxas: the deadline already passed, so no optional read starts', async () => {
     route();
-    expect(await run({ nansen: createNansenClient('k'), deadline: NOW - 1 })).toMatchSnapshot();
-  });
-
-  it('abraxas: Nansen answers 200 with the wrong shape', async () => {
-    route();
-    expect(await run({ nansen: fake({ positions: {} }) })).toMatchSnapshot();
+    expect(await run({ ...KEYED, deadline: NOW - 1 })).toMatchSnapshot();
   });
 
   it('a short covered by its own WETH', async () => {
-    route();
-    const nansen = fake({
-      positions: positions([{ coin: 'ETH', size: -25_000, valueUsd: 100_000_000 }]),
-      balances: [weth(95_000_000)],
-    });
-    expect(await run({ nansen })).toMatchSnapshot();
+    route({ holdings: [weth(95_000_000)], explorer: NOBODY });
+    expect(
+      await run({ ...KEYED, readPositions: holding(positions([{ coin: 'ETH', size: -25_000, valueUsd: 100_000_000 }])) }),
+    ).toMatchSnapshot();
   });
 
   it('a short 60% covered', async () => {
-    route();
-    const nansen = fake({
-      positions: positions([{ coin: 'ETH', size: -25_000, valueUsd: 100_000_000 }]),
-      balances: [weth(60_000_000)],
-    });
-    expect(await run({ nansen })).toMatchSnapshot();
+    route({ holdings: [weth(60_000_000)], explorer: NOBODY });
+    expect(
+      await run({ ...KEYED, readPositions: holding(positions([{ coin: 'ETH', size: -25_000, valueUsd: 100_000_000 }])) }),
+    ).toMatchSnapshot();
   });
 
   it('a lone long, with its funding history', async () => {
     route();
-    const nansen = fake({
-      positions: positions([{ coin: 'BTC', size: 500, valueUsd: 50_000_000 }]),
-      relatedFromFixtures: true,
-    });
-    expect(await run({ nansen })).toMatchSnapshot();
+    expect(
+      await run({ ...KEYED, readPositions: holding(positions([{ coin: 'BTC', size: 500, valueUsd: 50_000_000 }])) }),
+    ).toMatchSnapshot();
   });
 
   it('thirty offsetting positions in thirty assets', async () => {
-    route();
-    const nansen = fake({
-      positions: positions(
-        Array.from({ length: 30 }, (_, i) => ({ coin: `C${i}`, size: i % 2 === 0 ? 10 : -10, valueUsd: 1_000_000 })),
-      ),
-    });
-    expect(await run({ nansen })).toMatchSnapshot();
+    route({ explorer: NOBODY });
+    const thirty = positions(
+      Array.from({ length: 30 }, (_, i) => ({ coin: `C${i}`, size: i % 2 === 0 ? 10 : -10, valueUsd: 1_000_000 })),
+    );
+    expect(await run({ ...KEYED, readPositions: holding(thirty) })).toMatchSnapshot();
   });
 
   it('a HIP-3 long whose dex will not answer for its orders', async () => {
-    route({ hip3Orders: 'fail' });
-    const nansen = fake({ positions: positions([{ coin: 'xyz:SP500', size: 100, valueUsd: 20_000_000 }]) });
-    expect(await run({ nansen })).toMatchSnapshot();
+    // The registry of dexes does not answer either, as when this path was
+    // first recorded: the market's deployer and oracle stay unestablished.
+    route({ hip3Orders: 'fail', registry: 'fail', explorer: NOBODY });
+    expect(
+      await run({ ...KEYED, readPositions: holding(positions([{ coin: 'xyz:SP500', size: 100, valueUsd: 20_000_000 }])) }),
+    ).toMatchSnapshot();
   });
 });

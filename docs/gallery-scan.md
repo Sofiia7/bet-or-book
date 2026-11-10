@@ -1,5 +1,7 @@
 # The gallery: one dated scan, not the market
 
+*A dated record: the readings here were made in September-October 2026 with Nansen, and "Nansen" in this text names the source those readings used. Since stage 3 a new check reads Hyperliquid, public nodes and the Blockscout explorer instead (see the [README](../README.md)).*
+
 The [README](../README.md) has the headline table. This is the full account of how the set was built, what moved when the rules changed, and what it does not claim to show.
 
 On 18 September 2026 the same check ran over a set of large Hyperliquid positions: accounts from the top 3,000 by value on Hyperliquid's public leaderboard, ranked by their largest main-dex position (864 had one open), checked from the top until the credits ran out. That is 278 accounts; one had closed its position by the time it was checked, which leaves 277. Thirty-one cards have since been re-read live - nine on 21 September when the rules first changed, twenty-two after the 21 September audit - so the set spans several dates and each card carries its own.

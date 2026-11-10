@@ -6,7 +6,9 @@
  * which. This lists what Nansen supplied to this particular reading -
  * positions on every dex, balances on every chain, funding links, funding
  * history, realized PnL - and says which of them the rule that answered
- * actually needed.
+ * actually needed. A reading made after positions came from Hyperliquid's own
+ * dexes (it carries `positionsVenues`) is never credited with the positions:
+ * only what Nansen still supplies is listed.
  *
  * It never claims that Nansen "found" a different situation. The audit was
  * specific: a bet refused for want of a complete position read is a gap
@@ -53,44 +55,14 @@ function withoutFundingLinks(r: CheckResponse): VerdictResult | null {
   return without.verdict === withLinks.verdict && without.strength === withLinks.strength ? null : without;
 }
 
-export function nansenContribution(r: CheckResponse): NansenContribution | null {
-  const calls = r.nansenCalls ?? 0;
-  if (r.positions.nPositions === 0 && calls === 0) return null;
-
-  if (r.source !== 'nansen') {
-    const why = (r.coverage ?? []).find((c) => c.startsWith('Nansen'));
-    return {
-      lead: 'not used for this reading',
-      items: [
-        ...(why ? [`${why}.`] : []),
-        "Positions come from Hyperliquid's own endpoint, which reads the main dex only, so a rule that needs " +
-          'every position read does not answer here.',
-      ],
-      calls,
-    };
-  }
-
+/** Everything Nansen supplies besides the positions: balances on other
+ * chains, funding links, funding history and realized PnL. Adds one sentence
+ * each to `items` and returns the lead those parts set, or `lead` as it was
+ * passed in when none of them sets one. Shared by both kinds of reading, so
+ * the sentences are the same whichever kind is being described. */
+function suppliedBesidesPositions(r: CheckResponse, items: string[], lead: string | null): string | null {
   const coin = r.positions.headlineCoin ?? 'the asset';
-  const n = r.positions.nPositions;
   const reason = r.verdict.reasons?.[0];
-  const isBet = r.verdict.verdict === 'looks_like_a_bet';
-  const items: string[] = [];
-  let lead: string | null = null;
-
-  // Positions: the one read every rule depends on.
-  const hip3 = (r.positions.candidates ?? []).map((c) => c.coin).filter((c) => c.includes(':'));
-  const mainDex = r.mainDexPositionCount ?? null;
-  const dexComparison =
-    mainDex !== null && mainDex !== n
-      ? `Hyperliquid's own free endpoint shows ${plural(mainDex, 'position')} on the main dex alone.`
-      : "Hyperliquid's own free endpoint reads the main dex only.";
-  items.push(
-    `Positions on every Hyperliquid dex, HIP-3 included: ${plural(n, 'open position')}` +
-      (hip3.length ? `, among the largest ${hip3.slice(0, 2).join(' and ')}` : '') +
-      `. ${dexComparison}` +
-      (isBet ? ' The bet rule needs every position read, so it could only be applied with these.' : ''),
-  );
-  if (isBet) lead = `every dex read, ${plural(n, 'position')} in all, which the bet rule needs`;
 
   // Balances on every chain: what lets a short's cover be called complete.
   if (r.hedgeScope === 'all-chains') {
@@ -130,6 +102,8 @@ export function nansenContribution(r: CheckResponse): NansenContribution | null 
       const chains = [...new Set(funders.map((f) => f.chain))].join(' and ');
       const without = withoutFundingLinks(r);
       const hold = funders.length === 1 ? 'holds' : 'hold';
+      // A known-tokens reading never gets here (its links are the
+      // explorer's): the links and their balances are both Nansen's.
       items.push(
         `Funding links: ${plural(funders.length, 'wallet')} that funded this account ${hold} ${formatUsd(usd)} of ` +
           `${coin}, on ${chains}. A funding transfer is not ownership, so none of it is counted.` +
@@ -139,9 +113,10 @@ export function nansenContribution(r: CheckResponse): NansenContribution | null 
           // still be hiding more of the picture (spec review after A06).
           (r.linkedHedgeCoverage === 'partial' ? ' Another funding wallet could not be read in full, so this is a floor.' : ''),
       );
+      const wallets = plural(funders.length, 'funding wallet');
       lead = without
-        ? `${plural(funders.length, 'funding wallet')} ${hold} ${formatUsd(usd)} of ${coin}; without them this would read as "${named(without)}"`
-        : `${plural(funders.length, 'funding wallet')} ${hold} ${formatUsd(usd)} of ${coin}, ownership unconfirmed`;
+        ? `${wallets} ${hold} ${formatUsd(usd)} of ${coin}; without them this would read as "${named(without)}"`
+        : `${wallets} ${hold} ${formatUsd(usd)} of ${coin}, ownership unconfirmed`;
     } else if (r.linkedHedgeCoverage === 'missing' || r.linkedHedgeCoverage === 'partial') {
       items.push(`Funding links: could not be read in full, so whether the funding wallets hold ${coin} is not known.`);
     } else if (r.linkedHedgeCoverage === 'complete') {
@@ -153,8 +128,103 @@ export function nansenContribution(r: CheckResponse): NansenContribution | null 
   const funded = (r.vitals ?? []).find((v) => v.label === 'Earliest funding found' && v.source === 'Nansen');
   if (funded) items.push(`${funded.label}: ${funded.value}. Context; no verdict turns on it.`);
 
+  // Only the old tile: a saved reading's `Realized PnL` row is Nansen's. A
+  // new reading's PnL tile is Hyperliquid's (source 'Hyperliquid', no
+  // `Realized PnL` label), so it is never listed here as something Nansen
+  // supplied.
   const pnl = (r.evidence ?? []).find((e) => e.label.startsWith('Realized PnL') && e.source === 'Nansen');
   if (pnl) items.push(`${pnl.label}: ${pnl.value}. Context; no verdict turns on it.`);
+
+  return lead;
+}
+
+/** The lead when none of Nansen's parts set one. */
+const FALLBACK_LEAD = 'context from other chains and funding history';
+
+/** A reading whose positions were read from every Hyperliquid dex by
+ * Hyperliquid itself (it carries `positionsVenues`). Nansen did not supply
+ * the positions, so nothing here credits it with them: when `source` is not
+ * 'nansen' it supplied nothing at all, and otherwise only the parts that
+ * `suppliedBesidesPositions` lists. */
+function contributionToAllDexReading(r: CheckResponse, calls: number): NansenContribution | null {
+  if (r.source !== 'nansen') {
+    const why = (r.coverage ?? []).find((c) => c.startsWith('Nansen'));
+    return {
+      lead: 'not used for this reading',
+      items: [
+        // Some of the notes are whole sentences that already end in a period.
+        ...(why ? [why.endsWith('.') ? why : `${why}.`] : []),
+        'Positions are read from Hyperliquid dex by dex, which needs no Nansen. Balances on other chains and ' +
+          'links between wallets were not read, so a hedge held off Hyperliquid is not visible.',
+      ],
+      calls,
+    };
+  }
+
+  const items: string[] = [];
+  const lead = suppliedBesidesPositions(r, items, null);
+  if (items.length === 0) return null;
+  return { lead: lead ?? FALLBACK_LEAD, items, calls };
+}
+
+/** A reading made after the funding links moved to the block explorer:
+ * Nansen supplied nothing to it. A `known-tokens` reading is always one (its
+ * other-chain balances are the public nodes', its links the explorer's), and
+ * so is any reading read from every dex that carries no Nansen source and no
+ * note about Nansen. A "not used" sentence would be false for these: the
+ * links between wallets were read, from the explorer. */
+function madeWithoutNansen(r: CheckResponse): boolean {
+  if (r.hedgeScope === 'known-tokens') return true;
+  return (
+    r.positionsVenues !== undefined &&
+    r.source !== 'nansen' &&
+    !(r.coverage ?? []).some((c) => c.startsWith('Nansen'))
+  );
+}
+
+export function nansenContribution(r: CheckResponse): NansenContribution | null {
+  const calls = r.nansenCalls ?? 0;
+  if (r.positions.nPositions === 0 && calls === 0) return null;
+  if (madeWithoutNansen(r)) return null;
+
+  if (r.positionsVenues) return contributionToAllDexReading(r, calls);
+
+  if (r.source !== 'nansen') {
+    const why = (r.coverage ?? []).find((c) => c.startsWith('Nansen'));
+    return {
+      lead: 'not used for this reading',
+      items: [
+        ...(why ? [`${why}.`] : []),
+        "Positions come from Hyperliquid's own endpoint, which reads the main dex only, so a rule that needs " +
+          'every position read does not answer here.',
+      ],
+      calls,
+    };
+  }
+
+  const n = r.positions.nPositions;
+  const isBet = r.verdict.verdict === 'looks_like_a_bet';
+  const items: string[] = [];
+  let lead: string | null = null;
+
+  // Positions: the one read every rule depends on.
+  const hip3 = (r.positions.candidates ?? []).map((c) => c.coin).filter((c) => c.includes(':'));
+  const mainDex = r.mainDexPositionCount ?? null;
+  const dexComparison =
+    mainDex !== null && mainDex !== n
+      ? `Hyperliquid's own free endpoint shows ${plural(mainDex, 'position')} on the main dex alone.`
+      : "Hyperliquid's own free endpoint reads the main dex only.";
+  items.push(
+    `Positions on every Hyperliquid dex, HIP-3 included: ${plural(n, 'open position')}` +
+      (hip3.length ? `, among the largest ${hip3.slice(0, 2).join(' and ')}` : '') +
+      `. ${dexComparison}` +
+      (isBet ? ' The bet rule needs every position read, so it could only be applied with these.' : ''),
+  );
+  if (isBet) lead = `every dex read, ${plural(n, 'position')} in all, which the bet rule needs`;
+
+  // Everything else Nansen supplied: other-chain balances, funding links,
+  // funding history and realized PnL.
+  lead = suppliedBesidesPositions(r, items, lead);
 
   return {
     lead: lead ?? `positions on every dex, ${plural(n, 'open position')}`,

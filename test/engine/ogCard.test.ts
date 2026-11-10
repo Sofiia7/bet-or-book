@@ -26,6 +26,7 @@ function input(overrides: Record<string, unknown> = {}) {
     hedge: { hedgeRatio: 0 },
     provenance: 'Positions as of 23 Sep, 14:32 UTC · saved reading, rules v4',
     limitText: null as string | null,
+    credit: 'Data: Hyperliquid API, public nodes, Blockscout',
     ...overrides,
   };
 }
@@ -61,6 +62,11 @@ describe('ogCardData', () => {
   it('shortens the address for the footer, with the rules version', () => {
     const d = ogCardData(input());
     expect(d.footerLeft).toBe('0xb83d...6e36 · rules v4');
+  });
+
+  it('carries the credit it is given into the footer, untouched', () => {
+    expect(ogCardData(input()).footerRight).toBe('Data: Hyperliquid API, public nodes, Blockscout');
+    expect(ogCardData(input({ credit: 'Powered by Nansen API' })).footerRight).toBe('Powered by Nansen API');
   });
 
   it('carries the date and reading kind through untouched, from shareCard (23.09 audit, U02)', () => {

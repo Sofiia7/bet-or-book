@@ -5,7 +5,11 @@ import { describe, expect, it, vi, afterEach } from 'vitest';
 import { checkAddress } from '../../src/api/check';
 import { computePositionFeatures } from '../../src/engine/features';
 import type { Position } from '../../src/types';
-import type { NansenClient, NansenPerpPositions, NansenBalance, NansenRelatedWallet, NansenPnlSummary } from '../../src/sources/nansen';
+import type { NansenPerpPositions } from '../support/nansenFixtures';
+import type { HlClearinghouseState } from '../../src/sources/hyperliquid';
+import { allDexFrom } from '../support/positions';
+import { onchainAnswers } from '../support/onchain';
+import { explorerAnswers } from '../support/explorer';
 
 const ADDRESS = '0x1111111111111111111111111111111111111111';
 
@@ -60,33 +64,40 @@ const HL: Record<string, unknown> = {
   clearinghouseState: { assetPositions: [], time: Date.now() },
 };
 
+/** Hyperliquid's quiet answers; the public nodes find nothing held, and the
+ * explorer no funder. */
 function route() {
-  global.fetch = vi.fn(async (_u: string | URL, init?: RequestInit) => {
+  const nodes = onchainAnswers({});
+  const explorer = explorerAnswers();
+  global.fetch = vi.fn(async (u: string | URL, init?: RequestInit) => {
     const body = JSON.parse(String(init?.body ?? '{}'));
+    const node = nodes(String(u), body);
+    if (node) return node;
+    const funding = explorer(String(u));
+    if (funding) return funding;
     return new Response(JSON.stringify(HL[body.type] ?? []), { status: 200 });
   }) as unknown as typeof fetch;
 }
 
-const nansen = (): NansenClient => ({
-  perpPositions: async () =>
-    ({
+/** An ETH short and a BTC long, as every dex reports them. */
+const readPositions = async () =>
+  allDexFrom(
+    {
       asset_positions: [
         { position: { token_symbol: 'ETH', size: '-1', position_value_usd: '50000000', entry_price_usd: '100', liquidation_price_usd: null, leverage_value: 5, unrealized_pnl_usd: '0', cumulative_funding_since_open_usd: '0' } },
         { position: { token_symbol: 'BTC', size: '1', position_value_usd: '10000000', entry_price_usd: '100', liquidation_price_usd: null, leverage_value: 5, unrealized_pnl_usd: '0', cumulative_funding_since_open_usd: '0' } },
       ],
       timestamp: Date.now(),
-    }) as unknown as NansenPerpPositions,
-  perpPnlSummary: async () => ({ realized_pnl_usd: 0, win_rate: 0, closed_trade_count: 0 }) as NansenPnlSummary,
-  currentBalance: async () => ({ rows: [] as NansenBalance[], complete: true }),
-  relatedWallets: async () => ({ rows: [] as NansenRelatedWallet[], complete: true }),
-});
+    } as unknown as NansenPerpPositions,
+    HL.clearinghouseState as HlClearinghouseState,
+  );
 
 afterEach(() => vi.restoreAllMocks());
 
 describe('a check can be asked about a particular position', () => {
   it('answers about the largest by default and lists the alternatives', async () => {
     route();
-    const result = await checkAddress(ADDRESS, { nansen: nansen() });
+    const result = await checkAddress(ADDRESS, { readPositions });
     expect(result.positions.headlineCoin).toBe('ETH');
     expect(result.positions.candidates.map((c) => c.coin)).toEqual(['ETH', 'BTC']);
     expect(result.focus).toBeNull();
@@ -94,7 +105,7 @@ describe('a check can be asked about a particular position', () => {
 
   it('answers about the one it was asked for, and says it was asked', async () => {
     route();
-    const result = await checkAddress(ADDRESS, { nansen: nansen(), focus: { coin: 'BTC', side: 'long' } });
+    const result = await checkAddress(ADDRESS, { readPositions, focus: { coin: 'BTC', side: 'long' } });
     expect(result.positions.headlineCoin).toBe('BTC');
     expect(result.focus).toEqual({ coin: 'BTC', side: 'long' });
     expect(result.summary).toContain('BTC');
@@ -102,14 +113,14 @@ describe('a check can be asked about a particular position', () => {
 
   it('says so when the position asked for is not open at that address', async () => {
     route();
-    const result = await checkAddress(ADDRESS, { nansen: nansen(), focus: { coin: 'DOGE', side: 'long' } });
+    const result = await checkAddress(ADDRESS, { readPositions, focus: { coin: 'DOGE', side: 'long' } });
     expect(result.positions.headlineCoin).toBe('ETH');
     expect(result.coverage.join(' ')).toContain('DOGE');
   });
 
   it('flags "not the position you asked about" to stand next to the answer, not among the optional notes (23.09 U06)', async () => {
     route();
-    const result = await checkAddress(ADDRESS, { nansen: nansen(), focus: { coin: 'DOGE', side: 'long' } });
+    const result = await checkAddress(ADDRESS, { readPositions, focus: { coin: 'DOGE', side: 'long' } });
     expect(result.coverageNotes).toContainEqual({ text: expect.stringContaining('No DOGE long is open'), failure: true });
   });
 
@@ -119,7 +130,7 @@ describe('a check can be asked about a particular position', () => {
     // asked for - while `positions` was still the short, and nothing told
     // the reader the side they asked about was not the one on screen.
     route();
-    const result = await checkAddress(ADDRESS, { nansen: nansen(), focus: { coin: 'ETH', side: 'long' } });
+    const result = await checkAddress(ADDRESS, { readPositions, focus: { coin: 'ETH', side: 'long' } });
     expect(result.positions.headlineCoin).toBe('ETH');
     expect(result.positions.headlineSide).toBe('short');
     expect(result.focus).toBeNull();

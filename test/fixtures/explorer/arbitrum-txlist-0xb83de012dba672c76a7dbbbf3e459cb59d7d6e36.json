@@ -1,0 +1,84 @@
+{
+  "note": "trimmed to the fields the reader uses (rows cut to blockNumber, timeStamp, from, to, value, isError, txreceipt_status) from a keyed capture of 2026-11-10",
+  "capturedAt": "2026-11-10T13:52:38.629Z",
+  "chain": "arbitrum",
+  "url": "https://api.blockscout.com/v2/api?chain_id=42161&module=account&action=txlist&address=0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36&sort=asc&page=1&offset=8",
+  "answer": {
+    "status": "1",
+    "message": "OK",
+    "result": [
+      {
+        "blockNumber": "308102502",
+        "timeStamp": "1740071909",
+        "from": "0xb38e8c17e38363af6ebdcb3dae12e0243582891d",
+        "to": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+        "value": "200000000000000000",
+        "isError": "0",
+        "txreceipt_status": "1"
+      },
+      {
+        "blockNumber": "308103433",
+        "timeStamp": "1740072142",
+        "from": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+        "to": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+        "value": "0",
+        "isError": "0",
+        "txreceipt_status": "1"
+      },
+      {
+        "blockNumber": "308235561",
+        "timeStamp": "1740105426",
+        "from": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+        "to": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+        "value": "0",
+        "isError": "0",
+        "txreceipt_status": "1"
+      },
+      {
+        "blockNumber": "308607739",
+        "timeStamp": "1740198905",
+        "from": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+        "to": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+        "value": "0",
+        "isError": "0",
+        "txreceipt_status": "1"
+      },
+      {
+        "blockNumber": "308625462",
+        "timeStamp": "1740203367",
+        "from": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+        "to": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+        "value": "0",
+        "isError": "0",
+        "txreceipt_status": "1"
+      },
+      {
+        "blockNumber": "308636476",
+        "timeStamp": "1740206122",
+        "from": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+        "to": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+        "value": "0",
+        "isError": "0",
+        "txreceipt_status": "1"
+      },
+      {
+        "blockNumber": "308900946",
+        "timeStamp": "1740273025",
+        "from": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+        "to": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+        "value": "0",
+        "isError": "0",
+        "txreceipt_status": "1"
+      },
+      {
+        "blockNumber": "311079804",
+        "timeStamp": "1740820617",
+        "from": "0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36",
+        "to": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+        "value": "0",
+        "isError": "0",
+        "txreceipt_status": "1"
+      }
+    ]
+  }
+}

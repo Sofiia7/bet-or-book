@@ -3,7 +3,7 @@
  * it again.
  *
  * Re-running the classifier over a stored aggregate is a cheap and useful
- * thing to do - a rules fix should not cost the credits the scan cost. It is
+ * thing to do - a rules fix should not cost the requests the scan cost. It is
  * not, however, a re-check of the account, and the 21.09 audit found the two
  * being presented as one: 269 of 277 gallery cards carried no per-token
  * evidence, no record of what the hedge sum left out and no order notional,
@@ -62,8 +62,11 @@ export interface Observation {
   /** How completely the resting orders were read. `partial` when a HIP-3
    * dex would not answer: the account may be quoting where nobody looked. */
   ordersCoverage: SourceCoverage;
-  /** How completely the positions were read. Hyperliquid's own clearinghouse
-   * answers for the main perp dex, so a fallback reading is `partial`. */
+  /** How completely the positions were read. `partial` when a named (HIP-3)
+   * dex did not answer, or the list of dexes itself could not be read: a
+   * position could be where nobody looked. (An older reading whose positions
+   * fell back to Hyperliquid's main dex alone is `partial` for the same
+   * reason.) */
   positionsCoverage: SourceCoverage;
   linkedHedge: LinkedHedgeFeatures | null;
   /** How completely the funder search itself was carried out, so a candidate
@@ -75,15 +78,31 @@ export interface Observation {
   trades: TradeFeatures;
   pnl: PnlSummary | null;
   sizeVsOi: number | null;
+  /** Which provider the reading drew on. For a reading that carries
+   * `positionsVenues` it is `'nansen'` when Nansen supplied any data to the
+   * reading (the funding links and a long's funding history; a reading made
+   * before the PnL moved to Hyperliquid's `portfolio` also counts its Nansen
+   * PnL, and one whose `hedgeScope` is not `'known-tokens'` also counts
+   * balances on other chains - for `'known-tokens'` public nodes read those
+   * balances and `source` no longer covers them) and
+   * `'hyperliquid'` otherwise; the positions themselves came from
+   * Hyperliquid's own dexes either way, and `positionsVenues` says how many.
+   * For an older reading, which has no `positionsVenues`, it is where the
+   * positions came from, as it always was. */
   source: 'nansen' | 'hyperliquid';
-  /** How many open positions Hyperliquid's own free main-dex endpoint shows
-   * for this account, read only when `source` is `'nansen'` (when it is not,
-   * this number would just restate `positions.nPositions`). Null when that
-   * source failed or was not asked, or when Nansen itself was the fallback.
-   * Presentational only - no rule reads it - so it needs no schema-version
-   * bump. Lets the Nansen-contribution line show the exact HIP-3 gap the
-   * README already claims ("134 against 86 on Hyperliquid's own main-dex
-   * endpoint") on every reading, not only in prose (24.09 audit, L05). */
+  /** How many Hyperliquid perp dexes the positions were read from: `asked`
+   * were queried (the main dex counts as one), `answered` replied, and
+   * `registryRead` says whether the list of named dexes itself was read
+   * (when it was not, positions on a dex nobody knew to ask went unseen).
+   * Absent on readings made before the positions came from every dex, which
+   * is how a stored reading is told from a new one. */
+  positionsVenues?: { asked: number; answered: number; registryRead: boolean };
+  /** How many of the reading's open positions are on Hyperliquid's main perp
+   * dex; the rest are on named (HIP-3) dexes. Always filled for a reading
+   * that carries `positionsVenues`. On an older reading it was read only when
+   * Nansen supplied the positions, and is null where that source failed or
+   * was not asked. Presentational only - no rule reads it - so it needs no
+   * schema-version bump (24.09 audit, L05). */
   mainDexPositionCount: number | null;
   /** The position this answer is about, when the reader chose one. Null
    * means the largest, which is what the check picks on its own. Part of
@@ -107,7 +126,7 @@ export interface Observation {
   /** Numbers about the headline position itself - leverage, distance to
    * liquidation, unrealized PnL, funding since open, size vs open interest -
    * rather than about the verdict. Both sources already return the first
-   * four on every position; nothing here costs an extra credit. */
+   * four on every position; nothing here costs an extra request. */
   vitals: VitalsItem[];
   /** Plain-language notes on anything that could not be read. */
   coverage: string[];
@@ -176,8 +195,9 @@ export const LOANS_READ_FROM_SCHEMA = 5;
 
 /** The contract allowlist and alias table that read the holdings. Bumped
  * whenever a token is added, because "not recognised" is a statement about
- * this list and the list changes. */
-export const ASSET_REGISTRY_VERSION = 3;
+ * this list and the list changes. Version 4 is the node-read registry plus the
+ * look-alike watchlist and the new scope note copy (stage 3). */
+export const ASSET_REGISTRY_VERSION = 4;
 
 type Stored = Partial<CheckResponse> & Pick<CheckResponse, 'positions' | 'orders' | 'hedge'>;
 
@@ -259,7 +279,7 @@ export function missingForCurrentRules(e: Stored): string[] {
   // one that left out nothing. Only an on-chain read could have left
   // anything out: Hyperliquid spot carries no contract to fail to recognise.
   const shortWithHedge = e.positions.headlineSide === 'short' && e.positions.headlineNotionalUsd > 0;
-  if (shortWithHedge && e.hedgeScope === 'all-chains' && !isNumber(e.hedge.unverifiedUsd)) {
+  if (shortWithHedge && (e.hedgeScope === 'all-chains' || e.hedgeScope === 'known-tokens') && !isNumber(e.hedge.unverifiedUsd)) {
     missing.push('hedge.unverifiedUsd');
   }
 

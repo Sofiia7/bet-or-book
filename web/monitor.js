@@ -27,13 +27,27 @@ export function createMonitoring({ read, write, render, status, fetchJson }) {
     } catch { status('This browser could not keep monitoring state.', true); }
     finally { polling = false; }
   }
-  const button = row => {
-    const b = document.createElement('button'); b.className = 'chip';
-    b.textContent = row.monitorToken ? 'Stop monitoring' : 'Monitor changes · pilot';
+  // The Monitor switch on a saved card: a secondary button holding a 30 x 18
+  // track, on while the position has a monitor token. A press moves it at
+  // once, so its 150 ms slide plays here, before render() draws the list
+  // again; if the server refuses, it moves back and the reason is shown.
+  // `name` is the card's own name for its controls (savedRowName in
+  // web/app.js), so two cards on the same coin are told apart. Focus stays
+  // on the switch: render() is asked to put it back on the redrawn one.
+  const button = (row, name) => {
+    const on = !!row.monitorToken;
+    const b = document.createElement('button'); b.className = 'btn-secondary monitor-toggle';
+    b.setAttribute('role', 'switch');
+    b.setAttribute('aria-checked', String(on));
+    const track = document.createElement('span'); track.className = 'switch'; track.setAttribute('aria-hidden', 'true');
+    const knob = document.createElement('span'); knob.className = 'switch-knob';
+    track.append(knob);
+    b.append(track, 'Monitor');
     b.disabled = !row.monitorToken && !row.snapshotId;
-    b.setAttribute('aria-label', b.textContent + ' ' + (row.label || row.coin || row.address));
+    b.setAttribute('aria-label', 'Monitor ' + (name || row.label || row.coin || row.address) + ' (pilot)');
     b.addEventListener('click', async () => {
       b.disabled = true;
+      b.setAttribute('aria-checked', String(!on));
       try {
         if (row.monitorToken) {
           try { await request({ action: 'unsubscribe', token: row.monitorToken }); }
@@ -41,10 +55,10 @@ export function createMonitoring({ read, write, render, status, fetchJson }) {
           update(row, { monitorToken: null, monitorStatus: '', monitorEvents: [], monitorExpires: null });
         } else {
           const result = await request({ action: 'subscribe', snapshotId: row.snapshotId });
-          update(row, { monitorToken: result.token, monitorExpires: result.expiresAt, monitorStatus: 'Scheduled · about every 4 hours; shared data budget can pause checks', monitorEvents: [] });
+          update(row, { monitorToken: result.token, monitorExpires: result.expiresAt, monitorStatus: 'Scheduled · about every 4 hours; shared rate limits can pause checks', monitorEvents: [] });
         }
-        render();
-      } catch (e) { status(e.message, true); b.disabled = false; }
+        render({ identity: identity(row), control: 'monitor' });
+      } catch (e) { b.setAttribute('aria-checked', String(on)); status(e.message, true); b.disabled = false; b.focus(); }
     });
     return b;
   };

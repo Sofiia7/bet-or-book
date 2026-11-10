@@ -13,12 +13,23 @@
  *   cache hits        count of `outcome` = cached, against fresh
  *   degraded answers  share of `degraded` = true among fresh checks
  *   why Unknown       count by `reason` where `verdict` = unknown
- *   cost of a full answer  `credits` and `nansenCalls` on fresh checks
- *   budget refusals   count by `nansenOff`
  *   failed saves      `saved` = false; `picture` outcomes save_failed, draw_failed
  *   KV trouble        `kvDegraded` = true, on every event
  *
- * What never goes in: the Nansen key or the demo key, the client's IP, and
+ * Lines written before stage 3 also carry `nansenCalls`, `credits`,
+ * `creditsRemaining`, `creditsMeasuredAt` and `nansenOff`, what a check cost
+ * on Nansen. A check makes no Nansen call now, so new lines carry none of
+ * them; a query over the old ones still finds them there.
+ *
+ * One field stands in for the credit meter's visibility: `fundingLinksNotes`
+ * on a check line. The explorer's free key allows about 5,000 calls a day and
+ * nothing bounds them now, so the only place a spent or refused explorer shows
+ * is the reading's coverage notes ("Funding links on Arbitrum were not read:
+ * ..."). The line carries the text of those notes, a few and short, so the
+ * dashboard can count them. A cached repeat carries its reading's notes again:
+ * count `outcome` = fresh only. It is not a cost field, and none is added.
+ *
+ * What never goes in: the explorer key or the demo key, the client's IP, and
  * the wallet address. None of them is needed to count anything, and the
  * platform's own invocation log already carries the request URL for anyone
  * debugging one particular request.
@@ -42,28 +53,28 @@ export interface CheckEvent {
   kvDegraded: boolean;
   /** A particular position was asked about, rather than the largest. */
   focus: boolean;
-  /** The request carried the operator key for the demo reserve. */
+  /** The request carried the operator key (DEMO_KEY), which skips the public
+   * rate limits. */
   demo: boolean;
   verdict?: string;
   /** The first reason code the rules gave, which is the one that decided. */
   reason?: string;
   rules?: string;
   degraded?: boolean;
+  /** 'nansen' only when Nansen supplied some of the reading, else 'hyperliquid'.
+   * It no longer says how much of the book was seen; `positionsCoverage` does. */
   source?: string;
-  /** Fresh checks only: what the answer cost. */
-  nansenCalls?: number;
-  /** Credits the API priced, plus one for each call it did not - the same
-   * conservative count the spend cap settles with. */
-  credits?: number;
-  /** Last balance reported by this check, with its measurement time. A
-   * historical measurement, not a live account balance between requests. */
-  creditsRemaining?: number;
-  creditsMeasuredAt?: number;
-  /** Fresh checks only: why Nansen was not asked at all - no key, the day's
-   * cap, the account nearly empty. Absent when it was asked. */
-  nansenOff?: string;
+  /** How completely the positions were read: 'partial' when a Hyperliquid dex
+   * did not answer or the list of dexes could not be read. Counting it is how
+   * production sees how often a dex goes unread. Absent on a reading stored
+   * before it was recorded. */
+  positionsCoverage?: string;
   /** Fresh checks only: whether the reading was kept, so its link works. */
   saved?: boolean;
+  /** The reading's coverage notes about the explorer's funding links: a chain
+   * not read (and why) or read but cut short. At most four, each cut to 200
+   * characters; absent when there are none. */
+  fundingLinksNotes?: string[];
 }
 
 export interface PictureEvent {
@@ -117,14 +128,40 @@ export function emit(e: TelemetryEvent): void {
   else console.log(line);
 }
 
+/** The notes src/api/observe.ts writes about a funding-link chain (`fundingChainNote`)
+ * all start like this; no other note does. */
+const FUNDING_LINKS_PREFIX = 'Funding links on ';
+const FUNDING_LINKS_NOTES_MAX = 4;
+const FUNDING_LINKS_NOTE_CHARS = 200;
+
+/** The texts of the funding-link notes among a reading's coverage notes: the
+ * first four, each cut to 200 characters. Empty when there are none, and for a
+ * reading stored without notes. The texts name a chain and a reason, never a
+ * wallet or a key. */
+function fundingLinksNotesOf(notes: CheckResponse['coverageNotes'] | undefined): string[] {
+  if (!Array.isArray(notes)) return [];
+  return notes
+    .map((n) => n?.text)
+    .filter((text): text is string => typeof text === 'string' && text.startsWith(FUNDING_LINKS_PREFIX))
+    .slice(0, FUNDING_LINKS_NOTES_MAX)
+    .map((text) => text.slice(0, FUNDING_LINKS_NOTE_CHARS));
+}
+
 /** What a served reading says about itself, for a check event. Reads only
- * fields that are codes and flags, never the address or the text. */
-export function readingFields(r: Pick<CheckResponse, 'verdict' | 'classifierVersion' | 'degraded' | 'source'>) {
+ * fields that are codes and flags, and the funding-link coverage notes (a
+ * chain and a reason each), never the address or any other text. */
+export function readingFields(
+  r: Pick<CheckResponse, 'verdict' | 'classifierVersion' | 'degraded' | 'source'> &
+    Partial<Pick<CheckResponse, 'positionsCoverage' | 'coverageNotes'>>,
+) {
+  const fundingLinksNotes = fundingLinksNotesOf(r.coverageNotes);
   return {
     verdict: r.verdict.verdict,
     ...(r.verdict.reasons?.length ? { reason: r.verdict.reasons[0] } : {}),
     rules: r.classifierVersion,
     degraded: r.degraded,
     source: r.source,
+    ...(typeof r.positionsCoverage === 'string' ? { positionsCoverage: r.positionsCoverage } : {}),
+    ...(fundingLinksNotes.length > 0 ? { fundingLinksNotes } : {}),
   };
 }

@@ -52,7 +52,7 @@ export function removeBuild(): void {
  * wrangler.toml gives the deployed Worker. */
 function moduleType(file: string): ModuleType {
   if (file.endsWith('.wasm')) return 'CompiledWasm';
-  if (file.endsWith('.woff') || file.endsWith('.png')) return 'Data';
+  if (file.endsWith('.woff') || file.endsWith('.woff2') || file.endsWith('.png')) return 'Data';
   if (file.endsWith('.html') || file.endsWith('app.min.js')) return 'Text';
   throw new Error(`no module rule for ${file}`);
 }
@@ -62,7 +62,7 @@ export type Upstream = (request: Request) => Response | Promise<Response>;
 export interface WorkerOptions {
   /** Plain-text bindings on top of wrangler.toml's own defaults. */
   vars?: Record<string, string>;
-  /** Every fetch() the Worker makes - Hyperliquid and Nansen - lands here. */
+  /** Every fetch() the Worker makes - Hyperliquid, the explorer, the nodes - lands here. */
   upstream: Upstream;
   /** A directory the Durable Objects' storage lives in, so a second
    * Miniflare over the same one is the same objects after a restart. */
@@ -92,9 +92,6 @@ export async function startWorker(opts: WorkerOptions): Promise<Miniflare> {
       PILOT_WATCH: { className: 'PilotWatch', useSQLite: true },
     },
     bindings: {
-      NANSEN_DAILY_CREDIT_CAP: '300',
-      NANSEN_CREDIT_FLOOR: '0',
-      NANSEN_DEMO_RESERVE: '0',
       ...opts.vars,
     },
     outboundService: (request) => opts.upstream(request as unknown as Request) as never,
@@ -110,53 +107,15 @@ export function tempDir(): { path: string; remove(): void } {
   return { path, remove: () => rmSync(path, { recursive: true, force: true }) };
 }
 
-/** The day the Worker charges to, the way it works it out. */
-export const today = () => new Date().toISOString().slice(0, 10);
-
-/** Talks to the budget object the way the Worker does (src/coordinator.ts). */
-export async function budgetStub(mf: Miniflare) {
+/** Asks the retired Nansen credit meter something, the way the Worker used to
+ * (src/coordinator.ts): its status code says whether it still runs. */
+export async function retiredMeterStatus(mf: Miniflare): Promise<number> {
   const ns = await mf.getDurableObjectNamespace('NANSEN_BUDGET');
-  const stub = ns.get(ns.idFromName('nansen-budget'));
-  const call = async (body: unknown) => {
-    const res = await stub.fetch('https://budget.internal/', {
-      method: 'POST',
-      body: JSON.stringify(body),
-      headers: { 'content-type': 'application/json' },
-    });
-    return res.json() as Promise<Record<string, unknown>>;
-  };
-  return {
-    reserve: (worstCase: number, cap: number) =>
-      call({ action: 'reserve', day: today(), worstCase, limits: { cap, floor: 0 } }) as Promise<{
-        ok: boolean;
-        id: string | null;
-      }>,
-    settle: (id: string, actualCost: number) =>
-      call({ action: 'settle', id, actualCost, creditsRemaining: null, refused: false }),
-    record: (calls: Array<{ path: string; status: number; creditsCost: number | null }>) =>
-      call({ action: 'record', day: today(), calls }),
-    report: () =>
-      call({ action: 'report', from: today(), to: today() }) as Promise<{ calls: { attempted: number } }>,
-    /**
-     * How much of `cap` a new check could still reserve - the budget's own
-     * answer, found by asking it rather than by reading its state. Every
-     * probe that succeeds is settled at zero straight away, which releases
-     * it and charges nothing.
-     */
-    async available(cap: number): Promise<number> {
-      let lo = 0;
-      let hi = cap;
-      while (lo < hi) {
-        const mid = Math.ceil((lo + hi) / 2);
-        const r = await this.reserve(mid, cap);
-        if (r.ok) {
-          await this.settle(r.id!, 0);
-          lo = mid;
-        } else {
-          hi = mid - 1;
-        }
-      }
-      return lo;
-    },
-  };
+  const res = await ns.get(ns.idFromName('nansen-budget')).fetch('https://budget.internal/', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'report' }),
+    headers: { 'content-type': 'application/json' },
+  });
+  await res.arrayBuffer();
+  return res.status;
 }

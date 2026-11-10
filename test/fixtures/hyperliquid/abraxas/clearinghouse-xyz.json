@@ -1,0 +1,89 @@
+{
+  "marginSummary": {
+    "accountValue": "5327610.5196430003",
+    "totalNtlPos": "25019746.4962799996",
+    "totalRawUsd": "29037104.3641630001",
+    "totalMarginUsed": "5402037.1672240002"
+  },
+  "crossMarginSummary": {
+    "accountValue": "4804481.0163749997",
+    "totalNtlPos": "24394538.3197799996",
+    "totalRawUsd": "29139183.0373950005",
+    "totalMarginUsed": "4878907.6639559995"
+  },
+  "crossMaintenanceMarginUsed": "488788.310877",
+  "withdrawable": "0.0",
+  "assetPositions": [
+    {
+      "type": "oneWay",
+      "position": {
+        "coin": "xyz:GOLD",
+        "szi": "-5902.854",
+        "leverage": {
+          "type": "cross",
+          "value": 5
+        },
+        "entryPx": "4234.49",
+        "positionValue": "24364620.1704000011",
+        "unrealizedPnl": "631001.876867",
+        "returnOnEquity": "0.1262224792",
+        "liquidationPx": "27680.7944815938",
+        "marginUsed": "4872924.0340799997",
+        "maxLeverage": 25,
+        "cumFunding": {
+          "allTime": "-1044692.009352",
+          "sinceOpen": "-540221.209819",
+          "sinceChange": "-100051.670952"
+        }
+      }
+    },
+    {
+      "type": "oneWay",
+      "position": {
+        "coin": "xyz:MU",
+        "szi": "32.691",
+        "leverage": {
+          "type": "cross",
+          "value": 5
+        },
+        "entryPx": "856.487",
+        "positionValue": "29918.14938",
+        "unrealizedPnl": "1918.71653",
+        "returnOnEquity": "0.342634892",
+        "liquidationPx": null,
+        "marginUsed": "5983.629876",
+        "maxLeverage": 10,
+        "cumFunding": {
+          "allTime": "-2724.408487",
+          "sinceOpen": "32.44898",
+          "sinceChange": "32.44898"
+        }
+      }
+    },
+    {
+      "type": "oneWay",
+      "position": {
+        "coin": "xyz:STRC",
+        "szi": "6321.3",
+        "leverage": {
+          "type": "isolated",
+          "value": 3,
+          "rawUsd": "-102078.673232"
+        },
+        "entryPx": "95.53659",
+        "positionValue": "625208.1764999999",
+        "unrealizedPnl": "21292.702563",
+        "returnOnEquity": "0.1057732588",
+        "liquidationPx": "16.998281205",
+        "marginUsed": "523129.503268",
+        "maxLeverage": 10,
+        "cumFunding": {
+          "allTime": "-20031.038193",
+          "sinceOpen": "-20031.038193",
+          "sinceChange": "-3618.036025"
+        }
+      }
+    }
+  ],
+  "time": 1792579649587
+}

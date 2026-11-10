@@ -8,9 +8,14 @@ declare module '*/web/app.min.js' {
   export default content;
 }
 
-// The two fonts satori needs and the static fallback picture: raw bytes,
-// per the `Data` rule in wrangler.toml.
+// The two fonts satori needs, the page's own Geist pair and the static
+// fallback picture: raw bytes, per the `Data` rule in wrangler.toml.
 declare module '*.woff' {
+  const content: ArrayBuffer;
+  export default content;
+}
+
+declare module '*.woff2' {
   const content: ArrayBuffer;
   export default content;
 }

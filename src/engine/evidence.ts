@@ -10,7 +10,16 @@ import type {
 import { DEFAULT_THRESHOLDS, type VerdictResult, type SourceCoverage } from './verdict';
 import type { PnlSummary, PositionSide } from '../types';
 
-export type EvidenceSource = 'Nansen' | 'Hyperliquid' | 'Nansen + Hyperliquid';
+export type EvidenceSource =
+  | 'Nansen'
+  | 'Hyperliquid'
+  | 'Nansen + Hyperliquid'
+  | 'On-chain'
+  | 'Hyperliquid + On-chain'
+  | 'Nansen + On-chain'
+  /** The block explorer that supplies the funding links (src/sources/explorer.ts). */
+  | 'Explorer'
+  | 'Explorer + On-chain';
 
 /** One number on the card, with the source that produced it. */
 export interface EvidenceItem {
@@ -36,6 +45,14 @@ export interface EvidenceInput {
   pnl: PnlSummary | null;
   sizeVsOi: number | null;
   source: 'nansen' | 'hyperliquid';
+  /** Present when the positions were read from Hyperliquid's own dexes. Then
+   * the position rows say Hyperliquid whatever `source` is, because `source`
+   * may be `'nansen'` only for the funding links and funding history (the
+   * PnL is Hyperliquid's own `portfolio`; a saved reading made earlier may
+   * still carry Nansen's). Absent on
+   * readings made before this was recorded, where `source` alone says where
+   * the positions came from. */
+  positionsVenues?: { asked: number; answered: number; registryRead: boolean };
   /** The position the reader asked about, when they chose one rather than
    * getting the largest. A card about a chosen leg may not call it "the
    * largest" - it can be a ninth of the account's biggest position and still
@@ -160,8 +177,12 @@ function hedgedSummary(input: EvidenceInput): string {
  * was asked for, not what can be read back: the contract registry covers two
  * of them, so the honest phrase names the source rather than the universe. */
 function holdingsScope(input: EvidenceInput): string {
+  if (input.hedgeScope === 'known-tokens') return KNOWN_TOKENS_SCOPE;
   return input.hedgeScope === 'all-chains' ? 'on Nansen-supported chains' : 'on Hyperliquid';
 }
+
+/** The `known-tokens` search scope: the registry tokens, read from public nodes. */
+const KNOWN_TOKENS_SCOPE = 'among the tokens this tool recognises on Ethereum, Arbitrum and HyperEVM';
 
 /**
  * Where the covering dollars actually came from, for a sentence that quotes
@@ -179,6 +200,14 @@ function holdingsScope(input: EvidenceInput): string {
 function foundScope(input: EvidenceInput): string {
   const by = input.hedge.hedgeUsdBySource;
   if (!by || (by.onchain <= 0 && by.hyperliquidSpot <= 0)) return holdingsScope(input);
+  if (input.hedgeScope === 'known-tokens') {
+    if (by.onchain > 0 && by.hyperliquidSpot > 0) return 'on Hyperliquid and on Ethereum, Arbitrum or HyperEVM';
+    if (by.onchain > 0) return 'on Ethereum, Arbitrum or HyperEVM';
+    // Only a complete read checked all three chains; otherwise say only what is true.
+    return input.hedgeCoverage === 'complete'
+      ? 'on Hyperliquid - the recognised tokens on Ethereum, Arbitrum and HyperEVM were checked and held none'
+      : 'on Hyperliquid - the recognised tokens on the chains that answered held none';
+  }
   if (by.onchain > 0 && by.hyperliquidSpot > 0) return 'on Hyperliquid and on Nansen-supported chains';
   if (by.onchain > 0) return 'on Nansen-supported chains';
   return input.hedgeScope === 'all-chains'
@@ -290,7 +319,7 @@ function directionalPortfolioSummary(input: EvidenceInput): string {
   if (p.headlineSide !== 'short') {
     return `${head}; ${leg}. No two-sided quoting. Spot cannot offset a long, and debts or other derivatives are not read here.`;
   }
-  const where = input.hedgeScope === 'all-chains' ? 'at this address on Nansen-supported chains' : 'at this address on Hyperliquid';
+  const where = searchedWhere(input);
   const own = input.hedge.hedgeRatio;
   // Zero found is a statement about where this looked, so the search scope
   // is the honest phrase; a nonzero amount is a statement about where it
@@ -300,6 +329,12 @@ function directionalPortfolioSummary(input: EvidenceInput): string {
       ? `no ${p.headlineCoin} was found ${where}`
       : `only ${formatPct(own)} of it is covered by ${p.headlineCoin} at this address ${foundScope(input)}`;
   return `${head}; ${leg}. No two-sided quoting, and ${cov}. Debts and other derivatives are not read here.`;
+}
+
+/** The "where was it looked for" phrase of the bet and book-less sentences. */
+function searchedWhere(input: EvidenceInput): string {
+  if (input.hedgeScope === 'known-tokens') return `at this address on Hyperliquid or ${KNOWN_TOKENS_SCOPE}`;
+  return input.hedgeScope === 'all-chains' ? 'at this address on Nansen-supported chains' : 'at this address on Hyperliquid';
 }
 
 function betSummary(input: EvidenceInput): string {
@@ -313,8 +348,7 @@ function betSummary(input: EvidenceInput): string {
   // Only what this account holds. A funding wallet's balance belongs to
   // whoever owns that wallet, and the link does not say who that is; it gets
   // its own row rather than being folded into the account's coverage.
-  const where =
-    input.hedgeScope === 'all-chains' ? 'at this address on Nansen-supported chains' : 'at this address on Hyperliquid';
+  const where = searchedWhere(input);
   const own = input.hedge.hedgeRatio;
   const caveat = ' Debts and other derivatives are not read here.';
   if (own === 0) return `${opening}, and no ${p.headlineCoin} was found ${where}.${caveat}`;
@@ -352,7 +386,12 @@ function hedgeSource(input: EvidenceInput): EvidenceSource {
   // Nothing counted, or an entry from before the split was recorded: the
   // scope is all that is known about where the search happened.
   if (!by || (by.onchain <= 0 && by.hyperliquidSpot <= 0)) {
+    if (input.hedgeScope === 'known-tokens') return 'Hyperliquid + On-chain';
     return input.hedgeScope === 'all-chains' ? 'Nansen' : 'Hyperliquid';
+  }
+  if (input.hedgeScope === 'known-tokens') {
+    if (by.onchain > 0 && by.hyperliquidSpot > 0) return 'Hyperliquid + On-chain';
+    return by.onchain > 0 ? 'On-chain' : 'Hyperliquid';
   }
   if (by.onchain > 0 && by.hyperliquidSpot > 0) return 'Nansen + Hyperliquid';
   if (by.onchain > 0) return 'Nansen';
@@ -367,21 +406,43 @@ function hedgeItem(input: EvidenceInput): EvidenceItem | null {
   // ratio that was entirely Hyperliquid spot still read "(Nansen-supported
   // chains)" (23.09 audit, U04).
   const by = input.hedge.hedgeUsdBySource;
+  const known = input.hedgeScope === 'known-tokens';
   const where =
     !by || (by.onchain <= 0 && by.hyperliquidSpot <= 0)
-      ? input.hedgeScope === 'all-chains'
-        ? 'Nansen-supported chains'
-        : 'Hyperliquid spot'
-      : by.onchain > 0 && by.hyperliquidSpot > 0
-        ? 'Hyperliquid + Nansen chains'
-        : by.onchain > 0
+      ? known
+        ? 'Ethereum, Arbitrum, HyperEVM'
+        : input.hedgeScope === 'all-chains'
           ? 'Nansen-supported chains'
+          : 'Hyperliquid spot'
+      : by.onchain > 0 && by.hyperliquidSpot > 0
+        ? known
+          ? 'Hyperliquid + other chains'
+          : 'Hyperliquid + Nansen chains'
+        : by.onchain > 0
+          ? known
+            ? 'Ethereum, Arbitrum, HyperEVM'
+            : 'Nansen-supported chains'
           : 'Hyperliquid spot';
   return {
     label: 'Hedge found',
     value: `${formatPct(input.hedge.hedgeRatio)} (${where})`,
     source: hedgeSource(input),
   };
+}
+
+/**
+ * Whether a reading was made since the funding links moved to the block
+ * explorer: its scope is known-tokens, or it carries positionsVenues and a
+ * source other than Nansen. The one rule for every place that says where the
+ * links came from - the Linked wallets row, the credit of a share, embed and
+ * picture, the page - and decided by the reading's own shape, not by `source`
+ * alone: the old Worker set `source` to 'nansen' only when the Nansen
+ * positions call succeeded, so an older reading can say 'hyperliquid' and still
+ * carry funders that came from Nansen. A new short whose own node reads all
+ * failed has scope 'hyperliquid' and still searched its funders.
+ */
+export function madeWithExplorer(r: Pick<EvidenceInput, 'source' | 'hedgeScope' | 'positionsVenues'>): boolean {
+  return r.hedgeScope === 'known-tokens' || (r.positionsVenues !== undefined && r.source !== 'nansen');
 }
 
 function linkedItem(input: EvidenceInput): EvidenceItem | null {
@@ -391,7 +452,10 @@ function linkedItem(input: EvidenceInput): EvidenceItem | null {
   return {
     label: 'Linked wallets',
     value: `${formatUsd(linkedHedge.linkedHedgeUsd)} ${p.headlineCoin} in ${plural(k, 'wallet')}, owner unconfirmed`,
-    source: 'Nansen',
+    // A reading made since the links moved to the block explorer took its links
+    // from the explorer and its funders' balances from public nodes; an older
+    // one took both from Nansen (madeWithExplorer says which is which).
+    source: madeWithExplorer(input) ? 'Explorer + On-chain' : 'Nansen',
   };
 }
 
@@ -406,9 +470,11 @@ function hedgeNotCheckedSummary(input: EvidenceInput): string {
   const why =
     input.hedgeCoverage === 'missing'
       ? 'the read of its holdings on other chains failed'
-      : input.hedgeScope === 'all-chains'
-        ? 'only the first page of its holdings could be read'
-        : 'only its Hyperliquid balances were read, and a hedge on another chain would not show';
+      : input.hedgeScope === 'known-tokens'
+        ? 'its holdings on some of Ethereum, Arbitrum and HyperEVM could not be read'
+        : input.hedgeScope === 'all-chains'
+          ? 'only the first page of its holdings could be read'
+          : 'only its Hyperliquid balances were read, and a hedge on another chain would not show';
   const found =
     input.hedge.hedgeUsd > 0
       ? ` At least ${formatUsd(input.hedge.hedgeUsd)} of matching spot was found, which is a floor on the ` +
@@ -420,14 +486,52 @@ function hedgeNotCheckedSummary(input: EvidenceInput): string {
   );
 }
 
-/** Holdings that were read but could not be tied to an asset. The dollars
- * are real; what they are is not settled, so neither is the coverage. */
+/** Why a holding can be unpriced: Hyperliquid has no mark for the asset it is
+ * valued in, or the staking rate that converts it to that asset could not be
+ * read. Which of the two it was is not kept, so the sentence says both. */
+export const PRICE_GAPS = 'Hyperliquid had no price for the asset, or the staking rate could not be read';
+
+/**
+ * Whether what withheld the verdict is holdings that could not be PRICED,
+ * rather than dollars of holdings that could not be identified. The rule fires
+ * on either (src/engine/verdict.ts): a material share of the position in
+ * unrecognised holdings, or any unpriced one. A holding with no price has no
+ * dollars, so an unpriced look-alike token (rsETH, ezETH: read from the nodes,
+ * never trusted as cover) adds to `unpricedMatches` and nothing to
+ * `unverifiedUsd`. When the unrecognised dollars alone are below the material
+ * share, the unpriced holdings are the reason, and the sentences name them.
+ */
+export function withheldByUnpriced(r: { hedge: HedgeFeatures; positions: Pick<PositionFeatures, 'headlineNotionalUsd'> }): boolean {
+  const notional = r.positions.headlineNotionalUsd;
+  const unverifiedShare = notional > 0 ? (r.hedge.unverifiedUsd ?? 0) / notional : 0;
+  return (r.hedge.unpricedMatches ?? 0) > 0 && unverifiedShare < DEFAULT_THRESHOLDS.hedged.maxUnverifiedShare;
+}
+
+/** Holdings that were read but could not be tied to an asset, or could not be
+ * priced. The dollars are real where there are any; what they are is not
+ * settled, so neither is the coverage. */
 function unrecognisedAssetsSummary(input: EvidenceInput): string {
   const { positions: p, hedge: h } = input;
+  const n = h.unpricedMatches ?? 0;
+  // A reading whose balances came from the public nodes can hold unpriced
+  // holdings that are not matches at all: an unrecognised look-alike token read
+  // with no price. "A matching balance had no price" is not true of it, and
+  // what is true of every one of them is that they could not be priced. An
+  // older reading's unpriced holding was a matching balance, and keeps its words.
+  const fromNodes = input.hedgeScope === 'known-tokens';
+  const gap = `${plural(n, 'holding')} named like ${p.headlineCoin} could not be priced`;
+  if (fromNodes && withheldByUnpriced(input)) {
+    return (
+      `${gap} (${PRICE_GAPS}), so whether the ${headlineText(p)} is offset is not established. ` +
+      `Coverage confirmed so far: ${formatPct(h.hedgeRatio)}.`
+    );
+  }
   const unpriced =
-    (h.unpricedMatches ?? 0) > 0
-      ? ` ${plural(h.unpricedMatches, 'matching balance')} had no price, so their size is unknown.`
-      : '';
+    n === 0
+      ? ''
+      : fromNodes
+        ? ` ${gap}, so ${n === 1 ? 'its' : 'their'} size is unknown.`
+        : ` ${plural(n, 'matching balance')} had no price, so their size is unknown.`;
   const named =
     h.unverifiedUsd > 0
       ? `${formatUsd(h.unverifiedUsd)} of holdings named like ${p.headlineCoin} are in tokens or on chains ` +
@@ -459,14 +563,24 @@ function quotesNotCheckedSummary(input: EvidenceInput): string {
   );
 }
 
-/** Positions came from the main perp dex alone, so concentration across the
- * whole portfolio is not something this reading can establish. */
+/** Some venue a position could be on was not read, so concentration across
+ * the whole portfolio is not something this reading can establish. A reading
+ * that carries `positionsVenues` says which kind of gap it was; one made
+ * before positions came from every dex fell back to the main dex alone, and
+ * keeps the words it was given. The reading does not record which dexes
+ * failed, so none is named. */
 function positionsNotCompleteSummary(input: EvidenceInput): string {
-  const { positions: p } = input;
+  const { positions: p, positionsVenues: v } = input;
+  const gap = !v
+    ? 'only the main perp dex was read, and a HIP-3 position would not appear here'
+    : !v.registryRead
+      ? 'the list of Hyperliquid dexes could not be read, so only the main dex was read, and a position on a ' +
+        'named (HIP-3) dex would not appear here'
+      : `positions were read from ${v.answered} of ${v.asked} Hyperliquid dexes, so a position on a dex that ` +
+        'did not answer would not appear here';
   return (
     `Of what could be read, ${formatPct(p.headlineShare)} of the exposure is one ${headlineText(p)} - ` +
-    'but only the main perp dex was read, and a HIP-3 position would not appear here, ' +
-    'so this is not the whole portfolio.'
+    `but ${gap}, so this is not the whole portfolio.`
   );
 }
 
@@ -502,6 +616,13 @@ const SUMMARY_BY_REASON: Record<string, ((input: EvidenceInput) => string) | und
 
 function pnlItem(pnl: PnlSummary | null): EvidenceItem | null {
   if (!pnl) return null;
+  // A new reading's PnL is Hyperliquid's, realized and unrealized together,
+  // and perps only: the figure is `perpMonth`, which leaves out spot, so the
+  // label says Perp.
+  if (pnl.basis === 'realized-and-unrealized') {
+    return { label: `Perp PnL, ${pnl.windowDays}d (realized and unrealized)`, value: formatUsd(pnl.pnlUsd), source: 'Hyperliquid' };
+  }
+  // A saved reading's is Nansen's closed-trade figure, and renders as it did.
   const value = pnl.closedTrades === 0 ? 'no closed trades' : formatUsd(pnl.realizedPnlUsd);
   return { label: `Realized PnL, ${pnl.windowDays}d`, value, source: 'Nansen' };
 }
@@ -532,7 +653,7 @@ function markDecisive(items: EvidenceItem[], reasons: string[]): EvidenceItem[] 
 
 export function explain(input: EvidenceInput): Explanation {
   const { positions: p, orders: o } = input;
-  const posSource: EvidenceSource = input.source === 'nansen' ? 'Nansen' : 'Hyperliquid';
+  const posSource: EvidenceSource = input.positionsVenues ? 'Hyperliquid' : input.source === 'nansen' ? 'Nansen' : 'Hyperliquid';
   const present = (items: Array<EvidenceItem | null>) =>
     markDecisive(items.filter((i): i is EvidenceItem => i !== null), input.verdict.reasons).slice(0, MAX_EVIDENCE);
 

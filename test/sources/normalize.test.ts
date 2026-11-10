@@ -1,22 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { checkNansenBalances } from '../../src/sources/validate';
-
-it('normalizes accepted decimal strings before balance arithmetic', () => {
-  const checked = checkNansenBalances([{ chain: 'ethereum', token_symbol: 'WETH', token_amount: '100', value_usd: '300000' }]);
-  expect(checked.malformed).toBe(0);
-  expect(normalizeNansenBalances(checked.rows)).toMatchObject([{ amount: 100, valueUsd: 300000, priced: true }]);
-  const unpriced = checkNansenBalances([{ chain: 'ethereum', token_symbol: 'WETH', token_amount: '100', value_usd: null }]);
-  expect(normalizeNansenBalances(unpriced.rows)).toMatchObject([{ amount: 100, valueUsd: 0, priced: false }]);
-});
 import clearinghouseFixture from '../fixtures/hyperliquid/clearinghouse-many-positions.json';
 import openOrdersFixture from '../fixtures/hyperliquid/open-orders.json';
 import spotBalancesFixture from '../fixtures/hyperliquid/spot-balances.json';
 import spotMetaFixture from '../fixtures/hyperliquid/spot-meta.json';
 import fillsFixture from '../fixtures/hyperliquid/fills-24h.json';
-import nansenPositionsFixture from '../fixtures/nansen/perp-positions-wintermute.json';
-import funderEthBalancesFixture from '../fixtures/nansen/current-balance-abraxas-funder-eth-all.json';
-import relatedArbFixture from '../fixtures/nansen/related-wallets-abraxas-arbitrum.json';
-import pnlFixture from '../fixtures/nansen/perp-pnl-summary-wintermute.json';
+import portfolioAbraxas from '../fixtures/hyperliquid/portfolio-abraxas.json';
+import portfolioHypeLong from '../fixtures/hyperliquid/portfolio-hype-long.json';
 import {
   normalizePositions,
   normalizeOrders,
@@ -24,10 +13,9 @@ import {
   normalizeSpotHoldings,
   duplicateSpotTokenNames,
   normalizeTrades,
-  normalizeNansenPositions,
-  normalizeNansenBalances,
-  normalizeRelatedWallets,
-  normalizeNansenPnl,
+  normalizePortfolioPnl,
+  serviceStatusOf,
+  UpstreamShapeError,
 } from '../../src/sources/normalize';
 import type {
   HlClearinghouseState,
@@ -37,12 +25,6 @@ import type {
   HlSpotAssetCtx,
   HlFill,
 } from '../../src/sources/hyperliquid';
-import type {
-  NansenPerpPositions,
-  NansenBalance,
-  NansenRelatedWallet,
-  NansenPnlSummary,
-} from '../../src/sources/nansen';
 
 describe('normalizePositions', () => {
   it('converts every raw position into the domain Position shape', () => {
@@ -217,112 +199,83 @@ describe('normalizeTrades', () => {
   });
 });
 
-describe('Nansen normalizers', () => {
-  it('maps every Nansen position, including HIP-3 dexes, onto Position', () => {
-    const positions = normalizeNansenPositions((nansenPositionsFixture as { data: NansenPerpPositions }).data);
-    expect(positions.length).toBe(134);
-    expect(positions.filter((p) => p.coin.includes(':')).length).toBe(48);
-    const eth = positions.find((p) => p.coin === 'ETH');
-    expect(eth?.side).toBe('short');
-    expect(eth?.sizeUsd).toBeGreaterThan(0);
+describe('serviceStatusOf (whether a funding wallet is a shared service)', () => {
+  it('reads no label as unverified, never as a private wallet', () => {
+    // No label is the ordinary case. Reading "no label" as "a private wallet"
+    // is what let a Binance address and a Gate deposit address into four
+    // gallery cards as the checked trader's own hedge.
+    expect(serviceStatusOf('0x' + 'a'.repeat(40), null)).toBe('unverified');
+    expect(serviceStatusOf('0x' + 'a'.repeat(40), undefined)).toBe('unverified');
+    expect(serviceStatusOf('0x' + 'a'.repeat(40), '  ')).toBe('unverified');
   });
 
-  it('carries the cross/isolated leverage type onto every Nansen position', () => {
-    const raw = (nansenPositionsFixture as { data: NansenPerpPositions }).data;
-    const positions = normalizeNansenPositions(raw);
-    raw.asset_positions.forEach((entry, i) => {
-      expect(positions[i].leverageType).toBe(entry.position.leverage_type);
-    });
-    expect(positions.some((p) => p.leverageType === 'isolated')).toBe(true);
-    expect(positions.some((p) => p.leverageType === 'cross')).toBe(true);
-  });
-
-  it('keeps chain on balances and drops zero-amount rows', () => {
-    const rows = (funderEthBalancesFixture as { data: NansenBalance[] }).data;
-    const holdings = normalizeNansenBalances(rows);
-    expect(holdings.every((h) => h.valueUsd > 0)).toBe(true);
-    expect(holdings.find((h) => h.coin === 'AETHWETH')?.chain).toBe('ethereum');
-  });
-
-  it('keeps a real balance with no price instead of reading it as absent (23.09 audit, L05)', () => {
-    // A known WETH contract, 1,000 tokens, and an upstream that could not
-    // price it this time. The old filter read on `value_usd` alone, so this
-    // row - and the hedge it would have counted toward - vanished before the
-    // verdict ever saw it, and a complete page of holdings looked like an
-    // account with nothing there.
-    const base = (funderEthBalancesFixture as { data: NansenBalance[] }).data[0];
-    const unpriced: NansenBalance = { ...base, token_amount: 1000, value_usd: null as unknown as number };
-    const holdings = normalizeNansenBalances([unpriced]);
-    expect(holdings).toHaveLength(1);
-    expect(holdings[0]).toMatchObject({ priced: false, valueUsd: 0, amount: 1000 });
-  });
-
-  it('still drops a row with no real amount, priced or not', () => {
-    const base = (funderEthBalancesFixture as { data: NansenBalance[] }).data[0];
-    const empty: NansenBalance = { ...base, token_amount: 0 };
-    expect(normalizeNansenBalances([empty])).toHaveLength(0);
-  });
-
-  it('never returns the label itself, and grades a link as service, not-service or unverified', () => {
-    const fixtureRows = (relatedArbFixture as { data: NansenRelatedWallet[] }).data;
-    const [first] = normalizeRelatedWallets(fixtureRows);
-    expect(first.relation).toBe('First Funder');
-    expect(Object.keys(first)).not.toContain('address_label');
-    // Both saved fixtures carry address_label: null, which is the ordinary
-    // case in live data. Reading "no label" as "a private wallet" is what let
-    // a Binance address and a Gate deposit address into four gallery cards as
-    // the checked trader's own hedge.
-    expect(first.serviceStatus).toBe('unverified');
-
-    const synthetic = (label: string | null): NansenRelatedWallet => ({
-      ...fixtureRows[0],
-      address_label: label,
-    });
-    expect(normalizeRelatedWallets([synthetic('Binance: Hot Wallet')])[0].serviceStatus).toBe('service');
-    expect(normalizeRelatedWallets([synthetic('Arbitrum Bridge')])[0].serviceStatus).toBe('service');
-    expect(normalizeRelatedWallets([synthetic('High Activity')])[0].serviceStatus).toBe('not-service');
-    expect(normalizeRelatedWallets([synthetic('Token Millionaire')])[0].serviceStatus).toBe('not-service');
-  });
-
-  it('carries when the funding happened, as a plain epoch number', () => {
-    const fixtureRows = (relatedArbFixture as { data: NansenRelatedWallet[] }).data;
-    const [first] = normalizeRelatedWallets(fixtureRows);
-    expect(first.fundedAt).toBe(Date.parse(fixtureRows[0].block_timestamp));
-    const bad = normalizeRelatedWallets([{ ...fixtureRows[0], block_timestamp: 'not a date' }]);
-    expect(bad[0].fundedAt).toBeNull();
+  it('grades a label as service or not-service', () => {
+    const wallet = '0x' + 'a'.repeat(40);
+    expect(serviceStatusOf(wallet, 'Binance: Hot Wallet')).toBe('service');
+    expect(serviceStatusOf(wallet, 'Arbitrum Bridge')).toBe('service');
+    expect(serviceStatusOf(wallet, 'High Activity')).toBe('not-service');
+    expect(serviceStatusOf(wallet, 'Token Millionaire')).toBe('not-service');
   });
 
   it('knows the exchange addresses behind the wrong gallery cards, label or no label', () => {
-    const fixtureRows = (relatedArbFixture as { data: NansenRelatedWallet[] }).data;
-    const row = (address: string): NansenRelatedWallet => ({ ...fixtureRows[0], address, address_label: null });
     // Binance 15 and a Gate deposit address. Between them they funded four of
     // the accounts the 18.09 gallery called a probable hedge.
-    expect(normalizeRelatedWallets([row('0x21a31ee1afc51d94c2efccaa2092ad1028285549')])[0].serviceStatus).toBe('service');
-    expect(normalizeRelatedWallets([row('0x0d0707963952f2fba59dd06f2b425ace40b492fe')])[0].serviceStatus).toBe('service');
-    // Nansen returns checksummed addresses, the registry is lower case.
-    expect(normalizeRelatedWallets([row('0x21A31Ee1afC51d94C2EFcCAa2092aD1028285549')])[0].serviceStatus).toBe('service');
-  });
-
-  it('maps the PnL summary', () => {
-    const pnl = normalizeNansenPnl((pnlFixture as { data: NansenPnlSummary }).data, 30);
-    expect(pnl.realizedPnlUsd).toBeCloseTo(-13_625_651.41, 0);
-    expect(pnl.winRate).toBeCloseTo(0.4663, 3);
-    expect(pnl.closedTrades).toBe(2_423_158);
-    expect(pnl.windowDays).toBe(30);
+    expect(serviceStatusOf('0x21a31ee1afc51d94c2efccaa2092ad1028285549', null)).toBe('service');
+    expect(serviceStatusOf('0x0d0707963952f2fba59dd06f2b425ace40b492fe', null)).toBe('service');
+    // A checksummed address is the same address; the registry is lower case.
+    expect(serviceStatusOf('0x21A31Ee1afC51d94C2EFcCAa2092aD1028285549', null)).toBe('service');
   });
 });
 
-describe('addresses arriving from an upstream are checked before they are kept', () => {
-  it('drops a related-wallet row whose address is not one', () => {
-    // S04, audit of 21.09: an address from an upstream goes on to become a
-    // request path and a card, so it is validated on the way in rather than
-    // trusted because it arrived over TLS.
-    const rows = [
-      { address: '0x' + 'a'.repeat(40), relation: 'First Funder', chain: 'ethereum', address_label: null },
-      { address: 'not-an-address', relation: 'First Funder', chain: 'ethereum', address_label: null },
-      { address: '0x' + 'b'.repeat(64), relation: 'First Funder', chain: 'ethereum', address_label: null },
-    ] as unknown as NansenRelatedWallet[];
-    const links = normalizeRelatedWallets(rows);
-    expect(links.map((l) => l.address)).toEqual(['0x' + 'a'.repeat(40)]);
+describe('normalizePortfolioPnl (Hyperliquid portfolio, 30 days)', () => {
+  /** The month's own series, as Hyperliquid sent it, to compute the expected
+   * figure from rather than writing a number down. */
+  const monthOf = (fixture: { portfolio: unknown }): Array<[number, string]> =>
+    (fixture.portfolio as Array<[string, { pnlHistory: Array<[number, string]> }]>).find(([period]) => period === 'perpMonth')![1].pnlHistory;
+  const withMonth = (pnlHistory: unknown, period = 'perpMonth') => [
+    ['perpDay', { accountValueHistory: [], pnlHistory: [[1, '0.0'], [2, '5.0']], vlm: '0.0' }],
+    [period, { accountValueHistory: [], pnlHistory, vlm: '0.0' }],
+  ];
+
+  it('reads last minus first of perpMonth.pnlHistory, realized and unrealized', () => {
+    const month = monthOf(portfolioAbraxas);
+    const expected = Number(month[month.length - 1][1]) - Number(month[0][1]);
+    const pnl = normalizePortfolioPnl(portfolioAbraxas.portfolio, 30);
+    expect(pnl).toEqual({ basis: 'realized-and-unrealized', pnlUsd: expected, windowDays: 30 });
+    // Abraxas made money over the window: the sign comes from the series.
+    expect(expected).toBeGreaterThan(0);
+  });
+
+  it('reads a loss as a negative number', () => {
+    const month = monthOf(portfolioHypeLong);
+    const expected = Number(month[month.length - 1][1]) - Number(month[0][1]);
+    const pnl = normalizePortfolioPnl(portfolioHypeLong.portfolio, 30);
+    expect(pnl).toMatchObject({ basis: 'realized-and-unrealized', pnlUsd: expected, windowDays: 30 });
+    expect(expected).toBeLessThan(0);
+  });
+
+  it('subtracts the first point, which is not always zero', () => {
+    const pnl = normalizePortfolioPnl(withMonth([[1, '100.5'], [2, '250.25']]), 30);
+    expect(pnl).toMatchObject({ pnlUsd: 149.75 });
+  });
+
+  it.each<[string, unknown]>([
+    ['a list with no perpMonth', withMonth([[1, '0.0'], [2, '5.0']], 'month')],
+    ['a one-point history', withMonth([[1, '0.0']])],
+    ['an empty history', withMonth([])],
+    ['a history that is not a list', withMonth('0.0')],
+    ['a value that is not a number', withMonth([[1, '0.0'], [2, 'abc']])],
+    ['an empty value', withMonth([[1, '0.0'], [2, '']])],
+    ['a value that is not a string', withMonth([[1, '0.0'], [2, null]])],
+    ['a timestamp that is not a number', withMonth([[1, '0.0'], ['soon', '5.0']])],
+    ['a timestamp that is not finite', withMonth([[1, '0.0'], [Number.POSITIVE_INFINITY, '5.0']])],
+    ['a point that is not a pair', withMonth([[1, '0.0'], 5])],
+    ['a month entry that is not a pair', [['perpMonth']]],
+    ['an empty list', []],
+    ['an object', { perpMonth: { pnlHistory: [[1, '0.0'], [2, '5.0']] } }],
+    ['null', null],
+    ['a string', 'portfolio'],
+  ])('rejects %s', (_what, raw) => {
+    expect(() => normalizePortfolioPnl(raw, 30)).toThrow(UpstreamShapeError);
   });
 });

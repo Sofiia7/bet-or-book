@@ -1,5 +1,7 @@
 # Seventeen readings, read by hand
 
+*A dated record: the readings here were made in September-October 2026 with Nansen, and "Nansen" in this text names the source those readings used. Since stage 3 a new check reads Hyperliquid, public nodes and the Blockscout explorer instead (see the [README](../README.md)).*
+
 The 23 September audit asked for this before submission: take 12-20 different readings, especially the ones where the answer is not the expected one, and write down which conclusions the data itself establishes, where the card only interprets, and where it has to abstain. More tests on the same thresholds would not have done it; tests prove the rules run as written, not that the rules say something true about a position.
 
 This review was made on 24 September from readings already stored ([`data/gallery.json`](../data/gallery.json), [`data/featured.json`](../data/featured.json)); no new calls. It is not an independent validation. Nobody outside an account knows what its owner intends, so there is no ground truth to score against; what this can check is whether each card says more than the data behind it supports.

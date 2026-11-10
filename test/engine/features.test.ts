@@ -193,6 +193,21 @@ describe('computeHedgeFeatures, on-chain holdings', () => {
     expect(result.lendingUsd).toBe(0);
   });
 
+  it('counts an unpriced look-alike staking token as a balance of unknown size, and a priced one only as unverified', () => {
+    const RSETH = '0xa1290d69c65a6fe4df752f95823fae25cb99e5a7';
+    const unpriced = { coin: 'rsETH', valueUsd: 0, chain: 'ethereum', tokenAddress: RSETH, source: 'onchain' as const, priced: false };
+    const priced = { ...unpriced, valueUsd: 12_000_000, priced: true };
+    // Its contract is not trusted either way, so it is never cover. Priced, its
+    // dollars are the unverified ones; unpriced it has none to give, so the
+    // gap is counted instead of vanishing as $0.
+    const withPrice = computeHedgeFeatures('ETH', 'short', 100_000_000, [priced]);
+    expect([withPrice.hedgeUsd, withPrice.unverifiedUsd, withPrice.unpricedMatches]).toEqual([0, 12_000_000, 0]);
+    const withoutPrice = computeHedgeFeatures('ETH', 'short', 100_000_000, [unpriced]);
+    expect([withoutPrice.hedgeUsd, withoutPrice.unverifiedUsd, withoutPrice.unpricedMatches]).toEqual([0, 0, 1]);
+    // Not a balance of the asset a BTC short is about.
+    expect(computeHedgeFeatures('BTC', 'short', 100_000_000, [unpriced]).unpricedMatches).toBe(0);
+  });
+
   it('counts a lending deposit but records that a loan against it would not show', () => {
     const result = computeHedgeFeatures('ETH', 'short', 100_000_000, [
       { coin: 'AETHWETH', valueUsd: 30_000_000, chain: 'ethereum', tokenAddress: AETHWETH, source: 'onchain' },

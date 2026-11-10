@@ -1,10 +1,10 @@
 # Saved-reading publisher pilot
 
-No partner is connected yet. These endpoints read saved evidence only and never start a paid provider check.
+No partner is connected yet. These endpoints read saved evidence only and never start a check (no request to any data source).
 
 `GET /api/v1/readings/{snapshotId}` returns `bet-or-book.reading.v1`: dates, selected position, conclusion, evidence, limitations, attribution and a free saved-reading link. Optional `?claim=directional|spot|ownership|inventory` evaluates that bounded assertion against the same evidence. Unknown/historical/incomplete evidence stays qualified. GET and HEAD are supported; POST cannot check a wallet. CORS allows simple public GET requests.
 
-Use **Copy embed** in Share, or embed the static card:
+Use **Copy embed code** in Share, or embed the static card:
 
 ```html
 <iframe src="https://bet-or-book.trade/embed?s=12pk1a43rv3a1"
@@ -18,13 +18,13 @@ Bot message adapter: `node --import tsx scripts/publisher-message.ts <snapshotId
 
 No commercial licence, redistribution rights, prices, SLA or payment access are promised. Verify data-provider permissions and a real publisher's needs before commercial use.
 
-Core checks skip optional PnL/funding-age context and reserve each paid stage atomically, including retries/pages. Full-context checks retain the original worst-case reservation. Source positions can be reused for up to 60 seconds across asset selections; their source timestamp stays unchanged. Other sources are checked for the selected question. This does not promise a fixed price per reading.
+Core checks (`context=0`) skip the optional PnL and a long's funding-age context. Every check is bounded by the per-IP and global-burst rate limiters and by a budget of 45 outbound requests, retries included, and costs no paid credit. Source positions can be reused for up to 60 seconds across asset selections; their source timestamp stays unchanged. Other sources are checked for the selected question.
 
 # In-app monitoring pilot
 
-Save a position, then choose **Monitor changes · pilot**. Up to four distinct questions globally, about every four hours, for 72 hours. One job can be leased per UTC hour. The server stores the public address, selected asset/side and baseline; an unguessable browser token controls access. Keep that token private. Stop monitoring removes the server subscription; expiry removes it from active coordination.
+Save a position, then turn on the **Monitor** switch on its card on Saved. Up to four distinct questions globally, about every four hours, for 72 hours. One job can be leased per UTC hour. The server stores the public address, selected asset/side and baseline; an unguessable browser token controls access. Keep that token private. Turning Monitor off removes the server subscription; expiry removes it from active coordination.
 
-Notifications appear when this browser is open. This is not Web Push, email or Telegram. Events are limited to five. Material field changes use the existing 2% comparison threshold; rules-only reinterpretations, older readings and cache hits do not notify. A failed/incomplete/unsaved check pauses a cycle and does not advance the baseline. Each automated check uses the ordinary public budget, with no operator key or demo reserve. Budget limits can delay monitoring.
+Notifications appear when this browser is open. This is not Web Push, email or Telegram. Events are limited to five. Material field changes use the existing 2% comparison threshold; rules-only reinterpretations, older readings and cache hits do not notify. A failed/incomplete/unsaved check pauses a cycle and does not advance the baseline. Each automated check goes through the ordinary public path under the public rate limits, with no operator key. Rate limits can delay monitoring.
 
 # Quote diagnostics and calibration
 
@@ -38,6 +38,6 @@ HIP-3 provenance comes from the [official venue registry](https://hyperliquid.gi
 
 The publisher DTO includes `market.definition` and `market.provenance`. The exact eleven noncrypto `xyz:` contracts in `src/engine/marketIdentity.ts` use the [publisher specification](https://docs.trade.xyz/perpetuals/specifications-and-schedules/specification-index), reviewed 9 October and expiring 16 October 2026, and require the pinned live deployer/oracle updater. Missing registry, changed operator, unknown deployment or expired review withholds identity. This documents the published definition, not the live oracle implementation. No crypto alias or spot equivalence is established. Older observations lacking that evidence stay historical.
 
-Monitoring pins the initial selected asset/side; a repeated or older saved reading pauses the cycle without an unchanged-position claim. The scheduler's public-budget behavior is verified in real workerd with outbound provider fixtures, not a production paid scan.
+Monitoring pins the initial selected asset/side; a repeated or older saved reading pauses the cycle without an unchanged-position claim. The scheduler's public-path behavior is verified in real workerd with outbound source fixtures, not a production check.
 
 The four current demonstration preview PNGs ship inside the Worker and require no KV access. Unchanged historical readings reuse v9 previews. On 9 October the KV daily write quota was exhausted; v10 bulk upload failed. Until quota reset, new live snapshots may not persist, while existing reading links and bundled previews remain readable. `prerender-og.ts` defaults to current readings; `--all` explicitly rebuilds the archive.

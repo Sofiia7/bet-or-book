@@ -3,20 +3,18 @@
 //
 // The other tests drive src/index.ts through fake KV and fake Durable
 // Objects in Node. Those prove the routing and the arithmetic; they do not
-// model input and output gates, a Durable Object restarting with only its
-// storage, a client going away mid-request, KV failing, or KV answering
-// "not found" for something another region has just written. Each test
+// model input and output gates, real Durable Object bindings, KV failing,
+// or KV answering "not found" for something another region has just
+// written. (The tests of the Nansen credit meter across a restart and an
+// abandoned request went with the meter, stage 3.) Each test
 // here is one of those, and each asserts the property that has to hold
 // rather than the path taken to it.
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { Response } from 'miniflare';
-import { WORST_CASE_CALLS } from '../../src/budget';
 import type { Miniflare } from 'miniflare';
-import { buildWorker, budgetStub, removeBuild, startWorker, tempDir, type Upstream } from './harness';
+import { buildWorker, removeBuild, retiredMeterStatus, startWorker, type Upstream } from './harness';
+import perpDexs from '../fixtures/hyperliquid/perp-dexs.json';
 
-/** Four worst-case checks' worth: WORST_CASE_CALLS is 7. */
-const CAP = 4 * WORST_CASE_CALLS;
-const WORST_CASE = WORST_CASE_CALLS;
 const OPERATOR = 'operator-key-for-tests';
 
 const HL: Record<string, unknown> = {
@@ -25,48 +23,69 @@ const HL: Record<string, unknown> = {
   spotMetaAndAssetCtxs: [{ tokens: [], universe: [] }, []],
   userFillsByTime: [],
   metaAndAssetCtxs: [{ universe: [] }, []],
-  clearinghouseState: { assetPositions: [], time: Date.now() },
 };
+
+/** One dex's clearinghouseState, holding `positions`. */
+const dexState = (positions: unknown[]) => ({
+  assetPositions: positions,
+  marginSummary: { accountValue: '0.0', totalMarginUsed: '0.0', totalNtlPos: '0.0', totalRawUsd: '0.0' },
+  withdrawable: '0.0',
+  time: Date.now(),
+});
+
+/** A $1M ETH short on the main dex: a position whose cover is worth looking
+ * for, so a check reaches every read a short can - the funding links on the
+ * block explorer among them. None of them is Nansen's any more. */
+const ETH_SHORT = {
+  type: 'oneWay',
+  position: {
+    coin: 'ETH', szi: '-400', entryPx: '2500', leverage: { type: 'cross', value: 5 }, liquidationPx: null,
+    positionValue: '1000000', unrealizedPnl: '0', cumFunding: { allTime: '0', sinceOpen: '0', sinceChange: '0' },
+    marginUsed: '200000', maxLeverage: 25, returnOnEquity: '0',
+  },
+};
+
+/** Hyperliquid's answer to one request: the registry capture (ten named
+ * dexes), the short on the main dex, nothing on any named dex. */
+function hyperliquidAnswer(body: { type: string; dex?: string }): unknown {
+  if (body.type === 'perpDexs') return perpDexs;
+  if (body.type === 'clearinghouseState') return dexState(body.dex === undefined ? [ETH_SHORT] : []);
+  return HL[body.type] ?? [];
+}
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const address = (i: number) => `0x${(i + 1).toString(16).padStart(40, '0')}`;
 
 /**
- * Hyperliquid and Nansen, as the Worker sees them. Nansen answers after
- * `nansenDelayMs`, or never; every call is counted, because a call that
- * reached Nansen may have been charged whether or not anyone heard back.
+ * Hyperliquid and the block explorer, as the Worker sees them. A check is not
+ * expected to reach Nansen at all; a request to it is counted and refused.
+ * The explorer (keyless, so Ethereum only) answers that nothing funded the
+ * account.
  */
-function upstreams(opts: { nansenDelayMs?: number; nansenNeverAnswers?: boolean } = {}) {
-  const seen = { nansen: 0 };
-  let firstNansen: () => void = () => {};
-  const nansenReached = new Promise<void>((resolve) => {
-    firstNansen = resolve;
-  });
+function upstreams() {
+  const seen = { nansen: 0, explorer: 0, hyperliquid: 0 };
   const handler: Upstream = async (request) => {
     const url = new URL(request.url);
-    if (url.hostname === 'api.nansen.ai') {
+    if (url.hostname.includes('nansen')) {
       seen.nansen++;
-      firstNansen();
-      if (opts.nansenNeverAnswers) return new Promise<never>(() => {});
-      if (opts.nansenDelayMs) await sleep(opts.nansenDelayMs);
-      return new Response(JSON.stringify({ data: [] }), {
-        status: 200,
-        headers: {
-          'content-type': 'application/json',
-          'x-nansen-credits-cost': '1',
-          'x-nansen-credits-remaining': '900',
-        },
+      return new Response('{}', { status: 500 }) as unknown as globalThis.Response;
+    }
+    if (url.hostname.endsWith('blockscout.com')) {
+      seen.explorer++;
+      return new Response(JSON.stringify({ items: [], next_page_params: null }), {
+        headers: { 'content-type': 'application/json' },
       }) as unknown as globalThis.Response;
     }
     if (url.hostname === 'api.hyperliquid.xyz') {
-      const body = JSON.parse(await request.text()) as { type: string };
-      return new Response(JSON.stringify(HL[body.type] ?? []), {
+      seen.hyperliquid++;
+      const body = JSON.parse(await request.text()) as { type: string; dex?: string };
+      return new Response(JSON.stringify(hyperliquidAnswer(body)), {
         headers: { 'content-type': 'application/json' },
       }) as unknown as globalThis.Response;
     }
     return new Response('no such upstream in this test', { status: 599 }) as unknown as globalThis.Response;
   };
-  return { handler, seen, nansenReached };
+  return { handler, seen };
 }
 
 interface Reading {
@@ -85,7 +104,6 @@ async function check(mf: Miniflare, addr: string, headers: Record<string, string
 }
 
 let running: Miniflare[] = [];
-const cleanups: Array<() => void> = [];
 /** What each running Worker wrote to its console, kept out of the test
  * output and available to the tests that look at it. */
 const logsOf = new Map<Miniflare, string[]>();
@@ -105,11 +123,6 @@ function eventsOf(mf: Miniflare): Array<Record<string, unknown>> {
     .map((line) => JSON.parse(line) as Record<string, unknown>);
 }
 
-async function stop(mf: Miniflare): Promise<void> {
-  running = running.filter((m) => m !== mf);
-  await mf.dispose();
-}
-
 beforeAll(() => {
   buildWorker();
 }, 180_000);
@@ -119,127 +132,29 @@ afterAll(() => removeBuild());
 afterEach(async () => {
   await Promise.all(running.map((m) => m.dispose()));
   running = [];
-  while (cleanups.length) cleanups.pop()!();
 });
 
-describe('the spend cap, in a real Durable Object', () => {
-  it('core checks reserve per stage under contention and leave no unsettled successful holds', async () => {
-    const up = upstreams({ nansenDelayMs: 100 });
-    const mf = await start({ vars: { NANSEN_API_KEY: 'test-key', NANSEN_DAILY_CREDIT_CAP: '8', DEMO_KEY: OPERATOR }, upstream: up.handler });
-    const results = await Promise.all(Array.from({ length: 12 }, (_, i) => mf.dispatchFetch(`http://localhost/api/check?context=0&address=${address(i + 100)}`, { method: 'POST', headers: { 'x-demo-key': OPERATOR } })));
-    expect(results.every(r => r.status === 200)).toBe(true);
-    expect(up.seen.nansen).toBeGreaterThan(0); expect(up.seen.nansen).toBeLessThanOrEqual(8);
-    const budget = await budgetStub(mf);
-    expect(await budget.available(8)).toBe(8 - up.seen.nansen);
-    expect((await budget.report()).calls.attempted).toBe(up.seen.nansen);
-  }, 60_000); // Includes cold workerd startup, like the adjacent contention test.
-  it('never lets overlapping checks hold or spend more than the cap, and charges exactly what was called', async () => {
-    const up = upstreams({ nansenDelayMs: 400 });
-    const mf = await start({
-      vars: { NANSEN_API_KEY: 'test-key', NANSEN_DAILY_CREDIT_CAP: String(CAP), DEMO_KEY: OPERATOR },
-      upstream: up.handler,
-    });
-    // The operator key skips both rate limits, so twelve checks from one
-    // client really do arrive together and only the budget stands between
-    // them and Nansen.
+describe('no Nansen, in the real runtime', () => {
+  it('overlapping checks make no Nansen call, and the retired meter still answers', async () => {
+    // A check no longer reads from Nansen (stage 3): the funding links are the
+    // block explorer's. Twelve checks arriving together, past both rate
+    // limits with the operator key, reach Nansen not once.
+    const up = upstreams();
+    const mf = await start({ vars: { DEMO_KEY: OPERATOR }, upstream: up.handler });
     const results = await Promise.all(
       Array.from({ length: 12 }, (_, i) => check(mf, address(i), { 'x-demo-key': OPERATOR })),
     );
 
     expect(results.every((r) => r.status === 200 && r.body.address)).toBe(true);
-    // How many got Nansen depends on how the twelve interleave, which is
-    // the runtime's business; that the rest were told so, and that the
-    // total stayed under the cap, is not.
-    const paid = results.filter((r) => (r.body.nansenCalls ?? 0) > 0);
-    const refused = results.filter((r) => (r.body.coverage ?? []).join(' ').includes('Nansen not used'));
-    expect(paid.length).toBeGreaterThan(0);
-    expect(refused.length).toBeGreaterThan(0);
-    expect(paid.length + refused.length).toBe(results.length);
-    expect(up.seen.nansen).toBeLessThanOrEqual(CAP);
-
-    // Every hold has been settled to exactly what was called, with nothing
-    // lost between reservations and settlements that interleaved: whatever
-    // is left for a new check is the cap minus those calls, to the credit.
-    const budget = await budgetStub(mf);
-    expect(await budget.available(CAP)).toBe(CAP - up.seen.nansen);
-  }, 60_000);
-
-  it('charges a settle delivered twice once, including when the second comes after the object restarted', async () => {
-    const state = tempDir();
-    cleanups.push(state.remove);
-    const up = upstreams();
-    let mf = await start({ upstream: up.handler, persist: state.path });
-    let budget = await budgetStub(mf);
-
-    const first = await budget.reserve(WORST_CASE, CAP);
-    expect(first.ok).toBe(true);
-    await budget.settle(first.id!, 3);
-    await budget.settle(first.id!, 3);
-    expect(await budget.available(CAP)).toBe(CAP - 3);
-
-    const second = await budget.reserve(WORST_CASE, CAP);
-    expect(second.ok).toBe(true);
-
-    // The process goes away. Memory is gone; SQLite storage is what is left.
-    await stop(mf);
-    mf = await start({ upstream: up.handler, persist: state.path });
-    budget = await budgetStub(mf);
-
-    // The hold taken before the restart still stands against the cap...
-    expect(await budget.available(CAP)).toBe(CAP - 3 - WORST_CASE);
-    // ...and settles to what it cost, once, however often it is delivered.
-    await budget.settle(second.id!, 2);
-    await budget.settle(second.id!, 2);
-    expect(await budget.available(CAP)).toBe(CAP - 5);
-  }, 90_000);
-
-  it('keeps an aborted check\'s worst case held, since Nansen may already have served it', async () => {
-    const up = upstreams({ nansenNeverAnswers: true });
-    const mf = await start({
-      vars: { NANSEN_API_KEY: 'test-key', NANSEN_DAILY_CREDIT_CAP: String(CAP), DEMO_KEY: OPERATOR },
-      upstream: up.handler,
-    });
-    const reader = new AbortController();
-    const pending = mf
-      .dispatchFetch(`http://localhost/api/check?address=${address(0)}`, {
-        method: 'POST',
-        headers: { 'x-demo-key': OPERATOR },
-        signal: reader.signal,
-      })
-      .catch((err: unknown) => err);
-
-    await up.nansenReached;
-    reader.abort();
-    await pending;
-
-    // The reader is gone and nothing has answered. Handing the credits back
-    // now would treat "unknown" as "free"; they stay held until the check
-    // either settles or expires and is charged at its worst case.
-    const budget = await budgetStub(mf);
-    expect(up.seen.nansen).toBeGreaterThan(0);
-    expect(await budget.available(CAP)).toBe(CAP - WORST_CASE);
-  }, 60_000);
-});
-
-describe('the call ledger, across a restart', () => {
-  it('counts every one of many records that arrive together right after the object restarted', async () => {
-    const state = tempDir();
-    cleanups.push(state.remove);
-    const up = upstreams();
-    const call = { path: 'profiler/perp-positions', status: 200, creditsCost: 1 };
-
-    let mf = await start({ upstream: up.handler, persist: state.path });
-    await (await budgetStub(mf)).record([call]);
-    await stop(mf);
-
-    // The first requests after a restart all find the ledger unloaded. They
-    // have to wait on one load, not each build their own and overwrite the
-    // others (src/coordinator.ts).
-    mf = await start({ upstream: up.handler, persist: state.path });
-    const budget = await budgetStub(mf);
-    await Promise.all(Array.from({ length: 20 }, () => budget.record([call])));
-    expect((await budget.report()).calls.attempted).toBe(21);
-  }, 90_000);
+    expect(results.every((r) => r.body.nansenCalls === 0 && r.body.source === 'hyperliquid')).toBe(true);
+    expect(results.some((r) => (r.body.coverage ?? []).join(' ').includes('Nansen'))).toBe(false);
+    expect(up.seen.nansen).toBe(0);
+    // Each short's funding links were asked of the explorer (keyless: Ethereum only).
+    expect(up.seen.explorer).toBe(12);
+    // The NansenBudget class is still exported and bound (deleting it takes a
+    // migration); it does nothing but say so.
+    expect(await retiredMeterStatus(mf)).toBe(410);
+  }, 60_000); // Includes cold workerd startup.
 });
 
 describe('the rate limits, in real Durable Objects', () => {
@@ -262,12 +177,9 @@ describe('the rate limits, in real Durable Objects', () => {
 });
 
 describe('when KV fails', () => {
-  it('still answers a check, says it could not keep it, and settles the budget', async () => {
+  it('still answers a check and says it could not keep it', async () => {
     const up = upstreams();
-    const mf = await start({
-      vars: { NANSEN_API_KEY: 'test-key', NANSEN_DAILY_CREDIT_CAP: String(CAP), KV_MODE: 'down' },
-      upstream: up.handler,
-    });
+    const mf = await start({ vars: { KV_MODE: 'down' }, upstream: up.handler });
     const { status, body } = await check(mf, address(0));
     expect(status).toBe(200);
     expect(body.snapshotSaved).toBe(false);
@@ -275,16 +187,14 @@ describe('when KV fails', () => {
     // was never kept would open nothing.
     expect(body.snapshotId).toBeUndefined();
     expect((body.share as { link: string | null }).link).toBeNull();
-    expect(up.seen.nansen).toBeGreaterThan(0);
-    expect(await (await budgetStub(mf)).available(CAP)).toBe(CAP - up.seen.nansen);
+    expect(up.seen.nansen).toBe(0);
     // And the one line that lets anyone notice this happening on the live
     // site, written by the real runtime (23.09 audit, S06).
-    expect(eventsOf(mf).find((e) => e.event === 'check')).toMatchObject({
-      outcome: 'fresh',
-      kvDegraded: true,
-      saved: false,
-      credits: up.seen.nansen,
-    });
+    const event = eventsOf(mf).find((e) => e.event === 'check');
+    expect(event).toMatchObject({ outcome: 'fresh', kvDegraded: true, saved: false });
+    // A check makes no Nansen call, so the line carries no Nansen cost.
+    expect(event).not.toHaveProperty('nansenCalls');
+    expect(event).not.toHaveProperty('credits');
   }, 60_000);
 
   it('still opens a gallery card, and gives a crawler the stand-in picture rather than an error', async () => {
@@ -301,21 +211,19 @@ describe('when KV fails', () => {
     expect(og.headers.get('cache-control')).not.toContain('immutable');
   }, 60_000);
 
-  it('runs a repeat for real once the day\'s KV writes are gone, and still charges only what was called', async () => {
+  it('runs a repeat for real once the day\'s KV writes are gone', async () => {
     const up = upstreams();
-    const mf = await start({
-      vars: { NANSEN_API_KEY: 'test-key', NANSEN_DAILY_CREDIT_CAP: String(CAP), KV_MODE: 'read-only' },
-      upstream: up.handler,
-    });
+    const mf = await start({ vars: { KV_MODE: 'read-only' }, upstream: up.handler });
     const first = await check(mf, address(0));
-    const callsAfterFirst = up.seen.nansen;
+    const readsAfterFirst = up.seen.explorer;
     const second = await check(mf, address(0));
     expect(first.body.snapshotSaved).toBe(false);
     expect(second.body.snapshotSaved).toBe(false);
-    // Nothing could be cached, so the repeat was a second paid check. The
-    // cap is what bounds that, and it has to have counted both.
-    expect(up.seen.nansen).toBe(callsAfterFirst * 2);
-    expect(await (await budgetStub(mf)).available(CAP)).toBe(CAP - up.seen.nansen);
+    // Nothing could be cached, so the repeat was a second whole check: it
+    // asked the explorer again, and Nansen not at all.
+    expect(readsAfterFirst).toBeGreaterThan(0);
+    expect(up.seen.explorer).toBe(readsAfterFirst * 2);
+    expect(up.seen.nansen).toBe(0);
   }, 60_000);
 });
 

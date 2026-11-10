@@ -1,15 +1,16 @@
 // S06, audit of 23.09: something to count. Every route that decides what a
 // reader gets now leaves one JSON line saying what happened, how long it
-// took and what it cost - and none of them names the wallet, the client or
-// a key.
+// took - and none of them names the wallet, the client or a key.
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import worker from '../src/index';
 import { testEnv, request } from './support/worker';
 import { FakeKV } from './support/fakeKv';
+import { hlPosition } from './support/upstream';
+import portfolioFixture from './fixtures/hyperliquid/portfolio-abraxas.json';
 import { emit, readingFields } from '../src/telemetry';
 
 const ADDRESS = '0x1111111111111111111111111111111111111111';
-const API_KEY = 'nansen-key-that-must-never-be-logged';
+const API_KEY = 'explorer-key-that-must-never-be-logged';
 const CLIENT_IP = '198.51.100.23';
 
 const HL: Record<string, unknown> = {
@@ -19,18 +20,16 @@ const HL: Record<string, unknown> = {
   userFillsByTime: [],
   metaAndAssetCtxs: [{ universe: [] }, []],
   clearinghouseState: { assetPositions: [], time: Date.now() },
+  portfolio: portfolioFixture.portfolio,
 };
 
-function upstreams() {
+function upstreams(over: Record<string, unknown> = {}) {
+  const answers = { ...HL, ...over };
   global.fetch = vi.fn(async (url: string | URL, init?: RequestInit) => {
-    if (String(url).includes('api.nansen.ai')) {
-      return new Response(JSON.stringify({ data: [] }), {
-        status: 200,
-        headers: { 'x-nansen-credits-cost': '1', 'x-nansen-credits-remaining': '900' },
-      });
-    }
+    // A check asks Nansen nothing; a request to it would fail here.
+    if (String(url).includes('nansen')) return new Response('{}', { status: 500 });
     const body = JSON.parse(String(init?.body ?? '{}'));
-    return new Response(JSON.stringify(HL[body.type] ?? []), { status: 200 });
+    return new Response(JSON.stringify(answers[body.type] ?? []), { status: 200 });
   }) as unknown as typeof fetch;
 }
 
@@ -56,10 +55,13 @@ const post = (path: string, headers: Record<string, string> = {}) =>
 
 afterEach(() => vi.restoreAllMocks());
 
-describe('a check leaves one line saying what it was and what it cost', () => {
-  it('counts a fresh check: its verdict, the reason that decided it, its calls and credits, and whether it was kept', async () => {
-    upstreams();
-    const env = testEnv({ NANSEN_API_KEY: API_KEY });
+describe('a check leaves one line saying what it was', () => {
+  it('counts a fresh check: its verdict, the reason that decided it, and whether it was kept', async () => {
+    // A small long, whose funding history used to be two Nansen reads and is
+    // the block explorer's now. A check makes no Nansen call, so the line
+    // carries none of the Nansen cost fields older lines have.
+    upstreams({ clearinghouseState: { assetPositions: [hlPosition('BTC', 500, 50_000_000)], time: Date.now() } });
+    const env = testEnv({ BLOCKSCOUT_API_KEY: API_KEY });
     const events = await eventsOf(() => worker.fetch(post(`/api/check?address=${ADDRESS}`), env));
     const checks = events.filter((e) => e.event === 'check');
     expect(checks).toHaveLength(1);
@@ -68,20 +70,73 @@ describe('a check leaves one line saying what it was and what it cost', () => {
     expect(typeof e.ms).toBe('number');
     expect(e.verdict).toEqual(expect.any(String));
     expect(e.rules).toEqual(expect.any(String));
-    expect(e.nansenCalls).toBeGreaterThan(0);
-    expect(e.credits).toBe(e.nansenCalls);
-    expect(e.creditsRemaining).toBe(900);
-    expect(e.creditsMeasuredAt).toEqual(expect.any(Number));
+    for (const field of ['nansenCalls', 'credits', 'creditsRemaining', 'creditsMeasuredAt', 'nansenOff']) {
+      expect(e).not.toHaveProperty(field);
+    }
     expect(e.saved).toBe(true);
     expect(e.kvDegraded).toBe(false);
     expect(e.focus).toBe(false);
     expect(e.demo).toBe(false);
-    expect(e).not.toHaveProperty('nansenOff');
+  });
+
+  it('says how completely the positions were read, so an unread dex can be counted', async () => {
+    // A list of dexes with one named dex in it, and both answered: complete.
+    upstreams({ perpDexs: [null, { name: 'xyz' }] });
+    const env = testEnv({ BLOCKSCOUT_API_KEY: API_KEY });
+    const complete = await eventsOf(() => worker.fetch(post(`/api/check?address=${ADDRESS}`), env));
+    expect(complete.find((x) => x.event === 'check')!.positionsCoverage).toBe('complete');
+
+    // The list of dexes could not be read: the main dex alone, and the line says so.
+    upstreams({ perpDexs: { error: 'unavailable' } });
+    const other = '0x2222222222222222222222222222222222222222';
+    // A fresh environment: the list of dexes is kept in KV for an hour.
+    const partial = await eventsOf(() => worker.fetch(post(`/api/check?address=${other}`), testEnv({ BLOCKSCOUT_API_KEY: API_KEY })));
+    const e = partial.find((x) => x.event === 'check')!;
+    expect(e.outcome).toBe('fresh');
+    expect(e.positionsCoverage).toBe('partial');
+    // `source` no longer says how much of the book was seen; this is the field that does.
+    expect(e.source).toBe('hyperliquid');
+  });
+
+  // The credit meter that bounded spend is gone and the explorer's free key allows about 5,000 calls
+  // a day, so the one place a spent or refused explorer shows is the reading's own coverage notes.
+  // The line carries their text (chain names and reasons, nothing else) so it can be counted.
+  it('lists the funding chains that were not read, so a spent explorer quota can be seen', async () => {
+    // A small long: its funding history is read from the explorer as context. No key is
+    // configured, so the Arbitrum read is refused and the reading says so in a coverage note.
+    upstreams({ clearinghouseState: { assetPositions: [hlPosition('BTC', 500, 50_000_000)], time: Date.now() } });
+    const events = await eventsOf(() => worker.fetch(post(`/api/check?address=${ADDRESS}`), testEnv()));
+    const e = events.find((x) => x.event === 'check')!;
+    expect(e.outcome).toBe('fresh');
+    expect(e.fundingLinksNotes).toEqual(expect.arrayContaining(['Funding links on Arbitrum were not read: no explorer key is configured']));
+    for (const note of e.fundingLinksNotes as string[]) expect(note.startsWith('Funding links on ')).toBe(true);
+    // Counting needs a field that says what was lost, not a cost: none is added.
+    for (const field of ['nansenCalls', 'credits', 'creditsRemaining', 'creditsMeasuredAt', 'nansenOff', 'cost']) {
+      expect(e).not.toHaveProperty(field);
+    }
+  });
+
+  it('leaves the field out of a line whose reading searched no funding links', async () => {
+    upstreams();
+    const events = await eventsOf(() => worker.fetch(post(`/api/check?address=${ADDRESS}`), testEnv()));
+    const e = events.find((x) => x.event === 'check')!;
+    expect(e.outcome).toBe('fresh');
+    expect(e).not.toHaveProperty('fundingLinksNotes');
+  });
+
+  it('carries it on a repeat served from what is on record, too', async () => {
+    upstreams({ perpDexs: [null, { name: 'xyz' }] });
+    const env = testEnv();
+    await worker.fetch(post(`/api/check?address=${ADDRESS}`), env);
+    const events = await eventsOf(() => worker.fetch(post(`/api/check?address=${ADDRESS}`), env));
+    const e = events.find((x) => x.event === 'check')!;
+    expect(e.outcome).toBe('cached');
+    expect(e.positionsCoverage).toBe('complete');
   });
 
   it('never writes the wallet, the client address or a key into any line', async () => {
     upstreams();
-    const env = testEnv({ NANSEN_API_KEY: API_KEY, DEMO_KEY: 'demo-secret' });
+    const env = testEnv({ BLOCKSCOUT_API_KEY: API_KEY, DEMO_KEY: 'demo-secret' });
     const events = await eventsOf(async () => {
       await worker.fetch(post(`/api/check?address=${ADDRESS}`), env);
       await worker.fetch(post(`/api/check?address=${ADDRESS}`, { 'x-demo-key': 'demo-secret' }), env);
@@ -103,17 +158,6 @@ describe('a check leaves one line saying what it was and what it cost', () => {
     expect(e.outcome).toBe('cached');
     expect(e.verdict).toEqual(expect.any(String));
     expect(e).not.toHaveProperty('credits');
-  });
-
-  it('says why Nansen was not asked, so budget refusals can be counted', async () => {
-    upstreams();
-    const env = testEnv({ NANSEN_API_KEY: API_KEY, NANSEN_DAILY_CREDIT_CAP: '0' });
-    const events = await eventsOf(() => worker.fetch(post(`/api/check?address=${ADDRESS}`), env));
-    const e = events.find((x) => x.event === 'check')!;
-    expect(e.outcome).toBe('fresh');
-    expect(e.nansenOff).toBe("today's Nansen credits are used up");
-    expect(e.nansenCalls).toBe(0);
-    expect(e.source).toBe('hyperliquid');
   });
 
   it('counts a check refused by the rate limit', async () => {
@@ -200,5 +244,62 @@ describe('the line itself', () => {
       source: 'nansen',
     });
     expect(fields).toEqual({ verdict: 'unknown', reason: 'maker_flow_only', rules: 'v5', degraded: true, source: 'nansen' });
+  });
+
+  it('adds how completely the positions were read when the reading says, and nothing when it does not', () => {
+    const base = {
+      verdict: { verdict: 'unknown' as const, strength: null, reasons: [] },
+      classifierVersion: 'v5',
+      degraded: true,
+      source: 'hyperliquid' as const,
+    };
+    expect(readingFields({ ...base, positionsCoverage: 'partial' })).toMatchObject({ source: 'hyperliquid', positionsCoverage: 'partial' });
+    expect(readingFields({ ...base, positionsCoverage: 'complete' })).toHaveProperty('positionsCoverage', 'complete');
+    // A reading stored before the field existed adds no key rather than a null one.
+    expect(readingFields(base as Parameters<typeof readingFields>[0])).not.toHaveProperty('positionsCoverage');
+  });
+
+  describe('fundingLinksNotes', () => {
+    const base = {
+      verdict: { verdict: 'unknown' as const, strength: null, reasons: [] },
+      classifierVersion: 'v5',
+      degraded: true,
+      source: 'hyperliquid' as const,
+    };
+    const note = (text: string, failure = true) => ({ text, failure });
+
+    it('carries the texts of the funding-link notes, and only those', () => {
+      const fields = readingFields({
+        ...base,
+        coverageNotes: [
+          note('Funding links on Arbitrum were not read: no explorer key is configured'),
+          note('Orders were not read'),
+          note('Funding links on Ethereum: the first page held no incoming transaction with a value, so the earliest funder may be missing', false),
+          note('2 funding link(s) lead to an exchange or bridge and were not followed'),
+        ],
+      });
+      expect(fields.fundingLinksNotes).toEqual([
+        'Funding links on Arbitrum were not read: no explorer key is configured',
+        'Funding links on Ethereum: the first page held no incoming transaction with a value, so the earliest funder may be missing',
+      ]);
+    });
+
+    it('keeps at most four, each cut to 200 characters', () => {
+      const long = 'Funding links on Arbitrum were not read: ' + 'x'.repeat(400);
+      const fields = readingFields({
+        ...base,
+        coverageNotes: [1, 2, 3, 4, 5, 6].map((n) => note(`Funding links on chain ${n} could not be read`)).concat([note(long)]),
+      });
+      expect(fields.fundingLinksNotes).toHaveLength(4);
+      expect(fields.fundingLinksNotes![3]).toBe('Funding links on chain 4 could not be read');
+      expect(readingFields({ ...base, coverageNotes: [note(long)] }).fundingLinksNotes![0]).toHaveLength(200);
+    });
+
+    it('is absent when there is no such note, and for a reading stored without notes', () => {
+      expect(readingFields({ ...base, coverageNotes: [] })).not.toHaveProperty('fundingLinksNotes');
+      expect(readingFields({ ...base, coverageNotes: [note('PnL was not read')] })).not.toHaveProperty('fundingLinksNotes');
+      expect(readingFields(base)).not.toHaveProperty('fundingLinksNotes');
+      expect(readingFields({ ...base, coverageNotes: undefined })).not.toHaveProperty('fundingLinksNotes');
+    });
   });
 });

@@ -1,10 +1,11 @@
 import type { Position } from '../types';
 import { formatUsd, formatPct, plural, type EvidenceSource } from './evidence';
 
-/** Vitals only ever come from the same two places evidence does. Kept as a
- * narrower alias so this file cannot accidentally claim "Nansen + Hyperliquid"
- * for a single field that only one of them supplied. */
-export type VitalsSource = Extract<EvidenceSource, 'Nansen' | 'Hyperliquid'>;
+/** Each vital comes from one place: Hyperliquid, the block explorer (a
+ * long's earliest funding) or, on a reading saved before the explorer, Nansen.
+ * Kept as a narrower alias so this file cannot accidentally claim
+ * "Nansen + Hyperliquid" for a single field that only one of them supplied. */
+export type VitalsSource = Extract<EvidenceSource, 'Nansen' | 'Hyperliquid' | 'Explorer'>;
 
 export interface VitalsItem {
   label: string;

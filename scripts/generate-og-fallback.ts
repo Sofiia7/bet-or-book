@@ -21,6 +21,8 @@ const data: OgCardData = {
   constellation: null,
   constellationStat: null,
   footerLeft: 'bet-or-book.trade',
+  // The generic picture is the stand-in for any reading, so it credits no source.
+  footerRight: '',
   // No reading behind this card, so no date and no caveat to give.
   provenance: '',
   limitText: null,

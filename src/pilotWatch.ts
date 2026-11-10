@@ -43,10 +43,10 @@ export class PilotWatch extends DurableObject {
         if (!focus) return Response.json({ error: 'Choose an open position to monitor' }, { status: 400 });
         body.baseline = { ...body.baseline, focus };
         if (state.watches.some(w => w.address === body.baseline!.address && JSON.stringify(w.focus) === JSON.stringify(body.baseline!.focus))) return Response.json({ error: 'This position already has a pilot monitor. Save it and refresh manually until that monitor expires.' }, { status: 409 });
-        if (state.watches.length >= MAX_WATCHES) return Response.json({ error: 'The four pilot monitoring slots are full. Save this position and refresh manually.' }, { status: 409 });
+        if (state.watches.length >= MAX_WATCHES) return Response.json({ error: 'The four pilot monitoring slots are full. Use Refresh on this saved position for a new reading.' }, { status: 409 });
         const watch: Watch = { id: crypto.randomUUID(), token: crypto.randomUUID() + crypto.randomUUID(),
           address: body.baseline.address, focus: body.baseline.focus, baseline: body.baseline,
-          createdAt: now, dueAt: now + INTERVAL, expiresAt: now + LIFETIME, status: 'Scheduled; data budget can pause checks', events: [] };
+          createdAt: now, dueAt: now + INTERVAL, expiresAt: now + LIFETIME, status: 'Scheduled; shared rate limits can pause checks', events: [] };
         state.watches.push(watch);
         await this.ctx.storage.put('pilot', state);
         return Response.json({ token: watch.token, expiresAt: new Date(watch.expiresAt).toISOString(), intervalHours: 4 });

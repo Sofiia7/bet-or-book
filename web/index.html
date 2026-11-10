@@ -7,7 +7,7 @@
 <meta name="description" content="Paste a Hyperliquid address: see what actually stands behind that whale position - a bet, a hedge, or a market maker's book.">
 <!-- A link to a saved reading has these replaced by the Worker with that
      reading's own verdict, so a crawler gets the real text without running
-     the page's JavaScript or spending a Nansen credit on a fresh check. -->
+     the page's JavaScript or starting a fresh check. -->
 <!--SOCIAL-->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bet or Book">
@@ -18,364 +18,814 @@
 <meta name="twitter:image" content="https://bet-or-book.trade/og-fallback.png">
 <!--/SOCIAL-->
 <link rel="icon" href="/logo.png" type="image/png">
+<!-- Every screen sets its text in Geist from the first paint: asked for
+     here, before the stylesheet that names it. Geist Mono, for small labels
+     only, is left to load when used. -->
+<link rel="preload" as="font" type="font/woff2" href="/fonts/geist-sans.woff2" crossorigin>
 <style>
-  @font-face { font-family: Inter; src: url('/fonts/inter-regular.woff') format('woff'); font-weight: 400; font-display: swap; }
-  @font-face { font-family: Inter; src: url('/fonts/inter-bold.woff') format('woff'); font-weight: 600 700; font-display: swap; }
+  /* Geist and Geist Mono, served by the Worker from assets/ (SIL Open Font
+     License 1.1, assets/GEIST-LICENSE.txt). The page's CSP allows fonts from
+     'self' only, so a third-party font host is not an option. One variable
+     file per family covers every weight the page uses. */
+  @font-face { font-family: "Geist"; src: url("/fonts/geist-sans.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+  @font-face { font-family: "Geist Mono"; src: url("/fonts/geist-mono.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+
+  /* Design tokens: the owner's handoff, verbatim, with one deliberate change.
+     The handoff's --text-faint (#6B707D) and --placeholder (#5E6370) measured
+     3.95 and 3.25 on --bg, under the 4.5:1 that small text needs. Lightened,
+     their WCAG 2 contrast ratios are:
+       --text-faint  #808593: 5.30 on --bg, 4.99 on --surface, 5.12 on
+                              --surface-inset, 4.85 on --hover-bg, 4.57 on
+                              --hover-bg-strong
+       --placeholder #7C8190: 5.03 on --bg, 4.73 on --surface, 4.86 on
+                              --surface-inset (4.33 on --hover-bg-strong,
+                              which no input uses as its background)
+     Verdict colors are for the verdict label and its dot only. */
   :root {
-    --bg: #08090c; --fg: #e6e8ee; --muted: #8b90a0; --faint: #858a99; --line: rgba(255,255,255,.08); --panel: #0c0e13; --hover: rgba(255,255,255,.05);
-    --book-bg: rgba(127,162,255,.12); --book-fg: #7fa2ff;
-    --hedged-bg: rgba(79,224,176,.12); --hedged-fg: #4fe0b0;
-    --bet-bg: rgba(242,179,92,.12); --bet-fg: #f2b35c;
-    --unknown-bg: rgba(163,168,182,.12); --unknown-fg: #a3a8b6;
-    --link: #9fb8ff; --error: #ff6b6b;
-    --surface-2: #0e1015; --surface-3: #0a0b10;
+    color-scheme: dark;
+    --bg: #0B0C10;
+    --surface: #12141A;
+    --surface-inset: #0F1116;
+    --border: #1F222B;
+    --border-strong: #262A35;
+    --border-hover: #353A48;
+    --rule: #1C1F27;
+    --hover-bg: #15171E;
+    --hover-bg-strong: #1A1D25;
+    --text: #ECEDF2;
+    --text-2: #C4C8D2;
+    --text-muted: #A3A8B5;
+    --text-faint: #808593;
+    --placeholder: #7C8190;
+    --accent: #8F9BFF;
+    --accent-hover: #A7B1FF;
+    --link-hover: #B8C0FF;
+    --on-accent: #0B0C10;
+    --active-tab-bg: #ECEDF2;
+    --verdict-bet: oklch(0.82 0.14 75);
+    --verdict-hedged: oklch(0.8 0.14 155);
+    --verdict-unknown: #8A8F9C;
+    --verdict-book: oklch(0.78 0.12 270);
+    --danger: oklch(0.75 0.15 25);
+    /* Values the handoff gives inline on single components. */
+    --breadcrumb-sep: #3A3E4A;
+    --header-bg: rgba(11, 12, 16, 0.85);
+    --menu-bg: #171920;
+    --menu-border: #2A2E3A;
+    --menu-hover: #22252F;
+    --switch-track: #2A2E3A;
+    --font-sans: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+    --container: 1120px;
+    --gutter: 32px;
+    --header-h: 72px;
+    /* The header at its tallest: under 360 px the tab pill can move under
+       the name (102.5 px measured at 320 and 330 px with a two-digit Saved
+       count). */
+    --header-h-two-rows: 104px;
+    /* Side padding that lines a full-width band (header, footer) up with the
+       1120 px container: 100% is the band's own width. */
+    --band-inline: max(var(--gutter), calc((100% - var(--container)) / 2 + var(--gutter)));
   }
+
+  /* ---- base ---- */
   [hidden] { display: none !important; }
-  * { box-sizing: border-box; }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   body {
-    font-family: "Inter", -apple-system, system-ui, "Segoe UI", sans-serif;
-    background: var(--bg);
-    background-image: radial-gradient(1200px 600px at 50% -200px, #11131b 0%, var(--bg) 60%);
-    color: var(--fg); max-width: 1080px; margin: 40px auto; padding: 0 28px; line-height: 1.5;
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: var(--font-sans); font-size: 16px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
   }
-  h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
-  h2 { font-size: 18px; font-weight: 600; margin: 48px 0 4px; }
-  a { color: var(--link); }
-  .sub, .muted { color: var(--muted); }
-  .sub { margin: 0; }
-  .mono { font-family: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace; }
-  .row { display: flex; gap: 8px; margin: 20px 0 8px; }
-  input { flex: 1; min-width: 0; padding: 10px 12px; font-size: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
-  button { padding: 10px 16px; font-size: 14px; border: 1px solid var(--line); border-radius: 8px; background: none; color: var(--fg); cursor: pointer; }
-  button:hover { background: var(--hover); }
-  button:disabled { opacity: 0.6; cursor: default; }
-  .status { font-size: 13px; color: var(--muted); min-height: 20px; margin: 0; }
-  .status.error { color: var(--error); }
-  /* The result card is its own surface now, one shade up from the page
-     behind it (var(--panel), the same #0c0e13 the diagram and the player
-     card share) - it never had a background at all before this redesign,
-     only a border on the page's own color. */
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-top: 8px; }
-  /* A pill, not a filled chip: a thin border, JetBrains Mono uppercase text
-     in the verdict's own color, and a small glowing dot ahead of the text.
-     The badge no longer tints its background per verdict - the handoff's
-     own pill has none, only the border, the text color and the dot. */
-  .badge {
-    display: inline-flex; align-items: center; gap: 8px; min-height: 30px; height: auto; padding: 4px 12px;
-    border: 1px solid rgba(255,255,255,.1); border-radius: 999px;
-    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; font-weight: 500;
-    letter-spacing: .1em; text-transform: uppercase;
+  main { max-width: var(--container); margin: 0 auto; padding: 0 var(--gutter); }
+  h1, h2, h3 { margin: 0; color: var(--text); font-weight: 700; text-wrap: balance; }
+  h1 { font-size: 56px; line-height: 1; letter-spacing: -0.04em; }
+  h2 { font-size: 32px; line-height: 1.15; letter-spacing: -0.03em; }
+  h3 { font-size: 17px; line-height: 1.4; font-weight: 600; }
+  p, figure, dl, dd { margin: 0; }
+  p { text-wrap: pretty; }
+  ul { margin: 8px 0 0; padding-left: 20px; }
+  li { margin: 4px 0; }
+  strong { font-weight: 600; color: var(--text); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: var(--link-hover); }
+  /* A link inside running text is underlined too: accent against muted
+     text is a color difference only. */
+  :where(p, li, dd) > a:not([class]) { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  canvas { max-width: 100%; }
+  code {
+    font-family: var(--font-mono); font-size: 13px; padding: 1px 6px;
+    background: var(--surface-inset); border: 1px solid var(--border); border-radius: 6px;
   }
-  .badge::before {
-    content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%;
-    background: currentColor; box-shadow: 0 0 8px currentColor;
-  }
-  .book { color: var(--book-fg); }
-  .hedged { color: var(--hedged-fg); }
-  .bet { color: var(--bet-fg); }
-  .unknown { color: var(--unknown-fg); }
-  .headline { font-size: 20px; font-weight: 600; margin: 10px 0 4px; }
-  .summary { margin: 0 0 14px; }
-  /* Five equal tiles made the number that decided the verdict compete with
-     Net/Gross for attention, and on a wide screen the fifth became a narrow
-     column of wrapped text. The decisive one is given its own row. */
-  /* Two readings of one address. A verdict that moved because the account
-     did something, and one that moved because this tool reads it
-     differently, look identical on a card and are not the same event. */
-  .changed { border-left: 3px solid var(--fg); }
-  .changed li { font-size: 13px; }
-  .changed .dir { font-variant-numeric: tabular-nums; color: var(--muted); }
-
-  /* A post says BTC and the largest position at the address is ETH. Until
-     this existed the answer was always about the ETH, and the reader had no
-     way to say which position they came for. */
-  .picker { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 14px 0 0; font-size: 13px; }
-  .picker-label { color: var(--muted); }
-  .picker-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .picker .chip { padding: 4px 10px; font-size: 12px; }
-
-  /* A visitor with no address in hand - a judge, someone who followed a
-     link with nothing pasted yet - used to have nothing to click until the
-     gallery lower down the page. These are the same jump a gallery row
-     makes, just first. */
-  .examples { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 0; font-size: 13px; }
-  .examples-label { color: var(--muted); }
-  .examples-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .examples-chips .chip { padding: 4px 10px; font-size: 12px; }
-
-  .queue-pos { overflow-wrap: anywhere; }
-  .guess { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 13px; }
-  .guess-label { color: var(--muted); }
-  .guess-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  .guess-chips .chip { padding: 4px 10px; font-size: 12px; }
-  .guess-result { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
-
-  /* The one distinction the whole card turns on - what this address holds
-     against the position, versus what a wallet that merely funded it holds -
-     is a shape, not a row of percentages. Solid is counted; dashed is
-     somebody else's. */
-  .breakdown { margin: 16px 0 4px; padding: 0; }
-  .breakdown figcaption { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
-  /* #breakdown-svg wraps the canvas (web/app.js's renderBreakdown, Task 2)
-     and the centered stat overlay beside it, as siblings - positioned so
-     .constellation-stat below can center itself over the canvas, not over
-     the whole figure (which also carries the caption above it). The old
-     .breakdown svg/.seg-label/.seg-value/.bar-title rules are gone: dead
-     since the inline SVG diagram they targeted was replaced by that canvas,
-     confirmed by grep, nothing in web/app.js builds those classes any more. */
-  #breakdown-svg { position: relative; }
-  .constellation-stat {
-    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-    text-align: center; pointer-events: none;
-  }
-  .constellation-stat-value {
-    font-size: 44px; font-weight: 700; letter-spacing: -.03em; color: #f2f4f8;
-    text-shadow: 0 0 24px #08090c, 0 0 40px #08090c;
-  }
-  .constellation-stat-label {
-    font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .14em;
-    text-transform: uppercase; color: var(--muted); text-shadow: 0 0 12px #08090c;
-  }
-  .constellation-stat .quality-flag { color: #f2b35c; font: 600 11px "JetBrains Mono", monospace; letter-spacing: .08em; margin-top: 8px; text-transform: uppercase; text-shadow: 0 0 12px #08090c; }
-  .breakdown-quality { color: #f2b35c; font-size: 12px; line-height: 1.5; margin: 4px 0 0; }
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 14px 0; }
-  /* Leverage, distance to liquidation, unrealized PnL, funding since open:
-     none of these decide bet/hedge/book, so they sit apart from the
-     evidence that did, under their own caption rather than mixed into it. */
-  .vitals { margin: 20px 0 4px; padding: 0; }
-  .vitals figcaption { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
-  .stat.decisive { grid-column: 1 / -1; background: var(--panel); border-left: 3px solid var(--fg); }
-  .stat.decisive .stat-value { font-size: 22px; }
-  .stat { background: var(--panel); border-radius: 8px; padding: 10px 12px; }
-  .stat-label { font-size: 12px; color: var(--muted); }
-  .stat-value { font-size: 18px; font-weight: 600; overflow-wrap: anywhere; }
-  .stat-source { font-size: 11px; color: var(--faint); margin-top: 2px; }
-  /* #decisive holds only the tile(s) that turned the verdict (renderResult's
-     heroTiles, web/app.js) - shown as a responsive
-     legend directly under the diagram, dropping the boxed tile look every
-     other .stat still keeps in "Everything else this reading found" and in
-     the vitals strip. Usually one tile; a second (what stands elsewhere,
-     uncounted) sits beside it only when that is not already
-     the same evidence - see heroTiles in renderResult. */
-  #decisive .stat.decisive { grid-column: auto; background: none; border-left: 0; padding: 0; }
-  #decisive .stat-label { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
-  #decisive .stat-value { font-size: 17px; font-weight: 700; margin: 6px 0 4px; }
-  #decisive .stat-source { font-size: 13px; color: var(--muted); }
-  .box { background: var(--panel); border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-top: 10px; }
-  .box ul { margin: 6px 0 0; padding-left: 18px; }
-  .box p { margin: 0; }
-  /* Closed by default - a judge or a skeptical reader opens them, everyone
-     else is not made to read what they did not ask for (audit item 9, and
-     U06 on 23.09). Native <details>, so no JS runs the toggle. */
-  .fold { margin: 10px 0 0; font-size: 13px; }
-  .fold > summary { cursor: pointer; color: var(--link); }
-  .fold p { margin: 6px 0 0; }
-  .fold .tech { font-size: 12px; color: var(--muted); }
-  .fold code { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; background: var(--panel); padding: 1px 5px; border-radius: 4px; }
-  /* Which position the answer is about, before the answer. */
-  .subject { margin: 12px 0 0; font-size: 14px; }
-  .subject .muted { margin-right: 6px; }
-  .limit { font-size: 12px; color: var(--muted); margin: 12px 0 0; }
-  .open-question { font-size: 13px; margin: 8px 0 0; }
-  .nansen > summary { color: var(--fg); }
-  .nansen ul { margin: 6px 0 0; padding-left: 18px; }
-  .nansen li { margin: 3px 0; }
-  /* One way to share, not four buttons competing with the answer. Its own
-     top margin now lives on the wrapper div in the markup instead (inline,
-     alongside that wrapper's other one-off flex styles): .share sits inside
-     that flex row, not in normal document flow above it, so the offset from
-     #open-question belongs to the row as a whole, not to this one child. */
-  .share > summary { display: inline-block; list-style: none; cursor: pointer; padding: 10px 16px; font-size: 14px; font-weight: 600; border-radius: 8px; background: var(--fg); color: var(--bg); }
-  .share > summary::-webkit-details-marker { display: none; }
-  .share[open] > summary { opacity: 0.85; }
-  .share .actions { margin-top: 10px; }
-  .archive { margin-top: 20px; font-size: 13px; }
-  .archive > summary { cursor: pointer; color: var(--link); }
-  .archive .list { margin-top: 12px; }
-  .attribution { font-size: 12px; color: var(--muted); margin-top: 6px; }
-  .meta { font-size: 12px; color: var(--faint); margin-top: 12px; }
-  .snapshot { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-  .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
-  /* A verdict the current rules never produced is shown as what it is:
-     an earlier reading, not a present finding. */
-  .badge.historical { border-style: dashed; }
-  #card-canvas { display: block; width: 100%; height: auto; border-radius: 8px; margin-top: 12px; border: 1px solid var(--line); }
-  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0; }
-  .chip { padding: 6px 12px; font-size: 13px; border-radius: 999px; }
-  .chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  label { font-size: 15px; color: var(--text-muted); }
+  ::placeholder { color: var(--placeholder); opacity: 1; }
   /* Keyboard users need to see where they are. aria attributes alone say
      nothing about that. */
-  :focus-visible { outline: 3px solid var(--link); outline-offset: 3px; }
-  .list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
-  .list button { width: 100%; display: grid; grid-template-columns: 34px 1fr auto; gap: 4px 12px; align-items: center; text-align: left; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 10px 4px; }
-  /* The case cards sit inside a .list but are cards, not rows: their button is a pill, not the row grid above (it squeezed the label into 34px, one word per line). */
-  #case-study-list .box { position: relative; cursor: pointer; }
-  #case-study-list .box:hover { background: var(--hover); }
-  #case-study-list .box .chip::after { content: ""; position: absolute; inset: 0; border-radius: 8px; }
-  #case-study-list .box .chip { width: auto; display: inline-block; text-align: left; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; margin-top: 10px; }
-  /* boardRow (web/app.js) never draws a rank number - it has none to draw,
-     since a board is already ranked by its own stat, not by position in a
-     flat list. Reusing the 34px rank column above squeezed a real position
-     name ("$30.8M HYPE short") into 34px, wrapping three or four lines while
-     the badge took the stretchy auto column (25.09 audit, A13). Two columns:
-     the position name gets the room, the badge and the stat/address line
-     wrap under it on a narrow screen instead of overflowing. */
-  .board .list button { grid-template-columns: minmax(0, 1fr) auto; }
-  .board .list .row-meta { grid-column: 1 / -1; }
-  @media (max-width: 420px) {
-    .board .list button { grid-template-columns: 1fr; }
-    .board .list .badge { justify-self: start; }
-  }
-  .rank { color: var(--faint); font-size: 13px; }
-  .pos { font-weight: 600; }
-  .row-meta { grid-column: 2 / 4; font-size: 12px; color: var(--muted); }
-  .more { margin-top: 12px; }
-  .board { margin: 0 0 28px; }
-  .board h3 { font-size: 14px; font-weight: 600; margin: 0 0 4px; }
-  .board .board-note { font-size: 12px; color: var(--muted); margin: 0 0 8px; }
-  #all-readings { margin-top: 8px; font-size: 13px; }
-  #all-readings > summary { cursor: pointer; color: var(--link); }
-  footer { font-size: 12px; color: var(--muted); margin: 48px 0 24px; border-top: 1px solid var(--line); padding-top: 12px; }
-  footer p { margin: 4px 0; }
-  .site-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
-  .brand { color: var(--fg); text-decoration: none; font-weight: 700; font-size: 18px; }
-  .site-nav { display: flex; gap: 22px; font-size: 13px; }
-  .site-nav a { color: var(--muted); text-decoration: none; }
-  .site-nav a:hover { color: var(--fg); }
-  .hero { padding: 58px 0 20px; }
-  .eyebrow { color: var(--book-fg); font: 11px "JetBrains Mono", monospace; letter-spacing: .13em; text-transform: uppercase; margin: 0 0 18px; }
-  .hero h1 { font-size: clamp(36px, 5.5vw, 60px); line-height: 1.08; letter-spacing: -.045em; font-weight: 700; margin: 0 0 20px; }
-  .hero h1 span { color: var(--book-fg); }
-  .hero .sub { font-size: clamp(14px, 1.15vw, 16px); line-height: 1.7; }
-  .search-label { display: block; font-size: 13px; margin-top: 12px; }
-  .search-row { margin-top: 10px; }
-  .search-row input { padding: 17px; background: var(--panel); }
-  #check { background: var(--book-fg); color: var(--bg); font-weight: 700; padding: 14px 24px; }
-  .search-help { font-size: 12px; color: var(--muted); margin: 10px 0 0; }
-  .data-sources { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 11px; color: var(--muted); margin: 14px 0 0; }
-  .data-sources strong, .data-sources .partner { color: var(--fg); font-weight: 400; }
-  .partner { color: inherit; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 2px; }
-  .partner:hover { text-decoration-color: currentColor; }
-  .section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; margin-top: 36px; }
-  .section-heading h2 { margin: 0; font-size: 21px; }
-  .section-heading a { font-size: 13px; white-space: nowrap; }
-  #examples > .sub { font-size: 13px; margin: 8px 0 20px; }
-  #player-queue { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; border: 0; }
-  .deeper-example { grid-column: 1 / -1; }
-  .deeper-example .queue-row { margin-top: 12px; }
-  .example-question { font-size: 14px; line-height: 1.5; }
-  .takeaway { color: var(--muted); font-size: 14px; line-height: 1.6; }
-  .watch-label { width: 180px; font-size: 12px; padding: 7px; }
-  #address-choices { overflow-wrap: anywhere; }
-  #player-queue .queue-row { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 22px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); text-align: left; text-decoration: none; color: var(--fg); font: inherit; cursor: pointer; }
-  #player-queue .queue-row:hover { border-color: var(--book-fg); background: var(--surface-2); }
-  #player-queue .queue-pos { font-size: 20px; }
-  #player-queue .badge { max-width: 100%; height: auto; min-height: 30px; padding-top: 6px; padding-bottom: 6px; text-align: left; }
-  .example-note { color: var(--muted); font-size: 13px; line-height: 1.6; }
-  .example-date { color: var(--faint); font: 11px "JetBrains Mono", monospace; }
-  .example-open { color: var(--link); font-size: 12px; margin-top: auto; }
-  .how-it-works { margin-top: 48px; border-top: 1px solid var(--line); padding-top: 28px; }
-  .how-it-works h2 { margin: 0 0 22px; }
-  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px; }
-  .steps h3 { font-size: 14px; margin: 0 0 8px; }
-  .steps p { font-size: 13px; color: var(--muted); margin: 0; }
-  .reading-nav { display: flex; justify-content: space-between; margin: 20px 0 8px; }
-  .reading-nav button { font-size: 12px; padding: 8px 12px; }
-  body.has-reading .hero { padding: 24px 0 8px; }
-  body.has-reading .hero h1 { font-size: 24px; margin-bottom: 0; letter-spacing: -.02em; }
-  body.has-reading .hero .sub, body.has-reading .hero .eyebrow,
-  body.has-reading #examples, body.has-reading #how-it-works { display: none; }
-  body.has-reading #entry-controls, body.has-reading #recent, body.has-reading #watched { display: none; }
-  #reading-actions .share { flex: 1 1 160px; }
-  #reading-actions { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 16px; }
-  .save-share-controls { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
-  #reading-actions button { font-size: 12px; }
-  #save-confirmation { margin: 0; }
-  #save-confirmation p { margin: 0 0 10px; }
-  #saved-position-name { width: 100%; max-width: 320px; }
-  #claim-choice { display:block; width:100%; max-width:100%; min-width:0; margin-top:8px; padding:8px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; }
-  .monitor-notices { width:100%; overflow-wrap:anywhere; }
-  #reading-actions .share > summary { font-size: 12px; }
-  #card, #examples, #gallery, #how-it-works { scroll-margin-top: 24px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* The reading and the screen titles take focus from the script on every
+     screen change, so a screen reader lands on them; they are not controls,
+     and a ring around the whole reading only looks broken. */
+  #reading-title:focus-visible, #hero-title:focus-visible, #explore-title:focus-visible, #saved-title:focus-visible { outline: none; }
+  .muted, .sub { color: var(--text-muted); }
+  .mono { font-family: var(--font-mono); font-size: 0.94em; }
 
-  .evidence-preview { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 18px; }
-  .evidence-preview h3, .analysis-section h3 { font-size: 14px; margin: 0 0 12px; }
-  #decisive.stats { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 20px; border: 0; padding: 0; margin: 0; }
-  #decisive .stat { padding: 0; }
-  .source-lead { font-size: 13px; color: var(--muted); margin: 18px 0; }
-  .source-lead strong { color: var(--fg); }
-  .full-analysis { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 18px; }
-  .full-analysis > summary { font-size: 14px; }
-  .full-analysis > summary span { font-size: 12px; }
-  .analysis-section { margin: 24px 0; }
-  .explore-entry { border-top: 1px solid var(--line); margin-top: 40px; padding-top: 24px; }
-  .explore-entry h2 { margin: 0 0 8px; }
-  .explore-entry a { display: inline-block; margin-top: 16px; }
-  body.exploring #workspace, body.exploring #explore-entry { display: none; }
-  #explore-title, #saved-title { font-size: 36px; margin: 30px 0 12px; }
-  #saved-view #watched { display: block; margin-top: 16px; }
-  #saved-view .watch-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: var(--panel); border-radius: 8px; padding: 12px; margin-top: 10px; }
-  #saved-view .watch-row .search-help { margin: 0; }
-  #saved-view .saved-empty { background: var(--panel); border-radius: 8px; padding: 16px; font-size: 14px; color: var(--muted); }
-  #gallery > .chips { margin: 24px 0; }
-  #gallery-sub { font-size: 12px; margin-bottom: 24px; }
-  .explore-shortcut { display: inline-flex; align-items: center; justify-content: center; padding: 10px 8px; font-size: 14px; color: var(--link); text-decoration: underline; white-space: nowrap; }
-  .explore-shortcut:hover { background: var(--book-bg); }
-  .site-nav #nav-boards { color: var(--book-fg); font-weight: 700; }
-  .status, .search-help, .limit, .still-open, .tech { font-size: 14px; }
-  summary, nav a { min-height: 32px; padding-top: 5px; padding-bottom: 5px; }
-  .chip { min-height: 36px; }
-  .glossary { margin: 18px 0; font-size: 14px; color: var(--muted); }
-  .glossary dt { color: var(--fg); font-weight: 600; }
+  /* Every bare <button> on the page is a secondary button until its screen
+     is rebuilt; :where() keeps these defaults below any class rule. */
+  :where(button) {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 44px; padding: 10px 16px; margin: 0;
+    border: 1px solid var(--border-strong); border-radius: 12px;
+    background: transparent; color: var(--text);
+    font: 500 15px/1.3 var(--font-sans); text-align: center; cursor: pointer;
+    transition: background-color .15s, border-color .15s, color .15s;
+  }
+  :where(button:hover:not(:disabled)) { background: var(--hover-bg); }
+  :where(button:disabled) { opacity: .55; cursor: default; }
+  :where(input[type="text"], input[type="search"], input:not([type]), select) {
+    height: 44px; min-width: 0; padding: 0 14px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border-strong); border-radius: 12px;
+    font: 400 15px/1.2 var(--font-sans);
+  }
+  :where(input[type="search"]) { -webkit-appearance: none; appearance: none; }
+  summary { min-height: 44px; padding: 10px 0; cursor: pointer; }
+
+  /* ---- shared components (the redesign builds every screen from these) ---- */
+  .eyebrow { margin: 0; font: 500 13px/1.4 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+  .mono-label, .stat-label {
+    font: 500 12px/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint);
+  }
+  /* Read by a screen reader, not drawn: the address field's label. */
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+    overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+
+  /* Three button types only: primary, secondary, ghost. 44 px tall; the
+     hero's input and button are 56 px (.btn-lg). */
+  .btn, .btn-secondary, .btn-ghost, .share > summary {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 44px; min-height: 0; padding: 0 16px;
+    border: 1px solid transparent; border-radius: 12px;
+    font: 500 15px/1 var(--font-sans); white-space: nowrap; text-decoration: none; cursor: pointer;
+    transition: background-color .15s, border-color .15s, color .15s;
+  }
+  .btn, #check, #check-live { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+  .btn { padding: 0 18px; }
+  .btn:hover, #check:hover:not(:disabled), #check-live:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); color: var(--on-accent); }
+  .btn-lg { height: 56px; padding: 0 24px; font-size: 16px; }
+  .btn-secondary, .share > summary { background: transparent; border-color: var(--border-strong); color: var(--text); }
+  .btn-secondary:hover, .share > summary:hover { background: var(--hover-bg); color: var(--text); }
+  .btn-ghost, .reading-nav button { background: transparent; border-color: transparent; color: var(--text-muted); }
+  .btn-ghost { padding: 0 16px; }
+  .btn-ghost:hover, .reading-nav button:hover:not(:disabled) { background: transparent; color: var(--text); }
+  .btn-ghost.danger:hover { color: var(--danger); }
+
+  /* Segmented control: the header nav and Explore's row of view tabs. */
+  .pill-nav {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px; width: fit-content; max-width: 100%;
+    padding: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  }
+  .pill-tab {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 36px; min-height: 0; padding: 0 14px;
+    border: 0; border-radius: 8px; background: transparent; color: var(--text-muted);
+    font: 500 15px/1 var(--font-sans); white-space: nowrap; text-decoration: none; cursor: pointer;
+    transition: background-color .15s, color .15s;
+  }
+  /* No fade while the first screen is being set (web/app.js sets
+     body[data-ready] after it). */
+  body:not([data-ready]) .pill-tab { transition: none; }
+  .pill-tab:hover { background: transparent; color: var(--text); }
+  /* [aria-current] alone: "page" on the screen showing, "true" on the tab a
+     reading was opened from. [aria-pressed] on Explore's view tabs. */
+  .pill-tab[aria-current], .pill-tab[aria-pressed="true"], .pill-tab[aria-selected="true"] { background: var(--active-tab-bg); color: var(--on-accent); }
+  .pill-count { font: 500 12px/1.4 var(--font-mono); padding: 1px 6px; border-radius: 6px; background: var(--border-strong); color: var(--text); }
+
+  .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 40px 0; font-size: 15px; color: var(--text-faint); }
+  .breadcrumb a, .breadcrumb button {
+    height: auto; min-height: 0; padding: 0; border: 0; background: none;
+    color: var(--text-muted); font: inherit; cursor: pointer; text-decoration: none;
+  }
+  .breadcrumb a:hover, .breadcrumb button:hover { background: none; color: var(--text); }
+  .breadcrumb-sep { color: var(--breadcrumb-sep); }
+  .breadcrumb [aria-current="page"] { color: var(--text-faint); }
+
+  /* The one position-card pattern (Check, Explore and Saved). */
+  /* A card is a link or, once the gallery has loaded, a <button>: stretch
+     and normal undo the centring every bare button gets from the defaults
+     above, and the width makes a button outside a flex row as wide as a
+     link would be (a button block shrinks to its content). In a flex row
+     the item's flex-basis decides instead. */
+  .card-position, .queue-row {
+    display: flex; flex-direction: column; align-items: stretch; justify-content: normal; gap: 20px; width: 100%; min-width: 0;
+    padding: 28px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+    color: var(--text); font: 400 16px/1.5 var(--font-sans); text-align: left; text-decoration: none; cursor: pointer;
+    transition: border-color .15s;
+  }
+  .card-position:hover, .queue-row:hover { background: var(--surface); border-color: var(--border-hover); color: var(--text); }
+  /* The dot sits on the first line when a long label wraps
+     ("Unknown · assets sit with funders" on a 3-up card). */
+  .cp-verdict, .badge {
+    display: inline-flex; align-items: flex-start; gap: 8px; max-width: 100%;
+    font: 500 12px/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--verdict, var(--text-muted));
+  }
+  .cp-verdict::before, .badge::before { content: ""; flex: none; width: 8px; height: 8px; margin-top: calc(0.7em - 4px); border-radius: 50%; background: currentColor; }
+  /* The verdict classes only name a color; the label above is the one
+     thing that paints with it. */
+  .bet { --verdict: var(--verdict-bet); }
+  .hedged { --verdict: var(--verdict-hedged); }
+  .unknown { --verdict: var(--verdict-unknown); }
+  .book { --verdict: var(--verdict-book); }
+  /* A verdict the current rules never produced is shown as what it is:
+     an earlier reading, not a present finding. */
+  .badge.historical { padding: 3px 10px; border: 1px dashed currentColor; border-radius: 999px; }
+  .badge.historical::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
+  .cp-amount { font-size: 32px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; overflow-wrap: anywhere; }
+  .cp-asset { color: var(--text-muted); font-weight: 500; }
+  /* A saved card's summary comes back from this browser's storage, so it
+     is not trusted to have places to break. */
+  .cp-summary { margin: 12px 0 0; font-size: 16px; line-height: 1.5; color: var(--text-2); overflow-wrap: anywhere; }
+  .card-position > .cp-summary { margin-top: -8px; }
+  .cp-footer {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border); font-size: 15px;
+  }
+  .cp-meta { font: 400 13px/1.4 var(--font-mono); color: var(--text-faint); }
+  .cp-open { color: var(--accent); font-weight: 500; white-space: nowrap; }
+  .cp-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  /* Panels. Cells inside a .stat-grid sit 1 px apart so the panel's own
+     border color shows through as the divider; cells grow to fill each
+     row, so a row never ends in an empty gap. */
+  .panel, .box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; }
+  .panel { padding: 24px; }
+  .stat-grid, .stats {
+    display: flex; flex-wrap: wrap; gap: 1px; padding: 0;
+    background: var(--border); border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+  }
+  .stat-grid > *, .stat { flex: 1 1 260px; min-width: 0; padding: 24px; background: var(--surface-inset); }
+  .stat-grid > .stat-pair { flex-basis: 320px; display: flex; gap: 1px; padding: 0; background: transparent; }
+  .stat-pair > * { flex: 1 1 0; min-width: 0; padding: 24px; background: var(--surface-inset); }
+  .stat-value { margin: 12px 0 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+  /* The handoff's stat values are nowrap; real evidence values run to
+     "$395.8M ETH in 2 wallets, owner unconfirmed", so they wrap instead. */
+  .stat-grid .stat-value { font-size: 28px; letter-spacing: -0.03em; }
+  .stat-source { margin: 8px 0 0; font-size: 14px; line-height: 1.4; color: var(--text-faint); }
+  .cta-panel {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 24px;
+    margin-top: 64px; padding: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+  }
+  .cta-title { font-size: 20px; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; }
+  .cta-text { margin: 6px 0 0; font-size: 15px; color: var(--text-muted); }
+  .cta-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  /* ---- header and footer: full-width bands, content on the container ---- */
+  /* 72 px tall: the name, then the three tabs. They stay on one row down to
+     a 360 px phone (the phone rules below narrow the gutter and the tabs);
+     only on a narrower screen does the tab pill move under the name, whole,
+     rather than overflow. */
+  .site-header {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px;
+    min-height: var(--header-h); padding: 12px var(--band-inline);
+    background: var(--header-bg); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .site-header .pill-nav { flex-wrap: nowrap; }
+  /* The header stays on top of the page as it scrolls, so whatever the
+     browser scrolls into view (a control reached with Tab or Shift+Tab, a
+     section scrolled to) stops this far below the top edge, clear of it
+     (WCAG 2.2 SC 2.4.11); the phone rules below raise it where the header
+     can wrap. */
+  html { scroll-padding-top: calc(var(--header-h) + 16px); }
+  .brand { flex: none; color: var(--text); font-size: 19px; font-weight: 700; letter-spacing: -0.02em; text-decoration: none; white-space: nowrap; }
+  .brand:hover { color: var(--text); }
+  .brand-dot { color: var(--accent); }
+  /* A top rule, then one padded row that wraps: the screens, the data
+     sources, and the inspection-only note with the source link. */
+  .site-footer {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 16px 32px;
+    margin-top: 96px; padding: 32px var(--band-inline); border-top: 1px solid var(--rule);
+    font-size: 14px; line-height: 1.6; color: var(--text-faint);
+  }
+  .footer-nav { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+  .footer-nav a { color: var(--text-muted); }
+  .footer-nav a:hover { color: var(--text); }
+  .footer-sources { flex: 1 1 320px; max-width: 520px; }
+  .footer-legal { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+  .footer-source:hover { color: var(--link-hover); }
+  .partner { color: inherit; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
+  .partner:hover { color: var(--text); text-decoration-color: currentColor; }
+
+  /* ---- the breadcrumb and what it replaced ---- */
+  /* The breadcrumb leads back from Explore, Saved and a reading; the old
+     per-screen "Check a wallet" and reading buttons keep their ids and
+     handlers until their screens are rebuilt, but are no longer drawn.
+     "Back to your reading" stays, on its own line under the breadcrumb. */
+  #reading-nav, #explore-home, #saved-home { display: none; }
+  #gallery > .reading-nav, #saved-view > .reading-nav { display: contents; }
+  /* Above the eyebrow of Explore and Saved, with room under it. */
+  #explore-return, #saved-return { margin: -8px 0 16px; }
+  /* An empty status line keeps its height on Check, where a message is
+     expected under the field; on a reading it would only push the card
+     away from the breadcrumb. */
+  body[data-screen="reading"] #status:empty { min-height: 0; margin: 0; }
+
+  /* ---- Check: hero and the address field ---- */
+  /* The hero is 820 px at most; the H1 is 76 px from a 640 px screen up and
+     scales down below that. "Don't Get Rekt" is about 6.5 times the font
+     size wide, so at 12vw each of its two lines keeps to one line down to a
+     320 px phone (45 px at 375). */
+  #entry-controls { max-width: 820px; }
+  .hero { padding: 96px 0 0; }
+  .hero h1 { margin: 20px 0 0; font-size: clamp(40px, 12vw, 76px); line-height: 0.98; letter-spacing: -0.045em; }
+  .hero h1 span { color: var(--accent); }
+  .hero .sub { margin: 24px 0 0; max-width: 620px; font-size: 19px; line-height: 1.5; }
+  /* The field and its button, 56 px tall, wrap onto two lines when narrow. */
+  .search-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 40px 0 0; }
+  .search-row input { flex: 1 1 380px; height: 56px; padding: 0 20px; font-family: var(--font-mono); font-size: 15px; }
+  #check { min-height: 56px; padding: 0 24px; font-size: 16px; }
+  .search-help { margin: 12px 0 0; font-size: 15px; line-height: 1.5; color: var(--text-faint); }
+  #address-help { margin-top: 16px; }
+  /* What the handoff has no place for stays, quieter than the field: the
+     alert help and a saved example on one line (the help, opened, takes the
+     whole line), then the data sources. */
+  .entry-more { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0 24px; margin: 8px 0 0; }
+  .entry-more .fold { margin: 0; }
+  .entry-more .btn-ghost { padding: 0; }
+  .data-sources { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 12px 0 0; font-size: 14px; color: var(--text-faint); }
+  .data-sources strong, .data-sources .partner { color: var(--text-muted); font-weight: 400; }
+  .fold { margin: 12px 0 0; font-size: 15px; }
+  .fold > summary, .archive > summary, .glossary > summary { width: fit-content; color: var(--accent); font-weight: 500; }
+  .fold > summary:hover, .archive > summary:hover, .glossary > summary:hover { color: var(--link-hover); }
+  .fold p { margin: 8px 0 0; }
+  .fold .tech, .tech { font-size: 14px; color: var(--text-faint); }
+  #address-choices { margin: 16px 0 0; padding: 16px 20px; overflow-wrap: anywhere; }
+  #address-choice-buttons .chip { font-family: var(--font-mono); }
+  /* The chip: a compact 36 px choice, the one size beside the README's three
+     button types (44 px), kept for picking one of several options only -
+     the guess, the wallet to check, the position, a recent check, a list
+     filter - the way a tab is picked in a tab pill. A lone action is a
+     button. */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+  .chip { min-height: 36px; padding: 6px 14px; border-radius: 8px; font-size: 14px; text-align: left; }
+  .chip:hover:not(:disabled) { background: var(--hover-bg); }
+  .chip[aria-pressed="true"], .chip[aria-pressed="true"]:hover { background: var(--active-tab-bg); border-color: var(--active-tab-bg); color: var(--on-accent); }
+  .chip[aria-pressed="true"]:disabled { opacity: 1; }
+  /* "Checking wallet 0x...": a full 42-character address is wider than a
+     360 px phone at 15 px, so it breaks anywhere rather than widen the page. */
+  .status { min-height: 1.5em; margin: 16px 0 0; font-size: 15px; color: var(--text-muted); overflow-wrap: anywhere; }
+  .status.error { color: var(--danger); }
+  #check-progress { display: block; width: 100%; height: 4px; margin: 8px 0 0; accent-color: var(--accent); }
+  /* The slow-check line's way out, a secondary button, under the line or
+     beside its end. */
+  #slow-check { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+  .guess, .picker, .examples { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 15px; }
+  .guess { margin: 16px 0 0; }
+  .guess-label, .picker-label, .examples-label { color: var(--text-muted); }
+  .guess-chips, .picker-chips, .examples-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .guess-result { margin: 12px 0 0; font-size: 15px; color: var(--text-muted); }
+  .examples { margin: 24px 0 0; }
+
+  /* ---- Check: examples and how it works ---- */
+  /* The empty status line above keeps 40 px, so this makes the handoff's
+     96 px between the hero and the examples. */
+  #examples { margin-top: 56px; }
+  .section-heading { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; margin: 0 0 32px; }
+  .section-heading h2 { font-size: 32px; }
+  .section-heading .sub { margin: 8px 0 0; font-size: 17px; }
+  .section-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  /* Lines up with the heading when the actions wrap under it. */
+  .section-actions .btn-ghost { padding: 0 12px 0 0; }
+  /* Three position cards in a row on a desktop; on a narrower screen they
+     wrap and grow to fill the row, so no row ends in an empty gap. The same
+     holds for the cards in the "More evidence cases" fold. */
+  #player-queue { display: flex; flex-wrap: wrap; gap: 16px; }
+  #player-queue > .card-position { flex: 1 1 260px; }
+  .deeper-example { flex: 1 1 100%; margin: 0; }
+  .deeper-example > .card-position { margin-top: 16px; }
+  /* The question an example answers sits between the amount and the
+     summary that answers it, so the verdict labels and the amounts still
+     line up across a row of cards. */
+  .example-question { font-size: 15px; font-weight: 500; line-height: 1.45; color: var(--text-muted); }
+  .card-position > .example-question { margin-top: -8px; }
+  .card-position > .example-question + .cp-summary { margin-top: -14px; }
+  .how-it-works { margin-top: 96px; padding: 80px 0 0; border-top: 1px solid var(--rule); }
+  .how-it-works h2 { margin: 0 0 40px; }
+  .steps { display: flex; flex-wrap: wrap; gap: 16px; }
+  .step { flex: 1 1 260px; display: flex; flex-direction: column; gap: 12px; padding: 28px; border: 1px solid var(--border); border-radius: 20px; }
+  .step-number { font: 400 13px/1.4 var(--font-mono); color: var(--accent); }
+  .step h3 { font-size: 20px; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; }
+  .step p { font-size: 16px; line-height: 1.5; color: var(--text-muted); }
+  /* Under the Check screen (and a reading): one quiet line into Explore,
+     not a second panel beside the hero's call to action. */
+  .explore-entry { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; margin-top: 64px; font-size: 15px; line-height: 1.5; color: var(--text-muted); }
+  .explore-entry strong { color: var(--text); font-weight: 500; }
+  #explore-link { font-weight: 500; white-space: nowrap; }
+
+  /* ---- Reading ---- */
+  .reading-nav { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; margin: 40px 0 24px; }
+  .reading-nav button { padding: 0; }
+  /* The six sections are numbered by this counter. A section with nothing
+     to show is [hidden], so display: none: it takes no part in counting,
+     and the rows that remain read 01, 02, 03... with no gap. */
+  .card { margin: 0; padding: 0; background: none; border: 0; }
+  #card { counter-reset: reading-section; }
+
+  /* The header: the date as the eyebrow, the position as the H1 with the
+     address and age under it, Save, Share and Check live on the right. The
+     actions wrap under the title when the row is too narrow for both. */
+  .reading-header { margin: 0 0 56px; }
+  .reading-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px; margin: 16px 0 0; }
+  .reading-head-text { flex: 0 1 auto; min-width: 0; }
+  .reading-title { font-size: clamp(40px, 9vw, 56px); overflow-wrap: anywhere; }
+  .reading-asset { color: var(--text-muted); font-weight: 600; }
+  .reading-meta { margin: 16px 0 0; font-size: 17px; color: var(--text-muted); overflow-wrap: anywhere; }
+  .reading-actions { position: relative; display: flex; flex-wrap: wrap; gap: 8px; }
+  .share > summary { list-style: none; }
+  .share > summary::-webkit-details-marker { display: none; }
+  .share > summary::after { content: ""; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid currentColor; }
+  .share[open] > summary { background: var(--hover-bg); }
+  /* The menu hangs from the right edge of the actions, not of the Share
+     button, so it stays on screen when the actions wrap to the left on a
+     phone. */
+  .share-menu {
+    position: absolute; top: calc(100% + 8px); right: 0; z-index: 5;
+    width: 240px; max-width: calc(100vw - 2 * var(--gutter)); padding: 6px;
+    background: var(--menu-bg); border: 1px solid var(--menu-border); border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, .5);
+  }
+  .share-menu button {
+    display: flex; justify-content: flex-start; width: 100%; min-height: 40px; padding: 8px 12px;
+    border: 0; border-radius: 8px; background: transparent; color: var(--text);
+    font: 400 15px/1.35 var(--font-sans); text-align: left;
+  }
+  .share-menu button:hover { background: var(--menu-hover); }
+  .share-note { margin: 6px 12px; padding: 10px 0 2px; border-top: 1px solid var(--menu-border); font-size: 14px; line-height: 1.45; color: var(--text-faint); }
+  .share-status { margin: 0; font-size: 15px; color: var(--text-muted); }
+  .share-status:not(:empty) { margin-top: 16px; }
+  #save-confirmation { max-width: 640px; margin: 24px 0 0; padding: 20px 24px; }
+  #save-confirmation p { margin: 0 0 12px; }
+  #save-confirmation label { display: block; margin: 0; }
+  #saved-position-name { display: block; width: 100%; max-width: 320px; margin: 8px 0 0; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+  .subject { margin: 24px 0 0; font-size: 15px; color: var(--text-muted); overflow-wrap: anywhere; }
+  .subject .muted { margin-right: 6px; }
+  .picker { margin: 24px 0 0; }
+  .picker .fold { flex-basis: 100%; margin: 0; }
+  .picker input[type="search"] { display: block; width: 100%; max-width: 320px; margin: 8px 0; }
+
+  /* One numbered row: a top rule, the number and title in a 200 px column,
+     the content beside it; the content goes under the title on a narrow
+     screen. The number is generated, with empty alternative text, so the
+     title alone names the section. */
+  .reading-section { counter-increment: reading-section; display: flex; flex-wrap: wrap; gap: 16px 48px; padding: 40px 0; border-top: 1px solid var(--rule); }
+  .section-head { flex: 0 0 200px; display: flex; align-items: baseline; gap: 12px; }
+  .section-head::before {
+    content: counter(reading-section, decimal-leading-zero);
+    content: counter(reading-section, decimal-leading-zero) / "";
+    font: 400 13px/1.4 var(--font-mono); color: var(--accent);
+  }
+  /* The title is an H2, so a screen reader's heading list has the six
+     sections, drawn at the handoff's 17 px "Section label" size; in Full
+     analysis it is the summary's own H2 and takes the summary's hover color. */
+  .section-title { margin: 0; font-size: 17px; font-weight: 600; line-height: 1.4; letter-spacing: normal; color: inherit; }
+  .section-body { flex: 1 1 560px; min-width: 0; }
+
+  /* 01 Verdict */
+  .headline { margin: 16px 0 0; font-size: clamp(30px, 5vw, 40px); font-weight: 700; line-height: 1.1; letter-spacing: -0.035em; text-wrap: balance; }
+  .takeaway { margin: 16px 0 0; max-width: 600px; font-size: 17px; line-height: 1.55; color: var(--text-muted); }
+  .summary { margin: 12px 0 0; max-width: 600px; font-size: 16px; line-height: 1.55; color: var(--text-muted); }
+  .reading-note { margin: 12px 0 0; max-width: 680px; font-size: 15px; line-height: 1.5; color: var(--text-muted); }
+  .box { margin: 16px 0 0; padding: 16px 20px; font-size: 15px; line-height: 1.5; color: var(--text-2); }
+  .box p { margin: 0; }
+  .box ul { margin: 8px 0 0; }
+  #source-warning { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+
+  /* 02 Evidence: the tile(s) that turned the verdict (heroTilesFor in
+     web/app.js), in a panel whose rows are always full - 4 across or 2 by 2,
+     never 3 and 1. renderResult sets --stat-cols-N to statColumns(tiles, N),
+     the column count when N fit; the widths below say how many fit. A long
+     value wraps, a little smaller, rather than being cut. */
+  .evidence-body { container-type: inline-size; }
+  #decisive { display: grid; grid-template-columns: minmax(0, 1fr); }
+  @container (min-width: 400px) { #decisive { grid-template-columns: repeat(var(--stat-cols-2, 1), minmax(0, 1fr)); } }
+  @container (min-width: 600px) { #decisive { grid-template-columns: repeat(var(--stat-cols-3, 1), minmax(0, 1fr)); } }
+  @container (min-width: 800px) { #decisive { grid-template-columns: repeat(var(--stat-cols-4, 1), minmax(0, 1fr)); } }
+  #decisive .stat, .stat.decisive { padding: 24px; }
+  #decisive .stat-value { font-size: 28px; letter-spacing: -0.03em; }
+  #decisive .stat-value-long { font-size: 22px; letter-spacing: -0.02em; }
+  .source-lead { margin: 16px 0 0; font-size: 15px; color: var(--text-muted); }
+
+  /* 03 Since last read. Two readings of one address: a verdict that moved
+     because the account did something, and one that moved because this tool
+     reads it differently, look identical on a card and are not the same
+     event. */
+  .changed-panel { padding: 24px; background: var(--surface-inset); border: 1px solid var(--border); border-radius: 16px; font-size: 16px; line-height: 1.55; color: var(--text-2); }
+  .changed-panel p { margin: 0; }
+  #changed-list:empty { display: none; }
+  .changed li { font-size: 15px; }
+  .changed .dir { font-family: var(--font-mono); color: var(--text-faint); font-variant-numeric: tabular-nums; }
+  .changed-previous { display: inline-block; margin: 16px 0 0; font-size: 15px; font-weight: 500; }
+
+  /* 04 Blind spots: what is not visible, and what would change the answer,
+     side by side; a cell with nothing in it is hidden and the other takes
+     the row. Each note's own lead-in ("Still open:") reads as its label. */
+  .blind-cell { display: flex; flex-direction: column; gap: 16px; }
+  .open-question { margin: 0; max-width: 680px; font-size: 16px; line-height: 1.55; color: var(--text-2); }
+  .open-question > strong, .not-read strong {
+    display: block; margin: 0 0 12px; font: 500 12px/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint);
+  }
+  .limit { margin: 24px 0 0; font-size: 14px; color: var(--text-faint); }
+  .blind-cell .limit { margin: 0; }
+  .not-read { font-size: 15px; line-height: 1.5; color: var(--text-2); }
+  .not-read p, .not-read ul { margin: 0; }
+  .risk-preview { margin: 0; font-size: 15px; color: var(--text-muted); }
+
+  /* 05 Spot coverage: the coverage illustration in a panel, its caption and
+     figures on top. */
+  .breakdown { margin: 0; padding: 0 0 24px; background: var(--surface-inset); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .breakdown figcaption { padding: 24px 24px 0; font-size: 17px; font-weight: 600; color: var(--text); }
+  .breakdown-values { margin: 0; padding: 6px 24px 20px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-faint); }
+  .breakdown .search-help { margin: 0 24px; font-size: 14px; }
+  #breakdown-svg { position: relative; margin: 0; padding: 16px 24px; }
+  .constellation-stat { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
+  .constellation-stat-value {
+    font-size: 44px; font-weight: 700; letter-spacing: -0.03em; color: var(--text);
+    text-shadow: 0 0 24px var(--surface-inset), 0 0 40px var(--surface-inset);
+  }
+  .constellation-stat-label {
+    font: 500 12px/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-muted); text-shadow: 0 0 12px var(--surface-inset);
+  }
+  .constellation-stat .quality-flag {
+    margin-top: 8px; font: 500 12px/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text); text-shadow: 0 0 12px var(--surface-inset);
+  }
+  .breakdown-quality { margin: 12px 24px 0; padding-left: 12px; border-left: 2px solid var(--border-strong); font-size: 14px; line-height: 1.5; color: var(--text-2); }
+  #card-canvas { display: block; width: 100%; height: auto; margin-top: 16px; border: 1px solid var(--border); border-radius: 16px; }
+
+  /* 06 Full analysis: one collapsible row between two rules, its contents
+     under the content column. Closed by default: a skeptical reader opens
+     it, nobody else is made to read what they did not ask for. */
+  .reading-fold { display: block; padding: 0; border-bottom: 1px solid var(--rule); }
+  .full-analysis { font-size: 15px; }
+  .full-analysis > summary {
+    position: relative; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 48px;
+    min-height: 0; padding: 32px 48px 32px 0; list-style: none; color: var(--text);
+  }
+  .full-analysis > summary::-webkit-details-marker { display: none; }
+  .full-analysis > summary::after { content: "+"; position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 20px; font-weight: 400; color: var(--text-muted); }
+  .full-analysis[open] > summary::after { content: "\2212"; }
+  .full-analysis > summary:hover { color: var(--link-hover); }
+  .fold-description { font-size: 15px; color: var(--text-faint); }
+  .analysis-body { padding: 0 0 40px; }
+  .meta { margin: 0 0 16px; font-size: 14px; color: var(--text-faint); }
+  .analysis-section { margin: 32px 0; }
+  .analysis-section h3 { margin: 0 0 16px; font-size: 17px; font-weight: 600; }
+  .stats { margin: 16px 0 0; }
+  .vitals { margin: 24px 0 0; }
+  .vitals figcaption { font-size: 15px; color: var(--text-muted); }
+  .vitals .stats { margin: 12px 0 0; }
+  .stat { flex-basis: 200px; padding: 20px 24px; }
+  .nansen ul { margin: 8px 0 0; }
+  .nansen li { margin: 4px 0; }
+  .attribution { margin: 8px 0 0; font-size: 14px; color: var(--text-faint); }
+  #claim-checker { margin: 24px 0 0; }
+  #claim-checker label { display: block; margin: 8px 0 0; }
+  #claim-choice { display: block; width: 100%; max-width: 480px; margin: 8px 0 0; }
+  #claim-result { margin: 12px 0 0; color: var(--text-2); }
+  .glossary { margin: 24px 0; font-size: 15px; color: var(--text-muted); }
+  .glossary dl { margin: 8px 0 0; }
+  .glossary dt { color: var(--text); font-weight: 600; }
   .glossary dd { margin: 0 0 12px; }
-  #check-progress { width: 100%; height: 5px; accent-color: var(--link); }
+  /* The rows sit side by side from here up (200 + 48 + 560 px of content),
+     so the opened analysis lines up with the content column. */
+  @media (min-width: 880px) {
+    .analysis-body { margin-left: 248px; }
+  }
+
+  /* ---- Explore and Saved: the top of the screen ---- */
+  /* The breadcrumb above, then the eyebrow, the 56 px title and the lead. */
+  #explore-title, #saved-title { margin: 16px 0 0; font-size: clamp(40px, 7vw, 56px); line-height: 1; letter-spacing: -0.04em; }
+  #saved-view > .sub, #gallery > .sub { margin: 16px 0 0; max-width: 640px; font-size: 19px; line-height: 1.5; }
+  #explore-status, #explore-reading-status, #saved-status { margin: 24px 0 0; }
+
+  /* ---- Saved ---- */
+  /* One position card per saved position (renderWatched in web/app.js), up
+     to 520 px wide. The card is a container, not a button: the part that
+     opens the reading and the controls under it are siblings, so no control
+     sits inside another. */
+  #watched { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 40px; }
+  .saved-card { flex: 0 1 520px; cursor: auto; }
+  /* Only the part that opens the reading lights the border: the controls
+     under it do not open anything. */
+  .saved-card:hover { border-color: var(--border); }
+  .saved-card:has(.saved-open:hover) { border-color: var(--border-hover); }
+  /* It grows, and its footer keeps to its bottom (margin-top: auto), so the
+     footers and the controls of two cards in a row line up. */
+  .saved-open {
+    flex: 1 1 auto; display: flex; flex-direction: column; align-items: stretch; justify-content: normal; gap: 20px; width: 100%;
+    min-height: 0; padding: 0; border: 0; border-radius: 0; background: transparent;
+    color: var(--text); font: 400 16px/1.5 var(--font-sans); text-align: left; cursor: pointer;
+  }
+  .saved-open:hover:not(:disabled) { background: transparent; }
+  .saved-open:hover .cp-open { color: var(--link-hover); }
+  /* A name the reader typed can run to 80 characters. */
+  .saved-open .cp-amount { font-size: clamp(24px, 6vw, 32px); overflow-wrap: anywhere; }
+  /* With the reading kept on the row: the reader's name and the headline
+     sit close under the amount, as the question and the summary do on the
+     example cards. */
+  .saved-name { font-size: 15px; font-weight: 500; line-height: 1.45; color: var(--text-muted); overflow-wrap: anywhere; }
+  .saved-open > .saved-name, .saved-open > .cp-summary { margin-top: -8px; }
+  .saved-open > .saved-name + .cp-summary { margin-top: -14px; }
+  /* The name field takes the whole first row; Monitor, Refresh and Remove
+     share the next. */
+  .watch-label { flex: 1 1 100%; width: 100%; }
+  .monitor-toggle { gap: 10px; padding: 0 16px; }
+  /* The Monitor switch: the knob slides right and the track turns accent
+     when monitoring is on (aria-checked, set by web/monitor.js). */
+  .switch { position: relative; flex: none; display: inline-block; width: 30px; height: 18px; border-radius: 9px; background: var(--switch-track); transition: background-color .15s; }
+  .switch-knob { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--text); transition: left .15s; }
+  .monitor-toggle[aria-checked="true"] .switch { background: var(--accent); }
+  .monitor-toggle[aria-checked="true"] .switch-knob { left: 14px; }
+  .monitor-notices { overflow-wrap: anywhere; }
+  .monitor-notices p { margin: 0; font-size: 15px; }
+  .monitor-notices p + p { margin-top: 4px; }
+  .saved-pilot { margin: 24px 0 0; max-width: 640px; font-size: 15px; line-height: 1.5; color: var(--text-faint); }
+  /* Nothing saved: the closing panel is the whole screen, under the lead. */
+  #watched[hidden] + .saved-pilot[hidden] + .cta-panel { margin-top: 40px; }
+
+  /* ---- Explore ---- */
+  .explore-tabs { margin: 40px 0 32px; }
+  .explore-tabs .pill-tab { padding: 0 16px; }
+  #case-studies > .sub, #boards-fold > .sub { margin: 0 0 24px; font-size: 16px; }
+  #gallery-sub { font-size: 15px; }
+  /* Case studies: the Check screen's own position cards (exampleCard in
+     web/explore.js), two to a row, one on a narrow screen. */
+  #case-study-list { display: flex; flex-wrap: wrap; gap: 16px; }
+  #case-study-list > .card-position { flex: 1 1 400px; }
+  /* Compare: each board is a card of its own, two to a row; the last one
+     takes a row of its own rather than leave a gap beside it. */
+  #boards { display: flex; flex-wrap: wrap; gap: 16px; }
+  .board { flex: 1 1 400px; min-width: 0; padding: 28px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; }
+  /* Board and list titles are H2s under the screen's H1, at 20 px. */
+  .board h2 { font-size: 20px; font-weight: 600; line-height: 1.4; letter-spacing: -0.01em; }
+  .board .board-note { margin: 6px 0 16px; font-size: 14px; color: var(--text-faint); }
+  /* A row is the button in a list item (galleryRow and boardRow in
+     web/explore.js): the position, its verdict label, and a faint line of
+     meta under them. All readings and the archive hold their rows in one
+     panel; in a board the board is the panel. */
+  .list { list-style: none; margin: 0; padding: 0; }
+  .list > li { margin: 0; }
+  .list > li > button {
+    width: 100%; display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 4px 16px; align-items: center;
+    min-height: 0; padding: 16px 24px; text-align: left;
+    border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: transparent;
+    color: var(--text); font: 400 16px/1.4 var(--font-sans);
+  }
+  .list > li:last-child > button { border-bottom: 0; }
+  .list > li > button:hover { background: var(--hover-bg-strong); }
+  #gallery-list, #archive-list { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+  #gallery-list:empty, #archive-list:empty { display: none; }
+  /* The panel clips, so a row's focus ring is drawn inside the row. */
+  #gallery-list > li > button:focus-visible, #archive-list > li > button:focus-visible { outline-offset: -2px; }
+  .list .badge { justify-self: end; }
+  .rank { font: 400 13px/1.4 var(--font-mono); color: var(--text-faint); }
+  .pos { font-weight: 600; }
+  .row-meta { grid-column: 2 / 4; font: 400 13px/1.5 var(--font-mono); color: var(--text-faint); }
+  /* A board is ranked by its own stat, so its rows draw no rank number: the
+     position name gets the room, and the stat line wraps under it. The rows
+     line up with the board's own padding; the hover lights the name. */
+  .board .list { border-top: 1px solid var(--border); }
+  .board .list > li > button { grid-template-columns: minmax(0, 1fr) auto; padding: 14px 0; }
+  .board .list > li > button:hover { background: transparent; }
+  .board .list > li > button:hover .pos { color: var(--link-hover); }
+  .board .list .row-meta { grid-column: 1 / -1; }
+  .more { margin-top: 16px; }
+  #all-readings { font-size: 15px; }
+  #gallery-title { margin: 0 0 8px; font-size: 20px; font-weight: 600; line-height: 1.4; letter-spacing: -0.01em; }
+  .archive { font-size: 15px; }
+  .archive .sub { margin: 12px 0 0; }
+  .archive .list { margin-top: 16px; }
+
+  /* ---- which screen is showing ---- */
+  /* A reading replaces the whole Check screen but its status line, the
+     "Want to compare more wallets?" line under it included: the reading
+     closes with its own "What next?" panel. Explore and Saved replace the
+     whole workspace. */
+  body.has-reading #entry-controls, body.has-reading #examples, body.has-reading #how-it-works,
+  body.has-reading #recent, body.has-reading #explore-entry { display: none; }
+  body.exploring #workspace, body.exploring #explore-entry { display: none; }
+
   @media (max-width: 600px) {
-    body { margin-top: 22px; padding: 0 18px; }
-    .site-header { gap: 12px; }
-    .site-nav { gap: 14px; font-size: 12px; }
-    .hero { padding-top: 36px; }
-    .hero .sub { font-size: 16px; }
-    .search-row { flex-direction: column; }
-    #player-queue, .steps { grid-template-columns: 1fr; }
-    .section-heading { align-items: flex-start; }
-    .section-heading h2 { font-size: 19px; }
-    .board .list button { grid-template-columns: minmax(0,1fr); }
-    #decisive.stats, #decisive.stats:has(> :nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    #all-readings .list button { grid-template-columns: 28px minmax(0, 1fr); gap: 8px; }
-    #all-readings .list .badge { grid-column: 2; justify-self: start; height: auto; min-height: 30px; padding-top: 6px; padding-bottom: 6px; }
-    #all-readings .list .row-meta { grid-column: 2; }
+    #decisive .stat-value { font-size: 24px; }
+    #decisive .stat-value-long { font-size: 20px; }
+    .reading-header { margin-bottom: 40px; }
+    .reading-meta { font-size: 15px; }
+    .reading-section { padding: 32px 0; }
+    .full-analysis > summary { padding: 28px 40px 28px 0; }
+    #decisive .stat, .changed-panel, .stat-grid > .blind-cell { padding: 20px; }
+    .breakdown figcaption { padding: 20px 20px 0; }
+    .breakdown-values { padding: 6px 20px 16px; }
+    .breakdown .search-help { margin: 0 20px; }
+    #breakdown-svg { padding: 16px 20px; }
+    .breakdown-quality { margin: 12px 20px 0; }
+    .explore-tabs { width: 100%; }
+    .explore-tabs .pill-tab { flex: 1 1 auto; padding: 0 8px; font-size: 14px; }
+    .hero { padding-top: 56px; }
+    .hero .sub, #saved-view > .sub, #gallery > .sub { font-size: 17px; }
+    #check { flex: 1 1 100%; }
+    .section-heading h2, .how-it-works h2 { font-size: 26px; }
+    #examples { margin-top: 32px; }
+    .how-it-works { margin-top: 64px; padding-top: 56px; }
+    .explore-entry { margin-top: 48px; }
+    .cta-panel { padding: 24px; }
+    .card-position, .queue-row, .board, .step { padding: 24px; }
+    .list > li > button { grid-template-columns: 32px minmax(0, 1fr); gap: 6px 12px; padding: 16px 20px; }
+    .list .badge { grid-column: 2; justify-self: start; }
+    .list .row-meta { grid-column: 2; }
+    .board .list > li > button { grid-template-columns: minmax(0, 1fr); }
+    .board .list .badge, .board .list .row-meta { grid-column: 1; }
+  }
+  /* A phone: the name and the three tabs on one 72 px row. The side gutter
+     narrows for the whole page, not only the header, so the name stays
+     lined up with the content under it. */
+  @media (max-width: 520px) {
+    :root { --gutter: 16px; }
+    .site-header { gap: 8px 12px; }
+    .brand { font-size: 17px; }
+    .site-header .pill-nav { gap: 2px; padding: 3px; }
+    .site-header .pill-tab { padding: 0 8px; font-size: 14px; gap: 6px; }
+    /* Explore's four views stay on one row down to a 360 px phone. */
+    .explore-tabs { gap: 2px; padding: 3px; }
+    .explore-tabs .pill-tab { padding: 0 6px; }
+  }
+  /* Down to 360 px, a two-digit Saved count included. */
+  @media (max-width: 400px) {
+    .site-header { gap: 8px; }
+    .site-header .pill-tab { padding: 0 6px; gap: 4px; }
+    .site-header .pill-count { padding: 1px 4px; }
+    .explore-tabs .pill-tab { padding: 0 4px; }
+  }
+  /* Under 360 px the header can wrap to two rows. */
+  @media (max-width: 359px) {
+    html { scroll-padding-top: calc(var(--header-h-two-rows) + 16px); }
+  }
+  /* Less motion when the reader asked the system for it: no hover, menu or
+     Monitor switch transitions, no animation, no smooth scrolling (the
+     scripts ask for it through scrollMotion() in web/app.js). */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
   }
 </style>
 </head>
-<body>
+<body data-screen="check">
+<!-- The frame every screen shares. web/app.js setScreen() keeps it in step
+     with the screen: the active tab (on a reading, the screen it was opened
+     from), the breadcrumb, and body[data-screen] / body[data-from]. -->
 <header class="site-header">
-  <a class="brand" href="/">Bet or Book<span class="book">.</span></a>
-  <nav class="site-nav" aria-label="Main navigation"><a href="#examples" id="nav-examples">Examples</a><a href="#saved" id="nav-saved">Saved</a><a href="#explore" id="nav-boards">Explore</a></nav>
+  <a class="brand" href="/" id="site-logo">Bet or Book<span class="brand-dot">.</span></a>
+  <nav class="pill-nav" aria-label="Main navigation">
+    <a class="pill-tab" href="/" id="nav-examples" aria-current="page">Check</a>
+    <a class="pill-tab" href="#explore" id="nav-boards">Explore</a>
+    <a class="pill-tab" href="#saved" id="nav-saved">Saved <span class="pill-count" id="saved-count" hidden></span></a>
+  </nav>
 </header>
 <main>
+<nav class="breadcrumb" id="breadcrumb" aria-label="Breadcrumb" hidden>
+  <a id="breadcrumb-origin" href="/"><span aria-hidden="true">← </span><span id="breadcrumb-origin-label">Check a wallet</span></a>
+  <span class="breadcrumb-sep" aria-hidden="true">/</span>
+  <span id="breadcrumb-current" aria-current="page"></span>
+</nav>
 <div id="workspace">
+<!-- The Check screen: the hero with the address field, the examples, how
+     it works. A reading hides all of it (body.has-reading below) except
+     the status line, which a reading uses too. -->
 <div id="entry-controls">
 <section class="hero" aria-labelledby="hero-title">
   <p class="eyebrow">Look beyond the whale alert</p>
-  <h1 id="hero-title">Don't Get Rekt<br><span>Copytrading.</span></h1>
+  <h1 id="hero-title" tabindex="-1">Don't Get Rekt <span>Copytrading.</span></h1>
   <p class="sub">Saw a whale's $200M short? Check before you follow. Find out what the data shows: a directional bet, a hedge, or a market maker's inventory.</p>
 </section>
-
-<label class="search-label" for="address">Check a Hyperliquid wallet</label>
-<div class="row search-row">
-  <input id="address" type="text" placeholder="Paste a Hyperliquid wallet address" autocomplete="off" spellcheck="false" aria-describedby="address-help">
+<label class="visually-hidden" for="address">Check a Hyperliquid wallet</label>
+<div class="search-row">
+  <input id="address" type="text" placeholder="Paste a Hyperliquid wallet address or link" autocomplete="off" spellcheck="false" aria-describedby="address-help">
   <button id="check">Check position</button>
-  <a class="explore-shortcut" href="#explore" id="search-explore">Explore positions →</a>
 </div>
-<p class="search-help" id="address-help">Paste an address, Hypurrscan or Hyperliquid link. No wallet connection needed.</p>
-<details class="fold"><summary>Checking a whale alert?</summary><p class="search-help">Open the alert’s wallet or explorer link and copy the 0x wallet address. You can also paste alert text containing the address. An X post URL alone does not contain the wallet data.</p><p class="search-help">For example: “A whale opened an ETH short · wallet 0x…” - paste the full wallet address, then choose ETH from the positions found.</p></details>
+<p class="search-help" id="address-help">Address, Hypurrscan or Hyperliquid link · No wallet connection</p>
 <div id="address-choices" class="box" hidden><p>More than one wallet found. Choose the address to check:</p><div id="address-choice-buttons" class="chips"></div></div>
-<p class="search-help"><button class="chip" id="use-example">Try a saved example · free</button></p>
-<p class="data-sources"><span>Powered by <a class="partner" href="https://app.nansen.ai/r/36RkYL4jJsy" rel="noopener noreferrer">Nansen API</a></span><span>Orders and fills from <a class="partner" href="https://app.hyperliquid.xyz" rel="noopener noreferrer">Hyperliquid</a></span></p>
+<div class="entry-more">
+  <details class="fold"><summary>Checking a whale alert?</summary><p class="search-help">Open the alert’s wallet or explorer link and copy the 0x wallet address. You can also paste alert text containing the address. An X post URL alone does not contain the wallet data.</p><p class="search-help">For example: “A whale opened an ETH short · wallet 0x…” - paste the full wallet address, then choose ETH from the positions found.</p></details>
+  <button class="btn-ghost" id="use-example">Try a saved example · free</button>
+</div>
+<p class="data-sources"><span>Positions, orders, fills and PnL from <a class="partner" href="https://app.hyperliquid.xyz" rel="noopener noreferrer">Hyperliquid</a></span><span>Balances from public nodes</span><span>Funding links from Blockscout</span></p>
 </div>
 <p class="status" id="status" role="status"></p>
 <progress id="check-progress" aria-label="Reading the wallet" hidden></progress>
-<p class="search-help" id="slow-check" hidden>Still reading sources. A live check can take up to 45 seconds; the answer will identify any sources that did not finish. <button class="chip" id="waiting-example">Open a free saved example</button></p>
+<p class="search-help" id="slow-check" hidden>Still reading sources. A live check can take up to 45 seconds; the answer will identify any sources that did not finish. <button class="btn-secondary" id="waiting-example">Open a free saved example</button></p>
 <div class="guess" id="guess" hidden>
   <span class="guess-label" id="guess-label">Guess before it loads:</span>
   <span class="guess-chips" id="guess-chips" role="group" aria-labelledby="guess-label">
@@ -385,110 +835,153 @@
     <button class="chip" aria-pressed="false" data-guess="cant_tell">Can't tell</button>
   </span>
 </div>
-<!-- Read fresh on 26 September and picked by hand, one of each kind of
-     answer, from data/featured.json; test/featured.test.ts holds these
-     chips to that file. The scan further down is older and was read before
-     the card had the position's own numbers (23.09 audit, U05). -->
-<section id="examples" aria-labelledby="examples-title">
-  <div class="section-heading"><h2 id="examples-title">Big positions. Different stories.</h2><a id="nav-how-it-works" href="#how-it-works">How it works ↗</a></div>
-  <p class="sub" id="examples-status">Explore saved examples. Each opens a dated reading, without running a new check.</p>
-  <div class="queue" id="player-queue"><!--FEATURED_EXAMPLES--></div>
-</section>
 <div class="examples" id="recent" hidden>
   <span class="examples-label">Your recent checks, saved in this browser only:</span>
   <span class="examples-chips" id="recent-chips"></span>
 </div>
-
-<!-- The first screen of a card is the question and its answer: which
-     position, what it is, the one picture or number that decided it, and
-     one way to share it. Everything else a card knows is one click down,
-     not gone (23.09 audit, U06). -->
-<div class="reading-nav" id="reading-nav" hidden><button id="back-examples">← All examples</button><button id="reading-boards">Explore ranked boards →</button></div>
-<div class="card" id="card" tabindex="-1" aria-label="Position reading" hidden>
-  <div class="box snapshot" id="snapshot" hidden>
-    <span id="snapshot-text"></span>
-    <button id="check-live">Check live</button>
-  </div>
-  <p class="subject" id="subject" hidden></p>
-  <div class="picker" id="picker" hidden>
-    <span class="picker-label">This answer is about</span>
-    <span class="picker-chips" id="picker-chips"></span>
-  </div>
-  <p style="margin: 10px 0 0;"><span class="badge" id="badge"></span></p>
-  <div class="box" id="source-warning" role="status" hidden><strong id="source-warning-text"></strong> <button id="try-again">Try again</button><button id="source-free-examples" hidden>Open free examples</button></div>
-  <p class="headline" id="headline"></p>
-  <p class="takeaway" id="takeaway" hidden></p>
-  <p class="summary" id="summary"></p>
-  <figure class="breakdown" id="breakdown" hidden>
-    <figcaption id="breakdown-caption"></figcaption>
-    <p class="search-help" id="diagram-values"></p>
-    <div id="breakdown-svg"></div>
-    <p class="search-help" id="diagram-legend"></p>
-    <p id="breakdown-quality" class="breakdown-quality" hidden></p>
-  </figure>
-  <section class="evidence-preview" aria-label="Key evidence">
-    <h3>Evidence at a glance</h3>
-    <div class="stats" id="decisive" hidden></div>
-    <p class="source-lead" id="nansen-preview" hidden><strong>From Nansen:</strong> <span id="nansen-lead"></span></p>
-  </section>
-  <!-- What this reading leaves open, and what Nansen added to it: the two
-       things the 23.09 audit asked a card to say before submission. The
-       Nansen line is readable without opening it; the list is one click. -->
-  <p class="open-question" id="open-question" hidden></p>
-  <p class="search-help" id="risk-preview" hidden></p>
-  <details class="fold" id="claim-checker">
-    <summary>Check an assertion from the alert</summary>
-    <label for="claim-choice">What does the alert claim?</label>
-    <select id="claim-choice">
-      <option value="">Choose an assertion</option>
-      <option value="directional">This position is a directional bet</option>
-      <option value="spot">Own spot holdings cover this short</option>
-      <option value="ownership">Funding-wallet holdings belong to this account</option>
-      <option value="inventory">This position is market-maker inventory</option>
-    </select>
-    <p id="claim-result" role="status" hidden></p>
-    <p class="search-help">Uses this dated reading only. Evidence supports an interpretation, not the owner’s intent. No extra provider calls.</p>
-  </details>
-  <section id="reading-actions" aria-label="Save and share this reading">
-    <div class="save-share-controls">
-    <button id="watch-address">Save this position</button>
-    <details class="share" id="share">
-      <summary>Share this reading</summary>
-      <div class="actions">
-        <button id="copy-link">Copy link</button>
-        <button id="copy-reading">Copy reading</button>
-        <button id="copy-embed">Copy embed</button>
-        <button id="share-x">Share on X</button>
-        <button id="download-image">Download PNG</button>
-      </div>
-    </details>
+<!-- Read fresh and picked by hand, one of each kind of answer, from
+     data/featured.json. The Worker draws them here as position cards
+     (src/landing.ts) and web/explore.js redraws the same cards once the
+     gallery loads; test/featured.test.ts holds the two to each other. -->
+<section id="examples" aria-labelledby="examples-title">
+  <div class="section-heading">
+    <div>
+      <h2 id="examples-title">Big positions. Different stories.</h2>
+      <p class="sub" id="examples-status">Saved readings - opening one is free.</p>
     </div>
-    <p class="search-help" id="share-note"></p>
+    <div class="section-actions">
+      <a class="btn-ghost" id="nav-how-it-works" href="#how-it-works">How it works</a>
+      <a class="btn-secondary" href="#explore" id="search-explore">All examples →</a>
+    </div>
+  </div>
+  <div id="player-queue"><!--FEATURED_EXAMPLES--></div>
+</section>
+
+<!-- The old reading's row of buttons: kept for its ids and handlers, not
+     drawn (the breadcrumb and the "What next?" panel lead away instead). -->
+<div class="reading-nav" id="reading-nav" hidden><button id="back-examples">← All examples</button><button id="reading-boards">Explore ranked boards →</button></div>
+<!-- The Reading screen of the owner's handoff: a header (the date, the
+     position, Save / Share / Check live), six numbered sections and the
+     "What next?" panel. web/app.js renderResult() hides a section that has
+     nothing to show (readingSections); the CSS counter that numbers them
+     skips a hidden one, so the numbers stay consecutive. The question and
+     its answer come first; everything else a card knows is one click down,
+     in Full analysis, not gone (23.09 audit, U06). -->
+<section class="card" id="card" aria-labelledby="reading-title" hidden>
+  <header class="reading-header">
+    <p class="eyebrow" id="snapshot-text"></p>
+    <div class="reading-head">
+      <div class="reading-head-text">
+        <h1 class="reading-title" id="reading-title" tabindex="-1"></h1>
+        <p class="reading-meta" id="reading-meta"></p>
+      </div>
+      <div class="reading-actions" id="reading-actions" role="group" aria-label="Save and share this reading">
+        <button class="btn-secondary" id="watch-address">Save</button>
+        <details class="share" id="share">
+          <summary id="share-toggle">Share</summary>
+          <div class="share-menu" id="share-menu">
+            <button id="copy-link">Copy link</button>
+            <button id="copy-reading">Copy reading as text</button>
+            <button id="copy-embed">Copy embed code</button>
+            <button id="share-x">Share on X</button>
+            <button id="download-image">Download PNG</button>
+            <p class="share-note" id="share-note"></p>
+          </div>
+        </details>
+        <button class="btn" id="check-live">Check live</button>
+      </div>
+    </div>
+    <!-- A choice in the Share menu closes it, so what the button says back
+         ("Copied") is repeated here, where it stays in sight. -->
+    <p class="share-status" id="share-status" role="status"></p>
     <div class="box" id="save-confirmation" role="status" hidden>
       <p id="save-confirmation-text"></p>
       <label class="search-help" for="saved-position-name">Name this saved position (optional)</label>
       <input id="saved-position-name" type="text" maxlength="80" placeholder="For example: ETH whale from my alert">
       <div class="actions"><button id="save-copy-link">Copy saved reading link</button><button id="open-saved-positions">Open my saved positions</button></div>
     </div>
-    <button id="check-another" style="border: none; background: none; color: var(--link); cursor: pointer; padding: 10px 4px;">Check another</button>
+    <p class="subject" id="subject" hidden></p>
+    <div class="picker" id="picker" hidden>
+      <span class="picker-label">This answer is about</span>
+      <span class="picker-chips" id="picker-chips"></span>
+    </div>
+  </header>
+  <section class="reading-section" id="section-verdict" aria-labelledby="section-verdict-title">
+    <div class="section-head"><h2 class="section-title" id="section-verdict-title">Verdict</h2></div>
+    <div class="section-body">
+      <p><span class="badge" id="badge"></span></p>
+      <p class="reading-note" id="snapshot-note" hidden></p>
+      <div class="box" id="source-warning" role="status" hidden><strong id="source-warning-text"></strong> <button id="try-again">Try again</button><button id="source-free-examples" hidden>Open free examples</button></div>
+      <h3 class="headline" id="headline"></h3>
+      <p class="takeaway" id="takeaway" hidden></p>
+      <p class="summary" id="summary"></p>
+    </div>
   </section>
-  <div class="box" id="coverage" hidden>
-    <p><strong>Not read this time</strong></p>
-    <ul id="coverage-list"></ul>
-  </div>
-  <p class="limit" id="standing-limit">Not visible to this tool: centralized exchanges, OTC deals and wallets with no on-chain link to this address.</p>
-  <p class="open-question" id="what-changes" hidden></p>
+  <section class="reading-section" id="section-evidence" aria-labelledby="section-evidence-title">
+    <div class="section-head"><h2 class="section-title" id="section-evidence-title">Evidence</h2></div>
+    <div class="section-body evidence-body">
+      <div class="stat-grid" id="decisive" hidden></div>
+      <p class="source-lead" id="nansen-preview" hidden><strong>From Nansen:</strong> <span id="nansen-lead"></span></p>
+    </div>
+  </section>
+  <section class="reading-section" id="section-changed" aria-labelledby="section-changed-title">
+    <div class="section-head"><h2 class="section-title" id="section-changed-title">Since last read</h2></div>
+    <div class="section-body">
+      <div class="changed" id="changed" hidden>
+        <div class="changed-panel">
+          <p><strong id="changed-title"></strong> <span class="muted" id="changed-because"></span></p>
+          <ul id="changed-list"></ul>
+        </div>
+        <a class="changed-previous" id="changed-previous" href="/">Open previous reading · free</a>
+      </div>
+    </div>
+  </section>
+  <!-- What this reading leaves open and what would change it: the two
+       things the 23.09 audit asked a card to say before submission. -->
+  <section class="reading-section" id="section-blind-spots" aria-labelledby="section-blind-spots-title">
+    <div class="section-head"><h2 class="section-title" id="section-blind-spots-title">Blind spots</h2></div>
+    <div class="section-body">
+      <div class="stat-grid blind-spots">
+        <div class="blind-cell" id="blind-spots-open">
+          <p class="open-question" id="open-question" hidden></p>
+          <p class="limit" id="standing-limit">Not visible to this tool: centralized exchanges, OTC deals and wallets with no on-chain link to this address.</p>
+          <div class="not-read" id="coverage" hidden>
+            <p><strong>Not read this time</strong></p>
+            <ul id="coverage-list"></ul>
+          </div>
+        </div>
+        <div class="blind-cell" id="blind-spots-change">
+          <p class="open-question" id="what-changes" hidden></p>
+          <p class="risk-preview" id="risk-preview" hidden></p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="reading-section" id="section-coverage" aria-labelledby="section-coverage-title">
+    <div class="section-head"><h2 class="section-title" id="section-coverage-title">Spot coverage</h2></div>
+    <div class="section-body">
+      <figure class="breakdown" id="breakdown" hidden>
+        <figcaption id="breakdown-caption"></figcaption>
+        <p class="breakdown-values" id="diagram-values"></p>
+        <div id="breakdown-svg"></div>
+        <p class="search-help" id="diagram-legend"></p>
+        <p id="breakdown-quality" class="breakdown-quality" hidden></p>
+      </figure>
+    </div>
+  </section>
   <canvas id="card-canvas" aria-hidden="true" width="1200" height="675" hidden></canvas>
-  <div class="box changed" id="changed" hidden>
-    <p><strong id="changed-title"></strong> <span class="muted" id="changed-because"></span></p>
-    <ul id="changed-list"></ul>
-    <a id="changed-previous" href="/">Open previous reading · free</a>
-  </div>
-  <details class="fold full-analysis" id="full-analysis">
-    <summary>Full analysis <span class="muted">· metrics, rules and sources</span></summary>
+  <!-- Closed by default: a skeptical reader opens it, nobody else is made
+       to read what they did not ask for. Native <details>, so no JS runs it. -->
+  <section class="reading-section reading-fold" id="section-analysis" aria-labelledby="section-analysis-title">
+  <details class="full-analysis" id="full-analysis">
+    <summary>
+      <h2 class="section-head section-title" id="section-analysis-title">Full analysis</h2>
+      <span class="fold-description">Metrics, rules, sources and alert assertions</span>
+    </summary>
+  <div class="analysis-body">
   <p class="meta" id="meta"></p>
   <section class="analysis-section" id="market-diagnostics" hidden><h3>Market and quote observations</h3><ul id="market-diagnostics-list"></ul></section>
-  <p><button id="load-context">Load optional PnL context · new check</button><span class="muted"> Uses the shared data budget. Exposure checks work without this context.</span></p>
+  <p><button id="load-context">Load optional PnL context · new check</button><span class="muted"> Counts as a new check against the rate limits. Exposure checks work without this context.</span></p>
   <section class="analysis-section" id="decided" hidden>
     <h3>How this was decided</h3>
     <p id="decided-rule"></p>
@@ -504,7 +997,7 @@
     <div class="box" id="funders" hidden>
       <p><strong>Wallets that funded this account</strong> - they hold the matching asset, which is not the same as this account holding it</p>
       <ul id="funders-list"></ul>
-      <p class="attribution">Linked wallets: Powered by Nansen API. Funding links are observed; common ownership is unverified.</p>
+      <p class="attribution" id="funders-credit">Funding links are observed; common ownership is unverified.</p>
     </div>
     <div class="box" id="notes" hidden>
       <p><strong>Notes on this reading</strong></p>
@@ -516,6 +1009,19 @@
     <ul id="nansen-list"></ul>
     <p class="tech" id="nansen-calls"></p>
   </section>
+  <details class="fold" id="claim-checker">
+    <summary>Check an assertion from the alert</summary>
+    <label for="claim-choice">What does the alert claim?</label>
+    <select id="claim-choice">
+      <option value="">Choose an assertion</option>
+      <option value="directional">This position is a directional bet</option>
+      <option value="spot">Own spot holdings cover this short</option>
+      <option value="ownership">Funding-wallet holdings belong to this account</option>
+      <option value="inventory">This position is market-maker inventory</option>
+    </select>
+    <p id="claim-result" role="status" hidden></p>
+    <p class="search-help">Uses this dated reading only. Evidence supports an interpretation, not the owner’s intent. No extra provider calls.</p>
+  </details>
   <details class="glossary"><summary>What these terms mean</summary><dl>
     <dt>Book</dt><dd>Evidence of market-making inventory: meaningful buy and sell orders in this position's market. The grade counts corroborating signals, not a probability or a recommendation.</dd>
     <dt>Spot-covered short</dt><dd>Matching spot at this address covers roughly the size of the short. It does not establish safety, shared collateral or the absence of off-chain debt.</dd>
@@ -529,63 +1035,112 @@
     <dt>First funder</dt><dd>A wallet that transferred funds to this address. A transfer alone does not establish common ownership.</dd>
   </dl></details>
   <p class="limit" id="analysis-limit" hidden>Not visible to this tool: centralized exchanges, OTC deals and wallets with no on-chain link to this address.</p>
+  </div>
   </details>
-</div>
+  </section>
+  <section class="cta-panel" id="reading-next" aria-labelledby="reading-next-title">
+    <div>
+      <h2 class="cta-title" id="reading-next-title">What next?</h2>
+      <p class="cta-text">Check another wallet, or go back to where you were.</p>
+    </div>
+    <div class="cta-actions">
+      <button class="btn-secondary" id="reading-back">Back to Check a wallet</button>
+      <button class="btn" id="check-another">Check a wallet</button>
+    </div>
+  </section>
+</section>
 
-<section class="how-it-works" id="how-it-works">
-  <h2>From a headline to the evidence</h2>
+<section class="how-it-works" id="how-it-works" aria-labelledby="how-it-works-title">
+  <h2 id="how-it-works-title">From a headline to the evidence</h2>
   <div class="steps">
-    <div><h3><span class="book">01</span> Find the position</h3><p>Read the wallet's open Hyperliquid positions. Choose the asset you came to check.</p></div>
-    <div><h3><span class="hedged">02</span> Look for the other side</h3><p>Compare matching holdings, linked funding wallets and two-sided orders using Nansen and Hyperliquid data.</p></div>
-    <div><h3><span class="bet">03</span> See what holds up</h3><p>Get the answer, the numbers behind it and what remains unknown. Share the exact reading.</p></div>
+    <div class="step"><span class="step-number">01</span><h3>Find the position</h3><p>Read the wallet's open Hyperliquid positions. Choose the asset you came to check.</p></div>
+    <div class="step"><span class="step-number">02</span><h3>Look for the other side</h3><p>Compare matching holdings, linked funding wallets and two-sided orders using Hyperliquid, public node and Blockscout data.</p></div>
+    <div class="step"><span class="step-number">03</span><h3>See what holds up</h3><p>Get the answer, the numbers behind it and what remains unknown. Share the exact reading.</p></div>
   </div>
 </section>
 </div>
-<div class="explore-entry" id="explore-entry"><h2>Want to compare more wallets?</h2><p class="sub">Explore saved positions by size, coverage and market-making activity.</p><a href="#explore" id="explore-link">Explore readings →</a></div>
+<!-- One quiet line into Explore under the Check screen and a reading: the
+     hero's "Check position" stays the one call to action. -->
+<div class="explore-entry" id="explore-entry"><p><strong>Want to compare more wallets?</strong> Explore saved positions by size, coverage and market-making activity.</p><a href="#explore" id="explore-link">Explore readings →</a></div>
+<!-- The Saved screen of the owner's handoff: the positions saved in this
+     browser as position cards (renderWatched in web/app.js), each with its
+     own controls under the part that opens it, the pilot note, and the
+     closing panel, which is the whole screen when nothing is saved. -->
 <section id="saved-view" hidden aria-labelledby="saved-title">
   <div class="reading-nav"><button id="saved-home">← Check a wallet</button><button id="saved-return" hidden>Back to your reading →</button></div>
-  <h1 id="saved-title" tabindex="-1">My saved positions</h1>
-  <p class="sub">Kept in this browser only, never on our server. Open a dated reading for free; Refresh runs a new check.</p>
-  <div class="examples" id="watched" role="region" aria-label="Your saved positions"></div>
+  <p class="eyebrow">Stored in this browser only</p>
+  <h1 id="saved-title" tabindex="-1">Saved</h1>
+  <p class="sub">Opening a reading is free. Refresh runs a new check.</p>
+  <p class="status" id="saved-status" role="status" hidden></p>
+  <div id="watched" role="region" aria-label="Your saved positions"></div>
+  <p class="saved-pilot" id="saved-pilot">Monitor (pilot): checks every ~4 h for 72 h, 4 slots. The public wallet and question are stored on our server. Alerts appear on the card; the shared rate limits can pause checks.</p>
+  <section class="cta-panel" id="saved-next" aria-labelledby="saved-next-title">
+    <div>
+      <h2 class="cta-title" id="saved-next-title">Track another position</h2>
+      <p class="cta-text" id="saved-next-text">Check a wallet, then press Save on the reading.</p>
+    </div>
+    <div class="cta-actions">
+      <button class="btn" id="saved-check">Check a wallet</button>
+    </div>
+  </section>
 </section>
-<section id="gallery" hidden>
+<!-- The Explore screen: four views of the saved readings behind one
+     segmented pill (selectExploreView in web/app.js), the case studies drawn
+     as the Check screen's own position cards (web/explore.js), and the
+     closing panel. -->
+<section id="gallery" hidden aria-labelledby="explore-title">
   <div class="reading-nav"><button id="explore-home">← Check a wallet</button><button id="explore-return" hidden>Back to your reading →</button></div>
+  <p class="eyebrow">Saved readings</p>
   <h1 id="explore-title" tabindex="-1">Explore</h1>
   <p class="sub">Learn what large positions do and do not reveal. Every case has a date and evidence; these are saved readings, not a live market overview.</p>
   <p id="explore-status" class="status" role="status">Loading saved readings...</p>
   <p id="explore-reading-status" class="status" role="status" hidden></p>
-  <div class="chips" role="group" aria-label="Explore view">
-    <button class="chip" id="explore-cases" aria-pressed="true" aria-controls="case-studies">Recent case studies</button>
-    <button class="chip" id="explore-ranked" aria-pressed="false" aria-controls="boards-fold">Compare readings</button>
-    <button class="chip" id="explore-all" aria-pressed="false" aria-controls="all-readings">All readings</button>
-    <button class="chip" id="explore-archive" aria-pressed="false" aria-controls="archive">Archive</button>
+  <div class="pill-nav explore-tabs" role="group" aria-label="Explore view">
+    <button class="pill-tab" id="explore-cases" aria-pressed="true" aria-controls="case-studies">Case studies</button>
+    <button class="pill-tab" id="explore-ranked" aria-pressed="false" aria-controls="boards-fold">Compare</button>
+    <button class="pill-tab" id="explore-all" aria-pressed="false" aria-controls="all-readings">All readings</button>
+    <button class="pill-tab" id="explore-archive" aria-pressed="false" aria-controls="archive">Archive</button>
   </div>
-  <section id="case-studies" aria-label="Recent case studies"><p class="sub">Selected evidence cases. Opening one is free and does not run a new check.</p><div id="case-study-list" class="list"></div></section>
+  <section id="case-studies" aria-label="Case studies"><p class="sub">Selected evidence cases. Opening one is free and does not run a new check.</p><div id="case-study-list"></div></section>
   <section id="boards-fold" aria-label="Ranked boards" hidden>
     <p class="sub" id="gallery-sub"></p>
     <div id="boards"></div>
   </section>
   <section id="all-readings" aria-label="All readings" hidden>
-    <h3 id="gallery-title">Saved Hyperliquid positions</h3>
+    <h2 id="gallery-title">Saved Hyperliquid positions</h2>
     <div class="chips" id="chips"></div>
     <ol class="list" id="gallery-list"></ol>
-    <button class="more" id="more" hidden>Show more</button>
-    <!-- How the set was chosen, the counts across it, and the readings made
-         under earlier rules: all real, all kept, none of it the first thing a
-         new visitor needs (23.09 audit, U06). -->
+    <button class="more btn-secondary" id="more" hidden>Show more</button>
   </section>
-    <details class="archive" id="archive" hidden>
-      <summary id="archive-summary">How these were picked, and the readings made under earlier rules</summary>
-      <p class="sub" id="gallery-stats"></p>
-      <p class="sub" id="gallery-method"></p>
-      <ol class="list" id="archive-list"></ol>
-      <button class="more" id="archive-more" hidden>Show more</button>
-    </details>
+  <!-- How the set was chosen, the counts across it, and the readings made
+       under earlier rules: all real, all kept, none of it the first thing a
+       new visitor needs (23.09 audit, U06). -->
+  <details class="archive" id="archive" hidden>
+    <summary id="archive-summary">How these were picked, and the readings made under earlier rules</summary>
+    <p class="sub" id="gallery-stats"></p>
+    <p class="sub" id="gallery-method"></p>
+    <ol class="list" id="archive-list"></ol>
+    <button class="more btn-secondary" id="archive-more" hidden>Show more</button>
+  </details>
+  <section class="cta-panel" id="explore-next" aria-labelledby="explore-next-title">
+    <div>
+      <h2 class="cta-title" id="explore-next-title">Seen a whale alert?</h2>
+      <p class="cta-text">Paste the wallet and get a reading in seconds.</p>
+    </div>
+    <div class="cta-actions">
+      <button class="btn" id="explore-check">Check a wallet</button>
+    </div>
+  </section>
 </section>
 </main>
-<footer>
-  <p>Positions, realized PnL, balances on other chains and linked wallets: <strong>Powered by <a class="partner" href="https://app.nansen.ai/r/36RkYL4jJsy" rel="noopener noreferrer">Nansen API</a></strong>. Resting orders and fills: <a class="partner" href="https://app.hyperliquid.xyz" rel="noopener noreferrer">Hyperliquid API</a>.</p>
-  <p>This tool only inspects. It is not financial advice and never trades. <a href="https://github.com/Sofiia7/bet-or-book" rel="noopener noreferrer">Source code</a></p>
+<footer class="site-footer">
+  <nav class="footer-nav" aria-label="Footer">
+    <a href="/" id="footer-check">Check</a>
+    <a href="#explore" id="footer-explore">Explore</a>
+    <a href="#saved" id="footer-saved">Saved</a>
+  </nav>
+  <p class="footer-sources">Positions, resting orders, fills and PnL: <a class="partner" href="https://app.hyperliquid.xyz" rel="noopener noreferrer">Hyperliquid API</a>. Balances on Ethereum, Arbitrum and HyperEVM: public nodes. Funding links: Blockscout. Older saved readings also used Nansen data: Powered by Nansen API.</p>
+  <p class="footer-legal"><span>Inspection only - not financial advice</span> <a class="footer-source" href="https://github.com/Sofiia7/bet-or-book" rel="noopener noreferrer">Source code</a></p>
 </footer>
 
 <script src="/app.js" defer></script>

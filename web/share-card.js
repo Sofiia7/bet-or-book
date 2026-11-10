@@ -33,6 +33,16 @@ function clipText(ctx, text, maxWidth) {
   return s + '...';
 }
 
+/** The credit at the bottom right of the card. The server works it out from
+ * the sources the reading used (src/engine/attribution.ts) and sends it as
+ * `attribution.card`; a reading saved before that has no such field, and is
+ * credited by its `source`, as it always was. */
+function cardCredit(d) {
+  const credit = d.attribution && d.attribution.card;
+  if (typeof credit === 'string' && credit !== '') return credit;
+  return d.source === 'nansen' ? 'Powered by Nansen API' : 'Data: Hyperliquid API';
+}
+
 /**
  * What goes on the picture, as the server worked it out (src/engine/share.ts).
  *
@@ -186,10 +196,17 @@ function drawCard() {
   // is pasted into, plus the link back to this exact reading.
   ctx.fillStyle = '#5a5f6d';
   ctx.font = font(400, 17);
+  // The credit sits at the right of the first row, beside the date line, which
+  // is cut to W - 380. A credit that names several sources is wider than the
+  // 268 px that leaves, so it goes on the second row, beside the link, and the
+  // link is cut to what is left of that row.
+  const credit = cardCredit(d);
+  const creditWidth = ctx.measureText(credit).width;
+  const creditBelow = creditWidth > 380 - 112;
   ctx.fillText(clipText(ctx, 'Bet or Book · ' + shortAddr(d.address) + ' · ' + share.provenance, W - 380), 56, H - 46);
-  if (share.link) ctx.fillText(clipText(ctx, share.link, W - 380), 56, H - 22);
+  if (share.link) ctx.fillText(clipText(ctx, share.link, creditBelow ? W - 112 - creditWidth - 24 : W - 380), 56, H - 22);
   ctx.textAlign = 'right';
-  ctx.fillText(d.source === 'nansen' ? 'Powered by Nansen API' : 'Data: Hyperliquid API', W - 56, H - 46);
+  ctx.fillText(credit, W - 56, creditBelow ? H - 22 : H - 46);
   ctx.textAlign = 'left';
 }
 

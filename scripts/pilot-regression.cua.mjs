@@ -8,8 +8,11 @@ export async function runPilotRegression(browser, tab, baseURL) {
     assert((await tab.playwright.locator('#claim-result').innerText()).includes('Not established'), 'Funding claim stays unestablished');
     const width = await tab.playwright.evaluate(() => ({ client: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth }));
     assert(width.client === width.scroll, '320 px claim selector fits');
-    await tab.playwright.getByRole('button', { name: 'Copy embed', exact: true }).click();
-    await tab.playwright.getByRole('button', { name: 'Embed copied', exact: true }).waitFor({ state: 'visible' });
+    // The share items sit in the Share menu, which a choice closes again; what
+    // the button says back is repeated in the status line under the header.
+    await tab.playwright.locator('#share-toggle').click();
+    await tab.playwright.getByRole('button', { name: 'Copy embed code', exact: true }).click();
+    await tab.playwright.locator('#share-status').filter({ hasText: 'Embed copied' }).waitFor({ state: 'visible' });
     const embed = await tab.clipboard.readText();
     assert(embed.includes('<iframe') && embed.includes('/embed?s=12pk1a43rv3a1&claim=ownership'), 'Embed carries saved question');
     await tab.playwright.getByLabel('What does the alert claim?', { exact: true }).selectOption('spot');

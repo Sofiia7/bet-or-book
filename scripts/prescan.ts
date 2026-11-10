@@ -1,24 +1,21 @@
 // Pre-scans the biggest open positions on Hyperliquid through the very same
 // checkAddress the Worker runs, and writes data/gallery.json for the page.
-// This is where most of the buildathon's 1 000 Nansen calls are made, so it
-// is built to never pay twice and to stop before the account runs dry:
+// A check reads only free public sources (Hyperliquid, public nodes and the
+// block explorer), so nothing here is metered; what the script guards is the
+// time a long run takes and the rate limits of those sources:
 //
 // - candidates come free: Hyperliquid's public leaderboard gives the accounts,
 //   its public clearinghouseState ranks them by their largest open position;
-// - every Nansen call is appended to data/nansen-calls.jsonl as it happens;
 // - the gallery file is rewritten after every check, and --resume skips what
 //   is already in it, so an interrupted run loses nothing;
-// - it stops at the credit reserve, on a refusal that reports no credits
-//   left (a 403 that still reports a balance means the key may not read that
-//   one endpoint, which is not a reason to stop), or after three checks
-//   in a row that could not read Nansen positions;
-// - Hyperliquid 429s and 5xx are retried with backoff; Nansen calls never are,
-//   since a retry could be charged twice.
+// - it stops after five checks in a row that failed;
+// - Hyperliquid 429s and 5xx are retried with backoff.
 //
-// The API key is read from .dev.vars and never printed.
+// The optional explorer key BLOCKSCOUT_API_KEY is read from the environment or
+// .dev.vars and never printed. Without it Arbitrum funding links are not read.
 //
 // Usage:
-//   npx tsx scripts/prescan.ts [--pool=1000] [--reserve=30] [--gap-ms=7000]
+//   npx tsx scripts/prescan.ts [--pool=1000] [--gap-ms=7000]
 //                              [--limit=N] [--addresses=0x..,0x..]
 //                              [--source=prescan] [--out=data/gallery.json]
 //                              [--universe="what this set is"]
@@ -33,21 +30,16 @@
 //     --supersede-from=data/gallery.json --gap-ms=3000
 // `--supersede-from` links each new reading to the same address's latest
 // reading in that file, so the card can say what changed since then.
-import { readFileSync, writeFileSync, appendFileSync, existsSync, renameSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, renameSync } from 'node:fs';
 import { checkAddress, type CheckResult } from '../src/api/check';
-import { createNansenClient, meansOutOfCredits, type NansenCallMeta } from '../src/sources/nansen';
 import { getClearinghouseState } from '../src/sources/hyperliquid';
 import { snapshotId } from '../src/snapshot';
 import { previousReadingId, type Gallery } from '../src/gallery';
+import { localVar } from './local-vars';
 
 const LEADERBOARD_URL = 'https://stats-data.hyperliquid.xyz/Mainnet/leaderboard';
-const LEDGER = 'data/nansen-calls.jsonl';
 const CANDIDATES_FILE = 'data/prescan-candidates.json';
 const MAX_FAILED_IN_A_ROW = 5;
-/** The most Nansen calls one check can make (the full funder search). */
-import { WORST_CASE_CALLS } from '../src/budget';
-/** What a check costs when its headline is a long: positions and PnL. */
-const LONG_CHECK_CALLS = 8;
 
 interface Candidate {
   address: string;
@@ -59,7 +51,6 @@ interface Candidate {
 
 interface Args {
   pool: number;
-  reserve: number;
   gapMs: number;
   /** Most checks this run may make - for a small first batch before the rest. */
   limit: number;
@@ -84,7 +75,6 @@ function parseArgs(argv: string[]): Args {
   const addresses = get('addresses');
   return {
     pool: Number(get('pool') ?? 1000),
-    reserve: Number(get('reserve') ?? 30),
     gapMs: Number(get('gap-ms') ?? 7000),
     limit: Number(get('limit') ?? Infinity),
     addresses: addresses ? addresses.split(',').map((a) => a.trim().toLowerCase()) : null,
@@ -97,18 +87,9 @@ function parseArgs(argv: string[]): Args {
   };
 }
 
-function readKey(): string {
-  const line = readFileSync('.dev.vars', 'utf-8')
-    .split(/\r?\n/)
-    .find((l) => l.startsWith('NANSEN_API_KEY='));
-  const key = line?.slice('NANSEN_API_KEY='.length).trim();
-  if (!key) throw new Error('NANSEN_API_KEY not found in .dev.vars');
-  return key;
-}
-
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Retries Hyperliquid only. Nansen requests pass through untouched. */
+/** Retries Hyperliquid only; every other request passes through untouched. */
 function installHyperliquidRetry(): void {
   const original = globalThis.fetch;
   const backoffMs = [2_000, 5_000, 10_000, 20_000];
@@ -199,7 +180,6 @@ async function rankCandidates(pool: number): Promise<Candidate[]> {
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
-  const key = readKey();
   installHyperliquidRetry();
 
   const addresses = args.addresses ?? (await rankCandidates(args.pool)).map((c) => c.address);
@@ -230,70 +210,24 @@ async function main(): Promise<void> {
 
   const done = new Set(gallery.entries.map((e) => e.address));
   const todo = addresses.filter((a) => !done.has(a)).slice(0, args.limit);
-  console.log(`to scan: ${todo.length} (already in ${args.out}: ${done.size}), reserve ${args.reserve} credits`);
+  console.log(`to scan: ${todo.length} (already in ${args.out}: ${done.size})`);
+  const explorer = { apiKey: localVar('BLOCKSCOUT_API_KEY') };
+  if (!explorer.apiKey) console.log('no BLOCKSCOUT_API_KEY: Arbitrum funding links will not be read');
 
-  let lastRemaining: number | null = null;
-  let lostInARow = 0;
   let failedInARow = 0;
-  let totalCalls = 0;
-  let skippedInEndgame = 0;
-  /** Endpoints this key is not allowed to read, mentioned once each. */
-  const forbidden = new Set<string>();
   let stopReason = 'candidates exhausted';
 
   for (const [i, address] of todo.entries()) {
-    if (lastRemaining !== null && lastRemaining <= args.reserve) {
-      stopReason = `credit reserve reached (${lastRemaining} left)`;
-      break;
-    }
-    // Endgame: once the balance cannot cover a worst-case check, take only
-    // accounts whose largest position is a long - those cost exactly two
-    // calls - so the last credits are spent without overdrawing.
-    if (lastRemaining !== null && lastRemaining < args.reserve + WORST_CASE_CALLS) {
-      if (lastRemaining < args.reserve + LONG_CHECK_CALLS) {
-        stopReason = `credit reserve reached (${lastRemaining} left)`;
-        break;
-      }
-      const state = await getClearinghouseState(address).catch(() => null);
-      const largest = (state?.assetPositions ?? [])
-        .map(({ position }) => position)
-        .reduce<{ szi: string; positionValue: string } | null>(
-          (m, p) => (m === null || Math.abs(Number(p.positionValue)) > Math.abs(Number(m.positionValue)) ? p : m),
-          null,
-        );
-      if (!largest || Number(largest.szi) <= 0) {
-        skippedInEndgame++;
-        continue;
-      }
-    }
     const started = Date.now();
-    const calls: NansenCallMeta[] = [];
-    const nansen = createNansenClient(key, (m) => {
-      calls.push(m);
-      appendFileSync(
-        LEDGER,
-        JSON.stringify({
-          at: new Date().toISOString(),
-          source: args.source,
-          endpoint: m.path,
-          status: m.status,
-          creditsCost: m.creditsCost,
-          creditsRemaining: m.creditsRemaining,
-        }) + '\n',
-      );
-    });
 
     let result: CheckResult | null = null;
     try {
-      result = await checkAddress(address, { nansen });
+      result = await checkAddress(address, { explorer });
       failedInARow = 0;
     } catch (err) {
       failedInARow++;
       console.log(`#${i + 1} ${address} FAILED: ${err instanceof Error ? err.message : String(err)}`);
     }
-    totalCalls += calls.length;
-    const reported = [...calls].reverse().find((c) => c.creditsRemaining !== null);
-    if (reported) lastRemaining = reported.creditsRemaining;
 
     if (result) {
       // Its own id, from the same function a live check uses, so a link to
@@ -302,7 +236,8 @@ async function main(): Promise<void> {
       const previous = previousReadingId(earlier, address, idOf);
       gallery.entries.push({
         ...result,
-        nansenCalls: calls.length,
+        // The field old readings carry; a reading made now made no Nansen call.
+        nansenCalls: 0,
         snapshotId: snapshotId(address, result.checkedAt, result.classifierVersion, result.focus),
         ...(previous ? { supersedes: previous } : {}),
       });
@@ -311,28 +246,10 @@ async function main(): Promise<void> {
       const v = result.verdict;
       console.log(
         `#${i + 1} ${address} ${v.verdict}${v.strength ? ` (${v.strength})` : ''} | ` +
-          `${result.evidence[0]?.value ?? '-'} | calls ${calls.length} | left ${lastRemaining ?? '?'}`,
+          `${result.evidence[0]?.value ?? '-'}`,
       );
-      lostInARow = result.source === 'nansen' ? 0 : lostInARow + 1;
     }
 
-    // Only stop for a refusal that is about the balance. A 403 that still
-    // reports credits means the key may not read that one endpoint, which
-    // costs this scan a field on the card, not the rest of its budget.
-    if (calls.some((c) => meansOutOfCredits(c.status, c.creditsRemaining))) {
-      stopReason = `Nansen refused a call (${calls.map((c) => c.status).join(',')})`;
-      break;
-    }
-    for (const c of calls) {
-      if (c.status >= 400 && !forbidden.has(c.path)) {
-        forbidden.add(c.path);
-        console.log(`  note: ${c.path} answered ${c.status}; continuing without it`);
-      }
-    }
-    if (lostInARow >= 3) {
-      stopReason = 'three checks in a row without Nansen positions';
-      break;
-    }
     if (failedInARow >= MAX_FAILED_IN_A_ROW) {
       stopReason = `${MAX_FAILED_IN_A_ROW} checks in a row failed`;
       break;
@@ -343,8 +260,7 @@ async function main(): Promise<void> {
 
   const counts: Record<string, number> = {};
   for (const e of gallery.entries) counts[e.verdict.verdict] = (counts[e.verdict.verdict] ?? 0) + 1;
-  console.log(`stopped: ${stopReason}; skipped in the endgame (short headline): ${skippedInEndgame}`);
-  console.log(`this run: ${totalCalls} Nansen calls, ${lastRemaining ?? '?'} credits left`);
+  console.log(`stopped: ${stopReason}`);
   console.log(`gallery: ${gallery.entries.length} entries ${JSON.stringify(counts)}`);
 }
 

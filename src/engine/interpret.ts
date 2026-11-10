@@ -15,6 +15,7 @@ import { verdictInputOf, type Observation } from './observation';
 import { explain, type EvidenceInput } from './evidence';
 import { exposureBreakdown } from './breakdown';
 import { shareCard, type ShareCardOptions } from './share';
+import { attributionOf } from './attribution';
 
 /** An observation with the current rules' verdict on it. */
 export type Interpreted = Observation & Pick<CheckResult, 'verdict' | 'classifierVersion' | 'interpretedAt'>;
@@ -56,6 +57,9 @@ export function present(r: Interpreted, share: ShareCardOptions = { kind: 'live'
     pnl: r.pnl,
     sizeVsOi: r.sizeVsOi,
     source: r.source,
+    // Only when present: a reading made before the field existed must come
+    // out without the key, not with `positionsVenues: undefined`.
+    ...(r.positionsVenues ? { positionsVenues: r.positionsVenues } : {}),
     mainDexPositionCount: r.mainDexPositionCount,
     focus: r.focus,
     positionsAsOf: r.positionsAsOf,
@@ -78,5 +82,5 @@ export function present(r: Interpreted, share: ShareCardOptions = { kind: 'live'
     coverageNotes: r.coverageNotes,
     checkedAt: r.checkedAt,
   };
-  return { ...result, share: shareCard(result, share) };
+  return { ...result, share: shareCard(result, share), attribution: attributionOf(result) };
 }

@@ -176,9 +176,11 @@ export interface VerdictInput {
    * dex leaves this `partial`, and "it quotes nothing" is then a statement
    * about the reading rather than about the account. */
   ordersCoverage?: SourceCoverage;
-  /** How completely the account's positions were read. Hyperliquid's own
-   * clearinghouse answers for the main dex only, so a fallback reading
-   * cannot see a HIP-3 leg and cannot support a claim about concentration. */
+  /** How completely the account's positions were read: `complete` only when
+   * every Hyperliquid dex answered, so a dex that did not leaves it `partial`
+   * and the reading cannot support a claim about concentration. (Readings
+   * made before 21 October 2026 read main-dex-only fallbacks, which could not
+   * see a HIP-3 leg at all.) */
   positionsCoverage?: SourceCoverage;
 }
 
@@ -297,7 +299,8 @@ function selectedOffset(input: StructureInput): boolean {
   return legs ? legs.opposingUsd > 0 || legs.sameSideOtherUsd > 0 : (offsetShare(input) ?? 0) > 0;
 }
 
-/** A hedge read costs a credit, so it is worth making only when its answer
+/** A hedge read costs upstream requests from the check's own budget, so it
+ * is worth making only when its answer
  * could move the verdict: positions exist, the quoting has not already
  * settled the account, and the headline is
  * a short - spot offsets nothing else. Mirrors the order of the rules in

@@ -1,0 +1,124 @@
+{
+  "note": "trimmed to the parties of the first three transactions, each cut to hash, name and tag names, from a keyed capture of 2026-11-10",
+  "capturedAt": "2026-11-10T13:52:40.375Z",
+  "chain": "ethereum",
+  "url": "https://api.blockscout.com/1/api/v2/addresses/0xb38e8c17e38363af6ebdcb3dae12e0243582891d/transactions?filter=to&sort=block_number&order=asc",
+  "answer": {
+    "items": [
+      {
+        "from": {
+          "hash": "0x3E5E497D054013a9506e1AB811A0C37e0AC34cac",
+          "name": null,
+          "metadata": null
+        },
+        "to": {
+          "hash": "0xB38e8c17e38363aF6EbdCb3dAE12e0243582891D",
+          "name": null,
+          "metadata": {
+            "tags": [
+              {
+                "name": "Binance: Hot Wallet"
+              },
+              {
+                "name": "HOT WALLET"
+              },
+              {
+                "name": "Exchange"
+              },
+              {
+                "name": "Binance 54"
+              },
+              {
+                "name": "note_0"
+              },
+              {
+                "name": "Binance"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "from": {
+          "hash": "0x46340b20830761efd32832A74d7169B29FEB9758",
+          "name": null,
+          "metadata": {
+            "tags": [
+              {
+                "name": "Crypto.com Exchange: Hot Wallet"
+              },
+              {
+                "name": "HOT WALLET"
+              },
+              {
+                "name": "Crypto.com 2"
+              },
+              {
+                "name": "Crypto.com Exchange"
+              }
+            ]
+          }
+        },
+        "to": {
+          "hash": "0xB38e8c17e38363aF6EbdCb3dAE12e0243582891D",
+          "name": null,
+          "metadata": {
+            "tags": [
+              {
+                "name": "Binance: Hot Wallet"
+              },
+              {
+                "name": "HOT WALLET"
+              },
+              {
+                "name": "Exchange"
+              },
+              {
+                "name": "Binance 54"
+              },
+              {
+                "name": "note_0"
+              },
+              {
+                "name": "Binance"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "from": {
+          "hash": "0x93ff1949FCCc48beBAccF0E0375a41E5e4da3379",
+          "name": null,
+          "metadata": null
+        },
+        "to": {
+          "hash": "0xB38e8c17e38363aF6EbdCb3dAE12e0243582891D",
+          "name": null,
+          "metadata": {
+            "tags": [
+              {
+                "name": "Binance: Hot Wallet"
+              },
+              {
+                "name": "HOT WALLET"
+              },
+              {
+                "name": "Exchange"
+              },
+              {
+                "name": "Binance 54"
+              },
+              {
+                "name": "note_0"
+              },
+              {
+                "name": "Binance"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

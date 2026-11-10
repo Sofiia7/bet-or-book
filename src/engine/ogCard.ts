@@ -12,6 +12,7 @@ import { shareCard } from './share';
 import { formatPct } from './evidence';
 import { constellationInputsForOg, type ConstellationInputs } from './constellation';
 import { VERDICT_STYLES } from './presentation';
+import { attributionOf } from './attribution';
 
 /**
  * The picture's own layout, as part of where it is kept.
@@ -59,6 +60,13 @@ export interface OgCardData {
    * its own, only layout. Both null exactly when `constellation` is. */
   constellationStat: { value: string; label: string } | null;
   footerLeft: string;
+  /** The credit at the right of the footer: the sources the reading used
+   * (src/engine/attribution.ts, `card`). A reading made with Nansen prints
+   * "Powered by Nansen API" here, drawn again on demand as much as the first
+   * time; the pictures already stored for the archive keep what they drew.
+   * Empty on the standing picture, which is the stand-in for any reading and
+   * so credits no source. */
+  footerRight: string;
   /** When the numbers were measured and what kind of reading this is - the
    * Download PNG path had this and the link's own preview did not, so the
    * same card told two different ages of itself depending which picture of
@@ -136,6 +144,8 @@ export interface OgCardInput {
    * drift from either of them by having its own, third opinion. */
   provenance: string;
   limitText: string | null;
+  /** The footer's credit line: the reading's own `attributionOf(...).card`. */
+  credit: string;
 }
 
 /**
@@ -162,6 +172,7 @@ export function ogCardFor(card: CheckResult, kind: 'saved' | 'gallery'): OgCardD
     hedge: card.hedge,
     provenance: share.provenance,
     limitText: share.limits.length > 1 ? share.limits[1] : null,
+    credit: attributionOf(card).card,
   });
 }
 
@@ -191,6 +202,7 @@ export function ogCardData(input: OgCardInput): OgCardData {
     constellationStat,
     dataQuality: quality,
     footerLeft: `${shortAddress(input.address)} · rules ${input.classifierVersion}`,
+    footerRight: input.credit,
     provenance: input.provenance,
     limitText: input.limitText,
   };

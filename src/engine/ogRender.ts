@@ -257,10 +257,10 @@ export function ogTree(d: OgCardData): object {
                 type: 'div',
                 props: { style: { display: 'flex', fontWeight: 400 }, children: `Bet or Book · ${d.footerLeft}` },
               },
-              {
-                type: 'div',
-                props: { style: { display: 'flex', fontWeight: 400 }, children: 'Powered by Nansen API' },
-              },
+              // No credit on the standing picture, which says nothing about a source.
+              ...(d.footerRight
+                ? [{ type: 'div', props: { style: { display: 'flex', fontWeight: 400 }, children: d.footerRight } }]
+                : []),
             ],
           },
         },

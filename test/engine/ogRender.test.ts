@@ -7,7 +7,10 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { ogTree, renderOgPng, OG_WIDTH, OG_HEIGHT, type OgFont } from '../../src/engine/ogRender';
-import type { OgCardData } from '../../src/engine/ogCard';
+import { ogCardFor, type OgCardData } from '../../src/engine/ogCard';
+import featuredData from '../../data/featured.json';
+import type { Gallery } from '../../src/gallery';
+import type { CheckResponse } from '../../src/api/check';
 
 const compileWasm = (bytes: BufferSource): Promise<WebAssembly.Module> =>
   (WebAssembly as unknown as { compile(b: BufferSource): Promise<WebAssembly.Module> }).compile(bytes);
@@ -25,6 +28,7 @@ function data(overrides: Partial<OgCardData> = {}): OgCardData {
     constellation: null,
     constellationStat: null,
     footerLeft: '0xecb6...2b00 · rules v4',
+    footerRight: 'Data: Hyperliquid API, public nodes, Blockscout',
     provenance: 'Positions as of 23 Sep, 14:32 UTC · saved reading, rules v4',
     limitText: null,
     dataQuality: 'measured',
@@ -38,7 +42,11 @@ describe('ogTree', () => {
     expect(tree).toContain('BOOK (STRONG)');
     expect(tree).toContain('2,685 resting orders');
     expect(tree).toContain('0xecb6...2b00');
-    expect(tree).toContain('Powered by Nansen API');
+    expect(tree).toContain('Data: Hyperliquid API, public nodes, Blockscout');
+  });
+
+  it('prints no Nansen credit on a picture whose card does not carry one', () => {
+    expect(JSON.stringify(ogTree(data()))).not.toMatch(/nansen/i);
   });
 
   it('draws no constellation block when there is none', () => {
@@ -103,6 +111,70 @@ describe('ogTree', () => {
   it('shows the date alone when the reading carries no caveat beyond the permanent one', () => {
     const tree = JSON.stringify(ogTree(data({ provenance: 'Positions as of 23 Sep, 14:32 UTC · saved reading, rules v4', limitText: null })));
     expect(tree).toContain('23 Sep, 14:32 UTC');
+  });
+});
+
+// The footer credit follows the reading: a reading made with Nansen keeps
+// "Powered by Nansen API" (also when it is drawn again on demand), a reading
+// made without it names only the sources it used. The tree is what satori is
+// handed, so it is what the picture says.
+describe('the footer credit of the picture', () => {
+  const nansenReading = (featuredData as unknown as Gallery).entries.find((e) => e.snapshotId === '12pk1a43rv3a1') as CheckResponse;
+  const newReading: CheckResponse = {
+    ...nansenReading,
+    source: 'hyperliquid',
+    hedgeScope: 'known-tokens',
+    nansenCalls: 0,
+    evidence: nansenReading.evidence.map((e) => ({ ...e, source: e.label === 'Linked wallets' ? ('Explorer + On-chain' as const) : ('Hyperliquid' as const) })),
+    vitals: nansenReading.vitals.map((v) => ({ ...v, source: 'Hyperliquid' as const })),
+  };
+
+  it('says Powered by Nansen API for a reading made with Nansen, for a saved card and for a gallery card', () => {
+    for (const kind of ['saved', 'gallery'] as const) {
+      const tree = JSON.stringify(ogTree(ogCardFor(nansenReading, kind)));
+      expect(tree).toContain('\"children\":\"Powered by Nansen API\"');
+    }
+  });
+
+  it('names the sources a new reading used, and not Nansen', () => {
+    const tree = JSON.stringify(ogTree(ogCardFor(newReading, 'saved')));
+    expect(tree).toContain('\"children\":\"Data: Hyperliquid API, public nodes, Blockscout\"');
+    expect(tree).not.toMatch(/nansen/i);
+  });
+
+  it('names only Hyperliquid for a new reading that read nothing else', () => {
+    const bare: CheckResponse = { ...newReading, hedgeScope: 'hyperliquid', linkedHedge: null, evidence: newReading.evidence.filter((e) => e.label !== 'Linked wallets') };
+    const tree = JSON.stringify(ogTree(ogCardFor(bare, 'saved')));
+    expect(tree).toContain('\"children\":\"Data: Hyperliquid API\"');
+  });
+});
+
+// The standing picture is what a link shows until its own picture is drawn, for a reading made with
+// Nansen as much as for one made without, so it makes no claim about a source: it has no credit at
+// the right of its footer, and the script that draws it says none either.
+describe('the standing picture makes no source claim', () => {
+  it('draws no credit when the card has none, and keeps its left footer', () => {
+    const tree = JSON.stringify(ogTree(data({ footerLeft: 'bet-or-book.trade', footerRight: '' })));
+    expect(tree).toContain('Bet or Book · bet-or-book.trade');
+    expect(tree).not.toMatch(/nansen/i);
+    expect(tree).not.toMatch(/Powered by|Data: /);
+    // Only the left text is in the footer row.
+    expect(tree).not.toContain('"children":""');
+  });
+
+  it('is drawn by scripts that name no source', () => {
+    const brand = readFileSync('scripts/render-brand.ts', 'utf8');
+    expect(brand).toContain("children: 'bet-or-book.trade'");
+    expect(brand).not.toMatch(/nansen/i);
+    expect(brand).not.toMatch(/Powered by|Data: /);
+    const fallback = readFileSync('scripts/generate-og-fallback.ts', 'utf8');
+    expect(fallback).toContain("footerRight: ''");
+    expect(fallback).not.toMatch(/nansen/i);
+    expect(fallback).not.toMatch(/Powered by|Data: /);
+  });
+
+  it('still draws the footer credit of a reading from its attribution', () => {
+    expect(JSON.stringify(ogTree(data()))).toContain('"children":"Data: Hyperliquid API, public nodes, Blockscout"');
   });
 });
 

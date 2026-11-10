@@ -1,0 +1,53 @@
+{
+  "note": "trimmed to the fields the reader uses (sender metadata cut to its tag names) from a keyless capture of 2026-11-09",
+  "capturedAt": "2026-11-09T20:48:36.550Z",
+  "chain": "ethereum",
+  "url": "https://eth.blockscout.com/api/v2/addresses/0xb83de012dba672c76a7dbbbf3e459cb59d7d6e36/transactions?filter=to&sort=block_number&order=asc",
+  "answer": {
+    "items": [
+      {
+        "from": {
+          "hash": "0xEd0C6079229E2d407672a117c22b62064f4a4312",
+          "name": null,
+          "metadata": null
+        },
+        "to": {
+          "hash": "0xB83DE012dbA672c76A7dbbbf3E459CB59D7D6E36"
+        },
+        "value": "20000000000000000",
+        "timestamp": "2025-07-08T19:23:59.000000Z",
+        "status": "ok",
+        "block_number": 22876537
+      },
+      {
+        "from": {
+          "hash": "0xbe1392C9A6e4E2a557db21c7726d6c8B152d0700",
+          "name": null,
+          "metadata": null
+        },
+        "to": {
+          "hash": "0xB83DE012dbA672c76A7dbbbf3E459CB59D7D6E36"
+        },
+        "value": "0",
+        "timestamp": "2025-11-03T20:43:35.000000Z",
+        "status": "ok",
+        "block_number": 23721259
+      },
+      {
+        "from": {
+          "hash": "0x94e20896dE7764567162F5710833C82d50A7e886",
+          "name": null,
+          "metadata": null
+        },
+        "to": {
+          "hash": "0xB83DE012dbA672c76A7dbbbf3E459CB59D7D6E36"
+        },
+        "value": "3231160000000000",
+        "timestamp": "2026-01-03T09:03:11.000000Z",
+        "status": "ok",
+        "block_number": 24153098
+      }
+    ],
+    "next_page_params": null
+  }
+}

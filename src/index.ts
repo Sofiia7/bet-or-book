@@ -2,11 +2,9 @@ import { extractAddress, extractIp } from './guard';
 import { checkAddress, CHECK_DEADLINE_MS } from './api/check';
 import { withCache } from './cache';
 import { safeKv } from './safeKv';
-import { WORST_CASE_CALLS } from './budget';
-import { spendGuard, requestGate } from './coordinator';
-import { createNansenClient, meansOutOfCredits, type NansenCallMeta } from './sources/nansen';
-import { reusePositions } from './sources/reusePositions';
-import { stagedNansen } from './sources/stagedNansen';
+import { requestGate } from './coordinator';
+import { readAllDexPositions, reusePositions } from './sources/positions';
+import { attachRequestBudget, createRequestBudget } from './requestBudget';
 import { CLASSIFIER_VERSION } from './engine/verdict';
 import { ASSET_REGISTRY_VERSION } from './engine/observation';
 import type { CheckResponse } from './api/check';
@@ -20,8 +18,9 @@ import galleryData from '../data/gallery.json';
 import featuredData from '../data/featured.json';
 import featuredOg from '../data/og-featured.json';
 import ledgerData from '../data/ledger.json';
+import workerLedgerData from '../data/ledger-worker.json';
 import { galleryIndex, previousReadingId, type Gallery, type GalleryIndex } from './gallery';
-import { BUILDATHON_WINDOW, type LedgerSummary } from './ledger';
+import type { LedgerSummary } from './ledger';
 import type { KVLike } from './kv';
 import type { SafeKV } from './safeKv';
 import { ogCardFor, ogCacheKey, OG_LAYOUT_VERSION } from './engine/ogCard';
@@ -34,9 +33,12 @@ import { ruleExplanation, badgeQualifier } from './engine/reasons';
 import { openQuestion } from './engine/openQuestion';
 import { readingHeadline, evidenceTakeaway, caseQuestion, whatWouldChange, exampleDescription, VERDICT_STYLES } from './engine/presentation';
 import { nansenContribution } from './engine/nansenContribution';
+import { attributionOf } from './engine/attribution';
 import { renderOgPng, type OgFont } from './engine/ogRender';
 import interRegular from '../assets/inter-regular.woff';
 import interBold from '../assets/inter-bold.woff';
+import geistSans from '../assets/geist-sans.woff2';
+import geistMono from '../assets/geist-mono.woff2';
 // @ts-expect-error -- a .wasm import has no declared module type; Wrangler
 // compiles it to a WebAssembly.Module at build time, which is exactly what
 // resvg-wasm's initWasm accepts.
@@ -47,12 +49,15 @@ import logoPng from '../assets/logo.png';
 const gallery = galleryData as unknown as Gallery;
 const pageScript = pageScriptSource.replace('__VERDICT_STYLES__', JSON.stringify(VERDICT_STYLES));
 
-/** A reading as it leaves the Worker, with four things worked out here from
+/** A reading as it leaves the Worker, with five things worked out here from
  * what it already holds, so the page has the words without keeping its own
  * copy of the rules: the rule behind the verdict (U06), the question it
  * leaves open, what Nansen added to it - the last two asked for by the
- * 23.09 audit before submission - and the short qualifier for the Unknown
- * badge itself (24.09 audit U02 + L10). */
+ * 23.09 audit before submission - the short qualifier for the Unknown
+ * badge itself (24.09 audit U02 + L10), and the credit each share carries,
+ * which follows the sources the reading used. The credit is worked out here
+ * again for every reading served, so a reading saved before it existed (the
+ * bundled archive, an older stored one) is credited by the same rule. */
 function explained<T extends CheckResponse>(r: T): T {
   return {
     ...r,
@@ -60,6 +65,7 @@ function explained<T extends CheckResponse>(r: T): T {
     openQuestion: openQuestion(r),
     nansen: nansenContribution(r),
     badgeQualifier: badgeQualifier(r.verdict, r.historical !== undefined),
+    attribution: attributionOf(r),
     headline: readingHeadline(r),
     takeaway: evidenceTakeaway(r),
     whatChanges: whatWouldChange(r),
@@ -101,6 +107,10 @@ const listedGallery: GalleryIndex & { featured: GalleryIndex['entries'] } = {
   }),
 };
 const scriptedLedger = ledgerData as unknown as LedgerSummary;
+/** The Worker's own September calls, frozen when the credit meter was retired. */
+const workerLedger = workerLedgerData as { calls: number };
+/** What /api/ledger answers: two static archives. Nothing counts live any more. */
+const ledgerBody = { totalCalls: scriptedLedger.calls + workerLedger.calls, scripted: scriptedLedger, live: workerLedger };
 
 /**
  * The page asks for its script by content, so a deploy cannot leave a reader
@@ -114,20 +124,19 @@ const page = pageHtml.replace('src="/app.js"', `src="${SCRIPT_PATH}"`)
 
 interface Env {
   KV: KVLike;
-  /** From .dev.vars locally, `wrangler secret put` when deployed. Optional:
-   * without it every check runs Hyperliquid-only and says so. */
-  NANSEN_API_KEY?: string;
-  NANSEN_DAILY_CREDIT_CAP: string;
-  NANSEN_CREDIT_FLOOR: string;
-  /** Credits of the daily cap that public checks may not touch, so a demo
-   * still runs after a busy afternoon. Optional; absent means none. */
-  NANSEN_DEMO_RESERVE?: string;
-  /** Lets one request reach past the public cap into that reserve. Set with
-   * `wrangler secret put`; without it the reserve is simply unreachable. */
+  /** A Blockscout PRO API key, for the funding links (src/sources/explorer.ts).
+   * From .dev.vars locally, `wrangler secret put` when deployed. Optional:
+   * without it Ethereum is read keyless and Arbitrum is said to be not read. */
+  BLOCKSCOUT_API_KEY?: string;
+  /** The operator key: a request carrying it in the `x-demo-key` header skips
+   * the public rate limits and is tagged `demo` in telemetry. Set with
+   * `wrangler secret put`; unset or empty, it lets no one through. */
   DEMO_KEY?: string;
-  /** The spend cap and the request counter. Both need read-modify-write to
-   * be atomic, which is the one thing KV cannot promise. */
+  /** The retired Nansen credit meter (src/coordinator.ts). Bound, because
+   * deleting a Durable Object class takes a migration; nothing calls it. */
   NANSEN_BUDGET: DurableObjectNamespace;
+  /** The request counter: read-modify-write that has to be atomic, which is
+   * the one thing KV cannot promise. */
   REQUEST_GATE: DurableObjectNamespace;
   PILOT_WATCH?: DurableObjectNamespace;
 }
@@ -143,11 +152,10 @@ const RATE_LIMIT_MAX_PER_WINDOW = 20;
 const RATE_LIMIT_WINDOW_SECONDS = 60;
 /** A second limit across every client at once. The per-address window
  * bounds one visitor; it does nothing about a hundred of them, or one
- * visitor on a hundred addresses, emptying the day's credits in a minute
- * while everyone else gets the free answer (audit S03). */
+ * visitor on a hundred addresses, firing a few thousand upstream requests in
+ * a minute and getting this site rate-limited by its sources (audit S03). */
 const GLOBAL_BURST_MAX = 10;
 const GLOBAL_BURST_WINDOW_SECONDS = 10;
-const LEDGER_MEMO_MS = 60_000;
 
 /** The script now lives in its own file, so no inline script is allowed at
  * all: an injected <script> has nothing to execute under. Inline styles
@@ -173,6 +181,17 @@ const SCRIPT_HEADERS = {
   'x-content-type-options': 'nosniff',
   'cache-control': 'public, max-age=300',
 };
+
+/** Every font the Worker serves, by path. The two Inter files are the ones
+ * the picture renderer (satori) draws with; the Geist pair is what the page
+ * itself is set in (assets/GEIST-LICENSE.txt). A Map, so no path can reach
+ * an inherited property the way an object lookup could. */
+const FONTS = new Map<string, { body: ArrayBuffer; type: string }>([
+  ['/fonts/inter-regular.woff', { body: interRegular, type: 'font/woff' }],
+  ['/fonts/inter-bold.woff', { body: interBold, type: 'font/woff' }],
+  ['/fonts/geist-sans.woff2', { body: geistSans, type: 'font/woff2' }],
+  ['/fonts/geist-mono.woff2', { body: geistMono, type: 'font/woff2' }],
+]);
 
 /** A reading's own picture. The reading never changes under its id and the
  * layout is part of the key (OG_LAYOUT_VERSION), so once a picture exists
@@ -263,12 +282,12 @@ const notFoundYet = () =>
 /**
  * True when this request did not come from another site's page.
  *
- * Starting a check spends money, so it is a POST from this origin rather
- * than a GET anything can trigger. A browser states where a request came
+ * Starting a check sends a few dozen upstream requests, so it is a POST
+ * from this origin rather than a GET anything can trigger. A browser states where a request came
  * from; a tool such as curl states nothing, and is allowed through on the
  * strength of the rate limits, because refusing it would only mean refusing
  * anyone using the API on purpose. What this stops is a page elsewhere
- * spending this site's credits, and a crawler doing it by accident.
+ * spending this site's upstream allowance, and a crawler doing it by accident.
  */
 function fromThisSite(request: Request, url: URL): boolean {
   const site = request.headers.get('sec-fetch-site');
@@ -278,7 +297,7 @@ function fromThisSite(request: Request, url: URL): boolean {
 }
 
 /**
- * Whether a request carries the operator key for the demo reserve.
+ * Whether a request carries the operator key (DEMO_KEY).
  *
  * Compared as SHA-256 digests, so the comparison takes the same time however
  * much of the key a guess gets right, and neither length nor content leaks
@@ -300,17 +319,6 @@ async function isOperator(request: Request, env: Env): Promise<boolean> {
 /** A HEAD answer carries the headers of the GET it stands for and no body. */
 const headOf = (res: Response) => new Response(null, { status: res.status, headers: res.headers });
 
-/** A configured number, or a fallback chosen so that a misconfiguration
- * costs nothing rather than everything. */
-function numberOr(raw: string | undefined, fallback: number, name: string): number {
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n < 0) {
-    console.error(`${name} is not a number: ${JSON.stringify(raw)}; using ${fallback}`);
-    return fallback;
-  }
-  return n;
-}
-
 const SOCIAL_BLOCK = /<!--SOCIAL-->[\s\S]*?<!--\/SOCIAL-->/;
 
 const escapeAttr = (s: string) =>
@@ -324,7 +332,7 @@ async function readSnapshot(kv: KVLike, id: string): Promise<CheckResponse | nul
 /**
  * Rewrites the page's social tags for one saved reading. A crawler follows a
  * shared link, does not run JavaScript, and must not be able to make this
- * site spend a credit; serving it the reading's own words costs neither.
+ * site start a check; serving it the reading's own words costs nothing.
  */
 function withSocialTags(html: string, card: CheckResponse, url: URL, id: string): string {
   const p = card.positions;
@@ -361,10 +369,6 @@ const VERDICT_WORDS: Record<string, string> = {
   unknown: 'not settled by what could be read',
 };
 
-/** Per-isolate memo of /api/ledger: it costs up to 14 KV reads, and reads
- * are a daily quota too. */
-let ledgerMemo: { at: number; body: unknown } | null = null;
-
 const worker = {
   async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
     if (!env.PILOT_WATCH) return;
@@ -376,7 +380,7 @@ const worker = {
     url.searchParams.set('address', job.address); url.searchParams.set('context', '0');
     if (job.focus) { url.searchParams.set('coin', job.focus.coin); url.searchParams.set('side', job.focus.side); }
     try {
-      // Same guarded public path: no operator key and no demo reserve access.
+      // Same guarded public path: no operator key.
       const res = await worker.fetch(new Request(url, { method: 'POST', headers: { origin: url.origin } }), env);
       await call({ action: 'complete', ...job, ...(res.ok ? { result: await res.json() } : { error: 'Check unavailable' }) });
     } catch { await call({ action: 'complete', ...job, error: 'Check unavailable' }); }
@@ -453,11 +457,10 @@ const worker = {
 
     if (url.pathname === '/og-fallback.png' || url.pathname === '/logo.png' || url.pathname.startsWith('/fonts/')) {
       if (method === 'POST') return new Response('method not allowed', { status: 405, headers: { allow: 'GET, HEAD' } });
-      const font = url.pathname === '/fonts/inter-regular.woff' ? interRegular
-        : url.pathname === '/fonts/inter-bold.woff' ? interBold : null;
+      const font = FONTS.get(url.pathname) ?? null;
       if (!font && url.pathname !== '/og-fallback.png' && url.pathname !== '/logo.png') return new Response('not found', { status: 404 });
-      const res = new Response(font ?? (url.pathname === '/logo.png' ? logoPng : ogFallbackPng), { headers: {
-        'content-type': font ? 'font/woff' : 'image/png',
+      const res = new Response(font?.body ?? (url.pathname === '/logo.png' ? logoPng : ogFallbackPng), { headers: {
+        'content-type': font ? font.type : 'image/png',
         'cache-control': 'public, max-age=86400',
         'x-content-type-options': 'nosniff',
       } });
@@ -497,9 +500,9 @@ const worker = {
       const cacheKey = `check:${CLASSIFIER_VERSION}:${ASSET_REGISTRY_VERSION}:${address}${asked}${includeContext ? '' : ':core'}`;
 
       // Reading an answer that already exists and starting a new one that
-      // costs money are two different acts, so they are two different
-      // methods. A scanner, a link preview or a browser prefetch can only
-      // ever perform the first: GET and HEAD used to run the paid branch,
+      // sends requests upstream are two different acts, so they are two
+      // different methods. A scanner, a link preview or a browser prefetch
+      // can only ever perform the first: GET and HEAD used to run a check,
       // and the comment above them said nothing here writes.
       if (method !== 'POST') {
         const cached = await kv.get(cacheKey);
@@ -513,8 +516,8 @@ const worker = {
         return method === 'HEAD' ? headOf(res) : res;
       }
 
-      // A reserve the public path cannot reach, so an afternoon of visitors
-      // cannot leave the demo with a Hyperliquid-only answer. A header, not
+      // The operator key lets a demonstration through while the public
+      // rate limits are exhausted (below). A header, not
       // `?demo=`: a query string ends up in browser history, server access
       // logs and - the specific way this was found - the URL bar of a
       // screen recording made for this project's own submission video. An
@@ -553,7 +556,7 @@ const worker = {
       }
 
       // A coin/side that is not actually open still mints its own cache key
-      // and its own fresh paid check, however many different ones are tried
+      // and its own fresh check, however many different ones are tried
       // - every one of them was going to fall back to the same largest
       // position anyway. When a plain reading of this address is already on
       // record, its candidates already say which positions exist, so an ask
@@ -585,12 +588,10 @@ const worker = {
         }
       }
 
-      // The reserve exists so the demo path still works while the public
-      // one is busy - which it cannot do if reaching it first requires
-      // getting past the same public limits it is meant to stand apart
-      // from. So this checks the operator key before either limiter, and a
-      // demo request skips both: the reserve is what protects it from
-      // public load, not a place in the public queue.
+      // The operator path has to work while the public one is busy - which
+      // it cannot do if reaching it first requires getting past the same
+      // public limits it is meant to stand apart from. So this checks the
+      // operator key before either limiter, and a demo request skips both.
       if (!demo) {
         const limiter = requestGate(env.REQUEST_GATE, RATE_LIMIT_MAX_PER_WINDOW, RATE_LIMIT_WINDOW_SECONDS);
         const ip = extractIp(request);
@@ -614,62 +615,29 @@ const worker = {
       // Filled in only when this request is the one that made the reading;
       // an answer that came from the cache or from a check already running
       // for the same question cost this request nothing. The `as` keeps
-      // TypeScript from deciding it is still null after the await: it is
-      // assigned inside the producer below.
-      let fresh = null as Pick<CheckEvent, 'nansenCalls' | 'credits' | 'nansenOff' | 'creditsRemaining' | 'creditsMeasuredAt'> | null;
+      // TypeScript from deciding it is still false after the await: it is
+      // set inside the producer below.
+      let fresh = false as boolean;
       try {
         const ttl = (r: CheckResponse) => (r.degraded ? DEGRADED_CACHE_TTL_SECONDS : CHECK_CACHE_TTL_SECONDS);
         const result = await withCache(kv, cacheKey, ttl, async () => {
-          const day = new Date().toISOString().slice(0, 10);
-          const calls: NansenCallMeta[] = [];
-          // The credits this check could possibly spend are held before it
-          // starts, not counted after it finishes, so a check that overlaps
-          // this one sees them as already gone.
-          // A cap that is not a number must not read as no cap: every
-          // comparison against NaN is false, which would have meant every
-          // check allowed. A misconfigured cap spends nothing instead.
-          const dailyCap = numberOr(env.NANSEN_DAILY_CREDIT_CAP, 0, 'NANSEN_DAILY_CREDIT_CAP');
-          const reserve = numberOr(env.NANSEN_DEMO_RESERVE, 0, 'NANSEN_DEMO_RESERVE');
-          const budget = spendGuard(env.NANSEN_BUDGET, {
-            cap: demo ? dailyCap : Math.max(0, dailyCap - reserve),
-            floor: numberOr(env.NANSEN_CREDIT_FLOOR, Number.MAX_SAFE_INTEGER, 'NANSEN_CREDIT_FLOOR'),
-          });
-          let nansenOffReason: string | undefined;
-          let hold: string | null = null;
-          if (!env.NANSEN_API_KEY) {
-            nansenOffReason = 'no API key configured';
-          } else if (includeContext) {
-            // The meter is a Durable Object, and the free plan's daily row
-            // allowance for those is shared by every Worker on the account.
-            // When it cannot be read, the check still answers from
-            // Hyperliquid and the card says why Nansen was not asked.
-            try {
-              const reservation = await budget.reserve(day, WORST_CASE_CALLS);
-              if (reservation.ok) hold = reservation.id;
-              else nansenOffReason = reservation.reason;
-            } catch (err) {
-              console.error('spend guard unreachable', err);
-              nansenOffReason = 'the credit meter could not be reached';
-            }
-          }
           // One deadline for the reader's wait, enforced both as a clock
           // the stages consult and as a signal on the sockets themselves.
           const startedAt = Date.now();
           const timeout = AbortSignal.timeout(CHECK_DEADLINE_MS);
-          const nansen =
-            nansenOffReason === undefined
-              ? reusePositions(includeContext ? createNansenClient(
-                  env.NANSEN_API_KEY!,
-                  (m) => {
-                    calls.push(m);
-                  },
-                  timeout,
-                ) : stagedNansen(env.NANSEN_API_KEY!, budget, day, m => { calls.push(m); }, timeout), kv)
-              : null;
+          // Every transport charges the budget on this signal, so a check
+          // stops itself below the plan's subrequest limit.
+          attachRequestBudget(timeout, createRequestBudget());
+          // Positions come from every Hyperliquid dex, free. A complete reading
+          // is reused for a minute, so switching the selected asset does not
+          // ask all of them again; the list of dexes is kept for an hour.
+          const readPositions = reusePositions((a, s) => readAllDexPositions(a, { signal: s, kv }), kv);
           try {
             const result = await checkAddress(address, {
-              nansen,
-              nansenOffReason,
+              // The funding links come from the block explorer, with the
+              // optional key; nothing here calls Nansen.
+              explorer: { apiKey: env.BLOCKSCOUT_API_KEY },
+              readPositions,
               focus,
               includeContext,
               deadline: startedAt + CHECK_DEADLINE_MS,
@@ -681,7 +649,7 @@ const worker = {
               const rawPrevious = await kv.get(quoteKey);
               let previous: QuoteSample | null = null;
               try { previous = rawPrevious ? JSON.parse(rawPrevious) as QuoteSample : null; } catch { /* discard corrupt history */ }
-              const sample = nextQuoteSample(previous, { ...result, nansenCalls: calls.length });
+              const sample = nextQuoteSample(previous, { ...result, nansenCalls: 0 });
               if (sample) {
                 result.quoteSamples = { samples: sample.samples, firstAt: sample.firstAt, lastAt: sample.at, continuityConfirmed: false };
                 await kv.put(quoteKey, JSON.stringify(sample), { expirationTtl: 1800 });
@@ -710,11 +678,11 @@ const worker = {
             const previousId =
               (await kv.get(latestKey)) ??
               (result.focus ? null : previousReadingId([...featured.entries, ...gallery.entries], address, galleryIdOf));
-            // Explained last, once it knows how many calls it took: what
-            // Nansen added says so, and the reading is what it reads it from.
+            // Explained last, with the reading whole. A reading made now took
+            // no Nansen call.
             const saved: CheckResponse = explained({
               ...result,
-              nansenCalls: calls.length,
+              nansenCalls: 0,
               snapshotId: id,
               ...(previousId !== null && previousId !== id ? { supersedes: previousId } : {}),
             });
@@ -724,7 +692,7 @@ const worker = {
             const stored = await kv.put(snapshotKey(id), JSON.stringify(saved), {
               expirationTtl: SNAPSHOT_TTL_SECONDS,
             });
-            if (!stored) return { ...explained({ ...result, nansenCalls: calls.length }), snapshotSaved: false };
+            if (!stored) return { ...explained({ ...result, nansenCalls: 0 }), snapshotSaved: false };
             // The pointer only moves once this reading is durably the
             // newest one: a save that failed above already returned, so it
             // can never bump a real reading off the position of "latest".
@@ -737,45 +705,17 @@ const worker = {
               share: shareCard(saved, { kind: 'live', origin: url.origin, snapshotId: id }),
             };
           } finally {
-            // Settle first: the hold has to come off whatever else fails.
-            // A call with no cost header counts as one credit, the
-            // conservative direction for a cap.
-            const spent = calls.reduce((sum, c) => sum + (c.creditsCost ?? 1), 0);
-            const lastKnown = [...calls].reverse().find((c) => c.creditsRemaining !== null);
-            fresh = {
-              nansenCalls: calls.length,
-              credits: spent,
-              ...(lastKnown ? { creditsRemaining: lastKnown.creditsRemaining!, creditsMeasuredAt: lastKnown.at } : {}),
-              ...(nansenOffReason !== undefined ? { nansenOff: nansenOffReason } : {}),
-            };
-            try {
-              if (hold !== null) {
-                // A refusal that still reports credits is about one endpoint,
-                // not about the balance, and must not stop tomorrow too.
-                const refused = calls.some((c) => meansOutOfCredits(c.status, c.creditsRemaining));
-                await budget.settle(hold, spent, lastKnown?.creditsRemaining ?? null, refused, lastKnown?.at);
-              }
-              // What was actually called, counted in the same object as the
-              // money. It used to be a read-modify-write on one KV key, which
-              // loses counts whenever two checks finish together - and this is
-              // the number the buildathon submission rests on.
-              await budget.record(day, calls);
-            } catch (err) {
-              // A reading that exists is returned. An unsettled hold expires
-              // on its own and is charged at its worst case, the conservative
-              // side; a count that could not be recorded is a count lost.
-              console.error('spend guard unreachable after the check', err);
-            }
+            fresh = true;
           }
         }, url.searchParams.get('retry') === '1' ? r => r.degraded : undefined);
         counted(
           fresh ? 'fresh' : 'cached',
-          fresh ? { ...readingFields(result), ...fresh, saved: result.snapshotSaved === true } : readingFields(result),
+          fresh ? { ...readingFields(result), saved: result.snapshotSaved === true } : readingFields(result),
         );
         return Response.json(result);
       } catch (err) {
         console.error('check failed', err);
-        counted('failed', fresh ?? {});
+        counted('failed');
         return Response.json({ error: 'could not read this address right now, try again shortly' }, { status: 502 });
       }
     }
@@ -909,7 +849,7 @@ const worker = {
       }
     }
 
-    // Whether this browser's operator key reaches the demo reserve - checked
+    // Whether this browser's operator key is the right one - checked
     // on its own, before the demo, so a wrong or missing key is found then
     // rather than on camera (23.09 audit, S03). Costs nothing and says
     // nothing but yes or no.
@@ -925,45 +865,14 @@ const worker = {
       return Response.json(listedGallery, { headers: { 'cache-control': 'public, max-age=300' } });
     }
 
-    // Scripted calls (fixtures, smoke runs, the gallery prescan) come bundled
-    // from data/ledger.json; the Worker's own calls come from its KV day
-    // counters. Under `wrangler dev` the local KV also holds the dev calls
-    // that the ledger already lists, so the sum double-counts them there.
+    // The September call ledger, as two static archives: the calls the
+    // scripts and smoke runs made to Nansen during the buildathon
+    // (data/ledger.json) and the Worker's own calls, frozen from the retired
+    // credit meter (data/ledger-worker.json, sent as `live` so the answer
+    // keeps the shape it had). A check no longer calls Nansen, so nothing is
+    // added to either.
     if (url.pathname === '/api/ledger') {
-      if (!ledgerMemo || Date.now() - ledgerMemo.at > LEDGER_MEMO_MS) {
-        const budget = spendGuard(env.NANSEN_BUDGET, { cap: 0, floor: 0 });
-        let live: { calls: number; successful: number; creditsQuoted: number; creditsAssumed: number; byEndpoint: Record<string, number>; byDay: Record<string, number> } | null = null;
-        let liveUnavailable: string | undefined;
-        try {
-          const report = await budget.report(BUILDATHON_WINDOW.from, BUILDATHON_WINDOW.to);
-          live = {
-            calls: report.calls.attempted,
-            successful: report.calls.successful,
-            // Credits the API priced, and credits assumed for calls it did
-            // not. Two different kinds of number, reported as two.
-            creditsQuoted: report.calls.creditsQuoted,
-            creditsAssumed: report.calls.creditsAssumed,
-            byEndpoint: report.calls.byEndpoint,
-            byDay: report.byDay,
-          };
-        } catch (err) {
-          // The counts live in a Durable Object. When the platform will not
-          // read it, the scripted ledger still answers, and the body says
-          // the live part is missing rather than the route failing whole.
-          console.error('ledger report unavailable', err);
-          liveUnavailable = "the Worker's own call counts could not be read right now";
-        }
-        ledgerMemo = {
-          at: Date.now(),
-          body: {
-            totalCalls: scriptedLedger.calls + (live?.calls ?? 0),
-            scripted: scriptedLedger,
-            live,
-            ...(liveUnavailable ? { liveUnavailable } : {}),
-          },
-        };
-      }
-      return Response.json(ledgerMemo.body, { headers: { 'cache-control': 'public, max-age=60' } });
+      return Response.json(ledgerBody, { headers: { 'cache-control': 'public, max-age=3600' } });
     }
 
     if (url.pathname === '/') {

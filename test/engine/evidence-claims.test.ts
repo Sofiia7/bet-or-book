@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { explain, type EvidenceInput } from '../../src/engine/evidence';
 import { EMPTY_HEDGE, EMPTY_ORDERS, type PositionFeatures } from '../../src/engine/features';
+import { openQuestion } from '../../src/engine/openQuestion';
 
 function positions(overrides: Partial<PositionFeatures> = {}): PositionFeatures {
   return {
@@ -112,6 +113,54 @@ describe('a withheld verdict says which gap withheld it', () => {
     );
     expect(e.summary).toContain('At least');
     expect(e.summary).toContain('$95.0M');
+  });
+});
+
+describe('positions_not_complete says which positions were not read', () => {
+  const verdict = { verdict: 'unknown' as const, strength: null, reasons: ['positions_not_complete'] };
+  const withheld = (positionsVenues?: EvidenceInput['positionsVenues']) =>
+    input({ verdict, positions: positions({ headlineShare: 0.4 }), ...(positionsVenues ? { positionsVenues } : {}) });
+  const reading = (positionsVenues?: EvidenceInput['positionsVenues']): Parameters<typeof openQuestion>[0] => ({
+    verdict,
+    positions: positions(),
+    hedge: { ...EMPTY_HEDGE },
+    ...(positionsVenues ? { positionsVenues } : {}),
+  });
+
+  it('keeps the old words on a stored reading from before positions came from every dex', () => {
+    // Such a reading did fall back to the main dex when Nansen did not answer.
+    expect(explain(withheld()).summary).toBe(
+      'Of what could be read, 40% of the exposure is one $100.0M ETH short - but only the main perp dex was read, ' +
+        'and a HIP-3 position would not appear here, so this is not the whole portfolio.',
+    );
+    expect(openQuestion(reading())).toBe(
+      'the positions on other Hyperliquid dexes, which only Nansen reads here. Checking again when Nansen answers ' +
+        'would complete them.',
+    );
+  });
+
+  it('counts the dexes that answered when a named dex did not', () => {
+    const venues = { asked: 11, answered: 10, registryRead: true };
+    expect(explain(withheld(venues)).summary).toBe(
+      'Of what could be read, 40% of the exposure is one $100.0M ETH short - but positions were read from 10 of 11 ' +
+        'Hyperliquid dexes, so a position on a dex that did not answer would not appear here, so this is not the ' +
+        'whole portfolio.',
+    );
+    expect(openQuestion(reading(venues))).toBe(
+      'the positions on the Hyperliquid dexes that did not answer. Checking again may complete them.',
+    );
+  });
+
+  it('says the list of dexes did not load when it could not be read', () => {
+    const venues = { asked: 1, answered: 1, registryRead: false };
+    expect(explain(withheld(venues)).summary).toBe(
+      'Of what could be read, 40% of the exposure is one $100.0M ETH short - but the list of Hyperliquid dexes ' +
+        'could not be read, so only the main dex was read, and a position on a named (HIP-3) dex would not appear ' +
+        'here, so this is not the whole portfolio.',
+    );
+    expect(openQuestion(reading(venues))).toBe(
+      'the list of Hyperliquid dexes, which did not load. Checking again may complete it.',
+    );
   });
 });
 

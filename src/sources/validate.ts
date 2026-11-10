@@ -25,9 +25,7 @@
  * a 97%-covered HYPE short into "hedge not checked".
  */
 import type { HlOpenOrder, HlSpotBalance, HlFill, HlSpotMeta, HlSpotAssetCtx, HlPerpMeta, HlPerpAssetCtx } from './hyperliquid';
-import type { NansenBalance, NansenRelatedWallet } from './nansen';
 import { UpstreamShapeError } from './normalize';
-import { isValidAddress } from '../guard';
 
 export interface Checked<T> {
   rows: T[];
@@ -150,37 +148,4 @@ export function checkPerpMeta(raw: unknown): [HlPerpMeta, HlPerpAssetCtx[]] {
     throw new UpstreamShapeError('perp metadata is not [meta, contexts]');
   }
   return raw as unknown as [HlPerpMeta, HlPerpAssetCtx[]];
-}
-
-/** A Nansen balance: a chain, an amount of zero or more, and a dollar value
- * that is either absent or zero or more. An unpriced row is valid (23.09
- * audit, L05): its size is unknown, not zero. */
-export function checkNansenBalances(raw: unknown): Checked<NansenBalance> {
-  const checked = partition<NansenBalance>(raw, 'balances', (r) => {
-    const amount = numeric(r.token_amount);
-    const value = r.value_usd === null || r.value_usd === undefined ? 0 : numeric(r.value_usd);
-    return named(r.chain) && amount !== null && amount >= 0 && value !== null && value >= 0;
-  });
-  // The validator accepts decimal strings. Return the promised numeric
-  // domain shape so no downstream finite check silently drops valid rows.
-  return { ...checked, rows: checked.rows.map((r) => ({
-    ...r,
-    token_amount: numeric(r.token_amount)!,
-    value_usd: r.value_usd == null ? r.value_usd : numeric(r.value_usd)!,
-  })) };
-}
-
-/** A funding link: an address that is one, a relation, a chain, and a time
- * that parses when there is one. */
-export function checkRelatedWallets(raw: unknown): Checked<NansenRelatedWallet> {
-  return partition(raw, 'related wallets', (r) => {
-    const when = r.block_timestamp;
-    return (
-      typeof r.address === 'string' &&
-      isValidAddress(r.address) &&
-      named(r.relation) &&
-      named(r.chain) &&
-      (when === undefined || when === null || (typeof when === 'string' && Number.isFinite(Date.parse(when))))
-    );
-  });
 }

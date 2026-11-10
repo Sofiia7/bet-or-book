@@ -5,7 +5,8 @@ export async function runSavedChangeRegression(browser, tab) {
   const baseURL = 'http://localhost:8789';
   await (await browser.capabilities.get('viewport')).set({ width: 390, height: 844 });
   // Reset only this replay fixture's bookmark through the UI for repeatable runs.
-  await tab.goto(baseURL + '/');
+  // Its Remove button is on the Saved screen, which a #saved link opens.
+  await tab.goto(baseURL + '/#saved');
   const oldFixture = tab.playwright.getByRole('button', { name: /Remove .*HYPE long.*0x082e.*ca88/ });
   if (await oldFixture.count()) await oldFixture.click();
   await tab.playwright.domSnapshot();
@@ -13,12 +14,13 @@ export async function runSavedChangeRegression(browser, tab) {
   await tab.playwright.locator('#card').waitFor({ state: 'visible' });
   await tab.playwright.locator('#watch-address').click();
   await tab.playwright.getByRole('button', { name: 'Check live', exact: true }).click();
-  await tab.playwright.locator('#changed-list li').waitFor({ state: 'visible' });
+  // The reading's own earlier comparison stays listed until the new answer arrives.
+  await tab.playwright.locator('#changed-list li').filter({ hasText: '$91.6M' }).waitFor({ state: 'visible' });
   assert((await tab.playwright.locator('#changed-list').innerText()).includes('$122.1M → $91.6M'), 'Manual check compares the original saved reading to the new fixture');
   assert(await tab.playwright.locator('#changed-previous').getAttribute('href') === '/?s=0aio3f82kqsu9', 'Previous link points to the user bookmark, without a provider call');
   assert(!await tab.playwright.locator('#full-analysis').getAttribute('open'), 'Change is visible without expanding Full analysis');
   await tab.reload();
-  await tab.playwright.locator('#changed-list li').waitFor({ state: 'visible' });
+  await tab.playwright.locator('#changed-list li').filter({ hasText: '$91.6M' }).waitFor({ state: 'visible' });
   assert((await tab.playwright.locator('#changed-list').innerText()).includes('$122.1M → $91.6M'), 'Original baseline persists after reload');
   for (const width of [320, 390, 1280]) {
     await (await browser.capabilities.get('viewport')).set({ width, height: 844 });
@@ -41,7 +43,8 @@ export async function runSavedChangeRegression(browser, tab) {
   assert((await tab.playwright.locator('#changed-list li').count()) === 0, 'A selected-position check against a largest-position baseline is not presented as a trading change');
   await tab.playwright.locator('#full-analysis').click();
   await tab.playwright.locator('#load-context').click();
-  await tab.playwright.getByRole('button', { name: 'Copy wallet link', exact: true }).waitFor({ state: 'visible' });
+  // The share items sit in the closed Share menu: wait for the text, not for sight.
+  await tab.playwright.locator('#copy-link').filter({ hasText: 'Copy wallet link' }).waitFor({ state: 'attached' });
   await tab.playwright.locator('#watch-address').click();
   assert((await tab.playwright.locator('#save-confirmation-text').innerText()).includes('did not replace it'), 'An unsaved refresh cannot erase the last persisted bookmark');
   const afterFailureClipboard = await tab.clipboard.read();
@@ -51,7 +54,7 @@ export async function runSavedChangeRegression(browser, tab) {
   } finally { if (afterFailureClipboard.length) await tab.clipboard.write(afterFailureClipboard); else await tab.clipboard.writeText(''); }
   await tab.playwright.getByRole('button', { name: 'Open my saved positions', exact: true }).click();
   await tab.playwright.getByRole('button', { name: /HYPE long.*Open saved/ }).click();
-  await tab.playwright.getByRole('button', { name: 'Copy link', exact: true }).waitFor({ state: 'visible' });
+  await tab.playwright.locator('#copy-link').filter({ hasText: 'Copy link' }).waitFor({ state: 'attached' });
   assert((await tab.url()).includes('s=replay-focused-reading'), 'The retained reading can still reopen free after a failed write');
   assert((await tab.dev.logs({ levels: ['error'], limit: 20 })).length === 0, 'No browser errors in saved comparison');
   return { baseURL, fixtureOnly: true, checkedAt: new Date().toISOString(), checks };
@@ -62,7 +65,8 @@ export async function runSavedCapacityRegression(browser, tab) {
   const checks = []; const assert = (ok, text) => { if (!ok) throw new Error(text); checks.push(text); };
   const origin = 'http://localhost:8789';
   const cleanup = async () => {
-    await tab.goto(origin + '/');
+    // The Remove buttons are on the Saved screen.
+    await tab.goto(origin + '/#saved');
     const buttons = tab.playwright.getByRole('button', { name: /Remove .*0x2222/ });
     while (await buttons.count()) { await buttons.first().click(); await tab.playwright.domSnapshot(); }
   };
@@ -72,15 +76,17 @@ export async function runSavedCapacityRegression(browser, tab) {
       const address = '0x' + '2'.repeat(38) + i.toString(16).padStart(2, '0');
       await tab.goto(origin + '/?address=' + address);
       await tab.playwright.getByRole('button', { name: 'Check position', exact: true }).click();
-      await tab.playwright.getByRole('button', { name: 'Copy wallet link', exact: true }).waitFor({ state: 'visible' });
+      await tab.playwright.locator('#copy-link').filter({ hasText: 'Copy wallet link' }).waitFor({ state: 'attached' });
       await tab.playwright.locator('#watch-address').click();
       if (i === 13) {
         assert((await tab.playwright.getByRole('status').first().innerText()).includes('12 saved-position slots are full'), 'Thirteenth save reports capacity without silently evicting a bookmark');
         assert(!await tab.playwright.locator('#save-confirmation').isVisible(), 'A rejected save does not claim success');
       }
     }
-    await tab.playwright.getByRole('button', { name: 'Check another', exact: true }).click();
-    assert(await tab.playwright.locator('#watched .watch-row').count() === 12, 'Twelve existing saved positions remain available');
+    // The saved list is a screen of its own: the header's Saved tab ("Saved 12").
+    await tab.playwright.getByRole('navigation', { name: 'Main navigation', exact: true }).getByRole('link', { name: /^Saved\b/ }).click();
+    await tab.playwright.getByRole('heading', { name: 'Saved', exact: true }).waitFor({ state: 'visible' });
+    assert(await tab.playwright.locator('#watched .saved-card').count() === 12, 'Twelve existing saved positions remain available');
     assert(await tab.playwright.getByRole('button', { name: /HYPE long.*0x082e.*Open saved/ }).isVisible(), 'Original replay bookmark is retained at capacity');
   } finally { await cleanup(); }
   return { checks, fixtureOnly: true };

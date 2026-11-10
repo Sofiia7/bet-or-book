@@ -1,6 +1,7 @@
 import { afterAll, expect, it } from 'vitest';
 import { buildWorker, removeBuild, startWorker, tempDir } from './harness';
 import featured from '../../data/featured.json';
+import perpDexs from '../fixtures/hyperliquid/perp-dexs.json';
 import type { Miniflare } from 'miniflare';
 import { Response } from 'miniflare';
 
@@ -26,6 +27,9 @@ it('persists capacity, leases only one job per hour and never advances on an uns
     expect((await call({ action: 'subscribe', baseline })).status).toBe(409);
     const others = await Promise.all(Array.from({ length: 5 }, (_, i) => call({ action: 'subscribe', baseline: { ...baseline, address: '0x' + String(i + 1).padStart(40, '0') } })));
     expect(others.filter(r => r.status === 200)).toHaveLength(3);
+    // Said on the Saved screen, under the Monitor switch just pressed: it
+    // names the control a saved card still has for a new reading.
+    expect(others.filter(r => r.status === 409).map(r => r.body.error)).toEqual(Array(2).fill('The four pilot monitoring slots are full. Use Refresh on this saved position for a new reading.'));
     expect((await call({ action: 'claim' })).body).toBeNull();
     await mf.dispose(); mf = await start(at + 4 * 3600000); call = await callFor(mf);
     const claims = await Promise.all(Array.from({ length: 8 }, () => call({ action: 'claim' })));
@@ -42,19 +46,25 @@ it('persists capacity, leases only one job per hour and never advances on an uns
   } finally { await mf?.dispose(); disk.remove(); }
 }, 120000);
 
-it('runs a due selected-position check through the public budget and deduplicates repeated cron delivery', async () => {
-  const disk = tempDir(); const at = Date.now(); let mf: Miniflare | undefined; let paid = 0;
+it('runs a due selected-position check through the public path and deduplicates repeated cron delivery', async () => {
+  const disk = tempDir(); const at = Date.now(); let mf: Miniflare | undefined; let paid = 0; let positionReads = 0;
+  // The watched position, a HYPE long, is now $1M on the main dex, nothing on
+  // the named dexes. Positions come from Hyperliquid, free, and a check asks
+  // Nansen nothing: the job runs on the public path, and a request to Nansen
+  // would be counted here.
+  const hypeLong = { type: 'oneWay', position: { coin: 'HYPE', szi: '100000', entryPx: '10', leverage: { type: 'cross', value: 2 }, liquidationPx: null, positionValue: '1000000', unrealizedPnl: '0', cumFunding: { allTime: '0', sinceOpen: '0', sinceChange: '0' }, marginUsed: '500000', maxLeverage: 10, returnOnEquity: '0' } };
+  const dexState = (positions: unknown[]) => ({ assetPositions: positions, marginSummary: { accountValue: '0.0', totalMarginUsed: '0.0', totalNtlPos: '0.0', totalRawUsd: '0.0' }, withdrawable: '0.0', time: at });
   const upstream = async (request: Request) => {
     const body = JSON.parse(await request.text()); const url = new URL(request.url);
-    if (url.hostname === 'api.nansen.ai') {
+    if (url.hostname.includes('nansen')) {
       paid++;
-      const position = { token_symbol: 'HYPE', size: '100', position_value_usd: '1000000', entry_price_usd: '10', leverage_value: 2, leverage_type: 'cross', liquidation_price_usd: null, margin_used_usd: '1000', unrealized_pnl_usd: '0', cumulative_funding_since_open_usd: '0', return_on_equity: '0' };
-      return new Response(JSON.stringify({ data: { asset_positions: [{ position, position_type: 'oneWay' }], timestamp: at, margin_summary_account_value_usd: '1000000', withdrawable_usd: '1000' } }), { headers: { 'x-nansen-credits-cost': '1', 'x-nansen-credits-remaining': '500' } }) as unknown as globalThis.Response;
+      return new Response('{}', { status: 500 }) as unknown as globalThis.Response;
     }
-    const free: Record<string, unknown> = { clearinghouseState: { assetPositions: [], time: at }, frontendOpenOrders: [], userFillsByTime: [], spotClearinghouseState: { balances: [] }, spotMetaAndAssetCtxs: [{ tokens: [], universe: [] }, []], metaAndAssetCtxs: [{ universe: [] }, []] };
+    if (body.type === 'clearinghouseState' && body.dex === undefined) positionReads++;
+    const free: Record<string, unknown> = { perpDexs, clearinghouseState: dexState(body.dex === undefined ? [hypeLong] : []), frontendOpenOrders: [], userFillsByTime: [], spotClearinghouseState: { balances: [] }, spotMetaAndAssetCtxs: [{ tokens: [], universe: [] }, []], metaAndAssetCtxs: [{ universe: [] }, []] };
     return new Response(JSON.stringify(free[body.type] ?? [])) as unknown as globalThis.Response;
   };
-  const start = (now: number) => startWorker({ persist: disk.path, vars: { TEST_NOW: String(now), NANSEN_API_KEY: 'test-key', NANSEN_DAILY_CREDIT_CAP: '20', NANSEN_DEMO_RESERVE: '18' }, upstream });
+  const start = (now: number) => startWorker({ persist: disk.path, vars: { TEST_NOW: String(now) }, upstream });
   try {
     mf = await start(at - 4 * 3600000); let call = await callFor(mf);
     const subscribed = await call({ action: 'subscribe', baseline });
@@ -63,12 +73,9 @@ it('runs a due selected-position check through the public budget and deduplicate
     expect((await run()).status).toBe(200);
     const status = (await call({ action: 'status', token: subscribed.body.token })).body;
     expect(status.status).toContain('meaningful change found'); expect(status.events).toHaveLength(1);
-    expect(paid).toBe(1);
-    await run(); expect(paid).toBe(1);
-    // Only two public credits exist; the 18-credit demo reserve is untouched.
-    const ns = await mf.getDurableObjectNamespace('NANSEN_BUDGET');
-    const budget = ns.get(ns.idFromName('nansen-budget'));
-    const probe = await budget.fetch('https://budget.internal/', { method: 'POST', body: JSON.stringify({ action: 'reserve', day: new Date().toISOString().slice(0,10), worstCase: 2, limits: { cap: 2, floor: 0 } }) });
-    expect((await probe.json() as { ok: boolean }).ok).toBe(false);
+    expect(positionReads).toBe(1);
+    expect(paid).toBe(0);
+    // The same cron delivered again in the same hour runs no second check.
+    await run(); expect(positionReads).toBe(1); expect(paid).toBe(0);
   } finally { await mf?.dispose(); disk.remove(); }
 }, 120000);
